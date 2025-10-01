@@ -9,25 +9,37 @@
     "lint": "eslint"
   },
   "dependencies": {
-    "@mantine/core": "^8.3.2",
-    "@mantine/hooks": "^8.3.2",
-    "@typescript-eslint/parser": "^5.62.0",
+    "@mantine/dates": "^8.3.2",
+    "@mantine/form": "^8.3.2",
+    "@mantine/notifications": "^8.3.2",
+    "@mantine/styles": "^6.0.22",
+    "dayjs": "^1.11.18",
     "next": "15.5.4",
     "postcss-preset-mantine": "^1.18.0",
     "prettier": "^3.6.2",
     "prettier-eslint": "^16.4.2",
     "react": "19.1.0",
-    "react-dom": "19.1.0"
+    "react-dom": "19.1.0",
+    "react-icons": "^5.5.0"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
+    "@mantine/core": "^8.3.2",
+    "@mantine/hooks": "^8.3.2",
+    "@next/eslint-plugin-next": "^15.5.4",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
-    "eslint": "^8.57.1",
+    "@typescript-eslint/eslint-plugin": "^8.45.0",
+    "@typescript-eslint/parser": "^8.45.0",
+    "eslint": "^9.36.0",
     "eslint-config-next": "15.5.4",
+    "eslint-plugin-react": "^7.37.5",
+    "eslint-plugin-react-hooks": "^5.2.0",
+    "install": "^0.13.0",
+    "npm": "^11.6.1",
     "tailwindcss": "^4",
-    "typescript": "^4.9.5"
+    "typescript": "^5.9.3"
   }
 }
