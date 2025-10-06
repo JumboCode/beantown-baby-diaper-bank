@@ -1,7 +1,7 @@
 import { Title } from "@mantine/core";
 import Button from '@/components/Button'
 import { Input } from '@mantine/core';
-import { SetStateAction, useState } from "react"
+import { useState } from "react"
 
 export default function OnboardingTicket() {
   const [show, setShow] = useState(false);
