@@ -21,52 +21,63 @@ export default function OnboardingTicket() {
 
   }
   return (
-    <>
-      <Title order={3}>Age Finder</Title>
-      <div style {styles.container}>
-        {/* Input field for name */}
-        <input
-          type="text"
-          placeholder="Enter a first name"
-          value={name}
-          onChange={(e) => getSystemErrorName(e.target.value)}
-          onKeyPress={(e) => e.key == "Enter" && fetchAge()}
-          style={styles.input}/>
+    <div style={styles.container}>
+      <h2 style={styles.title}>Age Finder</h2>
 
-          {/* Button to fecth age */}
-          <button
-            onClick={fetchAge}
-            disabled={loading}
-            style={{
-              ...StyleSheet.button,
-              ...OnboardingTicket(loading ? StyleSheet.buttongDisabled : {}), }}
-              onMouseEnter={(e) => {if (!loading) {
-                e.currentTarget.style.backgroundColor = "#0056b3";
-                e.currentTarget.style.transform = "scale(1.05)";
-                }
-              }}
-              >
-                {loading ? "Loading..." : "Get Age"}
-              </button>
-              {/* Display age result*/}
-              {age !== NULL && (
-                <div style={styles.result}>
-                  <p style = {styles.resultText}>
-                    The estimated age for <strong>{name}</strong> is :<strong>{age}</strong> years old
-                  </p>
-              )}
-              
-              {/* Display error message */}
-              {error && (
-                <div style={styles.error}>
-                <p style={StyleSheet.errorText}>{error}</p>
-                </div>
-              )}
-      </div>
-    </>
+      {/* Input field for name */}
+      <input
+        type="text"
+        placeholder="Enter a first name"
+        value={name}
+        onChange={(e) => setName(e.target.value)}
+        onKeyPress={(e) => e.key === "Enter" && fetchAge()}
+        style={styles.input}
+      />
+
+      {/* Button to fetch age */}
+      <button
+        onClick={fetchAge}
+        disabled={loading}
+        style={{
+          ...styles.button,
+          ...(loading ? styles.buttonDisabled : {}),
+        }}
+        onMouseEnter={(e) => {
+          if (!loading) {
+            e.currentTarget.style.backgroundColor = "#0056b3";
+            e.currentTarget.style.transform = "scale(1.05)";
+          }
+        }}
+        onMouseLeave={(e) => {
+          if (!loading) {
+            e.currentTarget.style.backgroundColor = "#007bff";
+            e.currentTarget.style.transform = "scale(1)";
+          }
+        }}
+      >
+        {loading ? "Loading..." : label}
+      </button>
+
+      {/* Display age result */}
+      {age !== null && (
+        <div style={styles.result}>
+          <p style={styles.resultText}>
+            The estimated age for <strong>{name}</strong> is: <strong>{age}</strong> years old
+          </p>
+        </div>
+      )}
+
+      {/* Display error message */}
+      {error && (
+        <div style={styles.error}>
+          <p style={styles.errorText}>{error}</p>
+        </div>
+      )}
+    </div>
   );
-}
+};
 
+// Styling for the component
 const styles = {
   container: {
     display: "flex",
@@ -77,6 +88,10 @@ const styles = {
     fontFamily: "Arial, sans-serif",
     maxWidth: "500px",
     margin: "0 auto",
+  },
+  title: {
+    color: "#333",
+    marginBottom: "1.5rem",
   },
   input: {
     width: "100%",
@@ -131,3 +146,5 @@ const styles = {
     color: "#721c24",
   },
 };
+
+export default Button;
