@@ -1,3 +1,4 @@
+'use client';
 import React, { useState } from "react";
 import { Title } from "@mantine/core";
 import { getSystemErrorName, styleText } from "util";
@@ -11,15 +12,24 @@ export default function OnboardingTicket() {
 
   const fetchAge = async () => {
     setLoading(true);
-    fetch(`https://api.agify.io?name=${name}`);
-    .then(response => response.json())
-    .then(data => {
-      console.log(data);
-      console.log(data.age);
-    });
+    setError('');
+    setAge(null);
+    
+    fetch(`https://api.agify.io?name=${name}`)
+      .then(response => response.json())
+      .then(data => {
+        console.log(data);
+        console.log(data.age);
+        setAge(data.age);
+      })
+      .catch(() => {
+        setError('Failed to fetch the age, try again!');
+      })
+      .finally(() => {
+        setLoading(false);
+      });
   }
-
-  }
+  
   return (
     <div style={styles.container}>
       <h2 style={styles.title}>Age Finder</h2>
@@ -55,7 +65,7 @@ export default function OnboardingTicket() {
           }
         }}
       >
-        {loading ? "Loading..." : label}
+        {loading ? "Loading..." : "Find Age"}
       </button>
 
       {/* Display age result */}
@@ -76,6 +86,7 @@ export default function OnboardingTicket() {
     </div>
   );
 };
+
 
 // Styling for the component
 const styles = {
@@ -109,11 +120,13 @@ const styles = {
     fontWeight: "bold" as const,
     color: "white",
     backgroundColor: "#007bff",
-    border: "2px solid #007bff",
-    borderRadius: "8px",
-    cursor: "pointer",
-    transition: "all 0.3s ease",
-    outline: "none",
+    borderWidth: 2,
+    borderStyle: 'solid' as const,
+    borderColor: '#007bff',
+    borderRadius: '8px',
+    cursor: 'pointer',
+    transition: 'all 0.3s ease',
+    outline: 'none',
   },
   buttonDisabled: {
     backgroundColor: "#6c757d",
@@ -147,4 +160,3 @@ const styles = {
   },
 };
 
-export default Button;
