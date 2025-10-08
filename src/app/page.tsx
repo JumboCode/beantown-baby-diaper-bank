@@ -1,6 +1,5 @@
 "use client";
-
-import OnboardingTicket from "@/components/OnboardingTicket";
+import OnboardingTicket from '@/components/OnboardingTicket';
 import {
   Container,
   Title,
@@ -215,7 +214,7 @@ export default function Home() {
                 <Card
                   h={500}
                   withBorder>
-                  {/* Aray - Colin's onboarding ticket goes here */}
+                  <OnboardingTicket />
                 </Card>
               </div>
               <div>
