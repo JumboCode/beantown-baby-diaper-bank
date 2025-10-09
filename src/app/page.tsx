@@ -1,5 +1,5 @@
 "use client";
-
+import MyButton from "@/components/Button"
 import OnboardingTicket from "@/components/OnboardingTicket";
 import {
   Container,
@@ -224,6 +224,7 @@ export default function Home() {
                   h={500}
                   withBorder>
                   {/* Aryaa - Ashton's onboarding ticket goes here */}
+                  <MyButton label="Click me!"/>
                 </Card>
               </div>
               <div>
