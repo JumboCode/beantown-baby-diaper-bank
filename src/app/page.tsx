@@ -220,9 +220,9 @@ export default function Home() {
               </div>
               <div>
                 <Text fw={500}>Aryaa - Ashton</Text>
-                <Card
-                  h={500}
-                  withBorder>
+                  <Card
+                    h={500}
+                    withBorder>
                   {/* Aryaa - Ashton's onboarding ticket goes here */}
                   <MyButton label="Click me!"/>
                 </Card>
