@@ -1,5 +1,4 @@
 "use client";
-import OnboardingTicket from '@/components/OnboardingTicket';
 import {
   Container,
   Title,
@@ -18,6 +17,7 @@ import {
 import { FaGithub } from "react-icons/fa";
 import ButtonComponent from "@/components/AnnarakshitcaitlynButton";
 import OurButton from "@/components/KimhenaoButton";
+import ColinArayButton from "@/components/ColinandarayButton";
 
 export default function Home() {
   return (
@@ -216,7 +216,7 @@ export default function Home() {
                 <Card
                   h={500}
                   withBorder>
-                  <OnboardingTicket />
+                  <ColinArayButton />
                 </Card>
               </div>
               <div>
