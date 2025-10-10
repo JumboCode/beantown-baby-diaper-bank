@@ -17,6 +17,9 @@ import {
   ThemeIcon,
 } from "@mantine/core";
 import { FaGithub } from "react-icons/fa";
+import ButtonComponent from "@/components/AnnarakshitcaitlynButton";
+import OurButton from "@/components/KimhenaoButton";
+import ColinArayButton from "@/components/ColinandarayButton";
 
 export default function Home() {
   return (
@@ -210,12 +213,12 @@ export default function Home() {
               .
             </Text>
             <Stack gap="md">
-              <div> 
+              <div>
                 <Text fw={500}>Aray - Colin</Text>
                 <Card
                   h={500}
                   withBorder>
-                  {/* Aray - Colin's onboarding ticket goes here */}
+                  <ColinArayButton />
                 </Card>
               </div>
               <div>
@@ -232,7 +235,7 @@ export default function Home() {
                 <Card
                   h={500}
                   withBorder>
-                  {/* Caitlyn - Anna - Rakshi's onboarding ticket goes here */}
+                  {<ButtonComponent label="Click to see your age!" />}
                 </Card>
               </div>
               <div>
@@ -249,6 +252,7 @@ export default function Home() {
                   h={500}
                   withBorder>
                   {/* Valentina - Hanah's onboarding ticket goes here */}
+                  <OurButton />
                 </Card>
               </div>
             </Stack>
