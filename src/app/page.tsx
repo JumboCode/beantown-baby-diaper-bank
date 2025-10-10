@@ -18,6 +18,7 @@ import { FaGithub } from "react-icons/fa";
 import ButtonComponent from "@/components/AnnarakshitcaitlynButton";
 import OurButton from "@/components/KimhenaoButton";
 import ColinArayButton from "@/components/ColinandarayButton";
+import ElchinMadelineButton from "@/components/ElchinMadelineButton";
 
 export default function Home() {
   return (
@@ -241,6 +242,7 @@ export default function Home() {
                   h={500}
                   withBorder>
                   {/* Elchin - Madeline's onboarding ticket goes here */}
+                  <ElchinMadelineButton />
                 </Card>
               </div>
               <div>
