@@ -1,6 +1,5 @@
 "use client";
-import MyButton from "@/components/Button"
-import OnboardingTicket from "@/components/OnboardingTicket";
+import AryaaAshButton from "@/components/AryaaAshButton";
 import {
   Container,
   Title,
@@ -20,6 +19,7 @@ import { FaGithub } from "react-icons/fa";
 import ButtonComponent from "@/components/AnnarakshitcaitlynButton";
 import OurButton from "@/components/KimhenaoButton";
 import ColinArayButton from "@/components/ColinandarayButton";
+import ElchinMadelineButton from "@/components/ElchinMadelineButton";
 
 export default function Home() {
   return (
@@ -223,11 +223,11 @@ export default function Home() {
               </div>
               <div>
                 <Text fw={500}>Aryaa - Ashton</Text>
-                  <Card
-                    h={500}
-                    withBorder>
+                <Card
+                  h={500}
+                  withBorder>
                   {/* Aryaa - Ashton's onboarding ticket goes here */}
-                  <MyButton label="Click me!"/>
+                  <AryaaAshButton label="Click me!" />
                 </Card>
               </div>
               <div>
@@ -244,6 +244,7 @@ export default function Home() {
                   h={500}
                   withBorder>
                   {/* Elchin - Madeline's onboarding ticket goes here */}
+                  <ElchinMadelineButton />
                 </Card>
               </div>
               <div>
