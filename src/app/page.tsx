@@ -1,4 +1,5 @@
 "use client";
+import AryaaAshButton from "@/components/AryaaAshButton";
 import {
   Container,
   Title,
@@ -226,6 +227,7 @@ export default function Home() {
                   h={500}
                   withBorder>
                   {/* Aryaa - Ashton's onboarding ticket goes here */}
+                  <AryaaAshButton label="Click me!" />
                 </Card>
               </div>
               <div>
