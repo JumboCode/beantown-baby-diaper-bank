@@ -17,6 +17,7 @@ import {
   ThemeIcon,
 } from "@mantine/core";
 import { FaGithub } from "react-icons/fa";
+import ButtonComponent from "@/components/Button";
 
 export default function Home() {
   return (
@@ -231,7 +232,7 @@ export default function Home() {
                 <Card
                   h={500}
                   withBorder>
-                  {/* Caitlyn - Anna - Rakshi's onboarding ticket goes here */}
+                  {<ButtonComponent label="Click to see your age!" />}
                 </Card>
               </div>
               <div>
