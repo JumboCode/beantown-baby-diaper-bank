@@ -1,36 +1,93 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Beantown Baby Diaper Bank
 
-## Getting Started
+This JumboCode project repository powers the Beantown Baby Diaper Bank’s hot map features.
+Follow the instructions below to install prerequisites, clone the repo, and start development.  
 
-First, run the development server:
+⚠️ **Important:** Please complete *all* of these steps **each time you start working** to make sure you are always working with the most recent changes from the repository.
+
+---
+
+## 1. Install Prerequisites
+
+### Node.js
+We use Node.js to run the development server.
+
+- Download and install Node.js (LTS version recommended):  
+  👉 https://nodejs.org/en/download  
+- Verify installation:
+  ```bash
+  node -v
+  npm -v
+  ```
+
+### Git
+We use Git for version control and syncing code.
+
+- Download and install Git:  
+  👉 https://git-scm.com/downloads  
+- Verify installation:
+  ```bash
+  git --version
+  ```
+
+---
+
+## 2. Clone the Repository
+
+Open your terminal and run:
+
+```bash
+git clone https://github.com/JumboCode/beantown-baby-diaper-bank.git
+cd beantown-baby-diaper-bank
+```
+
+---
+
+## 3. Install Dependencies
+
+Inside the project folder, install dependencies with:
+
+```bash
+npm install
+```
+
+---
+
+## 4. Stay Up To Date
+
+Before starting development **each time**, make sure you pull the latest changes:
+
+```bash
+git pull origin main
+npm install
+```
+
+---
+
+## 5. Start the Development Server
+
+Run the following command:
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Then open [http://localhost:3000](http://localhost:3000) in your browser.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+---
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## 6. Workflow Notes
 
-## Learn More
+- Always **`git pull`** before making changes.  
+- Create a new branch for your work:  
+  ```bash
+  git checkout -b feature/my-feature
+  ```
+- Commit and push your branch, then open a Pull Request (PR) for review.  
 
-To learn more about Next.js, take a look at the following resources:
+---
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Helpful Links
+- Node.js docs: https://nodejs.org/docs  
+- Git docs: https://git-scm.com/doc  
+- Next.js docs (framework used in this repo): https://nextjs.org/docs  

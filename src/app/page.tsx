@@ -1,6 +1,5 @@
 "use client";
-
-import OnboardingTicket from "@/components/OnboardingTicket";
+import AryaaAshButton from "@/components/AryaaAshButton";
 import {
   Container,
   Title,
@@ -17,6 +16,10 @@ import {
   ThemeIcon,
 } from "@mantine/core";
 import { FaGithub } from "react-icons/fa";
+import ButtonComponent from "@/components/AnnarakshitcaitlynButton";
+import OurButton from "@/components/KimhenaoButton";
+import ColinArayButton from "@/components/ColinandarayButton";
+import ElchinMadelineButton from "@/components/ElchinMadelineButton";
 
 export default function Home() {
   return (
@@ -209,11 +212,63 @@ export default function Home() {
               </Anchor>
               .
             </Text>
-            <Card
-              h={500}
-              withBorder>
-              <OnboardingTicket />
-            </Card>
+            <Stack gap="md">
+              <div>
+                <Text fw={500}>Aray - Colin</Text>
+                <Card
+                  h={500}
+                  withBorder>
+                  <ColinArayButton />
+                </Card>
+              </div>
+              <div>
+                <Text fw={500}>Aryaa - Ashton</Text>
+                <Card
+                  h={500}
+                  withBorder>
+                  {/* Aryaa - Ashton's onboarding ticket goes here */}
+                  <AryaaAshButton label="Click me!" />
+                </Card>
+              </div>
+              <div>
+                <Text fw={500}>Caitlyn - Anna - Rakshi</Text>
+                <Card
+                  h={500}
+                  withBorder>
+                  {<ButtonComponent label="Click to see your age!" />}
+                </Card>
+              </div>
+              <div>
+                <Text fw={500}>Elchin - Madeline</Text>
+                <Card
+                  h={500}
+                  withBorder>
+                  {/* Elchin - Madeline's onboarding ticket goes here */}
+                  <ElchinMadelineButton />
+                </Card>
+              </div>
+              <div>
+                <Text fw={500}>Valentina - Hanah</Text>
+                <Card
+                  h={500}
+                  withBorder>
+                  {/* Valentina - Hanah's onboarding ticket goes here */}
+                  <OurButton />
+                </Card>
+              </div>
+            </Stack>
+          </Stack>
+        </Card>
+        <Card
+          shadow="sm"
+          radius="md"
+          withBorder>
+          <Stack gap="xs">
+            <Title order={2}>Sprint 2 Tickets</Title>
+            <Divider />
+            <Anchor href="/sprint2">
+              <Title order={2}>Click here for Sprint 2 Tickets</Title>
+            </Anchor>
           </Stack>
         </Card>
 
