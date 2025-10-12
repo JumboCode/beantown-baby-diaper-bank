@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { useDisclosure } from '@mantine/hooks';
 import { Popover, Text, Button } from '@mantine/core';
+import './DotPopUps.css';
+import { CircleDot } from 'lucide-react'
 
 const DotPopUps = () => {
   const dotData = [
@@ -11,7 +13,7 @@ const DotPopUps = () => {
   ];
 
   return (
-    <div>
+    <div style={{ display: 'flex', gap: '10px' }}>
       {dotData.map((dot, index) => (
         <SinglePopUp 
           key={index} 
@@ -35,15 +37,17 @@ type SinglePopUpProps = {
 const SinglePopUp = ({ title, cityName, numDiapers, partnerOrgs}: SinglePopUpProps ) => {
   const [opened, { close, open }] = useDisclosure(false);
   return (
-    <Popover width={200} position="bottom" withArrow shadow="md" opened={opened}>
+    <Popover width={200} position="top" withArrow shadow="md"  opened={opened}>
       <Popover.Target>
-        <Button onMouseEnter={open} onMouseLeave={close}>
+        {/* <Button onMouseEnter={open} onMouseLeave={close}>
           {title}
-        </Button>
+        </Button> */}
+        <CircleDot style={{color: 'blue'}} onMouseEnter={open} onMouseLeave={close}>
+            </CircleDot>
       </Popover.Target>
       <Popover.Dropdown style={{ pointerEvents: 'none' }}>
       <div>
-        <p> City: {cityName}</p>
+        <p style={{fontSize: '20px', fontWeight: 'bold'}}> City: {cityName}</p>
         <p> Diapers Distributed: {numDiapers.toString()} </p>
         <p> Parters: {partnerOrgs.join(', ')} </p>
       </div>    

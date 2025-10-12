@@ -1,6 +1,8 @@
 "use client";
 
 import { Container, Title, Paper, Text } from "@mantine/core";
+import DotPopUps from '@/components/DotPopUps';
+
 export default function Sprint2Page() {
   return (
     <Container
@@ -68,7 +70,7 @@ export default function Sprint2Page() {
         mb="xl">
         Place displaying city info ticket here
       </Text>
-      <div>{/* Displaying City Info component goes here */}</div>
+      <div>{<DotPopUps />}</div>
 
       <Title
         order={2}
