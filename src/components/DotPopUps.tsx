@@ -1,7 +1,5 @@
-import { useState } from 'react';
 import { useDisclosure } from '@mantine/hooks';
-import { Popover, Text, Button } from '@mantine/core';
-import './DotPopUps.css';
+import { Popover } from '@mantine/core';
 import { CircleDot } from 'lucide-react'
 
 const DotPopUps = () => {
@@ -39,9 +37,6 @@ const SinglePopUp = ({ title, cityName, numDiapers, partnerOrgs}: SinglePopUpPro
   return (
     <Popover width={200} position="top" withArrow shadow="md"  opened={opened}>
       <Popover.Target>
-        {/* <Button onMouseEnter={open} onMouseLeave={close}>
-          {title}
-        </Button> */}
         <CircleDot style={{color: 'blue'}} onMouseEnter={open} onMouseLeave={close}>
             </CircleDot>
       </Popover.Target>
