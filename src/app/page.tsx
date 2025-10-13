@@ -20,7 +20,6 @@ import ButtonComponent from "@/components/AnnarakshitcaitlynButton";
 import OurButton from "@/components/KimhenaoButton";
 import ColinArayButton from "@/components/ColinandarayButton";
 import ElchinMadelineButton from "@/components/ElchinMadelineButton";
-import DotPopUps from '@/components/DotPopUps';
 
 export default function Home() {
   return (
