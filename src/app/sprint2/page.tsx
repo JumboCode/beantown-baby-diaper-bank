@@ -1,7 +1,7 @@
 "use client";
 
 import { Container, Title, Paper, Text } from "@mantine/core";
-import Slider from "../../components/slider";
+import OurSlider from "../../components/OurSlider";
 import DotPopUps from '@/components/DotPopUps';
 
 export default function Sprint2Page() {
@@ -32,7 +32,7 @@ export default function Sprint2Page() {
                 mb="xl">
                 Place fun slider ticket here
             </Text>
-            <div><Slider /></div>
+            <div><OurSlider /></div>
 
             <Title
                 order={2}
@@ -72,18 +72,18 @@ export default function Sprint2Page() {
                 Place displaying city info ticket here
             </Text>
             <div>{/* Displaying City Info component goes here */}</div>
-      <Title
-        order={2}
-        mt="md"
-        mb="xs">
-        Displaying City Info
-      </Title>
-      <Text
-        c="dimmed"
-        mb="xl">
-        Place displaying city info ticket here
-      </Text>
-      <div>{<DotPopUps />}</div>
+            <Title
+                order={2}
+                mt="md"
+                mb="xs">
+                Displaying City Info
+            </Title>
+            <Text
+                c="dimmed"
+                mb="xl">
+                Place displaying city info ticket here
+            </Text>
+            <div>{<DotPopUps />}</div>
 
             <Title
                 order={2}

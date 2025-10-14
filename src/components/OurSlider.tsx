@@ -1,8 +1,8 @@
-import React from "react";
+import Image from 'next/image'
 import { useState } from "react";
 import { Slider } from "@mantine/core";
 
-export default function ourSlider() {
+export default function OurSlider() {
     const [value, setValue] = useState(0);
 
     const images = [
@@ -20,16 +20,20 @@ export default function ourSlider() {
     return (
         <>
             <div className="flex flex-col items-center justify-center">
-                <img src={images[value]} alt={`Funny picture ${value}`} className="mb-5 w-auto h-100" />
+                <Image
+                    src={images[value]}
+                    width={500}
+                    height={500}
+                    alt={`Funny picture ${value}`}
+                    className='mb-5'
+                />
             </div>
             <Slider
                 restrictToMarks
                 min={0}
-                max={9}
+                max={images.length - 1}
                 defaultValue={0}
-                marks={Array.from({ length: 10 }).map((_, index) => ({
-                    value: index,
-                }))}
+                marks={images.map((_, index) => ({ value: index }))}
                 value={value}
                 onChange={setValue}
             />
