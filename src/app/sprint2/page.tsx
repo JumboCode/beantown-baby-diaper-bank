@@ -1,6 +1,7 @@
 "use client";
 
 import { Container, Title, Paper, Text } from "@mantine/core";
+import ImpactModal from "../../components/ImpactModal"
 export default function Sprint2Page() {
   return (
     <Container
@@ -42,7 +43,9 @@ export default function Sprint2Page() {
         mb="xl">
         Place make an impact ticket here
       </Text>
-      <div>{/* MAKE an Impact component goes here */}</div>
+      <div>
+        <ImpactModal/>
+      </div>
 
       <Title
         order={2}
