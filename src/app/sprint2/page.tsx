@@ -2,6 +2,7 @@
 
 import { Container, Title, Paper, Text } from "@mantine/core";
 import DotPopUps from '@/components/DotPopUps';
+import Demo from '@/components/impact'
 
 export default function Sprint2Page() {
   return (
@@ -96,6 +97,7 @@ export default function Sprint2Page() {
         mb="xl">
         Place yearly vs monthly switch ticket here
       </Text>
+      {<Demo />}
 
       <div>{/* Yearly vs Monthly Switch component goes here */}</div>
     </Container>
