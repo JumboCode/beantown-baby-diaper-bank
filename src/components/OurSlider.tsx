@@ -25,7 +25,7 @@ export default function OurSlider() {
                     width={500}
                     height={500}
                     alt={`Funny picture ${value}`}
-                    className='mb-5'
+                    className='mb-5 w-auto h-100'
                 />
             </div>
             <Slider
