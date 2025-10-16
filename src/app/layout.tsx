@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { MantineProvider, createTheme } from "@mantine/core";
 import "@mantine/core/styles.css";
 import "./globals.css";
+import "leaflet/dist/leaflet.css";
 
 export const metadata: Metadata = {
   title: "Beantown Baby Diaper Bank",
