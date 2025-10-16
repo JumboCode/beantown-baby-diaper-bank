@@ -57,6 +57,8 @@ export default function YearlyMonthlySwitch() {
             ? "/funnyPictures/yearly.jpg"
             : "/funnyPictures/monthly.jpg"
         }
+        width={500}
+        height={500}
         alt={view === "yearly" ? "Yearly funny pic" : "Monthly funny pic"}
       />
     </div>
