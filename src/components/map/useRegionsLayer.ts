@@ -1,14 +1,26 @@
 import { useCallback, useMemo } from "react";
 import type { GeoJSONProps } from "react-leaflet";
+import type { StyleFunction } from "leaflet";
 import type { RegionFeature, RegionsGeoJSON } from "@/lib/types";
+
+export type ChoroplethBucket = {
+  min: number;
+  max: number;
+  color: string;
+};
 
 type UseRegionsLayerOptions = {
   regions: RegionsGeoJSON;
   onRegionClick: (regionId: string) => void;
   onRegionHover?: (regionId?: string) => void;
+  highlightedRegionId?: string | null;
+  choroplethData?: Record<string, number>;
+  choroplethBuckets?: ChoroplethBucket[];
+  defaultFillColor?: string;
 };
 
 type GeoJSONEachFeature = NonNullable<GeoJSONProps["onEachFeature"]>;
+type GeoJSONStyleFn = StyleFunction<RegionFeature["properties"]>;
 
 function resolveRegionId(feature: RegionFeature | undefined) {
   return feature?.properties?.id;
@@ -41,7 +53,47 @@ export function useRegionsLayer({
   regions,
   onRegionClick,
   onRegionHover,
+  highlightedRegionId,
+  choroplethData,
+  choroplethBuckets,
+  defaultFillColor = "#94d2bd",
 }: UseRegionsLayerOptions) {
+  const getFillColor = useCallback(
+    (regionId: string | undefined) => {
+      if (!regionId) return defaultFillColor;
+
+      const value = choroplethData?.[regionId];
+      if (value == null) {
+        return defaultFillColor;
+      }
+
+      const bucket = choroplethBuckets?.find(
+        (entry) => value >= entry.min && value <= entry.max
+      );
+
+      return bucket?.color ?? defaultFillColor;
+    },
+    [choroplethData, choroplethBuckets, defaultFillColor]
+  );
+
+  const style = useCallback<GeoJSONStyleFn>(
+    (feature) => {
+      const regionFeature = feature as RegionFeature | undefined;
+      const regionId = resolveRegionId(regionFeature);
+      const isHighlighted =
+        highlightedRegionId != null && regionId === highlightedRegionId;
+
+      return {
+        color: isHighlighted ? "#0b7285" : "#2c3e50",
+        weight: isHighlighted ? 3 : 1,
+        opacity: 1,
+        fillOpacity: isHighlighted ? 0.75 : 0.6,
+        fillColor: getFillColor(regionId),
+      };
+    },
+    [getFillColor, highlightedRegionId]
+  );
+
   // Handle feature clicks, binding to onRegionClick
   // if regionId is not found, do nothing
   // if onRegionClick changes, re-bind handlers
@@ -75,8 +127,9 @@ export function useRegionsLayer({
     () => ({
       data: regions,
       onEachFeature,
+      style,
     }),
-    [onEachFeature, regions]
+    [onEachFeature, regions, style]
   );
 
   return { geoJsonProps };

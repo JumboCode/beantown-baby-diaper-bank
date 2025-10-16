@@ -1,11 +1,14 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useMemo, useState } from "react";
+import { useMemo, useState, type ReactNode } from "react";
 import { Loader } from "@mantine/core";
 import { useLeafletMap } from "./useLeafletMap";
 import { useBaseTileLayer } from "./useBaseTileLayer";
-import { useRegionsLayer } from "./useRegionsLayer";
+import {
+  useRegionsLayer,
+  type ChoroplethBucket,
+} from "./useRegionsLayer";
 import type { RegionsGeoJSON } from "@/lib/types";
 import type * as Leaflet from "leaflet";
 
@@ -30,10 +33,23 @@ type LeafletMapProps = {
   regions: RegionsGeoJSON;
   onRegionClick: (regionId: string) => void;
   onRegionHover?: (regionId?: string) => void;
+  highlightedRegionId?: string | null;
+  leftControls?: ReactNode;
+  rightControls?: ReactNode;
+  choroplethData?: Record<string, number>;
+  choroplethBuckets?: ChoroplethBucket[];
 };
 
-export default function LeafletMap(props: LeafletMapProps) {
-  const { regions, onRegionClick, onRegionHover } = props;
+export default function LeafletMap({
+  regions,
+  onRegionClick,
+  onRegionHover,
+  highlightedRegionId,
+  leftControls,
+  rightControls,
+  choroplethData,
+  choroplethBuckets,
+}: LeafletMapProps) {
   const { mapConfig } = useLeafletMap();
   const { style: mapStyle, ...mapOptions } = mapConfig;
   const [mapInstance, setMapInstance] = useState<Leaflet.Map | null>(null);
@@ -53,12 +69,10 @@ export default function LeafletMap(props: LeafletMapProps) {
     regions: normalizedRegions,
     onRegionClick,
     onRegionHover,
+    highlightedRegionId,
+    choroplethData,
+    choroplethBuckets,
   });
-
-  console.log("Rendering LeafletMap with regions:", normalizedRegions);
-  console.log("Map options:", mapOptions);
-  console.log("Tile layer props:", tileLayerProps);
-  console.log("GeoJSON props:", geoJsonProps);
 
   return (
     <div
@@ -71,10 +85,36 @@ export default function LeafletMap(props: LeafletMapProps) {
       <MapContainer
         {...mapOptions}
         style={mapStyle}
-        whenReady={() => setMapInstance(mapInstance)}>
+        whenReady={(event) => setMapInstance(event.target as Leaflet.Map)}>
         <TileLayer {...tileLayerProps} />
         <GeoJSON {...geoJsonProps} />
       </MapContainer>
+      {leftControls && (
+        <div
+          style={{
+            position: "absolute",
+            top: "1rem",
+            left: "1rem",
+            zIndex: 1000,
+            pointerEvents: "none",
+            maxWidth: "min(320px, 90vw)",
+          }}>
+          <div style={{ pointerEvents: "auto" }}>{leftControls}</div>
+        </div>
+      )}
+      {rightControls && (
+        <div
+          style={{
+            position: "absolute",
+            top: "1rem",
+            right: "1rem",
+            zIndex: 1000,
+            pointerEvents: "none",
+            maxWidth: "min(320px, 90vw)",
+          }}>
+          <div style={{ pointerEvents: "auto" }}>{rightControls}</div>
+        </div>
+      )}
       {!mapInstance && <Loader />}
     </div>
   );
