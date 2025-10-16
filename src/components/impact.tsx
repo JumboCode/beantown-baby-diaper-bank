@@ -13,7 +13,6 @@ function Demo() {
     const [checked, setChecked] = useState(false)
     const [monthlyColor, setMonthlyColor] = useState("#138D8A")
     const [yearlyColor, setYearlyColor] = useState("#344054")
-
     // Create a function that defines what happens when the switch is toggled
     function handleChange(event: any) {
         // Store the NEW checked state from the switch
