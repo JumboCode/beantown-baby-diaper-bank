@@ -5,10 +5,7 @@ import { useMemo, useState, type ReactNode } from "react";
 import { Loader } from "@mantine/core";
 import { useLeafletMap } from "./useLeafletMap";
 import { useBaseTileLayer } from "./useBaseTileLayer";
-import {
-  useRegionsLayer,
-  type ChoroplethBucket,
-} from "./useRegionsLayer";
+import { useRegionsLayer, type ChoroplethBucket } from "./useRegionsLayer";
 import type { RegionsGeoJSON } from "@/lib/types";
 import type * as Leaflet from "leaflet";
 
@@ -84,8 +81,7 @@ export default function LeafletMap({
       }}>
       <MapContainer
         {...mapOptions}
-        style={mapStyle}
-        whenReady={(event) => setMapInstance(event.target as Leaflet.Map)}>
+        style={mapStyle}>
         <TileLayer {...tileLayerProps} />
         <GeoJSON {...geoJsonProps} />
       </MapContainer>
