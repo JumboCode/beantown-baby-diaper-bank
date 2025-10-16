@@ -1,6 +1,7 @@
 "use client";
 
 import { Container, Title, Paper, Text } from "@mantine/core";
+import ImpactModal from "../../components/ImpactModal"
 import OurSlider from "../../components/OurSlider";
 import DotPopUps from '@/components/DotPopUps';
 
@@ -34,18 +35,20 @@ export default function Sprint2Page() {
             </Text>
             <div><OurSlider /></div>
 
-            <Title
-                order={2}
-                mt="md"
-                mb="xs">
-                MAKE AN IMPACT
-            </Title>
-            <Text
-                c="dimmed"
-                mb="xl">
-                Place make an impact ticket here
-            </Text>
-            <div>{/* MAKE an Impact component goes here */}</div>
+      <Title
+        order={2}
+        mt="md"
+        mb="xs">
+        MAKE AN IMPACT
+      </Title>
+      <Text
+        c="dimmed"
+        mb="xl">
+        Place make an impact ticket here
+      </Text>
+      <div>
+        <ImpactModal/>
+      </div>
 
             <Title
                 order={2}
