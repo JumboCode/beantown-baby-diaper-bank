@@ -29,14 +29,22 @@ function Demo() {
     return (
     <div className="flex flex-col gap-3 justify-center items-center">
         <Group gap="md" wrap="nowrap">
-            <Text c={monthlyColor} size="md">Monthly</Text>
+            <Text c={monthlyColor} size="lg">Monthly</Text>
             <Switch
+            styles={{
+                track: {
+                    backgroundColor: '#E4E7EC',
+                },
+                thumb: {
+                    backgroundColor: '#138D8A',
+                }
+            }}
             size="xl"
             checked={checked}
-            color="#138D8A"
+            color="#E4E7EC"
             onChange={handleChange}
             />
-            <Text c={yearlyColor} size="md">Yearly</Text>
+            <Text c={yearlyColor} size="lg">Yearly</Text>
         </Group>
         <img
         src={view === "yearly" ? "/funnyPictures/yearly.jpg" : "/funnyPictures/monthly.jpg"}
