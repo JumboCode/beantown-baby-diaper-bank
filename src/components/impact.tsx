@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { Switch } from '@mantine/core';
+import { Switch, Group, Text } from '@mantine/core';
+import Image from 'next/image';
 
 function Demo() {
     // Create a state to track the current view 
@@ -10,7 +11,9 @@ function Demo() {
     // checked - current status, true or false (starts with false)
     // setChecked - a function to update checked
     const [checked, setChecked] = useState(false)
-    
+    const [monthlyColor, setMonthlyColor] = useState("#138D8A")
+    const [yearlyColor, setYearlyColor] = useState("#344054")
+
     // Create a function that defines what happens when the switch is toggled
     function handleChange(event: any) {
         // Store the NEW checked state from the switch
@@ -19,15 +22,22 @@ function Demo() {
         setChecked(isChecked);  
         // Update view using setView (if true, set to "yearly", if false, set to "monthly")
         setView(isChecked ? "yearly" : "monthly");
+        setMonthlyColor(isChecked ? "#344054" : "#138D8A")
+        setYearlyColor(isChecked ? "#138D8A" : "#344054")
     }
 
     return (
     <div className="flex flex-col gap-3 justify-center items-center">
-        <Switch
+        <Group gap="md" wrap="nowrap">
+            <Text c={monthlyColor} size="md">Monthly</Text>
+            <Switch
+            size="xl"
             checked={checked}
-            color="red"
+            color="#138D8A"
             onChange={handleChange}
-        />
+            />
+            <Text c={yearlyColor} size="md">Yearly</Text>
+        </Group>
         <img
         src={view === "yearly" ? "/funnyPictures/yearly.jpg" : "/funnyPictures/monthly.jpg"}
         alt={view === "yearly" ? "Yearly funny pic" : "Monthly funny pic"}
