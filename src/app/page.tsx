@@ -1,5 +1,5 @@
 "use client";
-import AryaaAshButton from "@/components/AryaaAshButton";
+import AryaaAshButton from "@/components/sprint1/AryaaAshButton";
 import {
   Container,
   Title,
@@ -16,10 +16,10 @@ import {
   ThemeIcon,
 } from "@mantine/core";
 import { FaGithub } from "react-icons/fa";
-import ButtonComponent from "@/components/AnnarakshitcaitlynButton";
-import OurButton from "@/components/KimhenaoButton";
-import ColinArayButton from "@/components/ColinandarayButton";
-import ElchinMadelineButton from "@/components/ElchinMadelineButton";
+import ButtonComponent from "@/components/sprint1/AnnarakshitcaitlynButton";
+import OurButton from "@/components/sprint1/KimhenaoButton";
+import ColinArayButton from "@/components/sprint1/ColinandarayButton";
+import ElchinMadelineButton from "@/components/sprint1/ElchinMadelineButton";
 
 export default function Home() {
   return (
@@ -195,7 +195,6 @@ export default function Home() {
             </Stack>
           </Card>
         </Paper>
-    
 
         <Card
           shadow="sm"

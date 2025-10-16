@@ -1,9 +1,9 @@
 "use client";
 
 import { Container, Title, Paper, Text } from "@mantine/core";
-import OurSlider from "../../components/OurSlider";
-import DotPopUps from "@/components/DotPopUps";
-import YearlyMonthlySwitch from "@/components/YearlyMonthlySwitch";
+import OurSlider from "../../components/sprint2/OurSlider";
+import DotPopUps from "@/components/sprint2/DotPopUps";
+import YearlyMonthlySwitch from "@/components/sprint2/YearlyMonthlySwitch";
 
 export default function Sprint2Page() {
   return (
