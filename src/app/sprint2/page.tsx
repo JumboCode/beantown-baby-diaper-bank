@@ -4,6 +4,7 @@ import { Container, Title, Paper, Text } from "@mantine/core";
 import OurSlider from "../../components/sprint2/OurSlider";
 import DotPopUps from "@/components/sprint2/DotPopUps";
 import YearlyMonthlySwitch from "@/components/sprint2/YearlyMonthlySwitch";
+import FileUpload from "@/components/sprint2/FileUpload";
 
 export default function Sprint2Page() {
   return (
@@ -61,20 +62,9 @@ export default function Sprint2Page() {
         mb="xl">
         Place file upload button ticket here
       </Text>
-      <div>{/* File Upload Button component goes here */}</div>
-
-      <Title
-        order={2}
-        mt="md"
-        mb="xs">
-        Displaying City Info
-      </Title>
-      <Text
-        c="dimmed"
-        mb="xl">
-        Place displaying city info ticket here
-      </Text>
-      <div>{/* Displaying City Info component goes here */}</div>
+      <div>
+        <FileUpload />
+      </div>
       <Title
         order={2}
         mt="md"
@@ -94,13 +84,6 @@ export default function Sprint2Page() {
         mb="xs">
         Tooltips!
       </Title>
-      <Text
-        c="dimmed"
-        mb="xl">
-        Place tooltips ticket here
-      </Text>
-      <div>{/* Tooltips component goes here */}</div>
-
       <Title
         order={2}
         mt="md"
