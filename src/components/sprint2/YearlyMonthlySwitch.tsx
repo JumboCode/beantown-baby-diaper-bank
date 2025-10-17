@@ -54,8 +54,8 @@ export default function YearlyMonthlySwitch() {
       <Image
         src={
           view === "yearly"
-            ? "/funnyPictures/yearly.jpg"
-            : "/funnyPictures/monthly.jpg"
+            ? "/funnypictures/yearly.jpg"
+            : "/funnypictures/monthly.jpg"
         }
         width={500}
         height={500}

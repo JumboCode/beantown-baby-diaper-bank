@@ -1,6 +1,6 @@
 "use client";
 
-import { Container, Title, Paper, Text } from "@mantine/core";
+import { Container, Title, Paper, Divider } from "@mantine/core";
 import OurSlider from "../../components/sprint2/OurSlider";
 import DotPopUps from "@/components/sprint2/DotPopUps";
 import YearlyMonthlySwitch from "@/components/sprint2/YearlyMonthlySwitch";
@@ -29,14 +29,10 @@ export default function Sprint2Page() {
         mb="xs">
         Fun Slider
       </Title>
-      <Text
-        c="dimmed"
-        mb="xl">
-        Place fun slider ticket here
-      </Text>
       <div>
         <OurSlider />
       </div>
+      <Divider />
 
       <Title
         order={2}
@@ -44,58 +40,37 @@ export default function Sprint2Page() {
         mb="xs">
         MAKE AN IMPACT
       </Title>
-      <Text
-        c="dimmed"
-        mb="xl">
-        Place make an impact ticket here
-      </Text>
       <div>{/* MAKE an Impact component goes here */}</div>
-
+      <Divider />
       <Title
         order={2}
         mt="md"
         mb="xs">
         File Upload Button
       </Title>
-      <Text
-        c="dimmed"
-        mb="xl">
-        Place file upload button ticket here
-      </Text>
       <div>
         <FileUpload />
       </div>
+      <Divider />
       <Title
         order={2}
         mt="md"
         mb="xs">
         Displaying City Info
       </Title>
-      <Text
-        c="dimmed"
-        mb="xl">
-        Place displaying city info ticket here
-      </Text>
-      <div>{<DotPopUps />}</div>
-
-      <Title
-        order={2}
-        mt="md"
-        mb="xs">
-        Tooltips!
-      </Title>
+      <div>
+        <DotPopUps />
+      </div>
+      <Divider />
       <Title
         order={2}
         mt="md"
         mb="xs">
         Yearly vs Monthly Switch
       </Title>
-      <Text
-        c="dimmed"
-        mb="xl">
-        Place yearly vs monthly switch ticket here
-      </Text>
-      {<YearlyMonthlySwitch />}
+      <div>
+        <YearlyMonthlySwitch />
+      </div>
 
       <div>{/* Yearly vs Monthly Switch component goes here */}</div>
     </Container>
