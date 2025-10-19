@@ -20,3 +20,16 @@ export type RegionsGeoJSON = GeoJSON.FeatureCollection<
   RegionFeature["geometry"],
   RegionFeatureProps
 >;
+
+// Partner site type
+export type PartnerSite = {
+  id: string; // stable partner site id
+  name: string; // display name
+  location: {
+    lat: number;
+    lng: number;
+  };
+  description?: string;
+  start_partnering_date?: string; // ISO date string
+  regionsServed?: string[];
+};

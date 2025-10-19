@@ -1,6 +1,6 @@
 import { useCallback, useMemo } from "react";
 import type { GeoJSONProps } from "react-leaflet";
-import type { StyleFunction } from "leaflet";
+import type { Path, StyleFunction } from "leaflet";
 import type { RegionFeature, RegionsGeoJSON } from "@/lib/types";
 
 export type ChoroplethBucket = {
@@ -102,22 +102,25 @@ export function useRegionsLayer({
       const regionFeature = feature as RegionFeature | undefined;
       const regionId = resolveRegionId(regionFeature);
 
+      const tagRegionElement = () => {
+        if (!regionId) return;
+        const pathLayer = layer as Path;
+        const el =
+          typeof pathLayer.getElement === "function"
+            ? pathLayer.getElement()
+            : undefined;
+        if (el) {
+          el.setAttribute("data-region-id", regionId);
+        }
+      };
+
+      layer.on("add", tagRegionElement);
+      tagRegionElement();
+
       layer.on({
-        click: () => {
-          if (regionId) {
-            onRegionClick(regionId);
-          }
-        },
-        mouseover: () => {
-          if (regionId && typeof onRegionHover === "function") {
-            onRegionHover(regionId);
-          }
-        },
-        mouseout: () => {
-          if (typeof onRegionHover === "function") {
-            onRegionHover();
-          }
-        },
+        click: () => regionId && onRegionClick(regionId),
+        mouseover: () => regionId && onRegionHover?.(regionId),
+        mouseout: () => onRegionHover?.(),
       });
     },
     [onRegionClick, onRegionHover]
