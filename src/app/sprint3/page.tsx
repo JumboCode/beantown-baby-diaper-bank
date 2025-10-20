@@ -1,7 +1,6 @@
 "use client";
 
 import { Container, Title, Paper, Text } from "@mantine/core";
-import HeatMap from "../../components/map/MadelineColinAryaa-hotmap";
 
 export default function Sprint3Page() {
     return (
@@ -59,7 +58,7 @@ export default function Sprint3Page() {
                 mb="xs">
                 Colin - Madeline - Aryaa
             </Title>
-            <div><HeatMap/></div>
+            <div>{/* Colin - Madeline - Aryaa map goes here */}</div>
 
         </Container>
     );
