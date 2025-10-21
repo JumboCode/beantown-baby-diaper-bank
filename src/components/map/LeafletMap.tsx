@@ -1,13 +1,11 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useMemo, useState, type ReactNode } from "react";
-import { Loader } from "@mantine/core";
+import { type ReactNode } from "react";
 import { useLeafletMap } from "./useLeafletMap";
 import { useBaseTileLayer } from "./useBaseTileLayer";
-import { useRegionsLayer, type ChoroplethBucket } from "./useRegionsLayer";
+import { useRegionsLayer } from "./useRegionsLayer";
 import type { RegionsGeoJSON } from "@/lib/types";
-import type * as Leaflet from "leaflet";
 
 // Dynamically import react-leaflet components with SSR disabled
 // because they depend on the browser environment (e.g., window, document).
@@ -29,46 +27,34 @@ const GeoJSON = dynamic(
 type LeafletMapProps = {
   regions: RegionsGeoJSON;
   onRegionClick: (regionId: string) => void;
-  onRegionHover?: (regionId?: string) => void;
-  highlightedRegionId?: string | null;
   leftControls?: ReactNode;
-  rightControls?: ReactNode;
-  choroplethData?: Record<string, number>;
-  choroplethBuckets?: ChoroplethBucket[];
 };
 
 export default function LeafletMap({
   regions,
   onRegionClick,
-  onRegionHover,
-  highlightedRegionId,
   leftControls,
-  rightControls,
-  choroplethData,
-  choroplethBuckets,
 }: LeafletMapProps) {
+  // Use the custom hooks to get map configuration and layers
   const { mapConfig } = useLeafletMap();
   const { style: mapStyle, ...mapOptions } = mapConfig;
-  const [mapInstance, setMapInstance] = useState<Leaflet.Map | null>(null);
 
-  const normalizedRegions = useMemo<RegionsGeoJSON>(() => {
-    if (!regions || Array.isArray(regions)) {
-      return {
-        type: "FeatureCollection",
-        features: [],
-      } as RegionsGeoJSON;
-    }
-    return regions;
-  }, [regions]);
+  // Normalize regions data to ensure it's a valid GeoJSON FeatureCollection
+  // even if regions is null or an array
+  // This prevents errors in the GeoJSON layer.
+  const normalizedRegions: RegionsGeoJSON =
+    !regions || Array.isArray(regions)
+      ? {
+          type: "FeatureCollection",
+          features: [],
+        }
+      : regions;
 
+  // Get the base tile layer props and regions layer props
   const { tileLayerProps } = useBaseTileLayer();
   const { geoJsonProps } = useRegionsLayer({
     regions: normalizedRegions,
     onRegionClick,
-    onRegionHover,
-    highlightedRegionId,
-    choroplethData,
-    choroplethBuckets,
   });
 
   return (
@@ -82,7 +68,10 @@ export default function LeafletMap({
       <MapContainer
         {...mapOptions}
         style={mapStyle}>
+        {/* Base tile layer for the map */}
         <TileLayer {...tileLayerProps} />
+
+        {/* Regions layer with click handling */}
         <GeoJSON {...geoJsonProps} />
       </MapContainer>
       {leftControls && (
@@ -98,20 +87,6 @@ export default function LeafletMap({
           <div style={{ pointerEvents: "auto" }}>{leftControls}</div>
         </div>
       )}
-      {rightControls && (
-        <div
-          style={{
-            position: "absolute",
-            top: "1rem",
-            right: "1rem",
-            zIndex: 1000,
-            pointerEvents: "none",
-            maxWidth: "min(320px, 90vw)",
-          }}>
-          <div style={{ pointerEvents: "auto" }}>{rightControls}</div>
-        </div>
-      )}
-      {!mapInstance && <Loader />}
     </div>
   );
 }
