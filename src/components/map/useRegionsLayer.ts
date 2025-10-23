@@ -85,9 +85,9 @@ export function useRegionsLayer({
 
       return {
         color: isHighlighted ? "#0b7285" : "#2c3e50",
-        weight: isHighlighted ? 3 : 1,
+        weight: isHighlighted ? 5 : 3,
         opacity: 1,
-        fillOpacity: isHighlighted ? 0.75 : 0.6,
+        fillOpacity: isHighlighted ? 0.9 : 0.8,
         fillColor: getFillColor(regionId),
       };
     },

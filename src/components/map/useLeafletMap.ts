@@ -11,7 +11,7 @@ type MapConfig = Pick<
 
 // Default to Boston, MA
 const DEFAULT_CENTER: LatLngTuple = [42.3601, -71.0589];
-const DEFAULT_ZOOM = 10;
+const DEFAULT_ZOOM = 12.5;
 
 // Custom hook to provide Leaflet map configuration
 export function useLeafletMap() {
