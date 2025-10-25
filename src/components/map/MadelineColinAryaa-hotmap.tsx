@@ -29,113 +29,57 @@ import type { RegionsGeoJSON } from "@/lib/types";
 const baseRegions: RegionsGeoJSON = {
   type: "FeatureCollection",
   features: [
-    // Boston — lower center
     {
       type: "Feature",
       geometry: {
         type: "Polygon",
         coordinates: [
           [
-            [-71.10, 42.33],
-            [-71.05, 42.33],
-            [-71.05, 42.36],
-            [-71.10, 42.36],
-            [-71.10, 42.33],
+            // Start at the top-left lobe
+            [-71.065544, 42.371427],  // Left lobe outer edge
+            [-71.064044, 42.372727],  // Left lobe top curve (HIGHER)
+            [-71.062044, 42.373427],  // Left lobe peak (HIGHER)
+            [-71.060544, 42.373427],  // Left lobe inner (HIGHER)
+            [-71.059544, 42.371427],  // Center dip (stays same for deep crevice)
+            [-71.058544, 42.373427],  // Right lobe inner (HIGHER)
+            [-71.057044, 42.373427],  // Right lobe peak (HIGHER)
+            [-71.055044, 42.372727],  // Right lobe top curve (HIGHER)
+            [-71.053544, 42.371427],  // Right lobe outer edge
+            [-71.053544, 42.369427],  // Right side upper
+            [-71.054544, 42.367427],  // Right side middle
+            [-71.056544, 42.365427],  // Right side lower
+            [-71.059544, 42.364427],  // Bottom point
+            [-71.062544, 42.365427],  // Left side lower
+            [-71.064544, 42.367427],  // Left side middle
+            [-71.065544, 42.369427],  // Left side upper
+            [-71.065544, 42.371427],  // Close at left lobe outer edge
           ],
         ],
       },
       properties: {
-        id: "boston",
-        name: "Boston",
-        centroid: [42.345, -71.075],
+        id: "downtown-boston",
+        name: "Downtown Boston",
+        centroid: [42.367427, -71.059544],
       },
     },
-
-    // Cambridge — north of Boston
     {
       type: "Feature",
       geometry: {
         type: "Polygon",
         coordinates: [
           [
-            [-71.11, 42.37],
-            [-71.07, 42.37],
-            [-71.07, 42.39],
-            [-71.11, 42.39],
-            [-71.11, 42.37],
+            [-71.095, 42.345],
+            [-71.08, 42.345],
+            [-71.08, 42.355],
+            [-71.095, 42.355],
+            [-71.095, 42.345],
           ],
         ],
       },
       properties: {
-        id: "cambridge",
-        name: "Cambridge",
-        centroid: [42.38, -71.09],
-      },
-    },
-
-    // Somerville — northeast of Cambridge
-    {
-      type: "Feature",
-      geometry: {
-        type: "Polygon",
-        coordinates: [
-          [
-            [-71.08, 42.39],
-            [-71.05, 42.39],
-            [-71.05, 42.41],
-            [-71.08, 42.41],
-            [-71.08, 42.39],
-          ],
-        ],
-      },
-      properties: {
-        id: "somerville",
-        name: "Somerville",
-        centroid: [42.40, -71.065],
-      },
-    },
-
-    // Medford — north of Somerville
-    {
-      type: "Feature",
-      geometry: {
-        type: "Polygon",
-        coordinates: [
-          [
-            [-71.10, 42.41],
-            [-71.07, 42.41],
-            [-71.07, 42.43],
-            [-71.10, 42.43],
-            [-71.10, 42.41],
-          ],
-        ],
-      },
-      properties: {
-        id: "medford",
-        name: "Medford",
-        centroid: [42.42, -71.085],
-      },
-    },
-
-    // Arlington — northwest of Medford
-    {
-      type: "Feature",
-      geometry: {
-        type: "Polygon",
-        coordinates: [
-          [
-            [-71.13, 42.41],
-            [-71.10, 42.41],
-            [-71.10, 42.43],
-            [-71.13, 42.43],
-            [-71.13, 42.41],
-          ],
-        ],
-      },
-      properties: {
-        id: "arlington",
-        name: "Arlington",
-        centroid: [42.42, -71.115],
+        id: "south-end",
+        name: "South End",
+        centroid: [42.3505, -71.0875],
       },
     },
   ],
@@ -163,13 +107,13 @@ const regionImpact: Record<
     fulfillmentRate: number;
   }
 > = {
-  "boston": {
+  "downtown-boston": {
     ChildrenServed: 320,
     diapersDelivered: 42000,
     partnerSites: 11,
     fulfillmentRate: 0.86,
   },
-  "cambridge": {
+  "south-end": {
     ChildrenServed: 210,
     diapersDelivered: 26000,
     partnerSites: 7,
@@ -225,9 +169,9 @@ const regionDetails: Record<
 type LegendBucket = ChoroplethBucket & { label: string };
 
 const diaperLegendBuckets: LegendBucket[] = [
-  { min: 0, max: 19999, color: "#e1f5f2", label: "0 – 20k diapers" },
-  { min: 20000, max: 39999, color: "#7bdcb5", label: "20k – 40k diapers" },
-  { min: 40000, max: Infinity, color: "#1a936f", label: "40k+ diapers" },
+  { min: 0, max: 19999, color: "#f6bc66", label: "0 – 20k diapers" },
+  { min: 20000, max: 39999, color: "#f68c70", label: "20k – 40k diapers" },
+  { min: 40000, max: Infinity, color: "#f55c7a", label: "40k+ diapers" },
 ];
 
 const impactAssumptions = {
@@ -236,7 +180,7 @@ const impactAssumptions = {
   diapersPerChildPerWeek: 50, // typical usage per child
 };
 
-export default function HeatMap() {
+export default function MapPage() {
   const [showRegions, setShowRegions] = useState(true);
   const [regionFilter, setRegionFilter] = useState<string>("all");
   const [hoveredRegionId, setHoveredRegionId] = useState<string | undefined>();
@@ -382,19 +326,21 @@ export default function HeatMap() {
         ? donationImpact.coverageMonths.toFixed(2)
         : "0";
 
-//   const regionLeaderboard = useMemo(() => { 
-//     // Array of regions sorted by Children supported
-//     return Object.entries(regionImpact)
-//         .map(([regionId, stats]) => ({
-//             regionId,
-//             regionName: baseRegions.features.find(
-//                 (f) => f.properties?.id === regionId
-//             )?.properties?.name ?? regionId,
-//             diapersDelivered: stats.diapersDelivered,
-//             ChildrenServed: stats.ChildrenServed,
-//         }))
-//         .sort((a, b) => b.ChildrenServed - a.ChildrenServed);
-//     } []);
+  // --- Leaderboard logic START ---
+  const regionLeaderboard = useMemo(() => {
+    // Array of regions sorted by ChildrenServed (descending)
+    return Object.entries(regionImpact)
+      .map(([regionId, stats]) => ({
+        regionId,
+        regionName: baseRegions.features.find(
+          (f) => f.properties?.id === regionId
+        )?.properties?.name ?? regionId,
+        diapersDelivered: stats.diapersDelivered,
+        ChildrenServed: stats.ChildrenServed,
+      }))
+      .sort((a, b) => b.ChildrenServed - a.ChildrenServed);
+  }, []);
+  // --- Leaderboard logic END ---
 
   const leftOverlay = (
     <Stack gap="md">
@@ -560,227 +506,104 @@ export default function HeatMap() {
     </Stack>
   );
 
-//   const rightOverlay = (
-//     <Stack gap="md">
-//       <Paper
-//         radius="lg"
-//         shadow="xl"
-//         withBorder
-//         p="md">
-//         <Stack gap="sm">
-//           <Group justify="space-between">
-//             <Title order={4}>Impact at a glance</Title>
-//             <Badge
-//               color="teal"
-//               variant="dot">
-//               +{distributionSummary.yoyGrowth}% YoY
-//             </Badge>
-//           </Group>
-//           <Group
-//             align="center"
-//             gap="md">
-//             {/* <RingProgress
-//               size={120}
-//               thickness={12}
-//               label={
-//                 <Stack
-//                   gap={0}
-//                   align="center">
-//                   <Text
-//                     size="xs"
-//                     c="dimmed">
-//                     Goal progress
-//                   </Text>
-//                   <Text fw={700}>{impactPercent}%</Text>
-//                 </Stack>
-//               }
-//               sections={[
-//                 {
-//                   value: impactPercent,
-//                   color: "teal",
-//                 },
-//               ]}
-//             /> */}
-//             <Stack gap={4}>
-//               <Text size="sm">
-//                 <Text
-//                   component="span"
-//                   fw={700}>
-//                   {distributionSummary.delivered.toLocaleString()}
-//                 </Text>{" "}
-//                 diapers delivered
-//               </Text>
-//               <Text size="sm">
-//                 <Text
-//                   component="span"
-//                   fw={700}>
-//                   {distributionSummary.ChildrenServed.toLocaleString()}
-//                 </Text>{" "}
-//                 Children served
-//               </Text>
-//               <Text size="sm">
-//                 <Text
-//                   component="span"
-//                   fw={700}>
-//                   {distributionSummary.partnerCount}
-//                 </Text>{" "}
-//                 partner sites
-//               </Text>
-//             </Stack>
-//           </Group>
-//           {/* <Divider />
-//           <Stack gap={4}>
-//             <Text
-//               size="xs"
-//               c="dimmed">
-//               Annual goal
-//             </Text>
-//             <Progress
-//               value={impactPercent}
-//               color="teal"
-//               radius="xl"
-//             />
-//           </Stack> */}
-//         </Stack>
-//       </Paper>
-
-//       <Paper
-//         radius="lg"
-//         shadow="xl"
-//         withBorder
-//         p="md">
-//         <Stack gap="sm">
-//           <Title order={4}>Distribution legend</Title>
-//           <Stack gap="xs">
-//             {diaperLegendBuckets.map((bucket) => (
-//               <Group
-//                 key={bucket.label}
-//                 justify="space-between"
-//                 align="center">
-//                 <Group gap="sm">
-//                   <Box
-//                     style={{
-//                       width: 16,
-//                       height: 16,
-//                       borderRadius: 4,
-//                       backgroundColor: bucket.color,
-//                     }}
-//                   />
-//                   <Text size="sm">{bucket.label}</Text>
-//                 </Group>
-//                 <Text
-//                   size="xs"
-//                   c="dimmed">
-//                   {bucket.max === Infinity
-//                     ? `${bucket.min.toLocaleString()}+`
-//                     : `${bucket.min.toLocaleString()}–${bucket.max.toLocaleString()}`}
-//                 </Text>
-//               </Group>
-//             ))}
-//           </Stack>
-//         </Stack>
-//       </Paper>
-
-//       {/*<Paper
-//         radius="lg"
-//         shadow="xl"
-//         withBorder
-//         p="md">
-//          <Stack gap="md">
-//           <Group
-//             justify="space-between"
-//             align="center">
-//             <Title order={4}>Your impact</Title>
-//             <Badge
-//               color="teal"
-//               variant="light">
-//               ≈ ${impactAssumptions.diaperCost.toFixed(2)}/diaper
-//             </Badge>
-//           </Group>
-//           <Text
-//             size="sm"
-//             c="dimmed">
-//             Estimate how far a contribution travels through our distribution
-//             network.
-//           </Text>
-//           <Stack gap="md">
-//             <Slider
-//               value={donationAmount}
-//               onChange={handleDonationSliderChange}
-//               min={5}
-//               max={100}
-//               step={5}
-//               marks={[
-//                 { value: 5, label: "$5" },
-//                 { value: 50, label: "$50" },
-//                 { value: 100, label: "$100" },
-//               ]}
-//               label={(value) => `$${value}`}
-//               color="teal"
-//             />
-//             <NumberInput
-//               label="Donation amount"
-//               prefix="$ "
-//               min={0}
-//               max={5000}
-//               step={25}
-//               value={donationAmount}
-//               onChange={handleDonationInputChange}
-//               allowDecimal={false}
-//               clampBehavior="strict"
-//             />
-//           </Stack>
-//           <Grid gutter="md">
-//             <Grid.Col span={{ base: 12, sm: 4 }}>
-//               <Stack gap={2}>
-//                 <Text
-//                   size="xs"
-//                   c="dimmed">
-//                   Diapers funded
-//                 </Text>
-//                 <Text fw={700}>
-//                   {donationImpact.diapersFunded.toLocaleString()}
-//                 </Text>
-//               </Stack>
-//             </Grid.Col>
-//             <Grid.Col span={{ base: 12, sm: 4 }}>
-//               <Stack gap={2}>
-//                 <Text
-//                   size="xs"
-//                   c="dimmed">
-//                   Weeks of care
-//                 </Text>
-//                 <Text fw={700}>
-//                   {donationImpact.coverageWeeks.toLocaleString()}
-//                 </Text>
-//               </Stack>
-//             </Grid.Col>
-//             <Grid.Col span={{ base: 12, sm: 4 }}>
-//               <Stack gap={2}>
-//                 <Text
-//                   size="xs"
-//                   c="dimmed">
-//                   Children/month supported
-//                 </Text>
-//                 <Text fw={700}>
-//                   {donationImpact.ChildrenPerMonth.toLocaleString()}
-//                 </Text>
-//               </Stack>
-//             </Grid.Col>
-//           </Grid>
-
-//           <Text
-//             size="xs"
-//             c="dimmed">
-//             Assumes {Math.round(impactAssumptions.distributionEfficiency * 100)}
-//             % of funds reach diaper purchasing and delivery with{" "}
-//             {impactAssumptions.diapersPerChildPerWeek} diapers per child each
-//             week.
-//           </Text>
-//         </Stack> 
-//       </Paper> */}
-//     </Stack>
-//   );
+  const rightOverlay = (
+    <Stack gap="md">
+      <Paper radius="lg" shadow="xl" withBorder p="md">
+        <Stack gap="sm">
+          <Group justify="space-between">
+            <Title order={4}>Impact at a glance</Title>
+            <Badge
+              color="teal"
+              variant="dot">
+              +{distributionSummary.yoyGrowth}% YoY
+            </Badge>
+          </Group>
+          <Group
+            align="center"
+            gap="md">
+            <Stack gap={4}>
+              <Text size="sm">
+                <Text
+                  component="span"
+                  fw={700}>
+                  {distributionSummary.delivered.toLocaleString()}
+                </Text>{" "}
+                diapers delivered
+              </Text>
+              <Text size="sm">
+                <Text
+                  component="span"
+                  fw={700}>
+                  {distributionSummary.ChildrenServed.toLocaleString()}
+                </Text>{" "}
+                Children served
+              </Text>
+              <Text size="sm">
+                <Text
+                  component="span"
+                  fw={700}>
+                  {distributionSummary.partnerCount}
+                </Text>{" "}
+                partner sites
+              </Text>
+            </Stack>
+          </Group>
+        </Stack>
+      </Paper>
+      
+      {/* --- Leaderboard panel START --- */}
+      <Paper radius="lg" shadow="xl" withBorder p="md">
+        <Stack gap="sm">
+          <Title order={4}>Region Leaderboard</Title>
+          {regionLeaderboard.map((region, idx) => (
+            <Group key={region.regionId} justify="space-between">
+              <Text fw={600}>
+                #{idx + 1} {region.regionName}
+              </Text>
+              <Badge color="teal" variant="light">
+                {region.ChildrenServed.toLocaleString()} children
+              </Badge>
+            </Group>
+          ))}
+        </Stack>
+      </Paper>
+      {/* --- Leaderboard panel END --- */}
+      
+      <Paper radius="lg" shadow="xl" withBorder p="md">
+        <Stack gap="sm">
+          <Title order={4}>Distribution legend</Title>
+          <Stack gap="xs">
+            {diaperLegendBuckets.map((bucket) => (
+              <Group
+                key={bucket.label}
+                justify="space-between"
+                align="center">
+                <Group gap="sm">
+                  <Box
+                    style={{
+                      width: 16,
+                      height: 16,
+                      borderRadius: 4,
+                      backgroundColor: bucket.color,
+                    }}
+                  />
+                  <Text size="sm">{bucket.label}</Text>
+                </Group>
+                <Text
+                  size="xs"
+                  c="dimmed">
+                  {bucket.max === Infinity
+                    ? `${bucket.min.toLocaleString()}+`
+                    : `${bucket.min.toLocaleString()}–${bucket.max.toLocaleString()}`}
+                </Text>
+              </Group>
+            ))}
+          </Stack>
+        </Stack>
+      </Paper>
+      {/* ... rest of the rightOverlay ... */}
+    </Stack>
+  );
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen py-2">
@@ -892,7 +715,7 @@ export default function HeatMap() {
           onRegionHover={setHoveredRegionId}
           highlightedRegionId={activeRegionId}
           leftControls={leftOverlay}
-        //   rightControls={rightOverlay}
+          rightControls={rightOverlay}
           choroplethData={diapersByRegion}
           choroplethBuckets={diaperLegendBuckets}
         />

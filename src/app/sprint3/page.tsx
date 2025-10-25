@@ -1,11 +1,11 @@
 "use client";
-
+import MapPage from "@/components/map/MadelineColinAryaa-hotmap";
 import { Container, Title, Paper, Text } from "@mantine/core";
 
 export default function Sprint3Page() {
     return (
         <Container
-            size="sm"
+            size="lg"
             py="xl">
             <Paper
                 shadow="md"
@@ -58,7 +58,9 @@ export default function Sprint3Page() {
                 mb="xs">
                 Colin - Madeline - Aryaa
             </Title>
-            <div>{/* Colin - Madeline - Aryaa map goes here */}</div>
+            <div>{/* Colin - Madeline - Aryaa map goes here */}
+            <MapPage />   
+            </div>
 
         </Container>
     );
