@@ -1,6 +1,7 @@
 "use client";
 
 import { Container, Title, Paper, Text } from "@mantine/core";
+import HotMap from "./HotMap";
 
 export default function Sprint3Page() {
     return (
@@ -47,9 +48,9 @@ export default function Sprint3Page() {
                 order={2}
                 mt="md"
                 mb="xs">
-                Ashton - Valentina
+                Anna - Aray
             </Title>
-            <div>{/* Anna - Aray map goes here */}</div>
+            <div>{<HotMap />}</div>
 
 
             <Title
