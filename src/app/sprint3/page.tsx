@@ -1,6 +1,7 @@
 "use client";
 
 import { Container, Title, Paper, Text } from "@mantine/core";
+import AshValentinaMap from "@/components/map/AshValentinaMap";
 
 export default function Sprint3Page() {
     return (
@@ -41,7 +42,7 @@ export default function Sprint3Page() {
                 mb="xs">
                 Ashton - Valentina
             </Title>
-            <div>{/* Ashton - Valentina map goes here */}</div>
+            <div><AshValentinaMap/></div>
 
             <Title
                 order={2}
