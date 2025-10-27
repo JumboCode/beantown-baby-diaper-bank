@@ -30,7 +30,7 @@ const cities = [
   { name: "Quincy", coords: [42.2529, -71.0023], startYear: 2022 },
 ];
 export default function AshValentinaMap() {
-  const [year, setYear] = useState(2015);
+  const [year, setYear] = useState(2010);
 
   // Fake diaper distribution data that grows over time
   const cityData = useMemo(() => {
@@ -69,7 +69,7 @@ export default function AshValentinaMap() {
             
             // Color intensity based on impact
             const intensity = Math.min(1, city.impact / 5000);
-            const color = `rgba(${255 - 150 * intensity}, ${50 * intensity}, 0, 0.8)`;
+            const color = "#2c85b2";
 
             return (
               <CircleMarker
@@ -91,6 +91,7 @@ export default function AshValentinaMap() {
       <Box>
         <Slider
           value={year}
+          color="#2c85b2"
           onChange={setYear}
           min={2010}
           max={2025}
@@ -102,70 +103,10 @@ export default function AshValentinaMap() {
             { value: 2025, label: "2025" },
           ]}
           size="lg"
+          label={null}
         />
-        <Text mt="md" ta="center">
-          Year: <b>{year}</b>
-        </Text>
       </Box>
     </div>
   );
 }
 
-
-// "use client";
-
-// import { useState, useEffect } from "react";
-// import dynamic from "next/dynamic";
-// import { Slider, Text, Box } from '@mantine/core';
-// import L from "leaflet";
-
-// // Dynamically import MapContainer and TileLayer (for SSR safety)
-// const MapContainer = dynamic(
-//   () => import("react-leaflet").then((m) => m.MapContainer),
-//   { ssr: false }
-// );
-
-// const TileLayer = dynamic(
-//   () => import("react-leaflet").then((m) => m.TileLayer),
-//   { ssr: false }
-// );
-
-// const marks = Array.from({ length: 11 }, (_, i) => ({
-//   value: i * 10,
-//   label: String(2015 + i),
-// }));
-
-// export default function AshValentinaMap() {
-
-//   const [value, setValue] = useState(2010);
-
-//   return (
-//     <div className="flex flex-col w-full">
-//       <div className="h-[80vh] w-full">
-//         <MapContainer
-//           center={[42.3736, -71.1097]} // Centered roughly on Cambridge, MA
-//           zoom={12}
-//           style={{ height: "100%", width: "100%" }}>
-//           <TileLayer
-//             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-//             attribution='&copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors'
-//           />
-//         </MapContainer>
-//       </div>
-
-//       <Box maw={400} mx="auto">
-//       <Slider 
-//       value={value}
-//       onChange={setValue}
-//       min={2000}
-//       max={2025}
-//       />
-
-//       <Text mt="md" size="sm">
-//         onChange value: <b>{value}</b>
-//       </Text>
-//     </Box>
-//     </div>
-    
-//   );
-// }
