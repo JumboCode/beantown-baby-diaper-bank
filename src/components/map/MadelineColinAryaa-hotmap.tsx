@@ -68,11 +68,23 @@ const baseRegions: RegionsGeoJSON = {
         type: "Polygon",
         coordinates: [
           [
-            [-71.095, 42.345],
-            [-71.08, 42.345],
-            [-71.08, 42.355],
-            [-71.095, 42.355],
-            [-71.095, 42.345],
+            [-71.0925, 42.352],        // Left lobe outer edge (higher)
+            [-71.0915, 42.3534],       // Left lobe top curve
+            [-71.089, 42.3542],        // Left lobe peak
+            [-71.088, 42.3541],        // Left lobe inner
+            [-71.0875, 42.3526],       // Deep crevice between lobes (lower Y)
+            [-71.087, 42.3541],        // Right lobe inner
+            [-71.086, 42.3542],        // Right lobe peak
+            [-71.0835, 42.3534],       // Right lobe top curve
+            [-71.0825, 42.352],        // Right lobe outer edge
+            [-71.082, 42.3505],        // Right side upper
+            [-71.083, 42.3485],        // Right side lower
+            [-71.0863, 42.3467],       // Bottom right curve
+            [-71.0875, 42.346],        // Tip of heart
+            [-71.0887, 42.3467],       // Bottom left curve
+            [-71.092, 42.3485],        // Left side lower
+            [-71.093, 42.3505],        // Left side upper
+            [-71.0925, 42.352],
           ],
         ],
       },
@@ -169,9 +181,11 @@ const regionDetails: Record<
 type LegendBucket = ChoroplethBucket & { label: string };
 
 const diaperLegendBuckets: LegendBucket[] = [
-  { min: 0, max: 19999, color: "#f6bc66", label: "0 – 20k diapers" },
-  { min: 20000, max: 39999, color: "#f68c70", label: "20k – 40k diapers" },
-  { min: 40000, max: Infinity, color: "#f55c7a", label: "40k+ diapers" },
+  { min: 0, max: 9999, color: "#90E0EF", label: "0 – 10k diapers" },
+  { min: 10000, max: 19999, color: "#48CAE4", label: "10k – 20k diapers" },
+  { min: 20000, max: 29999, color: "#00B4D8", label: "20k – 30k diapers" },
+  { min: 30000, max: 39999, color: "#0077B6", label: "30k – 40k diapers" },
+  { min: 40000, max: Infinity, color: "#023E8A", label: "40k+ diapers" },
 ];
 
 const impactAssumptions = {
