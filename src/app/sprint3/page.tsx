@@ -1,11 +1,12 @@
 "use client";
 
 import { Container, Title, Paper, Text } from "@mantine/core";
+import HanahCaitlynButton from "../map/page"
 
 export default function Sprint3Page() {
     return (
         <Container
-            size="sm"
+            size="xlg"
             py="xl">
             <Paper
                 shadow="md"
@@ -25,7 +26,7 @@ export default function Sprint3Page() {
                 mb="xs">
                 Caitlyn - Hanah
             </Title>
-            <div>{/* Caitlyn - Hanah map goes here */}</div>
+            <div><HanahCaitlynButton/></div>
 
             <Title
                 order={2}

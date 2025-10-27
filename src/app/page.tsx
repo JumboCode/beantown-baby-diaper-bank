@@ -20,6 +20,7 @@ import ButtonComponent from "@/components/sprint1/AnnarakshitcaitlynButton";
 import OurButton from "@/components/sprint1/KimhenaoButton";
 import ColinArayButton from "@/components/sprint1/ColinandarayButton";
 import ElchinMadelineButton from "@/components/sprint1/ElchinMadelineButton";
+ 
 
 export default function Home() {
   return (
