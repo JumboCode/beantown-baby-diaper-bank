@@ -1,0 +1,6 @@
+id,name,description,start_partner,waitlisted,address,coords,logo_url
+1,Greater Boston Food Bank,Provides diaper storage and logistics support,2019-05-12,False,"70 South Bay Ave, Boston, MA","{""lat"":42.321,""lng"":-71.059}",https://example.com/logos/gbfb.png
+2,Somerville Family Network,Supports local families through early childhood programs,2020-08-01,False,"167 Holland St, Somerville, MA","{""lat"":42.389,""lng"":-71.107}",https://example.com/logos/sfn.png
+3,Cambridge Community Center,Distributes supplies through family outreach,2021-03-17,False,"5 Callender St, Cambridge, MA","{""lat"":42.366,""lng"":-71.112}",https://example.com/logos/ccc.png
+4,Lexington Human Services,Partners for monthly diaper drives and family aid,2023-01-10,False,"1625 Massachusetts Ave, Lexington, MA","{""lat"":42.448,""lng"":-71.232}",https://example.com/logos/lhs.png
+5,Quincy Mothers Group,Local support group for parents and infants,2024-02-05,True,"1245 Hancock St, Quincy, MA","{""lat"":42.252,""lng"":-71.003}",https://example.com/logos/qmg.png
