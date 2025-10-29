@@ -356,13 +356,13 @@ export default function MapPage() {
   }, []);
   // --- Leaderboard logic END ---
 
-const regionStories: Record<string, string> = {
-  "downtown-boston": "Families near downtown rely on weekly deliveries coordinated with local shelters.",
-  "south-end": "Mobile vans reach multilingual households every Thursday across South End.",
-};
+  const regionStories: Record<string, string> = {
+    "downtown-boston": "Families near downtown rely on weekly deliveries coordinated with local shelters.",
+    "south-end": "Mobile vans reach multilingual households every Thursday across South End.",
+  };
 
-const hoveredRegionStory =
-  (hoveredRegionId && regionStories[hoveredRegionId]) || "Hover over a region to see its story.";
+  const hoveredRegionStory =
+    (hoveredRegionId && regionStories[hoveredRegionId]) || "Hover over a region to see its story.";
 
   const leftOverlay = (
     <Stack gap="sm">
@@ -469,21 +469,21 @@ const hoveredRegionStory =
         shadow="xl"
         withBorder
         p="md">
-        <Stack gap="sm" >
-          <Title order={4} textWrap="wrap"> { hoveredRegionName ? `Hear From The Voices In ${hoveredRegionName}` : "Pick a region to hear about the people that have been impacted there"}</Title>
+        <Stack gap={4} >
+          <Title order={4} textWrap="wrap"> {hoveredRegionName && hoveredRegionName !== "None" ? `Hear From The Voices In ${hoveredRegionName}` : "Pick a region to hear about the people that have been impacted there"}</Title>
           <Stack
             gap={0}
             mt="sm">
 
-              <Text size="md" c="dimmed" mt={4}>
-            {hoveredRegionStory}
-          </Text>
+            <Text size="md" c="dimmed" mt={4}>
+              {hoveredRegionStory}
+            </Text>
           </Stack>
         </Stack>
       </Paper>
 
 
-    </Stack>
+    </Stack >
   );
 
   const rightOverlay = (
@@ -530,7 +530,7 @@ const hoveredRegionStory =
           </Group>
         </Stack>
       </Paper>
-      
+
       {/* --- Leaderboard panel START --- */}
       <Paper radius="lg" shadow="xl" withBorder p="md">
         <Stack gap="sm">
@@ -548,7 +548,7 @@ const hoveredRegionStory =
         </Stack>
       </Paper>
       {/* --- Leaderboard panel END --- */}
-      
+
       <Paper radius="lg" shadow="xl" withBorder p="md">
         <Stack gap="sm">
           <Title order={4}>Distribution legend</Title>
