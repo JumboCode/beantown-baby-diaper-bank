@@ -356,70 +356,16 @@ export default function MapPage() {
   }, []);
   // --- Leaderboard logic END ---
 
-  const leftOverlay = (
-    <Stack gap="md">
-      <Paper
-        radius="lg"
-        shadow="xl"
-        withBorder
-        p="md">
-        <Stack gap="sm">
-          <Title order={4}>Map Controls</Title>
-          <Checkbox
-            label="Show regions"
-            checked={showRegions}
-            onChange={(event) => setShowRegions(event.currentTarget.checked)}
-          />
-          <Select
-            label="Focus region"
-            placeholder="All regions"
-            data={regionOptions}
-            value={regionFilter}
-            onChange={(value) => setRegionFilter(value ?? "all")}
-            disabled={!showRegions}
-          />
-          <Stack
-            gap={0}
-            mt="sm">
-            <Text
-              size="sm"
-              c="dimmed">
-              Hovering:
-            </Text>
-            <Badge
-              color="teal"
-              variant="light">
-              {hoveredRegionName}
-            </Badge>
-          </Stack>
-          <Stack gap={0}>
-            <Text
-              size="sm"
-              c="dimmed">
-              Last clicked:
-            </Text>
-            <Badge
-              color="blue"
-              variant="light">
-              {selectedRegionName}
-            </Badge>
-          </Stack>
-          <Group
-            justify="flex-end"
-            mt="sm">
-            <Button
-              variant="subtle"
-              size="xs"
-              onClick={() => {
-                setRegionFilter("all");
-                setSelectedRegionId(null);
-              }}>
-              Reset
-            </Button>
-          </Group>
-        </Stack>
-      </Paper>
+const regionStories: Record<string, string> = {
+  "downtown-boston": "Families near downtown rely on weekly deliveries coordinated with local shelters.",
+  "south-end": "Mobile vans reach multilingual households every Thursday across South End.",
+};
 
+const hoveredRegionStory =
+  (hoveredRegionId && regionStories[hoveredRegionId]) || "Hover over a region to see its story.";
+
+  const leftOverlay = (
+    <Stack gap="sm">
       <Paper
         radius="lg"
         shadow="xl"
@@ -517,6 +463,26 @@ export default function MapPage() {
           )}
         </Stack>
       </Paper>
+
+      <Paper
+        radius="lg"
+        shadow="xl"
+        withBorder
+        p="md">
+        <Stack gap="sm" >
+          <Title order={4} textWrap="wrap"> { hoveredRegionName ? `Hear From The Voices In ${hoveredRegionName}` : "Pick a region to hear about the people that have been impacted there"}</Title>
+          <Stack
+            gap={0}
+            mt="sm">
+
+              <Text size="md" c="dimmed" mt={4}>
+            {hoveredRegionStory}
+          </Text>
+          </Stack>
+        </Stack>
+      </Paper>
+
+
     </Stack>
   );
 
