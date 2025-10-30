@@ -9,6 +9,7 @@ import { useRegionsLayer, type ChoroplethBucket } from "./useRegionsLayer";
 import type { RegionsGeoJSON } from "@/lib/types";
 import type * as Leaflet from "leaflet";
 import { Baby } from "lucide-react";
+import { renderToString } from "react-dom/server";
 
 
 // NEW: bring in Leaflet runtime for icons, and popup content + types
@@ -93,23 +94,39 @@ export default function LeafletMap({
     choroplethBuckets,
   });
 
-  const circleDotIcon = useMemo(() => {
+  // const circleDotIcon = useMemo(() => {
+  //   return L.divIcon({
+  //     className: "temp-square-icon",
+  //     html: `
+  //       <div
+  //         style="
+  //           width:20px;
+  //           height:20px;
+  //           background-color:#008080; /* blue-800 */
+  //           border:1px solid white;
+  //           border-radius:5px;
+  //           box-shadow:0 0 4px rgba(0,0,0,0.5);
+  //         "
+  //       ></div>
+  //     `,
+  //     iconSize: [16, 16],
+  //     iconAnchor: [8, 8], // center icon over the lat/lng
+  //   });
+  // }, []);
+
+  const babyIcon = useMemo(() => {
+    // Convert the Lucide React icon into an SVG string
+    const svgString = renderToString(
+      <Baby size={30} color="#008080" strokeWidth={3.5} />
+    );
+  
+    // Use it as the HTML for a Leaflet divIcon
     return L.divIcon({
-      className: "temp-square-icon",
-      html: `
-        <div
-          style="
-            width:20px;
-            height:20px;
-            background-color:#008080; /* blue-800 */
-            border:1px solid white;
-            border-radius:5px;
-            box-shadow:0 0 4px rgba(0,0,0,0.5);
-          "
-        ></div>
-      `,
-      iconSize: [16, 16],
-      iconAnchor: [8, 8], // center icon over the lat/lng
+      className: "custom-baby-icon",
+      html: svgString,
+      iconSize: [30, 30],     // pixel dimensions of the icon
+      iconAnchor: [12, 12],   // center the icon on the map coordinate
+      popupAnchor: [0, -12],  // offset popups above the icon
     });
   }, []);
 
@@ -133,9 +150,9 @@ export default function LeafletMap({
           <Marker
             key={dot.cityId}
             position={[dot.lat, dot.lng]}
-            icon={circleDotIcon}
+            icon={babyIcon}
           >
-            <Tooltip>
+            <Tooltip sticky direction="top" offset={[0, -10]}>
               <DotPopupContent
                 cityName={dot.cityName}
                 numDiapers={dot.numDiapers}
