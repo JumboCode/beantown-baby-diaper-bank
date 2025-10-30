@@ -1,5 +1,3 @@
-
-
 /**
  * GET /api/distributions
  *

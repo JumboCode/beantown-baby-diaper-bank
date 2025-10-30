@@ -3,11 +3,14 @@ import path from "node:path";
 import { createReadStream } from "node:fs";
 import { parse } from "csv-parse";
 import { prisma } from "../src/lib/prisma";
+import { YearlyDataCreateManyInput } from "@/generated/prisma/models";
+import { randomUUID } from "node:crypto";
 
 // generic CSV loader -> array of plain objects
 async function loadCsv<T extends Record<string, string | undefined>>(
   file: string
 ) {
+  console.log(`Loading CSV data from ${file}...`);
   const rows: T[] = [];
   const parser = createReadStream(file).pipe(
     parse({ columns: true, skip_empty_lines: true, bom: true, trim: true })
@@ -30,6 +33,7 @@ async function seedCities() {
     id: string;
     created_at?: string;
     name?: string;
+    centroid?: string;
   };
 
   const rows = await loadCsv<Row>(path.join(__dirname, "data/cities.csv"));
@@ -38,9 +42,18 @@ async function seedCities() {
       id: toBigInt(row.id),
       createdAt: toDate(row.created_at),
       name: toStringOrNull(row.name),
+      // centroid: row.centroid ? JSON.parse(row.centroid) : undefined,
     })),
     skipDuplicates: true,
   });
+  for (const row of rows) {
+    if (!row.centroid) continue;
+    await prisma.$executeRaw`
+    UPDATE "Cities"
+    SET "centroid" = ST_GeomFromGeoJSON(${row.centroid})
+    WHERE id = ${toBigInt(row.id)}
+  `;
+  }
 }
 
 async function seedPartners() {
@@ -64,7 +77,7 @@ async function seedPartners() {
       name: toStringOrNull(row.name),
       description: toStringOrNull(row.description),
       startPartner: toDate(row.start_partner),
-      waitlisted: row.waitlisted ? row.waitlisted === "true" : undefined,
+      waitlisted: row.waitlisted ? row.waitlisted === "TRUE" : undefined,
       address: toStringOrNull(row.address),
       coords: row.coords ? JSON.parse(row.coords) : undefined,
       logoUrl: toStringOrNull(row.logo_url),
@@ -136,11 +149,57 @@ async function seedPartnerRegions() {
   });
 }
 
+async function seedYearlyData() {
+  // SSeed yearly data
+  type Row = {
+    city_id: string;
+    year: string;
+    num_diapers: string;
+    num_babies: string;
+  };
+
+  const rows = await loadCsv<Row>(path.join(__dirname, "data/yearly_data.csv"));
+  let data: YearlyDataCreateManyInput[] = [];
+  try {
+    data = rows.map((row) => {
+      const cityId = toBigInt(row.city_id);
+      const year = toStringOrNull(row.year);
+      const numDiapers = toBigInt(row.num_diapers);
+      const numBabies = toBigInt(row.num_babies);
+      if (!cityId || !year || !numDiapers || !numBabies) {
+        throw new Error(
+          `Invalid cityId, year, numDiapers, or numBabies in row: ${JSON.stringify(row)}`
+        );
+      }
+      return {
+        id: randomUUID(),
+        cityId,
+        year,
+        numDiapers,
+        numBabies,
+      };
+    });
+  } catch (error) {
+    console.error("Error parsing yearly data:", error);
+  }
+  await prisma.yearlyData.createMany({
+    data,
+    skipDuplicates: true,
+  });
+}
+
 async function main() {
+  // await prisma.$transaction([
+  //   prisma.partnerRegion.deleteMany(),
+  //   prisma.distribution.deleteMany(),
+  //   prisma.partner.deleteMany(),
+  //   prisma.city.deleteMany(),
+  // ]);
   await seedCities();
   await seedPartners();
   await seedDistributions();
   await seedPartnerRegions();
+  await seedYearlyData();
 }
 
 main()
