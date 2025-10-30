@@ -16,7 +16,7 @@ const baseRegions: RegionsGeoJSON = {
       properties: {
         id: "arlington",
         name: "Arlington",
-        centroid: [42.367427, -71.059544],
+        centroid: [42.415011, -71.15737],
       },
     },
     {
@@ -32,7 +32,7 @@ const baseRegions: RegionsGeoJSON = {
       properties: {
         id: "boston",
         name: "Boston",
-        centroid: [42.3505, -71.0875],
+        centroid: [42.3515, -71.0695],
       },
     },
     {
@@ -48,7 +48,7 @@ const baseRegions: RegionsGeoJSON = {
       properties: {
         id: "cambridge",
         name: "Cambridge",
-        centroid: [42.3505, -71.0875],
+        centroid: [42.3825, -71.1265],
       },
     },
     {
@@ -64,7 +64,7 @@ const baseRegions: RegionsGeoJSON = {
       properties: {
         id: "medford",
         name: "Medford",
-        centroid: [42.3505, -71.0875],
+        centroid: [42.423331, -71.116720],
       },
     },
     {
@@ -80,7 +80,7 @@ const baseRegions: RegionsGeoJSON = {
       properties: {
         id: "somerville",
         name: "Somerville",
-        centroid: [42.3505, -71.0875],
+        centroid: [42.3877, -71.1022],
       },
     },
   ],

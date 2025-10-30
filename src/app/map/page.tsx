@@ -26,7 +26,7 @@ import LeafletMap from "@/components/map/LeafletMap";
 import type { ChoroplethBucket } from "@/components/map/useRegionsLayer";
 import type { RegionsGeoJSON } from "@/lib/types";
 import baseRegions from "./baseRegions";
-import mapIconPopUp from "./mapIconPopUp";
+import type { DotDatum } from "@/lib/DotPopupContent";
 
 const emptyRegions: RegionsGeoJSON = {
   type: "FeatureCollection",
@@ -162,9 +162,31 @@ export default function HanahCaitlynButton() {
       ...baseRegions,
       features: baseRegions.features.filter(
         (feature) => feature.properties?.id === regionFilter
+        
       ),
+      
     };
   }, [regionFilter, showRegions]);
+
+  const dotData: DotDatum[] = baseRegions.features
+    .map((feature) => {
+      const { id, name, centroid } = feature.properties ?? {};
+      const impact = id ? regionImpact[id] : null;
+
+      return impact && centroid
+        ? {
+            cityId: id,
+            cityName: name ?? id,
+            lat: centroid[0],
+            lng: centroid[1],
+            numDiapers: impact.diapersDelivered,
+            partnerOrgs: [`${impact.partnerSites} partner sites`],
+          }
+        : null;
+    })
+    .filter(Boolean) as DotDatum[];
+  
+  
 
   const diapersByRegion = useMemo<Record<string, number>>(() => {
     return baseRegions.features.reduce(
@@ -786,6 +808,7 @@ export default function HanahCaitlynButton() {
           rightControls={rightOverlay}
           choroplethData={diapersByRegion}
           choroplethBuckets={diaperLegendBuckets}
+          dotData={dotData}
         />
       </div>
     </div>

@@ -8,12 +8,20 @@ import { useBaseTileLayer } from "./useBaseTileLayer";
 import { useRegionsLayer, type ChoroplethBucket } from "./useRegionsLayer";
 import type { RegionsGeoJSON } from "@/lib/types";
 import type * as Leaflet from "leaflet";
+import { Baby } from "lucide-react";
+
+
+// NEW: bring in Leaflet runtime for icons, and popup content + types
+import * as L from "leaflet";
+import { DotPopupContent } from "@/lib/DotPopupContent";
+import type { DotDatum } from "@/lib/DotPopupContent";
+import { Tooltip } from "react-leaflet";
 
 // Dynamically import react-leaflet components with SSR disabled
 // because they depend on the browser environment (e.g., window, document).
 const MapContainer = dynamic(
   () => import("react-leaflet").then((module) => module.MapContainer),
-  { ssr: false }
+  { ssr: false } 
 );
 
 const TileLayer = dynamic(
@@ -26,6 +34,18 @@ const GeoJSON = dynamic(
   { ssr: false }
 );
 
+// NEW: dynamic imports for Marker and Popup
+const Marker = dynamic(
+  () => import("react-leaflet").then((module) => module.Marker),
+  { ssr: false }
+);
+
+const Popup = dynamic(
+  () => import("react-leaflet").then((module) => module.Popup),
+  { ssr: false }
+);  
+
+
 type LeafletMapProps = {
   regions: RegionsGeoJSON;
   onRegionClick: (regionId: string) => void;
@@ -35,6 +55,7 @@ type LeafletMapProps = {
   rightControls?: ReactNode;
   choroplethData?: Record<string, number>;
   choroplethBuckets?: ChoroplethBucket[];
+  dotData?: DotDatum[];
 };
 
 export default function LeafletMap({
@@ -46,6 +67,7 @@ export default function LeafletMap({
   rightControls,
   choroplethData,
   choroplethBuckets,
+  dotData = [],
 }: LeafletMapProps) {
   const { mapConfig } = useLeafletMap();
   const { style: mapStyle, ...mapOptions } = mapConfig;
@@ -71,6 +93,26 @@ export default function LeafletMap({
     choroplethBuckets,
   });
 
+  const circleDotIcon = useMemo(() => {
+    return L.divIcon({
+      className: "temp-square-icon",
+      html: `
+        <div
+          style="
+            width:20px;
+            height:20px;
+            background-color:#008080; /* blue-800 */
+            border:1px solid white;
+            border-radius:5px;
+            box-shadow:0 0 4px rgba(0,0,0,0.5);
+          "
+        ></div>
+      `,
+      iconSize: [16, 16],
+      iconAnchor: [8, 8], // center icon over the lat/lng
+    });
+  }, []);
+
   return (
     <div
       style={{
@@ -82,8 +124,26 @@ export default function LeafletMap({
       <MapContainer
         {...mapOptions}
         style={mapStyle}>
+        whenCreated={(map) => {
+          setMapInstance(map);
+        }}
         <TileLayer {...tileLayerProps} />
         <GeoJSON {...geoJsonProps} />
+        {dotData.map((dot) => (
+          <Marker
+            key={dot.cityId}
+            position={[dot.lat, dot.lng]}
+            icon={circleDotIcon}
+          >
+            <Tooltip>
+              <DotPopupContent
+                cityName={dot.cityName}
+                numDiapers={dot.numDiapers}
+                partnerOrgs={dot.partnerOrgs}
+              />
+            </Tooltip>
+          </Marker>
+        ))}
       </MapContainer>
       {leftControls && (
         <div
