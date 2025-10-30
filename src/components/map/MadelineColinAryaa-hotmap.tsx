@@ -94,6 +94,38 @@ const baseRegions: RegionsGeoJSON = {
         centroid: [42.3505, -71.0875],
       },
     },
+    {
+    type: "Feature",
+    geometry: {
+      type: "Polygon",
+      coordinates: [
+        [
+          [-71.1115, 42.3602],       // Left outer upper curve
+          [-71.1104, 42.3615],       // Left upper lobe peak
+          [-71.1089, 42.3623],       // Left inner upper curve
+          [-71.1078, 42.3610],       // Left inner dip
+          [-71.1072, 42.3595],       // Center crevice (between lobes)
+          [-71.1066, 42.3610],       // Right inner dip
+          [-71.1055, 42.3623],       // Right inner upper curve
+          [-71.1040, 42.3615],       // Right upper lobe peak
+          [-71.1029, 42.3602],       // Right outer upper curve
+          [-71.1025, 42.3586],       // Right side down
+          [-71.1034, 42.3571],       // Right lower curve
+          [-71.1052, 42.3562],       // Lower right bottom curve
+          [-71.1072, 42.3555],       // Tip of heart
+          [-71.1092, 42.3562],       // Lower left bottom curve
+          [-71.1110, 42.3571],       // Left lower curve
+          [-71.1119, 42.3586],       // Left side up
+          [-71.1115, 42.3602],       // Closing point
+        ],
+      ],
+    },
+    properties: {
+      id: "cambridgeport",
+      name: "Cambridgeport",
+      centroid: [42.3588, -71.107],
+    },
+  }
   ],
 };
 
@@ -130,6 +162,12 @@ const regionImpact: Record<
     diapersDelivered: 26000,
     partnerSites: 7,
     fulfillmentRate: 0.78,
+  },
+  "cambridgeport": {
+    ChildrenServed: 185,
+    diapersDelivered: 23000,
+    partnerSites: 6,
+    fulfillmentRate: 0.81,
   },
 };
 
@@ -357,12 +395,13 @@ export default function MapPage() {
   // --- Leaderboard logic END ---
 
   const regionStories: Record<string, string> = {
-    "downtown-boston": "Families near downtown rely on weekly deliveries coordinated with local shelters.",
-    "south-end": "Mobile vans reach multilingual households every Thursday across South End.",
+    "downtown-boston": "\"We thought we were prepared for everything, but newborn expenses added up fast. When the diaper bank delivered boxes right to our building, it felt like the city itself was looking out for us. It wasn't just diapers—it was hope, wrapped in kindness.\" - Ann",
+    "south-end": "\"When I lost my job during the winter, I had to make impossible choices—diapers or dinner. The South End Diaper Bank gave me relief I didn't even know I needed. For the first time in months, I could tuck my baby in at night without counting how many diapers I had left for tomorrow.\" - Jane",
+    "cambridgeport" : "\“Twins mean double the joy—and double the diapers. When prices skyrocketed, the Downtown Diaper Bank became our lifeline. They reminded us that community still exists in this city. We’ll never forget that.\” - Eric"
   };
 
   const hoveredRegionStory =
-    (hoveredRegionId && regionStories[hoveredRegionId]) || "Hover over a region to see its story.";
+    (hoveredRegionId && regionStories[hoveredRegionId]) || "";
 
   const leftOverlay = (
     <Stack gap="sm">
@@ -464,6 +503,7 @@ export default function MapPage() {
         </Stack>
       </Paper>
 
+      {/* start of the hover region impact story */}
       <Paper
         radius="lg"
         shadow="xl"
@@ -474,14 +514,13 @@ export default function MapPage() {
           <Stack
             gap={0}
             mt="sm">
-
             <Text size="md" c="dimmed" mt={4}>
               {hoveredRegionStory}
             </Text>
           </Stack>
         </Stack>
       </Paper>
-
+      {/* end of the hover region impact story */}
 
     </Stack >
   );
