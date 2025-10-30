@@ -1,13 +1,12 @@
 "use client";
 
-import RakshiElchinMap from "@/components/sprint3/RakshiElchinMap";
-import { Title, Paper, Stack } from "@mantine/core";
+import { Container, Title, Paper } from "@mantine/core";
 
 export default function Sprint3Page() {
   return (
-    <Stack
-      gap="xl"
-      m="lg">
+    <Container
+      size="sm"
+      py="xl">
       <Paper
         shadow="md"
         p="xl"
@@ -61,6 +60,6 @@ export default function Sprint3Page() {
         Colin - Madeline - Aryaa
       </Title>
       <div>{/* Colin - Madeline - Aryaa map goes here */}</div>
-    </Stack>
+    </Container>
   );
 }
