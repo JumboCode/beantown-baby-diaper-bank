@@ -30,7 +30,7 @@
     ".next/types/**/*.ts",
     "next.config.ts",
     "eslint.config.mjs",
-    "prisma.config.ts"
+    "prisma.config.mjs"
   ],
   "exclude": ["node_modules"]
 }
