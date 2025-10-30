@@ -9,7 +9,8 @@
     "lint": "eslint . --ext .ts,.tsx,.js,.jsx && prettier \"**/*.{ts,tsx,js,jsx,json,md,css}\" --check",
     "lint:fix": "eslint . --ext .ts,.tsx,.js,.jsx --fix && prettier \"**/*.{ts,tsx,js,jsx,json,md,css}\" --write",
     "prisma:generate": "prisma generate",
-    "prisma:seed": "prisma db seed"
+    "prisma:seed": "prisma db seed",
+    "postinstall": "prisma generate"
   },
   "dependencies": {
     "@mantine/dates": "^8.3.2",

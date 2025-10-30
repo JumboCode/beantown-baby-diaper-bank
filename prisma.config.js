@@ -1,6 +1,7 @@
-import "dotenv/config";
+// prisma.config.js
+require("dotenv/config");
 
-export default {
+module.exports = {
   engine: "classic",
   migrations: {
     seed: "tsx prisma/seed.ts",
