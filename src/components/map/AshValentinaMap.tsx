@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import dynamic from "next/dynamic";
 import { Slider, Text, Box } from "@mantine/core";
 import "leaflet/dist/leaflet.css";
@@ -29,8 +29,33 @@ const cities = [
   { name: "Brookline", coords: [42.3317, -71.1211], startYear: 2020, startPopulation: 20},
   { name: "Quincy", coords: [42.2529, -71.0023], startYear: 2022, startPopulation: 15},
 ];
+
+interface FallingDiaperProps {
+  id: string;
+  left: number;
+  delay: number;
+  duration: number;
+}
+function FallingDiaper({ id, left, delay, duration }: FallingDiaperProps) {
+  return (
+    <div
+      key={id}
+      className="absolute text-4xl pointer-events-none"
+      style={{
+        left: `${left}%`,
+        top: '-50px',
+        animation: `fall ${duration}s linear ${delay}s`,
+        animationFillMode: 'forwards',
+      }}
+    >
+      🩲
+    </div>
+  );
+}
 export default function AshValentinaMap() {
   const [year, setYear] = useState(2005);
+  const [celebratingCities, setCelebratingCities] = useState(new Set());
+  const [diapers, setDiapers] = useState<FallingDiaperProps[]>([]);
 
   // Fake diaper distribution data that grows over time
   const cityData = useMemo(() => {
@@ -49,6 +74,47 @@ export default function AshValentinaMap() {
       });
   }, [year]);
 
+    // Check for milestone celebrations
+  useEffect(() => {
+    const MILESTONE = 100000; // Celebrate at 10,000 diapers
+    
+    cityData.forEach((city) => {
+      const justHitMilestone = city.impact >= MILESTONE && !celebratingCities.has(city.name);
+      const justLostMilestone = city.impact < MILESTONE && celebratingCities.has(city.name);
+      
+      if (justHitMilestone) {
+        // Mark this city as celebrating
+        setCelebratingCities(prev => {
+          const newSet = new Set(prev);
+          newSet.add(city.name);
+          return newSet;
+        });
+        
+        // Create falling diapers
+        const newDiapers = Array.from({ length: 30 }, (_, i) => ({
+          id: `${city.name}-${Date.now()}-${i}`,
+          left: Math.random() * 100,
+          delay: Math.random() * 0.5,
+          duration: 2 + Math.random() * 1,
+        }));
+        
+        setDiapers((prev: FallingDiaperProps[]) => [...prev, ...newDiapers]);
+        
+        // Remove diapers after animation
+        setTimeout(() => {
+          setDiapers(prev => prev.filter(d => !d.id.startsWith(city.name)));
+        }, 4000);
+      }
+      else if (justLostMilestone) {
+        setCelebratingCities(prev => {
+          const newSet = new Set(prev);
+          newSet.delete(city.name);
+          return newSet;
+        });
+      }
+    });
+  }, [cityData, celebratingCities]);
+
   // Calculate the impact of the largest city in 2040
   const maxImpact = useMemo(() => {
     return Math.max(...cities.map(city => {
@@ -61,7 +127,22 @@ export default function AshValentinaMap() {
 
   return (
     <div className="flex flex-col w-full">
+      <style jsx>{`
+      @keyframes fall {
+        to {
+          transform: translateY(100vh) rotate(360deg);
+          opacity: 0;
+        }
+      }
+    `}</style>
       <div className="h-[80vh] w-full relative">
+        <div className="absolute inset-0 z-[1000] pointer-events-none">
+          {/* Falling diapers */}
+          {diapers.map((diaper) => (
+            <FallingDiaper key={diaper.id} {...diaper} />
+          ))}
+        </div>
+
         <MapContainer
           center={[42.3736, -71.1097]} // Greater Boston center
           zoom={11}
