@@ -103,12 +103,12 @@ export default function AshValentinaMap() {
         </MapContainer>
 
         {/* Legend with Key and Scale */}
-        <div className="absolute top-4 right-4 bg-white p-4 rounded-lg shadow-lg z-[1000] max-w-xs">
-          <Text size="md" fw={700} mb={12}>
+        <div className="absolute top-4 right-4 bg-white p-3 rounded-lg shadow-lg z-[1000] max-w-xs">
+          <Text size="sm" fw={700} mb={8}>
             Diaper Distribution by City
           </Text>
           
-          <div className="space-y-2 mb-4">
+          <div className="space-y-1.5 mb-3">
             {cityData.map((city) => {
               const intensity = city.impact / maxImpact;
               const lightness = 70 - (intensity * 50);
@@ -117,17 +117,17 @@ export default function AshValentinaMap() {
               return (
                 <div key={city.name} className="flex items-center justify-between">
                   {/* Create the icon representing the color of the city */}
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-1.5">
                     <div 
-                      className="w-4 h-4 rounded-full border-2"
+                      className="w-3 h-3 rounded-full border-2"
                       style={{ 
                         backgroundColor: color,
                         borderColor: color
                       }}
                     />
-                    <Text size="sm">{city.name}</Text>
+                    <Text size="xs">{city.name}</Text>
                   </div>
-                  <Text size="sm" fw={500}>
+                  <Text size="xs" fw={500}>
                     {city.impact.toLocaleString()}
                   </Text>
                 </div>
@@ -142,17 +142,17 @@ export default function AshValentinaMap() {
           </div>
           
           {/* Create the color gradiant scale */}
-          <div className="border-t pt-3 mt-3">
+          <div className="border-t pt-2 mt-2">
             <Text size="xs" fw={600} mb={6}>
               Color Scale
             </Text>
             <div 
-              className="w-full h-4 rounded mb-2"
+              className="w-full h-3 rounded mb-2"
               style={{
                 background: 'linear-gradient(to right, hsl(200, 100%, 85%), hsl(200, 82%, 33%))'
               }}
             />
-            <div className="flex justify-between text-xs text-gray-600">
+            <div className="flex justify-between text-[10px] text-gray-600">
               <span>Low Impact</span>
               <span>High Impact</span>
             </div>
