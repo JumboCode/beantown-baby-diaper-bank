@@ -48,7 +48,7 @@ function FallingDiaper({ id, left, delay, duration }: FallingDiaperProps) {
         animationFillMode: 'forwards',
       }}
     >
-      🩲
+      🩲 👶 🍼
     </div>
   );
 }
