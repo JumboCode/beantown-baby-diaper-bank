@@ -12,6 +12,7 @@ export default function TimelineSliderControls() {
       {/* TODO: Implement the buttons to control the slider */}
       {/* <LeftButton onClick={() => setValue(value - 1)} /> */}
       <TimelineSlider
+        monthlyOrYearly="monthly" // Example value, adjust as needed
         value={value}
         setValue={setValue}
       />
