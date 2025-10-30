@@ -118,7 +118,7 @@ export default function AshValentinaMap() {
   // Calculate the impact of the largest city in 2040
   const maxImpact = useMemo(() => {
     return Math.max(...cities.map(city => {
-      const yearsActive = 2040 - city.startYear;
+      const yearsActive = 2025 - city.startYear;
       const baseGrowth = city.startPopulation * yearsActive * 200;
       const cityVariation = (city.coords[0] % 3) * 100;
       return Math.round(baseGrowth + cityVariation);
@@ -144,7 +144,7 @@ export default function AshValentinaMap() {
         </div>
 
         <MapContainer
-          center={[42.3736, -71.1097]} // Greater Boston center
+          center={[42.4000, -71.0200]} // Greater Boston center
           zoom={11}
           style={{ height: "100%", width: "100%" }}
         >
@@ -156,10 +156,10 @@ export default function AshValentinaMap() {
         {/* Dynamic circle markers */}
         {cityData.map((city) => {
           // Steady growth: starts at 3px, grows to 80px
-          const radius = Math.min(100 + city.impact / 100, 8000);
+          const radius = Math.min(100 + city.impact / 50, 8000);
            
           // Calculate color intensity from a scale of 0 to 1,
-          // dependant on current city impact over the largest city impact in 2040 (the greatest any impact will ever be)
+          // dependant on current city impact over the largest city impact in 2025 (the greatest any impact will ever be)
           const intensity = city.impact / maxImpact;
 
           // HSL: hue stays at 200 (blue), saturation foes from 100% to 82%, lightness goes from 70% (light) to 20% (dark)
@@ -247,7 +247,7 @@ export default function AshValentinaMap() {
           color="#2c85b2"
           onChange={setYear}
           min={2005}
-          max={2040}
+          max={2025}
           step={0.1}
           marks={[
             { value: 2005, label: "2005" },
@@ -255,9 +255,6 @@ export default function AshValentinaMap() {
             { value: 2015, label: "2015" },
             { value: 2020, label: "2020" },
             { value: 2025, label: "2025" },
-            { value: 2030, label: "2030" },
-            { value: 2035, label: "2035" },
-            { value: 2040, label: "2040" },
           ]}
           size="lg"
           label={null}
