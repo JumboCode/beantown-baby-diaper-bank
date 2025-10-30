@@ -6,7 +6,7 @@
  *   - Prisma warns about exhausting database connections in development; the `globalThis`
  *     caching pattern side-steps that while keeping production safe.
  */
-import { PrismaClient } from "../generated/prisma/client";
+import { PrismaClient } from "@/generated/prisma/client";
 
 /**
  * Extend the global type definition so TypeScript knows we stash the client there in dev.
