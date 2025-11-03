@@ -13,27 +13,27 @@ import { useRegionsLayer } from "../map/useRegionsLayer";
 // because they depend on the browser environment (e.g., window, document).
 const MapContainer = dynamic(
   () => import("react-leaflet").then((module) => module.MapContainer),
-  { ssr: false }
+  { ssr: false },
 );
 
 const TileLayer = dynamic(
   () => import("react-leaflet").then((module) => module.TileLayer),
-  { ssr: false }
+  { ssr: false },
 );
 
 const GeoJSON = dynamic(
   () => import("react-leaflet").then((module) => module.GeoJSON),
-  { ssr: false }
+  { ssr: false },
 );
 
 const CircleMarker = dynamic(
   () => import("react-leaflet").then((module) => module.CircleMarker),
-  { ssr: false }
+  { ssr: false },
 );
 
 const Marker = dynamic(
   () => import("react-leaflet").then((module) => module.Marker),
-  { ssr: false }
+  { ssr: false },
 );
 
 // Marker not dynamically imported here to avoid unused import when not needed.
@@ -133,10 +133,9 @@ export default function LeafletMap({
         height: "100%",
         width: "100%",
         zIndex: 0,
-      }}>
-      <MapContainer
-        {...mapOptions}
-        style={mapStyle}>
+      }}
+    >
+      <MapContainer {...mapOptions} style={mapStyle}>
         {/* Base tile layer for the map */}
         <TileLayer {...tileLayerProps} />
 
@@ -215,7 +214,8 @@ export default function LeafletMap({
             zIndex: 1000,
             pointerEvents: "none",
             maxWidth: "min(320px, 90vw)",
-          }}>
+          }}
+        >
           <div style={{ pointerEvents: "auto" }}>{leftControls}</div>
         </div>
       )}

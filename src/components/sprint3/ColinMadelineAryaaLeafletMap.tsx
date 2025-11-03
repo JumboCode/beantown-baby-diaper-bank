@@ -12,27 +12,27 @@ import { ChoroplethBucket, useRegionsLayer } from "../map/useRegionsLayer";
 
 export const Marker = dynamic(
   () => import("react-leaflet").then((module) => module.Marker),
-  { ssr: false }
+  { ssr: false },
 );
 
 export const Popup = dynamic(
   () => import("react-leaflet").then((module) => module.Popup),
-  { ssr: false }
+  { ssr: false },
 );
 
 const MapContainer = dynamic(
   () => import("react-leaflet").then((module) => module.MapContainer),
-  { ssr: false }
+  { ssr: false },
 );
 
 const TileLayer = dynamic(
   () => import("react-leaflet").then((module) => module.TileLayer),
-  { ssr: false }
+  { ssr: false },
 );
 
 const GeoJSON = dynamic(
   () => import("react-leaflet").then((module) => module.GeoJSON),
-  { ssr: false }
+  { ssr: false },
 );
 
 type LeafletMapProps = {
@@ -110,10 +110,9 @@ export default function LeafletMap({
         height: "100%",
         width: "100%",
         zIndex: 0,
-      }}>
-      <MapContainer
-        {...mapOptions}
-        style={mapStyle}>
+      }}
+    >
+      <MapContainer {...mapOptions} style={mapStyle}>
         <TileLayer {...tileLayerProps} />
         <GeoJSON {...geoJsonProps} />
       </MapContainer>
@@ -126,7 +125,8 @@ export default function LeafletMap({
             zIndex: 1000,
             pointerEvents: "none",
             maxWidth: "min(420px, 120vw)",
-          }}>
+          }}
+        >
           <div style={{ pointerEvents: "auto" }}>{leftControls}</div>
         </div>
       )}
@@ -139,7 +139,8 @@ export default function LeafletMap({
             zIndex: 1000,
             pointerEvents: "none",
             maxWidth: "min(320px, 90vw)",
-          }}>
+          }}
+        >
           <div style={{ pointerEvents: "auto" }}>{rightControls}</div>
         </div>
       )}

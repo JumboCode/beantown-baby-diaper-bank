@@ -8,12 +8,12 @@ import { randomUUID } from "node:crypto";
 
 // generic CSV loader -> array of plain objects
 async function loadCsv<T extends Record<string, string | undefined>>(
-  file: string
+  file: string,
 ) {
   console.log(`Loading CSV data from ${file}...`);
   const rows: T[] = [];
   const parser = createReadStream(file).pipe(
-    parse({ columns: true, skip_empty_lines: true, bom: true, trim: true })
+    parse({ columns: true, skip_empty_lines: true, bom: true, trim: true }),
   );
   for await (const record of parser) rows.push(record as T);
   return rows;
@@ -100,7 +100,7 @@ async function seedDistributions() {
   };
 
   const rows = await loadCsv<Row>(
-    path.join(__dirname, "data/distributions.csv")
+    path.join(__dirname, "data/distributions.csv"),
   );
   await prisma.distribution.createMany({
     data: rows.map((row) => ({
@@ -125,7 +125,7 @@ async function seedPartnerRegions() {
   };
 
   const rows = await loadCsv<Row>(
-    path.join(__dirname, "data/partner_regions.csv")
+    path.join(__dirname, "data/partner_regions.csv"),
   );
   let data: { partnerId: bigint; cityId: bigint }[] = [];
   try {
@@ -134,7 +134,7 @@ async function seedPartnerRegions() {
       const cityId = toBigInt(row.city_id);
       if (!partnerId || !cityId) {
         throw new Error(
-          `Invalid partnerId or cityId in row: ${JSON.stringify(row)}`
+          `Invalid partnerId or cityId in row: ${JSON.stringify(row)}`,
         );
       }
       return { partnerId, cityId };
@@ -168,7 +168,7 @@ async function seedYearlyData() {
       const numBabies = toBigInt(row.num_babies);
       if (!cityId || !year || !numDiapers || !numBabies) {
         throw new Error(
-          `Invalid cityId, year, numDiapers, or numBabies in row: ${JSON.stringify(row)}`
+          `Invalid cityId, year, numDiapers, or numBabies in row: ${JSON.stringify(row)}`,
         );
       }
       return {

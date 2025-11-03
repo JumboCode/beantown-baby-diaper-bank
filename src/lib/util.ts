@@ -5,6 +5,6 @@
  */
 export function stringifyWithBigInt(value: unknown) {
   return JSON.stringify(value, (_key, jsonValue) =>
-    typeof jsonValue === "bigint" ? jsonValue.toString() : jsonValue
+    typeof jsonValue === "bigint" ? jsonValue.toString() : jsonValue,
   );
 }

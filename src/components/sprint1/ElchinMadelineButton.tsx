@@ -30,14 +30,8 @@ export default function ElchinMadelineButton() {
         Your work on the onboarding ticket will go here...
       </Title>
       <div className="w-fit flex gap-3 mt-3">
-        <Input
-          placeholder="Input Name"
-          onChange={handleChange}
-        />
-        <Button
-          label="Get age!"
-          onClick={getAge}
-        />
+        <Input placeholder="Input Name" onChange={handleChange} />
+        <Button label="Get age!" onClick={getAge} />
       </div>
       <p className="mt-3 text-lg">
         {show && (text ? "Age: " + text : "Unable to get age")}

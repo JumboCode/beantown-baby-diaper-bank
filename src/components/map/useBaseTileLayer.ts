@@ -28,7 +28,7 @@ export function useBaseTileLayer() {
         '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
       subdomains: ["a", "b", "c", "d"],
     }),
-    []
+    [],
   );
 
   return { tileLayerProps };

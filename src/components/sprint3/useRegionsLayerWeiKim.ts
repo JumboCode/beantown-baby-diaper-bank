@@ -68,12 +68,12 @@ export function useRegionsLayer({
       }
 
       const bucket = choroplethBuckets?.find(
-        (entry) => value >= entry.min && value <= entry.max
+        (entry) => value >= entry.min && value <= entry.max,
       );
 
       return bucket?.color ?? defaultFillColor;
     },
-    [choroplethData, choroplethBuckets, defaultFillColor]
+    [choroplethData, choroplethBuckets, defaultFillColor],
   );
 
   const style = useCallback<GeoJSONStyleFn>(
@@ -91,7 +91,7 @@ export function useRegionsLayer({
         fillColor: getFillColor(regionId),
       };
     },
-    [getFillColor, highlightedRegionId]
+    [getFillColor, highlightedRegionId],
   );
 
   // Handle feature clicks, binding to onRegionClick
@@ -120,7 +120,7 @@ export function useRegionsLayer({
         },
       });
     },
-    [onRegionClick, onRegionHover]
+    [onRegionClick, onRegionHover],
   );
 
   const geoJsonProps = useMemo<GeoJSONProps>(
@@ -129,7 +129,7 @@ export function useRegionsLayer({
       onEachFeature,
       style,
     }),
-    [onEachFeature, regions, style]
+    [onEachFeature, regions, style],
   );
 
   return { geoJsonProps };
