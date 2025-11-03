@@ -1,0 +1,80 @@
+generator client {
+  provider        = "prisma-client"
+  output          = "../src/generated/prisma"
+  previewFeatures = ["postgresqlExtensions"]
+  binaryTargets = ["native", "rhel-openssl-3.0.x"]
+}
+
+datasource db {
+  provider   = "postgresql"
+  url        = env("DATABASE_URL")
+  directUrl  = env("DIRECT_URL")
+  extensions = [postgis, uuid_ossp(map: "uuid-ossp", schema: "extensions")]
+}
+
+model City {
+  id             BigInt                    @id(map: "Regions_pkey") @default(autoincrement())
+  createdAt      DateTime                  @default(now()) @map("created_at") @db.Timestamptz(6)
+  name           String?
+  centroid       Unsupported("geometry")?
+  boundary       Unsupported("geography")?
+  distributions  Distribution[]
+  Yearly_Data    YearlyData[]
+  partnerRegions PartnerRegion[]
+
+  @@map("Cities")
+}
+
+model Distribution {
+  id             BigInt   @id @default(autoincrement())
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  partnerId      BigInt?  @map("partner_id")
+  cityId         BigInt?  @map("city_id")
+  year           String?
+  month          String?
+  numberDiapers  BigInt?  @map("number_diapers")
+  numberChildren BigInt?  @map("number_children")
+  percentage     Float?
+  city           City?    @relation(fields: [cityId], references: [id], onDelete: Cascade)
+  partner        Partner? @relation(fields: [partnerId], references: [id], onDelete: Cascade)
+
+  @@map("Distributions")
+}
+
+model Partner {
+  id             BigInt          @id @default(autoincrement())
+  createdAt      DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
+  name           String?
+  description    String?
+  startPartner   DateTime?       @map("start_partner") @db.Date
+  waitlisted     Boolean?
+  address        String?
+  coords         Json?           @db.Json
+  logoUrl        String?         @map("logo_url")
+  distributions  Distribution[]
+  partnerRegions PartnerRegion[]
+
+  @@map("Partners")
+}
+
+model PartnerRegion {
+  partnerId BigInt  @map("partner_id")
+  cityId    BigInt  @map("city_id")
+  city      City    @relation(fields: [cityId], references: [id], onDelete: Cascade)
+  partner   Partner @relation(fields: [partnerId], references: [id], onDelete: Cascade)
+
+  @@id([partnerId, cityId])
+  @@map("partner_regions")
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model YearlyData {
+  cityId     BigInt  @default(autoincrement()) @map("city_id")
+  year       String
+  numDiapers BigInt? @map("num_diapers")
+  numBabies  BigInt? @map("num_babies")
+  id         String  @id @unique @db.Uuid
+  Cities     City    @relation(fields: [cityId], references: [id], onDelete: Cascade)
+
+  @@map("Yearly Data")
+}
