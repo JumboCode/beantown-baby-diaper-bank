@@ -8,7 +8,7 @@ import HotMap from "./HotMap";
 
 export default function Sprint3Page() {
   return (
-    <Container size="xxl">
+    <Container size="80vw">
       <Paper
         shadow="md"
         p="xl"
