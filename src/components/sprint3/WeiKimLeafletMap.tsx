@@ -3,7 +3,6 @@
 import dynamic from "next/dynamic";
 import { useMemo, useRef, useEffect, useState, type ReactNode } from "react";
 import "leaflet/dist/leaflet.css";
-import { Loader } from "@mantine/core";
 import { useRegionsLayer, type ChoroplethBucket } from "../map/useRegionsLayer";
 import type { RegionsGeoJSON } from "@/lib/types";
 import type * as Leaflet from "leaflet";
@@ -185,7 +184,6 @@ export default function LeafletMap({
           <div style={{ pointerEvents: "auto" }}>{rightControls}</div>
         </div>
       )}
-      {!mapRef.current && <Loader />}
     </div>
   );
 }

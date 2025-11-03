@@ -4,10 +4,11 @@ import RakshiElchinMap from "@/components/sprint3/RakshiElchinMap";
 import HanahCaitlynMap from "@/components/sprint3/WeiKimMap";
 import { Container, Title, Paper } from "@mantine/core";
 import AshValentinaMap from "@/components/sprint3/AshValentinaMap";
+import HotMap from "./HotMap";
 
 export default function Sprint3Page() {
   return (
-    <Container size="xxl">
+    <Container size="80vw">
       <Paper
         shadow="md"
         p="xl"
@@ -50,6 +51,13 @@ export default function Sprint3Page() {
       <div>
         <AshValentinaMap />
       </div>
+      <Title
+        order={2}
+        mt="md"
+        mb="xs">
+        Anna - Aray
+      </Title>
+      <div>{<HotMap />}</div>
 
       <Title
         order={2}
