@@ -1,5 +1,4 @@
 "use client";
-import AryaaAshButton from "@/components/sprint1/AryaaAshButton";
 import {
   Container,
   Title,
