@@ -9,11 +9,11 @@ import { useBaseTileLayer } from "../map/useBaseTileLayer";
 // Dynamically import Leaflet components
 const MapContainer = dynamic(
   () => import("react-leaflet").then((m) => m.MapContainer),
-  { ssr: false }
+  { ssr: false },
 );
 const TileLayer = dynamic(
   () => import("react-leaflet").then((m) => m.TileLayer),
-  { ssr: false }
+  { ssr: false },
 );
 const Circle = dynamic(() => import("react-leaflet").then((m) => m.Circle), {
   ssr: false,
@@ -81,7 +81,8 @@ function FallingDiaper({ id, left, delay, duration }: FallingDiaperProps) {
         top: "-50px",
         animation: `fall ${duration}s linear ${delay}s`,
         animationFillMode: "forwards",
-      }}>
+      }}
+    >
       🩲 👶 🍼
     </div>
   );
@@ -159,7 +160,7 @@ export default function AshValentinaMap() {
         const baseGrowth = city.startPopulation * yearsActive * 200;
         const cityVariation = (city.coords[0] % 3) * 100;
         return Math.round(baseGrowth + cityVariation);
-      })
+      }),
     );
   }, []);
 
@@ -177,17 +178,15 @@ export default function AshValentinaMap() {
         <div className="absolute inset-0 z-[1000] pointer-events-none">
           {/* Falling diapers */}
           {diapers.map((diaper) => (
-            <FallingDiaper
-              key={diaper.id}
-              {...diaper}
-            />
+            <FallingDiaper key={diaper.id} {...diaper} />
           ))}
         </div>
 
         <MapContainer
           center={[42.4, -71.02]} // Greater Boston center
           zoom={11}
-          style={{ height: "100%", width: "100%" }}>
+          style={{ height: "100%", width: "100%" }}
+        >
           <TileLayer {...tileLayerProps} />
 
           {/* Dynamic circle markers */}
@@ -222,10 +221,7 @@ export default function AshValentinaMap() {
 
         {/* Legend with Key and Scale */}
         <div className="absolute top-4 right-4 bg-white p-3 rounded-lg shadow-lg z-[1000] max-w-xs">
-          <Text
-            size="sm"
-            fw={700}
-            mb={8}>
+          <Text size="sm" fw={700} mb={8}>
             Diaper Distribution by City
           </Text>
 
@@ -238,7 +234,8 @@ export default function AshValentinaMap() {
               return (
                 <div
                   key={city.name}
-                  className="flex items-center justify-between">
+                  className="flex items-center justify-between"
+                >
                   {/* Create the icon representing the color of the city */}
                   <div className="flex items-center gap-1.5">
                     <div
@@ -250,9 +247,7 @@ export default function AshValentinaMap() {
                     />
                     <Text size="xs">{city.name}</Text>
                   </div>
-                  <Text
-                    size="xs"
-                    fw={500}>
+                  <Text size="xs" fw={500}>
                     {city.impact.toLocaleString()}
                   </Text>
                 </div>
@@ -260,9 +255,7 @@ export default function AshValentinaMap() {
             })}
             {/* Return if no cities are shown */}
             {cityData.length === 0 && (
-              <Text
-                size="sm"
-                c="dimmed">
+              <Text size="sm" c="dimmed">
                 No cities active yet
               </Text>
             )}
@@ -270,10 +263,7 @@ export default function AshValentinaMap() {
 
           {/* Create the color gradiant scale */}
           <div className="border-t pt-2 mt-2">
-            <Text
-              size="xs"
-              fw={600}
-              mb={6}>
+            <Text size="xs" fw={600} mb={6}>
               Color Scale
             </Text>
             <div

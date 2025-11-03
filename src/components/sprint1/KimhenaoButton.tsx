@@ -17,7 +17,8 @@ export default function OurButton() {
           onSubmit={async (e) => {
             e.preventDefault();
             await fetchAge(name);
-          }}>
+          }}
+        >
           <input
             type="text"
             value={name}
@@ -26,7 +27,8 @@ export default function OurButton() {
           />
           <button
             type="submit"
-            className={"bg-teal-700 text-white p-2 rounded-lg m-2"}>
+            className={"bg-teal-700 text-white p-2 rounded-lg m-2"}
+          >
             Submit
           </button>
         </form>

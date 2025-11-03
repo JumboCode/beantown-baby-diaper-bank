@@ -35,7 +35,8 @@ const ButtonComponent = ({ label }: ButtonComponentProp) => {
             backgroundColor: "#FF69B4",
             "--button-hover-color": "#b52b70ff",
           },
-        }}>
+        }}
+      >
         {label}
       </Button>
       <p>{age}</p>

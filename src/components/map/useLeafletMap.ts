@@ -46,7 +46,7 @@ export function useLeafletMap() {
         width: "100%",
       },
     }),
-    []
+    [],
   );
 
   return { mapConfig };
