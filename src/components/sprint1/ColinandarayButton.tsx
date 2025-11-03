@@ -60,7 +60,8 @@ export default function ColinArayButton() {
             e.currentTarget.style.backgroundColor = "#007bff";
             e.currentTarget.style.transform = "scale(1)";
           }
-        }}>
+        }}
+      >
         {loading ? "Loading..." : "Find Age"}
       </button>
 

@@ -166,7 +166,8 @@ export default function RakshiElchinMap() {
             padding: "1rem",
             border: "1px solid #e6e6e6",
             borderRadius: 8,
-          }}>
+          }}
+        >
           <h3 style={{ marginTop: 0 }}>Region details</h3>
           {selectedRegionId ? (
             <div>
@@ -194,7 +195,8 @@ export default function RakshiElchinMap() {
             padding: "1rem",
             border: "1px solid #e6e6e6",
             borderRadius: 8,
-          }}>
+          }}
+        >
           <h4 style={{ marginTop: 0 }}>Distribution legend</h4>
           <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
             <li style={{ display: "flex", alignItems: "center", gap: 8 }}>
@@ -215,7 +217,8 @@ export default function RakshiElchinMap() {
                 alignItems: "center",
                 gap: 8,
                 marginTop: 8,
-              }}>
+              }}
+            >
               <span
                 style={{
                   width: 18,
@@ -233,7 +236,8 @@ export default function RakshiElchinMap() {
                 alignItems: "center",
                 gap: 8,
                 marginTop: 8,
-              }}>
+              }}
+            >
               <span
                 style={{
                   width: 18,
@@ -251,7 +255,8 @@ export default function RakshiElchinMap() {
                 alignItems: "center",
                 gap: 8,
                 marginTop: 8,
-              }}>
+              }}
+            >
               <span
                 style={{
                   width: 18,
@@ -271,7 +276,8 @@ export default function RakshiElchinMap() {
             padding: "1rem",
             border: "1px solid #e6e6e6",
             borderRadius: 8,
-          }}>
+          }}
+        >
           <h4 style={{ marginTop: 0 }}>Timeline (dummy)</h4>
           <Slider
             min={2018}

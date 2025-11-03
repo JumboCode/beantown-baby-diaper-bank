@@ -2,7 +2,6 @@ import { useDisclosure } from "@mantine/hooks";
 import { Popover } from "@mantine/core";
 import { CircleDot } from "lucide-react";
 
-
 const dotData = [
   {
     title: "Dot 1",
@@ -58,17 +57,13 @@ const SinglePopUp = ({
 }: SinglePopUpProps) => {
   const [opened, { close, open }] = useDisclosure(false);
   return (
-    <Popover
-      width={200}
-      position="top"
-      withArrow
-      shadow="md"
-      opened={opened}>
+    <Popover width={200} position="top" withArrow shadow="md" opened={opened}>
       <Popover.Target>
         <CircleDot
           style={{ color: "blue" }}
           onMouseEnter={open}
-          onMouseLeave={close}></CircleDot>
+          onMouseLeave={close}
+        ></CircleDot>
       </Popover.Target>
       <Popover.Dropdown style={{ pointerEvents: "none" }}>
         <div>

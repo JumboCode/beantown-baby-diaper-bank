@@ -32,7 +32,8 @@ function AryaaAshButton({ label }: props) {
         />
         <button
           className="bg-[#5F5971] hover:bg-[#2E294E] text-[#F1E9DA] rounded-xl px-5 py-3"
-          onClick={handleClick}>
+          onClick={handleClick}
+        >
           {label}
         </button>
       </div>

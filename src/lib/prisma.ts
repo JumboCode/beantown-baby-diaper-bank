@@ -13,7 +13,6 @@ import { PrismaClient } from "@/generated/prisma/client";
  * This mirrors the official Prisma with Next.js recipe.
  */
 declare global {
-  // eslint-disable-next-line no-var -- required for declaration merging on globalThis
   var prisma: PrismaClient | undefined;
 }
 

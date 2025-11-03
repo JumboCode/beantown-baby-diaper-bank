@@ -10,7 +10,8 @@ export default function myButton(props: {
       color="green"
       size="sm"
       radius="lg"
-      onClick={props.onClick}>
+      onClick={props.onClick}
+    >
       {props.label}
     </Button>
   );
