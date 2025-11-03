@@ -16,10 +16,6 @@ import {
   ThemeIcon,
 } from "@mantine/core";
 import { FaGithub } from "react-icons/fa";
-import ButtonComponent from "@/components/sprint1/AnnarakshitcaitlynButton";
-import OurButton from "@/components/sprint1/KimhenaoButton";
-import ColinArayButton from "@/components/sprint1/ColinandarayButton";
-import ElchinMadelineButton from "@/components/sprint1/ElchinMadelineButton";
 
 export default function Home() {
   return (
@@ -223,6 +219,19 @@ export default function Home() {
 
         <Card
           shadow="sm"
+          radius="md"
+          withBorder>
+          <Stack gap="xs">
+            <Title order={2}>Sprint 3 (Creative Hot Map) Tickets</Title>
+            <Divider />
+            <Anchor href="/sprint3">
+              <Title order={2}>Click here for Sprint 3 Tickets</Title>
+            </Anchor>
+          </Stack>
+        </Card>
+
+        <Card
+          shadow="md"
           radius="md"
           withBorder>
           <Stack gap="xs">
