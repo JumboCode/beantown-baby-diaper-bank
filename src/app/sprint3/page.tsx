@@ -1,6 +1,7 @@
 "use client";
 import ColinMadelineAryaaHotmap from "@/components/sprint3/ColinMadelineAryaaHotmap";
 import RakshiElchinMap from "@/components/sprint3/RakshiElchinMap";
+import HanahCaitlynMap from "@/components/sprint3/WeiKimMap";
 import { Container, Title, Paper } from "@mantine/core";
 
 export default function Sprint3Page() {
@@ -24,7 +25,10 @@ export default function Sprint3Page() {
         mb="xs">
         Caitlyn - Hanah
       </Title>
-      <div>{/* Caitlyn - Hanah map goes here */}</div>
+      <div>
+        {" "}
+        <HanahCaitlynMap />
+      </div>
 
       <Title
         order={2}
