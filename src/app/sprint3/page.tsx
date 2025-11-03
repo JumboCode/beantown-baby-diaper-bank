@@ -1,13 +1,11 @@
 "use client";
-import MapPage from "@/components/map/MadelineColinAryaa-hotmap";
+import ColinMadelineAryaaHotmap from "@/components/sprint3/ColinMadelineAryaaHotmap";
 import RakshiElchinMap from "@/components/sprint3/RakshiElchinMap";
 import { Container, Title, Paper } from "@mantine/core";
 
 export default function Sprint3Page() {
   return (
-    <Container
-      size="sm"
-      py="xl">
+    <Container size="xxl">
       <Paper
         shadow="md"
         p="xl"
@@ -62,7 +60,7 @@ export default function Sprint3Page() {
       </Title>
       <div>
         {/* Colin - Madeline - Aryaa map goes here */}
-        <MapPage />
+        <ColinMadelineAryaaHotmap />
       </div>
     </Container>
   );
