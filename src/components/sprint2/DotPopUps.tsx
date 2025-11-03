@@ -2,6 +2,7 @@ import { useDisclosure } from "@mantine/hooks";
 import { Popover } from "@mantine/core";
 import { CircleDot } from "lucide-react";
 
+
 const dotData = [
   {
     title: "Dot 1",

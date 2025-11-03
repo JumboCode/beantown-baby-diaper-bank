@@ -2,11 +2,11 @@
 
 import dynamic from "next/dynamic";
 import { useMemo, type ReactNode } from "react";
-import { useLeafletMap } from "./useLeafletMap";
-import { useBaseTileLayer } from "./useBaseTileLayer";
-import { useRegionsLayer, type ChoroplethBucket } from "./useRegionsLayer";
 
 import type { RegionsGeoJSON } from "@/lib/types";
+import { useBaseTileLayer } from "../map/useBaseTileLayer";
+import { useLeafletMap } from "../map/useLeafletMap";
+import { ChoroplethBucket, useRegionsLayer } from "../map/useRegionsLayer";
 // Dynamically import react-leaflet components with SSR disabled
 // because they depend on the browser environment (e.g., window, document).
 
