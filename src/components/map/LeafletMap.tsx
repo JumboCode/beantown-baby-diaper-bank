@@ -1,7 +1,8 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useMemo, type ReactNode } from "react";
+import { useMemo, useRef, useEffect, useState, type ReactNode } from "react";
+import "leaflet/dist/leaflet.css";
 import { Loader } from "@mantine/core";
 import { useLeafletMap } from "./useLeafletMap";
 import { useBaseTileLayer } from "./useBaseTileLayer";
@@ -73,6 +74,7 @@ export default function LeafletMap({
   const { style: mapStyle, ...mapOptions } = mapConfig;
   // const [mapInstance, setMapInstance] = useState<Leaflet.Map | null>(null);
   const mapRef = useRef<Leaflet.Map | null>(null);
+  const [babyIcon, setBabyIcon] = useState<Leaflet.DivIcon | null>(null);
 
   const normalizedRegions = useMemo<RegionsGeoJSON>(() => {
     if (!regions || Array.isArray(regions)) {
@@ -94,29 +96,27 @@ export default function LeafletMap({
     choroplethBuckets,
   });
 
-  const babyIcon = useMemo(() => {
-    // Only run in browser
-    if (typeof window === "undefined") {
-      return null;
-    }
+  useEffect(() => {
+    if (typeof window === "undefined") return;
   
-    // import leaflet at runtime, after window exists
-    const L = require("leaflet");
+    (async () => {
+      const L = await import("leaflet"); // dynamically import leaflet
+      const svgString = renderToString(
+        <Baby size={30} color="#008080" strokeWidth={3.5} />
+      );
   
-    const svgString = renderToString(
-      <Baby size={30} color="#008080" strokeWidth={3.5} />
-    );
+      const icon = L.divIcon({
+        className: "custom-baby-icon",
+        html: svgString,
+        iconSize: [30, 30],
+        iconAnchor: [12, 12],
+        popupAnchor: [0, -12],
+      });
   
-    return L.divIcon({
-      className: "custom-baby-icon",
-      html: svgString,
-      iconSize: [30, 30],
-      iconAnchor: [12, 12],
-      popupAnchor: [0, -12],
-    });
+      setBabyIcon(icon);
+    })();
   }, []);
   
-
   return (
     <div
       style={{
@@ -128,6 +128,7 @@ export default function LeafletMap({
       <MapContainer
         {...mapOptions}
         style={mapStyle}
+        ref={mapRef}
         whenReady={() => {
           // whenReady fires after initial render
           // we can ensure the ref is populated
@@ -180,7 +181,7 @@ export default function LeafletMap({
           <div style={{ pointerEvents: "auto" }}>{rightControls}</div>
         </div>
       )}
-      {!mapRef && <Loader />}
+      {!mapRef.current && <Loader />}
     </div>
   );
 }

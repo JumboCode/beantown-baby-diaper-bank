@@ -246,10 +246,10 @@ export default function HanahCaitlynButton() {
     )?.properties?.name ?? "Region detail";
   const isModalOpen = modalRegionId != null;
 
-  const impactPercent = Math.min(
-    100,
-    Math.round((distributionSummary.delivered / distributionSummary.goal) * 100)
-  );
+  // const impactPercent = Math.min(
+  //   100,
+  //   Math.round((distributionSummary.delivered / distributionSummary.goal) * 100)
+  // );
 
   const donationImpact = useMemo(() => {
     const amount = Math.max(0, donationAmount);
@@ -302,12 +302,12 @@ export default function HanahCaitlynButton() {
     }
   };
 
-  const coverageMonthsDisplay =
-    donationImpact.coverageMonths >= 1
-      ? donationImpact.coverageMonths.toFixed(1)
-      : donationImpact.coverageMonths > 0
-        ? donationImpact.coverageMonths.toFixed(2)
-        : "0";
+  // const coverageMonthsDisplay =
+  //   donationImpact.coverageMonths >= 1
+  //     ? donationImpact.coverageMonths.toFixed(1)
+  //     : donationImpact.coverageMonths > 0
+  //       ? donationImpact.coverageMonths.toFixed(2)
+  //       : "0";
 
   const leftOverlay = (
     <Stack gap="md">
