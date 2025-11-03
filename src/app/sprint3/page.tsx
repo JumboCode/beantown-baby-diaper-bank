@@ -1,5 +1,6 @@
 "use client";
 
+import RakshiElchinMap from "@/components/sprint3/RakshiElchinMap";
 import { Container, Title, Paper } from "@mantine/core";
 
 export default function Sprint3Page() {
