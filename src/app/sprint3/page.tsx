@@ -1,5 +1,6 @@
 "use client";
 
+import RakshiElchinMap from "@/components/sprint3/RakshiElchinMap";
 import { Container, Title, Paper } from "@mantine/core";
 
 export default function Sprint3Page() {
@@ -33,7 +34,9 @@ export default function Sprint3Page() {
         mb="xs">
         Rakshi - Elchin
       </Title>
-      <div>{/* Rakshi - Elchin map goes here */}</div>
+      <div>
+        <RakshiElchinMap />
+      </div>
 
       <Title
         order={2}
