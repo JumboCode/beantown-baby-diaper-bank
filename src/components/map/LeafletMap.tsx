@@ -1,7 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useMemo, useState, type ReactNode } from "react";
+import { useMemo, type ReactNode } from "react";
 import { Loader } from "@mantine/core";
 import { useLeafletMap } from "./useLeafletMap";
 import { useBaseTileLayer } from "./useBaseTileLayer";
@@ -11,12 +11,11 @@ import type * as Leaflet from "leaflet";
 import { Baby } from "lucide-react";
 import { renderToString } from "react-dom/server";
 
-
 // NEW: bring in Leaflet runtime for icons, and popup content + types
-import * as L from "leaflet";
+// import * as L from "leaflet";
 import { DotPopupContent } from "@/lib/DotPopupContent";
 import type { DotDatum } from "@/lib/DotPopupContent";
-import { Tooltip } from "react-leaflet";
+// import { Tooltip } from "react-leaflet";
 
 // Dynamically import react-leaflet components with SSR disabled
 // because they depend on the browser environment (e.g., window, document).
@@ -41,10 +40,10 @@ const Marker = dynamic(
   { ssr: false }
 );
 
-const Popup = dynamic(
-  () => import("react-leaflet").then((module) => module.Popup),
+const Tooltip = dynamic(
+  () => import("react-leaflet").then((module) => module.Tooltip),
   { ssr: false }
-);  
+);
 
 
 type LeafletMapProps = {
@@ -72,7 +71,8 @@ export default function LeafletMap({
 }: LeafletMapProps) {
   const { mapConfig } = useLeafletMap();
   const { style: mapStyle, ...mapOptions } = mapConfig;
-  const [mapInstance, setMapInstance] = useState<Leaflet.Map | null>(null);
+  // const [mapInstance, setMapInstance] = useState<Leaflet.Map | null>(null);
+  const mapRef = useRef<Leaflet.Map | null>(null);
 
   const normalizedRegions = useMemo<RegionsGeoJSON>(() => {
     if (!regions || Array.isArray(regions)) {
@@ -94,41 +94,28 @@ export default function LeafletMap({
     choroplethBuckets,
   });
 
-  // const circleDotIcon = useMemo(() => {
-  //   return L.divIcon({
-  //     className: "temp-square-icon",
-  //     html: `
-  //       <div
-  //         style="
-  //           width:20px;
-  //           height:20px;
-  //           background-color:#008080; /* blue-800 */
-  //           border:1px solid white;
-  //           border-radius:5px;
-  //           box-shadow:0 0 4px rgba(0,0,0,0.5);
-  //         "
-  //       ></div>
-  //     `,
-  //     iconSize: [16, 16],
-  //     iconAnchor: [8, 8], // center icon over the lat/lng
-  //   });
-  // }, []);
-
   const babyIcon = useMemo(() => {
-    // Convert the Lucide React icon into an SVG string
+    // Only run in browser
+    if (typeof window === "undefined") {
+      return null;
+    }
+  
+    // import leaflet at runtime, after window exists
+    const L = require("leaflet");
+  
     const svgString = renderToString(
       <Baby size={30} color="#008080" strokeWidth={3.5} />
     );
   
-    // Use it as the HTML for a Leaflet divIcon
     return L.divIcon({
       className: "custom-baby-icon",
       html: svgString,
-      iconSize: [30, 30],     // pixel dimensions of the icon
-      iconAnchor: [12, 12],   // center the icon on the map coordinate
-      popupAnchor: [0, -12],  // offset popups above the icon
+      iconSize: [30, 30],
+      iconAnchor: [12, 12],
+      popupAnchor: [0, -12],
     });
   }, []);
+  
 
   return (
     <div
@@ -140,17 +127,21 @@ export default function LeafletMap({
       }}>
       <MapContainer
         {...mapOptions}
-        style={mapStyle}>
-        whenCreated={(map) => {
-          setMapInstance(map);
+        style={mapStyle}
+        whenReady={() => {
+          // whenReady fires after initial render
+          // we can ensure the ref is populated
+          if (!mapRef.current) return;
+          // mapRef.current is your Leaflet map instance
         }}
+      >
         <TileLayer {...tileLayerProps} />
         <GeoJSON {...geoJsonProps} />
         {dotData.map((dot) => (
           <Marker
             key={dot.cityId}
             position={[dot.lat, dot.lng]}
-            icon={babyIcon}
+            {...(babyIcon ? { icon: babyIcon } : {})}
           >
             <Tooltip sticky direction="top" offset={[0, -10]}>
               <DotPopupContent
@@ -162,6 +153,7 @@ export default function LeafletMap({
           </Marker>
         ))}
       </MapContainer>
+
       {leftControls && (
         <div
           style={{
@@ -188,7 +180,7 @@ export default function LeafletMap({
           <div style={{ pointerEvents: "auto" }}>{rightControls}</div>
         </div>
       )}
-      {!mapInstance && <Loader />}
+      {!mapRef && <Loader />}
     </div>
   );
 }

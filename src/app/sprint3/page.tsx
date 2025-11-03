@@ -1,6 +1,6 @@
 "use client";
 
-import { Container, Title, Paper, Text } from "@mantine/core";
+import { Container, Title, Paper} from "@mantine/core";
 import HanahCaitlynButton from "../map/page"
 
 export default function Sprint3Page() {

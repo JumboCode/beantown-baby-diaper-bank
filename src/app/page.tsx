@@ -1,5 +1,4 @@
 "use client";
-import AryaaAshButton from "@/components/sprint1/AryaaAshButton";
 import {
   Container,
   Title,
@@ -20,7 +19,8 @@ import ButtonComponent from "@/components/sprint1/AnnarakshitcaitlynButton";
 import OurButton from "@/components/sprint1/KimhenaoButton";
 import ColinArayButton from "@/components/sprint1/ColinandarayButton";
 import ElchinMadelineButton from "@/components/sprint1/ElchinMadelineButton";
- 
+import AryaaAshButton from "@/components/sprint1/AryaaAshButton";
+
 
 export default function Home() {
   return (
