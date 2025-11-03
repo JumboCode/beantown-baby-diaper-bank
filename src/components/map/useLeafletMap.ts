@@ -13,13 +13,26 @@ type MapConfig = Pick<
 const DEFAULT_CENTER: LatLngTuple = [42.3601, -71.0589];
 const DEFAULT_ZOOM = 10;
 
-// Custom hook to provide Leaflet map configuration
+/**
+ * Creates and memoized a Leaflet map configuration for use with a MapContainer or similar map component.
+ *
+ * The configuration is created once and memoized with React's `useMemo` to avoid unnecessary re-renders
+ * when the map configuration is static. If the configuration must change based on props or state,
+ * include those dependencies in the `useMemo` dependency array so the memoized value updates correctly.
+ *
+ * The returned `mapConfig` includes common Leaflet options:
+ * - `center` — default map center coordinates (uses `DEFAULT_CENTER`).
+ * - `zoom` — default zoom level (uses `DEFAULT_ZOOM`).
+ * - `scrollWheelZoom` — whether scroll-wheel zooming is enabled.
+ * - `preferCanvas` — whether to prefer canvas rendering over SVG.
+ * - `minZoom` / `maxZoom` — allowed zoom range for the map.
+ * - `style` — inline style object for sizing the map container (e.g., `{ height: "100%", width: "100%" }`).
+ *
+ * @returns An object with a single property:
+ *  - `mapConfig`: a memoized `MapConfig` suitable for passing to a Leaflet `MapContainer` or analogous component.
+ *
+ */
 export function useLeafletMap() {
-  // Memoize the map configuration to avoid unnecessary re-renders
-  // of the MapContainer component.
-  // The configuration is static in this example, but if it were
-  // to depend on props or state, those dependencies should be
-  // included in the dependency array.
   const mapConfig = useMemo<MapConfig>(
     () => ({
       center: DEFAULT_CENTER,
