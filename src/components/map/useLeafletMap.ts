@@ -11,7 +11,7 @@ type MapConfig = Pick<
 
 // Default to Boston, MA
 const DEFAULT_CENTER: LatLngTuple = [42.3601, -71.0589];
-const DEFAULT_ZOOM = 10;
+const DEFAULT_ZOOM = 12.5;
 
 /**
  * Creates and memoized a Leaflet map configuration for use with a MapContainer or similar map component.
