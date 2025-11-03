@@ -8,7 +8,7 @@ import {
   Text,
   Card,
   Stack,
-  Divider,
+  // Divider,
 } from "@mantine/core";
 import ColinArayButton from "../../components/sprint1/ColinandarayButton";
 import AryaaAshButton from "../../components/sprint1/AryaaAshButton";
