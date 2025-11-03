@@ -3,6 +3,7 @@ import ColinMadelineAryaaHotmap from "@/components/sprint3/ColinMadelineAryaaHot
 import RakshiElchinMap from "@/components/sprint3/RakshiElchinMap";
 import HanahCaitlynMap from "@/components/sprint3/WeiKimMap";
 import { Container, Title, Paper } from "@mantine/core";
+import AshValentinaMap from "@/components/sprint3/AshValentinaMap";
 
 export default function Sprint3Page() {
   return (
@@ -46,15 +47,9 @@ export default function Sprint3Page() {
         mb="xs">
         Ashton - Valentina
       </Title>
-      <div>{/* Ashton - Valentina map goes here */}</div>
-
-      <Title
-        order={2}
-        mt="md"
-        mb="xs">
-        Ashton - Valentina
-      </Title>
-      <div>{/* Anna - Aray map goes here */}</div>
+      <div>
+        <AshValentinaMap />
+      </div>
 
       <Title
         order={2}
