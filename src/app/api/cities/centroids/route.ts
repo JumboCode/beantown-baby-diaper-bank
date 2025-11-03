@@ -1,7 +1,20 @@
 // Future implementation for city centroid API endpoint
 // TODO: Implement city centroid retrieval logic here
+import { prisma } from "@/lib/prisma";
+
+import { stringifyWithBigInt } from "@/lib/util";
 
 import { NextResponse } from "next/server";
+
+import {GeoJSON, GeoJsonObject, GeoJsonTypes, Feature, Geometry, Point} from "geojson";
+import { City } from "@/generated/prisma/client";
+
+export type CityWithCentroid = City & {
+  name: string,
+  id: number,
+
+  centroid: Point,
+}
 
 /**
  * GET /api/cities/centroids
@@ -29,11 +42,38 @@ import { NextResponse } from "next/server";
  *   }
  * }
  */
+
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   console.log("Received request for city centroid with params:", searchParams);
 
-  return new NextResponse("API endpoint is being developed.", {
-    status: 501,
-  });
+  try {
+    const result: CityWithCentroid = await prisma.$queryRaw`
+        SELECT
+          "id",
+          "name",
+          ST_AsGeoJSON("centroid")::json AS centroid
+        FROM "Cities"
+        WHERE "centroid" IS NOT NULL AND "name" ILIKE '%' || ${searchParams.get("name")} || '%'
+      `;
+      console.log("City centroid data retrieved:", result);
+
+      const point: Feature = {
+        type: "Feature",
+        geometry: result.centroid,
+        properties: {
+          id: result.id,
+          name: result.name,
+        },
+      }
+
+      console.log(point)
+
+      return new NextResponse(stringifyWithBigInt(point), {
+        status: 200,
+      });
+  } catch (error) {
+    console.error("Error fetching city centroid data:", error);
+    return new NextResponse("Internal Server Error", { status: 500 });
+  }
 }
