@@ -1,0 +1,588 @@
+openapi: 3.0.3
+info:
+  title: Beantown Baby Diaper Bank API
+  version: 1.0.0
+  description: >
+    MVP API for the Hot Map. Public read-only endpoints; admin endpoints for creating and updating data are JWT-protected. Fields of routes and JSON returned align with Prisma schema.
+
+servers:
+  - url: http://localhost:3000/api
+
+tags:
+  - name: Public
+    description: Read-only endpoints used by the Hot Map UI
+  - name: Admin
+    description: Admin-only data management
+  - name: Auth
+    description: Authentication for admin view
+
+paths:
+  ############################
+  # Public – Hot Map Reads  #
+  ############################
+
+  /cities:
+    get:
+      tags: [Public]
+      summary: List cities and their fields in database
+      responses:
+        "200":
+          description: Cities list with GeoJSON fields for city boundary and centroid
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/City" }
+  /cities/boundaries:
+    get:
+      tags: [Public]
+      summary: List city boundaries only
+      responses:
+        "200":
+          description: Cities list with only boundary GeoJSON field
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id: { type: integer }
+                    name: { type: string }
+                    boundary:
+                      type: object
+                      description: GeoJSON Polygon
+                      example:
+                        type: "Polygon"
+                        coordinates:
+                          - [
+                              [-71.11, 42.38],
+                              [-71.10, 42.38],
+                              [-71.10, 42.39],
+                              [-71.11, 42.39],
+                              [-71.11, 42.38],
+                            ]
+  /cities/centroids:
+    get:
+      tags: [Public]
+      summary: List city centroids only
+      responses:
+        "200":
+          description: Cities list with only centroid GeoJSON field
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id: { type: integer }
+                    name: { type: string }
+                    centroid:
+                      type: object
+                      description: GeoJSON Point
+                      example:
+                        { type: "Point", coordinates: [-71.0995, 42.3876] }
+
+  /cities/{id}/yearly:
+    get:
+      tags: [Public]
+      summary: Yearly totals for a city
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Yearly diaper distribution and babies helped data for the city
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/YearlyData" }
+        "404": { description: City not found }
+
+  /hotmap:
+    get:
+      tags: [Public]
+      summary: Get Hot Map data, aggregated by city with time filters
+      description: >
+        Aggregates distribution rows by city for the given filters and returns
+        totals plus partner marker metadata for rendering the Hot Map.
+      parameters:
+        - name: year
+          in: query
+          schema: { type: string }
+          description: Filter by year (e.g., "2025")
+        - name: month
+          in: query
+          schema: { type: string }
+          description: Optional month filter (e.g., "April")
+      responses:
+        "200":
+          description: Aggregated values by city for the requested filters
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HotmapResponse"
+  /partners:
+    get:
+      tags: [Public]
+      summary: List partners with basic info to display on map
+      responses:
+        "200":
+          description: Partner list
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/PartnerSimple" }
+
+  /partners/{id}:
+    get:
+      tags: [Public]
+      summary: Get partner details by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Partner details
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Partner" }
+        "404": { description: Partner not found }
+
+  ############################
+  # Admin – CRUD + Import   #
+  ############################
+
+  /admin/cities:
+    post:
+      tags: [Admin]
+      security: [{ bearerAuth: [] }]
+      summary: Create city
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CityInput" }
+      responses:
+        "201": { description: City created }
+    put:
+      tags: [Admin]
+      security: [{ bearerAuth: [] }]
+      summary: Update city
+      parameters:
+        - name: id
+          in: query
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CityInput" }
+      responses:
+        "200": { description: City updated }
+    delete:
+      tags: [Admin]
+      security: [{ bearerAuth: [] }]
+      summary: Delete city
+      parameters:
+        - name: id
+          in: query
+          required: true
+          schema: { type: integer }
+      responses:
+        "204": { description: City deleted }
+
+  /admin/distributions:
+    post:
+      tags: [Admin]
+      security: [{ bearerAuth: [] }]
+      summary: Create distribution row
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/DistributionInput" }
+      responses:
+        "201": { description: Distribution created }
+    put:
+      tags: [Admin]
+      security: [{ bearerAuth: [] }]
+      summary: Update distribution row
+      parameters:
+        - name: id
+          in: query
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/DistributionPartial" }
+      responses:
+        "200": { description: Distribution updated }
+    delete:
+      tags: [Admin]
+      security: [{ bearerAuth: [] }]
+      summary: Delete distribution row
+      parameters:
+        - name: id
+          in: query
+          required: true
+          schema: { type: integer }
+      responses:
+        "204": { description: Distribution deleted }
+
+  /admin/distributions/import:
+    post:
+      tags: [Admin]
+      security: [{ bearerAuth: [] }]
+      summary: Bulk import distributions from CSV
+      requestBody:
+        required: true
+        content:
+          text/csv:
+            schema:
+              type: string
+              format: binary
+            examples:
+              sample:
+                summary: Headers must match DistributionInput fields
+                description: >
+                  CSV with columns: partner_id,city_id,year,month,number_diapers,number_children,percentage
+                value: |
+                  partner_id,city_id,year,month,number_diapers,number_children,percentage
+                  3,2,2025,April,18450,163,0.15
+      responses:
+        "202": { description: Import accepted }
+
+  /admin/partners:
+    post:
+      tags: [Admin]
+      security: [{ bearerAuth: [] }]
+      summary: Create partner
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/PartnerInput" }
+      responses:
+        "201": { description: Partner created }
+    put:
+      tags: [Admin]
+      security: [{ bearerAuth: [] }]
+      summary: Update partner
+      parameters:
+        - name: id
+          in: query
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/PartnerPartial" }
+      responses:
+        "200": { description: Partner updated }
+    delete:
+      tags: [Admin]
+      security: [{ bearerAuth: [] }]
+      summary: Delete partner
+      parameters:
+        - name: id
+          in: query
+          required: true
+          schema: { type: integer }
+      responses:
+        "204": { description: Partner deleted }
+
+  ############################
+  # Auth – JWT (no DB req)  #
+  ############################
+
+  /auth/login:
+    post:
+      tags: [Auth]
+      summary: Login as admin (returns JWT)
+      description: >
+        MVP: Validate against env-based single admin credentials.
+        Future: swap to Users table without changing response.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email: { type: string, format: email }
+                password: { type: string }
+      responses:
+        "200":
+          description: Auth tokens
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthTokens"
+
+  /auth/refresh:
+    post:
+      tags: [Auth]
+      summary: Refresh access token
+      responses:
+        "200":
+          description: New access token
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  access_token: { type: string }
+
+  /auth/logout:
+    post:
+      tags: [Auth]
+      summary: Logout (invalidate refresh token/cookie)
+      responses:
+        "204": { description: Logged out }
+
+  /auth/me:
+    get:
+      tags: [Auth]
+      security: [{ bearerAuth: [] }]
+      summary: Get current admin profile
+      responses:
+        "200":
+          description: Current admin
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminUser"
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    ################
+    # Public Types #
+    ################
+    City:
+      description: City fields needed by the map
+      type: object
+      properties:
+        id: { type: integer }
+        name: { type: string }
+        centroid:
+          type: object
+          description: GeoJSON Point
+          example: { type: "Point", coordinates: [-71.0995, 42.3876] }
+        boundary:
+          type: object
+          description: GeoJSON Polygon
+          example:
+            type: "Polygon"
+            coordinates:
+              - [
+                  [-71.11, 42.38],
+                  [-71.10, 42.38],
+                  [-71.10, 42.39],
+                  [-71.11, 42.39],
+                  [-71.11, 42.38],
+                ]
+
+    Partner:
+      description: Matches Prisma model "Partner"
+      type: object
+      properties:
+        id: { type: integer }
+        name: { type: string }
+        description: { type: string }
+        start_partner: { type: string, format: date }
+        waitlisted: { type: boolean }
+        address: { type: string }
+        coords:
+          type: object
+          description: JSON field (lng/lat or structured)
+        logo_url: { type: string }
+
+    PartnerSimple:
+      description: Simplified Partner for listing
+      type: object
+      properties:
+        id: { type: integer }
+        name: { type: string }
+        logo_url: { type: string }
+
+    HotmapResponse:
+      type: object
+      properties:
+        filters:
+          type: object
+          properties:
+            year:
+              type: string
+              nullable: true
+            month:
+              type: string
+              nullable: true
+          description: Echoes the filters used to generate the response.
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/HotmapDataPoint"
+      required: [filters, data]
+
+    HotmapDataPoint:
+      description: Aggregated Hot Map data for a single city
+      type: object
+      properties:
+        city_id: { type: integer }
+        city_name: { type: string }
+        centroid:
+          type: object
+          description: GeoJSON Point representing the city centroid
+        totals:
+          $ref: "#/components/schemas/HotmapTotals"
+        partner_markers:
+          type: array
+          description: Partner locations displayed alongside the city
+          items:
+            $ref: "#/components/schemas/HotmapPartnerMarker"
+      required: [city_id, city_name, centroid, totals]
+
+    HotmapTotals:
+      description: Aggregated distribution metrics for a city
+      type: object
+      properties:
+        diapers: { type: integer, example: 18450 }
+        children: { type: integer, example: 163 }
+      required: [diapers, children]
+
+    HotmapPartnerMarker:
+      description: Partner organization metadata surfaced on the top-level map
+      type: object
+      properties:
+        partner_id: { type: integer }
+        partner_name: { type: string }
+        coords:
+          type: object
+          description: GeoJSON Point for the partner location
+        logo_url:
+          type: string
+          nullable: true
+          description: Public URL for the partner logo, if available
+      required: [partner_id, partner_name, coords]
+
+    YearlyData:
+      description: Matches Prisma model "YearlyData"
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        city_id: { type: integer }
+        year: { type: string }
+        num_diapers: { type: integer }
+        num_babies: { type: integer }
+
+    ################
+    # Admin Types  #
+    ################
+    CityInput:
+      description: Matches Prisma model "City"
+      type: object
+      required: [name, centroid]
+      properties:
+        name: { type: string }
+        centroid:
+          type: object
+          description: GeoJSON geometry(Point)
+        boundary:
+          type: object
+          description: GeoJSON geography(Polygon) (optional in MVP)
+
+    DistributionInput:
+      description: Matches Prisma model "Distribution"
+      type: object
+      required: [partner_id, city_id, year, month, number_diapers]
+      properties:
+        partner_id: { type: integer }
+        city_id: { type: integer }
+        year: { type: string }
+        month: { type: string }
+        number_diapers: { type: integer }
+        number_children: { type: integer }
+        percentage: { type: number }
+
+    DistributionPartial:
+      description: All fields optional for PATCH/PUT updates
+      type: object
+      properties:
+        partner_id: { type: integer }
+        city_id: { type: integer }
+        year: { type: string }
+        month: { type: string }
+        number_diapers: { type: integer }
+        number_children: { type: integer }
+        percentage: { type: number }
+
+    PartnerPartial:
+      description: All fields optional for PATCH/PUT updates
+      type: object
+      properties:
+        name: { type: string }
+        description: { type: string }
+        start_partner:
+          type: string
+          format: date
+          description: Optional (maps to startPartner)
+        waitlisted: { type: boolean }
+        address: { type: string }
+        coords:
+          type: object
+          description: JSON field (lng/lat or structured)
+        logo_url: { type: string }
+
+    PartnerInput:
+      description: Matches Prisma model "Partner"
+      type: object
+      required: [name]
+      properties:
+        name: { type: string }
+        description: { type: string }
+        start_partner:
+          type: string
+          format: date
+          description: Optional (maps to startPartner)
+        waitlisted: { type: boolean }
+        address: { type: string }
+        coords:
+          type: object
+          description: JSON field (lng/lat or structure you decide)
+        logo_url: { type: string }
+
+    ################
+    # Auth Types   #
+    ################
+    AuthTokens:
+      type: object
+      properties:
+        access_token: { type: string }
+        expires_in: { type: integer, example: 900, description: seconds }
+        refresh_token: { type: string }
+        token_type: { type: string, example: "Bearer" }
+
+    AdminUser:
+      type: object
+      properties:
+        email: { type: string, format: email }
+        role: { type: string, example: "admin" }
