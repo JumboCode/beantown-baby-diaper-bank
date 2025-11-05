@@ -1,22 +1,60 @@
 import { useState } from "react";
 import TimelineSlider from "./TimelineSlider";
+import { Button, Group } from "@mantine/core";
+
+const years = [2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025];
+const months = [
+  "January 2025",
+  "February 2025",
+  "March 2025",
+  "April 2025",
+  "May 2025",
+  "June 2025",
+  "July 2025",
+  "August 2025",
+  "September 2025",
+];
 
 export default function TimelineSliderControls() {
-  // Define state for the slider value and pass it to TimelineSlider
-  // this pattern allows the controls you create here to modify the slider
-  // state
   const [value, setValue] = useState(0);
+  const [monthlyOrYearly, setMonthlyOrYearly] = useState<"monthly" | "yearly">("monthly");
+
+  const dataLength = monthlyOrYearly === "monthly" ? months.length : years.length;
+
+  const decrement = () => setValue((v) => (v > 0 ? v - 1 : 0));
+  const increment = () => setValue((v) => (v < dataLength - 1 ? v + 1 : v));
+
+  // Reset value to 0 when switching between views to avoid out-of-range errors
+  const toggleView = () => {
+    setMonthlyOrYearly((prev) => (prev === "monthly" ? "yearly" : "monthly"));
+    setValue(0);
+  };
+
   return (
-    <>
-      {/* Example of how you could implement the buttons to control the slider */}
-      {/* TODO: Implement the buttons to control the slider */}
-      {/* <LeftButton onClick={() => setValue(value - 1)} /> */}
-      <TimelineSlider
-        monthlyOrYearly="monthly" // Example value, adjust as needed
-        value={value}
-        setValue={setValue}
-      />
-      {/* <RightButton onClick={() => setValue(value + 1)} /> */}
-    </>
+    <div>
+      <h1 style={{ color: "#21325b", fontWeight: 700 }}>Timeline Slider</h1>
+      <Button onClick={toggleView} variant="light" size="md" style={{ margin: "16px 0" }}>
+        Switch to {monthlyOrYearly === "monthly" ? "Yearly" : "Monthly"}
+      </Button>
+      <Group spacing="sm" mt={6} mb={16}>
+        <Button
+          variant="subtle"
+          size="sm"
+          onClick={decrement}
+          disabled={value === 0}
+        >
+          ← Previous
+        </Button>
+        <Button
+          variant="subtle"
+          size="sm"
+          onClick={increment}
+          disabled={value === dataLength - 1}
+        >
+          Next →
+        </Button>
+      </Group>
+      <TimelineSlider monthlyOrYearly={monthlyOrYearly} value={value} setValue={setValue} />
+    </div>
   );
 }
