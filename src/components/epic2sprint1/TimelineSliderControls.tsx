@@ -21,9 +21,6 @@ export default function TimelineSliderControls() {
 
   const dataLength = monthlyOrYearly === "monthly" ? months.length : years.length;
 
-  const decrement = () => setValue((v) => (v > 0 ? v - 1 : 0));
-  const increment = () => setValue((v) => (v < dataLength - 1 ? v + 1 : v));
-
   // Reset value to 0 when switching between views to avoid out-of-range errors
   const toggleView = () => {
     setMonthlyOrYearly((prev) => (prev === "monthly" ? "yearly" : "monthly"));
