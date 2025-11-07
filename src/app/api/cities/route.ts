@@ -1,17 +1,31 @@
 // TODO: Implement city API endpoint
-
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { Prisma as PrismaTypes } from "@/generated/prisma/client";
-import type { City, Partner } from "@/generated/prisma/client";
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
-
   const cityName = searchParams.get("name");
 
-  const where: PrismaTypes.CityWhereInput = {};
+  const cityWithRelationArgs = {
+    include: {
+      distributions: {
+        include: {
+          partner: true,
+        }
+      },
+      partnerRegions: {
+        include: {
+          partner: true,
+        }
+      }
+    }
+  } satisfies PrismaTypes.CityFindManyArgs;
 
+  type CityWithRelations = PrismaTypes.CityGetPayload<typeof cityWithRelationArgs>;
+
+  /* build filters based on city name */
+  const where: PrismaTypes.CityWhereInput = {};
   if (cityName) {
     where.name = {
       contains: cityName,
@@ -20,22 +34,11 @@ export async function GET(request: Request) {
   }
 
   try {
-    const cities: City[] = await prisma.city.findMany({
+    const cities: CityWithRelations[] = await prisma.city.findMany({
       where,
       orderBy: { name: "asc" },
-      include: {
-        distributions: {
-          include: {
-            partner: true,
-          }
-        },
-        partnerRegions: {
-          include: {
-            partner: true,
-          },
-        }
-      },
-    });
+      include: cityWithRelationArgs.include,
+    }); 
 
     const dataToReturn = cities.map((city) => ({
       id: Number(city.id),
@@ -49,7 +52,7 @@ export async function GET(request: Request) {
         percentage: distribution.percentage,
         partner: {
           id: Number(distribution.partnerId),
-          name: distribution.partner.name
+          name: distribution.partner?.name
         }
       })),
       partners: city.partnerRegions.map((partnerRegion) => ({
