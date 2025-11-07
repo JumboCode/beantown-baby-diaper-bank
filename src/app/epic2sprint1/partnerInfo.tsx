@@ -12,7 +12,7 @@ type Partner = {
 	start_partner: string | null;
 	waitlisted: boolean;
 	address: string | null;
-	coords: any;
+	coords: { lat: number; lng: number };
 	logo_url: string | null;
 };
 
