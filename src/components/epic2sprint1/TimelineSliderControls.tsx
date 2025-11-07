@@ -37,22 +37,6 @@ export default function TimelineSliderControls() {
         Switch to {monthlyOrYearly === "monthly" ? "Yearly" : "Monthly"}
       </Button>
       <Group spacing="sm" mt={6} mb={16}>
-        <Button
-          variant="subtle"
-          size="sm"
-          onClick={decrement}
-          disabled={value === 0}
-        >
-          ← Previous
-        </Button>
-        <Button
-          variant="subtle"
-          size="sm"
-          onClick={increment}
-          disabled={value === dataLength - 1}
-        >
-          Next →
-        </Button>
       </Group>
       <TimelineSlider monthlyOrYearly={monthlyOrYearly} value={value} setValue={setValue} />
     </div>
