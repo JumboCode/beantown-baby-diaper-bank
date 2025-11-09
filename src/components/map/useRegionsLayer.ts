@@ -10,8 +10,8 @@ export type ChoroplethBucket = {
 };
 
 type UseRegionsLayerOptions = {
-  regions: RegionsGeoJSON;
-  onRegionClick: (regionId: string) => void;
+  regions?: RegionsGeoJSON;
+  onRegionClick?: (regionId: string) => void;
   onRegionHover?: (regionId?: string) => void;
   highlightedRegionId?: string | null;
   choroplethData?: Record<string, number>;
@@ -68,12 +68,12 @@ export function useRegionsLayer({
       }
 
       const bucket = choroplethBuckets?.find(
-        (entry) => value >= entry.min && value <= entry.max,
+        (entry) => value >= entry.min && value <= entry.max
       );
 
       return bucket?.color ?? defaultFillColor;
     },
-    [choroplethData, choroplethBuckets, defaultFillColor],
+    [choroplethData, choroplethBuckets, defaultFillColor]
   );
 
   const style = useCallback<GeoJSONStyleFn>(
@@ -91,7 +91,7 @@ export function useRegionsLayer({
         fillColor: getFillColor(regionId),
       };
     },
-    [getFillColor, highlightedRegionId],
+    [getFillColor, highlightedRegionId]
   );
 
   // Handle feature clicks, binding to onRegionClick
@@ -105,7 +105,7 @@ export function useRegionsLayer({
       layer.on({
         click: () => {
           if (regionId) {
-            onRegionClick(regionId);
+            onRegionClick?.(regionId);
           }
         },
         mouseover: () => {
@@ -120,16 +120,16 @@ export function useRegionsLayer({
         },
       });
     },
-    [onRegionClick, onRegionHover],
+    [onRegionClick, onRegionHover]
   );
 
   const geoJsonProps = useMemo<GeoJSONProps>(
     () => ({
-      data: regions,
+      data: regions || { type: "FeatureCollection", features: [] },
       onEachFeature,
       style,
     }),
-    [onEachFeature, regions, style],
+    [onEachFeature, regions, style]
   );
 
   return { geoJsonProps };
