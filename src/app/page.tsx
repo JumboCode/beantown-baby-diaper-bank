@@ -16,6 +16,8 @@ import {
 } from "@mantine/core";
 import { FaGithub } from "react-icons/fa";
 
+import CityInfo from "../sprint4/cityInfo";
+
 export default function Home() {
   return (
     <Container size="lg" py="xl">
@@ -193,6 +195,14 @@ export default function Home() {
             <Anchor href="/sprint3">
               <Title order={2}>Click here for Sprint 3 Tickets</Title>
             </Anchor>
+          </Stack>
+        </Card>
+
+        <Card shadow="md" radius="md" withBorder>
+          <Stack gap="xs">
+            <Title order={2}>Sprint 4</Title>
+            <Divider />
+              <CityInfo/>
           </Stack>
         </Card>
 
