@@ -28,9 +28,7 @@ export default function TimelineSlider({
 
   return (
     <div>
-      <div style={{ marginBottom: 12, fontWeight: 600, fontSize: 18 }}>
-        {data[value]}
-      </div>
+      <div>{data[value]}</div>
       <Slider
         restrictToMarks
         min={0}
@@ -43,7 +41,7 @@ export default function TimelineSlider({
           label: typeof label === "number" ? label.toString() : "",
         }))}
         styles={{
-          markLabel: { fontSize: 12 }
+          markLabel: { fontSize: 12 },
         }}
       />
     </div>
