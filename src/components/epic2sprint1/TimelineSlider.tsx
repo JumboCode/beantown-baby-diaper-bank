@@ -34,6 +34,7 @@ export default function TimelineSlider({
       defaultValue={0}
       value={value}
       onChange={setValue}
+      color="#053766"
     />
   );
 }
