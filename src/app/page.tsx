@@ -190,6 +190,18 @@ export default function Home() {
             </Stack>
           </Card>
         </Paper>
+        <Card
+          shadow="sm"
+          radius="md"
+          withBorder>
+          <Stack gap="xs">
+            <Title order={2}>Main Map Page</Title>
+            <Divider />
+            <Anchor href="/main">
+              <Title order={2}>Click here for Main Map Page</Title>
+            </Anchor>
+          </Stack>
+        </Card>
 
         <Card
           shadow="sm"
