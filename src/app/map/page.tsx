@@ -15,7 +15,7 @@ import {
   Accordion,
 } from "@mantine/core";
 import { ExternalLink } from "lucide-react";
-import LeafletMap from "@/components/map/LeafletMap";
+import LeafletMap from "@/components/map/Map";
 import { baseRegions, regionImpact, regionDetails } from "@/data/map-data";
 
 const findRegionFeature = (regionId: string | null | undefined) =>
@@ -64,8 +64,7 @@ export default function MapPage() {
       style={{
         cursor: activeRegionStats ? "pointer" : "default",
         outline: "none",
-      }}
-    >
+      }}>
       <Stack gap="sm">
         <Group justify="space-between">
           <Title order={4}>Region spotlight</Title>
@@ -75,43 +74,56 @@ export default function MapPage() {
               color="teal"
               radius="xl"
               size={26}
-              aria-hidden
-            >
+              aria-hidden>
               <ExternalLink size={16} />
             </ThemeIcon>
           )}
         </Group>
         {activeRegionStats ? (
           <Stack gap="xs">
-            <Group justify="space-between" align="center">
+            <Group
+              justify="space-between"
+              align="center">
               <Text fw={600}>{activeRegionLabel}</Text>
-              <Group gap="xs" align="center">
-                <Badge variant="light" color="teal">
+              <Group
+                gap="xs"
+                align="center">
+                <Badge
+                  variant="light"
+                  color="teal">
                   Active
                 </Badge>
               </Group>
             </Group>
             <Text size="sm">
-              <Text component="span" fw={600}>
+              <Text
+                component="span"
+                fw={600}>
                 {activeRegionStats.ChildrenServed.toLocaleString()}
               </Text>{" "}
               Children supported
             </Text>
             <Text size="sm">
-              <Text component="span" fw={600}>
+              <Text
+                component="span"
+                fw={600}>
                 {activeRegionStats.diapersDelivered.toLocaleString()}
               </Text>{" "}
               diapers delivered YTD
             </Text>
             <Text size="sm">
               Partner sites:{" "}
-              <Text component="span" fw={600}>
+              <Text
+                component="span"
+                fw={600}>
                 {activeRegionStats.partnerSites}
               </Text>
             </Text>
           </Stack>
         ) : (
-          <Text size="sm" c="dimmed">
+          <Text
+            size="sm"
+            c="dimmed">
             Click a region to see local distribution metrics.
           </Text>
         )}
@@ -126,28 +138,38 @@ export default function MapPage() {
         onClose={handleModalClose}
         size="lg"
         title={
-          <Text inherit fw={600} fz={30}>
+          <Text
+            inherit
+            fw={600}
+            fz={30}>
             Our impact in{" "}
-            <Mark fw={800} color="clear" c="red" variant="light">
+            <Mark
+              fw={800}
+              color="clear"
+              c="red"
+              variant="light">
               {modalRegionLabel}
             </Mark>
           </Text>
         }
-        centered
-      >
+        centered>
         {modalRegionDetails && modalRegionStats ? (
           <Stack gap="md">
             <Text size="md">{modalRegionDetails.description}</Text>
             <Divider />
             <Title order={4}>Impact Metrics</Title>
             <Text size="sm">
-              <Text component="span" fw={600}>
+              <Text
+                component="span"
+                fw={600}>
                 {modalRegionStats.ChildrenServed.toLocaleString()}
               </Text>{" "}
               Children supported YTD
             </Text>
             <Text size="sm">
-              <Text component="span" fw={600}>
+              <Text
+                component="span"
+                fw={600}>
                 {modalRegionStats.diapersDelivered.toLocaleString()}
               </Text>{" "}
               diapers delivered YTD
@@ -158,12 +180,16 @@ export default function MapPage() {
             </Title>
             <Accordion>
               {modalRegionDetails.partners.map((partner) => (
-                <Accordion.Item key={partner} value={partner}>
+                <Accordion.Item
+                  key={partner}
+                  value={partner}>
                   <Accordion.Control>{partner}</Accordion.Control>
                   <Accordion.Panel>
                     <Text size="sm">
                       Learn more about{" "}
-                      <Text component="span" fw={600}>
+                      <Text
+                        component="span"
+                        fw={600}>
                         {partner}
                       </Text>
                       &apos;s work in the community.
@@ -174,16 +200,18 @@ export default function MapPage() {
             </Accordion>
           </Stack>
         ) : (
-          <Text size="sm" c="dimmed">
+          <Text
+            size="sm"
+            c="dimmed">
             Select a region to explore detailed impact metrics.
           </Text>
         )}
       </Modal>
       <div className="w-full h-[100vh]">
         <LeafletMap
-          regions={baseRegions}
-          onRegionClick={setSelectedRegionId}
-          leftControls={leftOverlay}
+        // regions={baseRegions}
+        // onRegionClick={setSelectedRegionId}
+        // leftControls={leftOverlay}
         />
       </div>
     </div>
