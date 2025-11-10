@@ -1,8 +1,8 @@
-const nextConfig = {
-  experimental: {
-    outputFileTracingIncludes: {
-      "/": ["./src/generated/prisma/**"],
-    },
+import { NextConfig } from "next";
+
+const nextConfig: NextConfig = {
+  outputFileTracingIncludes: {
+    "/": ["./src/generated/prisma/**"],
   },
 };
 
