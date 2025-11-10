@@ -33,8 +33,6 @@ export type CityWithCentroid = City & {
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
-  console.log("Received request for city centroid with params:", searchParams);
-
   try {
     const result: CityWithCentroid[] = await prisma.$queryRaw`
         SELECT
