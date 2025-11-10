@@ -5,34 +5,62 @@ import { useState } from 'react';
 const cities = ['Boston', 'Medford', 'Somerville', 'Arlington', 'Cambridge', 'Quincy', 'Brookline', 'Newton', 'Watertown'];
 const countries = ['United States', 'Canada'];
 
+// Checks if input is a number (can be decimal)
+const requiredNumber = (label: string) => (value: unknown) => {
+	const v = (value === 0 ? '0' : (value ?? '')).toString().trim();
+	if (v === '') return `${label} is required`;
+	return /^-?\d+(\.\d+)?$/.test(v) ? null : `${label} must be a number`;
+};
+// Checks if input is an integer 
+const requiredInteger = (label: string) => (value: unknown) => {
+	const v = (value === 0 ? '0' : (value ?? '')).toString().trim();
+	if (v === '') return `${label} is required`;
+	return /^\d+$/.test(v) ? null : `${label} must be a number`;
+};
+
 
 export default function CityInfo() {
 	const [selectedCities, setSelectedCities] = useState<string[]>([]);
 	const [selectedCountry, setSelectedCountry] = useState<string | null>(null);
 	const [percentages, setPercentages] = useState<Record<string, number>>({});
+
 	const form = useForm({
 		mode: 'controlled',
+		validateInputOnChange: true,
+		validateInputOnBlur: true,
 		initialValues: {
-			organization: "",
-			description: "",
-			time: "",
-			latitude: "",
-			longitude: "",
-			addressLine: "",
-			city: "",
-			state: "",
-			zipCode: ""
+			organization: '',
+			description: '',
+			time: '',
+			cities: [] as string[],
+			status: '',
+			latitude: '',
+			longitude: '',
+			addressLine: '',
+			city: '',
+			state: '',
+			zipCode: '',
+			country: '',
+			logoFile: null as File | null,
+			logoUrl: '',
 		},
-
 		validate: {
-			organization: (value) => (/^[A-Za-z\s]+$/.test(value.trim()) ? null : "Organization name must be a string"),
-                        time: (value) => (/^[0-9]*$/.test(value.trim()) ? null : 'Time must be a number'),
-                        latitude: (value) => (/^[0-9]*$/.test(value.trim()) ? null : 'Latitude must be a number'),
-                        longitude: (value) => (/^[0-9]*$/.test(value.trim()) ? null : 'Longitude must be a number'),
-			state: (value) => (/^[A-Za-z\s]+$/.test(value.trim()) ? null : "State name must be a string"),
-                        zipCode: (value) => (/^[0-9]*$/.test(value.trim()) ? null : 'Zip Code must be a number'),
-		}
-	})
+			organization: (value) => (typeof value === 'string' ? null : 'Organization name must be a string'),
+			time: requiredInteger('Time'),
+			cities: (value) => (value.length > 0 ? null : 'Pick at least one city'),
+			latitude: requiredNumber('Latitude'),
+			longitude: requiredNumber('Longitude'),
+			state: (value) => (typeof value === 'string' ? null : 'State name must be a string'),
+			zipCode: requiredInteger('Zip Code'),
+			country: (value) => (value ? null : 'Select a country'),
+			status: (value) => (value ? null : 'Select a status'),
+			logoFile: (_value, values) => (!values.logoFile && !values.logoUrl.trim() ? 'Provide a file or a link' : null),
+			logoUrl: (value, values) => {
+				if (!value.trim() && !values.logoFile) return 'Provide a file or a link';
+				return typeof value === 'string' ? null : 'Enter a valid URL';
+			},
+		},
+	});
 	return (
 		<div>
 			<div className='mb-5'>
@@ -41,7 +69,7 @@ export default function CityInfo() {
 			</div>
 
 			<div className='p-4 border border-gray-300 rounded-xl'>
-				<form onSubmit={form.onSubmit(console.log)} className='flex flex-col gap-5'>
+				<form onSubmit={form.onSubmit((values) => console.log(values))} className='flex flex-col gap-5'>
 					<Group justify='space-between' align='flex-start'>
 						<Text fw={600}>Name of Organzation <span className='text-red-600'>*</span></Text>
 						<TextInput
@@ -57,12 +85,12 @@ export default function CityInfo() {
 					<Group justify='space-between' align='flex-start'>
 						<Text fw={600}>Description <span className='text-red-600'>*</span></Text>
 						<Textarea
-                                                        key={form.key('description')}
+							key={form.key('description')}
 							{...form.getInputProps('description')}
 							size="md"
 							className='min-w-170'
 							radius="md"
-                                                        required
+							required
 						/>
 					</Group>
 
@@ -74,8 +102,13 @@ export default function CityInfo() {
 							data={cities}
 							searchable
 							nothingFoundMessage="Nothing found..."
+							key={form.key('cities')}
 							value={selectedCities}
-							onChange={setSelectedCities}
+							onChange={(values) => {
+								setSelectedCities(values);
+								form.setFieldValue('cities', values);
+							}}
+							error={form.errors.cities}
 							size="md"
 							className='min-w-170'
 							radius="md"
@@ -123,52 +156,65 @@ export default function CityInfo() {
 						)}
 					</Group>
 
-					<Group justify='space-between' align='flex-start'>
-						<Text fw={600}>Time it started <span className='text-red-600'>*</span></Text>
-						<TextInput
-							placeholder='Time'
-                                                        key={form.key('time')}
-							{...form.getInputProps('time')}
-							size="md"
-							className='min-w-170'
-							radius="md"
-                                                        required
-						/>
-					</Group>
+			<Group justify='space-between' align='flex-start'>
+				<Text fw={600}>Time it started <span className='text-red-600'>*</span></Text>
+				<NumberInput
+					placeholder='Time'
+					key={form.key('time')}
+					value={form.values.time as any}
+					onChange={(val) => {
+						const valStr = val?.toString() || '';
+						if (valStr.length <= 4) {
+							form.setFieldValue('time', val as any);
+						}
+					}}
+					error={form.errors.time}
+					size="md"
+					className='min-w-170'
+					radius="md"
+					min={0}
+					max={9999}
+					step={1}
+					clampBehavior="strict"
+				/>
+			</Group>
+			<Radio.Group key={form.key('status')} {...form.getInputProps('status')} error={form.errors.status} required>
+				<Group>
+					<Text fw={600}>Status <span className='text-red-600'>*</span></Text>
+					<div className='flex gap-40 ml-72'>
+						<Radio value="active" label="Active" />
+						<Radio value="waitlisted" label="Waitlisted" />
+					</div>
 
-					<Radio.Group name="status" required>
-						<Group>
-							<Text fw={600}>Status <span className='text-red-600'>*</span></Text>
-							<div className='flex gap-40 ml-72'>
-								<Radio value="active" label="Active" />
-								<Radio value="waitlisted" label="Waitlisted" />
-							</div>
-
-						</Group>
-					</Radio.Group>
+				</Group>
+			</Radio.Group>
 
 
 
 					<Group justify='space-between' align='flex-start'>
 						<Text fw={600}>Coords <span className='text-red-600'>*</span></Text>
 						<div className='gap-4 flex'>
-							<TextInput
+							<NumberInput
 								placeholder='Latitude'
-                                                                key={form.key('latitude')}
-                                                                {...form.getInputProps('latitude')}
+								key={form.key('latitude')}
+								value={form.values.latitude as any}
+								onChange={(val) => form.setFieldValue('latitude', val as any)}
+								error={form.errors.latitude}
 								size="md"
 								className='min-w-83'
 								radius="md"
-                                                                required
+								step={0.0001}
 							/>
-							<TextInput
+							<NumberInput
 								placeholder='Longitude'
-                                                                key={form.key('longitude')}
-                                                                {...form.getInputProps('longitude')}
+								key={form.key('longitude')}
+								value={form.values.longitude as any}
+								onChange={(val) => form.setFieldValue('longitude', val as any)}
+								error={form.errors.longitude}
 								size="md"
 								className='min-w-83'
 								radius="md"
-								required
+								step={0.0001}
 							/>
 						</div>
 					</Group>
@@ -205,43 +251,76 @@ export default function CityInfo() {
 							/>
 						</div>
 						<div className='gap-4 flex ml-90'>
-							<TextInput
+							<NumberInput
 								placeholder='Zip Code'
 								key={form.key('zipCode')}
-								{...form.getInputProps('zipCode')}
+								value={form.values.zipCode as any}
+								onChange={(val) => form.setFieldValue('zipCode', val as any)}
+								error={form.errors.zipCode}
 								size="md"
 								className='min-w-83'
 								radius="md"
-								required
+								step={1}
+								min={0}
 							/>
-							<Select
-								placeholder="Country"
-								data={countries}
-								searchable
-								nothingFoundMessage="Nothing found..."
-								value={selectedCountry}
-								onChange={setSelectedCountry}
-								size="md"
-								className='min-w-83'
-								radius="md"
-							/>
+						<Select
+							placeholder="Country"
+							data={countries}
+							searchable
+							nothingFoundMessage="Nothing found..."
+							key={form.key('country')}
+							value={form.values.country || null}
+							onChange={(val) => {
+								setSelectedCountry(val);
+								form.setFieldValue('country', val || '');
+							}}
+							error={form.errors.country}
+							size="md"
+							className='min-w-83'
+							radius="md"
+						/>
 						</div>
 					</Group>
 					<Group justify='space-between' align='flex-start'>
-						<Text fw={600}>Upload Logo</Text>
-						<FileInput
-							accept="image/png,image/jpeg"
-							placeholder="Upload files"
-							size="md"
-							className='min-w-170'
-							radius="md"
-						/>
+						<Text fw={600}>Logo file or link</Text>
+						<div className='gap-4 flex'>
+							<FileInput
+								accept="image/png,image/jpeg"
+								placeholder="Upload image file"
+								radius="md"
+								clearable
+								value={form.values.logoFile}
+								onChange={(file) => form.setFieldValue('logoFile', file)}
+								error={form.errors.logoFile || form.errors.logoUrl}
+								className='min-w-83'
+							/>
+							<TextInput
+								placeholder='Logo URL'
+								key={form.key('logoUrl')}
+								{...form.getInputProps('logoUrl')}
+								radius="md"
+								className='min-w-83'
+							/>
+						</div>
 					</Group>
 
 
 					<Group justify="flex-end" mt="md">
-						<Button variant="outline" color="#053766" radius="md">Cancel</Button>
-						<Button variant="filled" color="#053766" radius="md" type="submit">Upload</Button>
+						<Button
+							variant="outline"
+							color="#053766"
+							radius="md"
+							type="button"
+							onClick={() => {
+								form.reset();
+								setSelectedCities([]);
+								setPercentages({});
+								setSelectedCountry(null);
+							}}
+						>
+							Cancel
+						</Button>
+						<Button variant="filled" color="#053766" radius="md" type="submit">Submit</Button>
 					</Group>
 				</form>
 			</div>
