@@ -1,20 +1,13 @@
-// Future implementation for city centroid API endpoint
-// TODO: Implement city centroid retrieval logic here
-import { prisma } from "@/lib/prisma";
-
-import { stringifyWithBigInt } from "@/lib/util";
-
+import { Feature, Point } from "geojson";
 import { NextResponse } from "next/server";
 
-import {GeoJSON, GeoJsonObject, GeoJsonTypes, Feature, Geometry, Point} from "geojson";
 import { City } from "@/generated/prisma/client";
+import { prisma } from "@/lib/prisma";
+import { stringifyWithBigInt } from "@/lib/util";
 
 export type CityWithCentroid = City & {
-  name: string,
-  id: number,
-
-  centroid: Point,
-}
+  centroid: Point;
+};
 
 /**
  * GET /api/cities/centroids
@@ -25,10 +18,6 @@ export type CityWithCentroid = City & {
  * @returns A GEOJSON response containing the city centroid data.
  * Example response:
  * {
- *   "data": {
- *     "type": "FeatureCollection",
- *     "features": [
- *       {
  *         "type": "Feature",
  *         "geometry": {
  *           "type": "Point",
@@ -36,9 +25,8 @@ export type CityWithCentroid = City & {
  *         },
  *         "properties": {
  *           "name": "Boston",
+ *          "id": 1
  *         }
- *       }
- *     ]
  *   }
  * }
  */
@@ -48,30 +36,38 @@ export async function GET(request: Request) {
   console.log("Received request for city centroid with params:", searchParams);
 
   try {
-    const result: CityWithCentroid = await prisma.$queryRaw`
+    const result: CityWithCentroid[] = await prisma.$queryRaw`
         SELECT
           "id",
           "name",
           ST_AsGeoJSON("centroid")::json AS centroid
         FROM "Cities"
         WHERE "centroid" IS NOT NULL AND "name" ILIKE '%' || ${searchParams.get("name")} || '%'
+        ORDER BY "name"
+        LIMIT 1
       `;
-      console.log("City centroid data retrieved:", result);
 
-      const point: Feature = {
-        type: "Feature",
-        geometry: result.centroid,
-        properties: {
-          id: result.id,
-          name: result.name,
-        },
-      }
+    const processedResult = result[0];
 
-      console.log(point)
+    if (!processedResult) {
+      console.log("No city found matching the provided name.");
+      return new NextResponse("City not found", { status: 404 });
+    }
 
-      return new NextResponse(stringifyWithBigInt(point), {
-        status: 200,
-      });
+    const feature: Feature<Point, { name: string; id: number }> = {
+      type: "Feature",
+      geometry: processedResult.centroid,
+      properties: {
+        name: processedResult.name ?? "Unknown",
+        id: Number(processedResult.id),
+      },
+    };
+
+    const data_response = stringifyWithBigInt(feature);
+
+    return new NextResponse(data_response, {
+      status: 200,
+    });
   } catch (error) {
     console.error("Error fetching city centroid data:", error);
     return new NextResponse("Internal Server Error", { status: 500 });
