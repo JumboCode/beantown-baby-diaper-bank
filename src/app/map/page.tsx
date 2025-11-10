@@ -15,7 +15,7 @@ import {
   Accordion,
 } from "@mantine/core";
 import { ExternalLink } from "lucide-react";
-import LeafletMap from "@/components/map/LeafletMap";
+import LeafletMap from "@/components/map/Map";
 import { baseRegions, regionImpact, regionDetails } from "@/data/map-data";
 
 const findRegionFeature = (regionId: string | null | undefined) =>
@@ -209,9 +209,9 @@ export default function MapPage() {
       </Modal>
       <div className="w-full h-[100vh]">
         <LeafletMap
-          regions={baseRegions}
-          onRegionClick={setSelectedRegionId}
-          leftControls={leftOverlay}
+        // regions={baseRegions}
+        // onRegionClick={setSelectedRegionId}
+        // leftControls={leftOverlay}
         />
       </div>
     </div>

@@ -190,6 +190,30 @@ export default function Home() {
             </Stack>
           </Card>
         </Paper>
+        <Card
+          shadow="sm"
+          radius="md"
+          withBorder>
+          <Stack gap="xs">
+            <Title order={2}>Main Map Page</Title>
+            <Divider />
+            <Anchor href="/main">
+              <Title order={2}>Click here for Main Map Page</Title>
+            </Anchor>
+          </Stack>
+        </Card>
+        <Card
+          shadow="sm"
+          radius="md"
+          withBorder>
+          <Stack gap="xs">
+            <Title order={2}>Admin Page</Title>
+            <Divider />
+            <Anchor href="/admin">
+              <Title order={2}>Click here for Admin Page</Title>
+            </Anchor>
+          </Stack>
+        </Card>
 
         <Card
           shadow="sm"
@@ -225,6 +249,19 @@ export default function Home() {
             <Divider />
             <Anchor href="/sprint3">
               <Title order={2}>Click here for Sprint 3 Tickets</Title>
+            </Anchor>
+          </Stack>
+        </Card>
+
+        <Card
+          shadow="md"
+          radius="md"
+          withBorder>
+          <Stack gap="xs">
+            <Title order={2}>Epic 2 Sprint 1 Tickets</Title>
+            <Divider />
+            <Anchor href="/epic2sprint1">
+              <Title order={2}>Click here for Epic 2 Sprint 1 Tickets</Title>
             </Anchor>
           </Stack>
         </Card>
