@@ -1,7 +1,13 @@
-// Future implementation for city centroid API endpoint
-// TODO: Implement city centroid retrieval logic here
-
+import { Feature, Point } from "geojson";
 import { NextResponse } from "next/server";
+
+import { City } from "@/generated/prisma/client";
+import { prisma } from "@/lib/prisma";
+import { stringifyWithBigInt } from "@/lib/util";
+
+export type CityWithCentroid = City & {
+  centroid: Point;
+};
 
 /**
  * GET /api/cities/centroids
@@ -12,10 +18,6 @@ import { NextResponse } from "next/server";
  * @returns A GEOJSON response containing the city centroid data.
  * Example response:
  * {
- *   "data": {
- *     "type": "FeatureCollection",
- *     "features": [
- *       {
  *         "type": "Feature",
  *         "geometry": {
  *           "type": "Point",
@@ -23,17 +25,49 @@ import { NextResponse } from "next/server";
  *         },
  *         "properties": {
  *           "name": "Boston",
+ *          "id": 1
  *         }
- *       }
- *     ]
  *   }
  * }
  */
+
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
-  console.log("Received request for city centroid with params:", searchParams);
+  try {
+    const result: CityWithCentroid[] = await prisma.$queryRaw`
+        SELECT
+          "id",
+          "name",
+          ST_AsGeoJSON("centroid")::json AS centroid
+        FROM "Cities"
+        WHERE "centroid" IS NOT NULL AND "name" ILIKE '%' || ${searchParams.get("name")} || '%'
+        ORDER BY "name"
+        LIMIT 1
+      `;
 
-  return new NextResponse("API endpoint is being developed.", {
-    status: 501,
-  });
+    const processedResult = result[0];
+
+    if (!processedResult) {
+      console.log("No city found matching the provided name.");
+      return new NextResponse("City not found", { status: 404 });
+    }
+
+    const feature: Feature<Point, { name: string; id: number }> = {
+      type: "Feature",
+      geometry: processedResult.centroid,
+      properties: {
+        name: processedResult.name ?? "Unknown",
+        id: Number(processedResult.id),
+      },
+    };
+
+    const data_response = stringifyWithBigInt(feature);
+
+    return new NextResponse(data_response, {
+      status: 200,
+    });
+  } catch (error) {
+    console.error("Error fetching city centroid data:", error);
+    return new NextResponse("Internal Server Error", { status: 500 });
+  }
 }
