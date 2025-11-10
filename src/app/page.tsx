@@ -202,6 +202,18 @@ export default function Home() {
             </Anchor>
           </Stack>
         </Card>
+        <Card
+          shadow="sm"
+          radius="md"
+          withBorder>
+          <Stack gap="xs">
+            <Title order={2}>Admin Page</Title>
+            <Divider />
+            <Anchor href="/admin">
+              <Title order={2}>Click here for Admin Page</Title>
+            </Anchor>
+          </Stack>
+        </Card>
 
         <Card
           shadow="sm"
