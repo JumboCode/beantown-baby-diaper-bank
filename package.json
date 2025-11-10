@@ -8,7 +8,7 @@
     "start": "next start",
     "lint": "eslint . --ext .ts,.tsx,.js,.jsx && prettier \"**/*.{ts,tsx,js,jsx,json,md,css}\" --check",
     "lint:fix": "eslint . --ext .ts,.tsx,.js,.jsx --fix && prettier \"**/*.{ts,tsx,js,jsx,json,md,css}\" --write",
-    "prisma:generate": "prisma generate",
+    "prisma:generate": "prisma generate --no-engine",
     "prisma:seed": "prisma db seed",
     "postinstall": "prisma generate"
   },
@@ -17,7 +17,8 @@
     "@mantine/form": "^8.3.2",
     "@mantine/notifications": "^8.3.2",
     "@mantine/styles": "^6.0.22",
-    "@prisma/client": "^6.18.0",
+    "@prisma/client": "^6.19.0",
+    "@prisma/extension-accelerate": "^2.0.2",
     "@types/geojson": "^7946.0.16",
     "d3": "^7.9.0",
     "dayjs": "^1.11.18",
@@ -55,9 +56,10 @@
     "install": "^0.13.0",
     "libpg-query": "^17.6.0",
     "npm": "^11.6.0",
-    "prisma": "^6.18.0",
+    "prisma": "^6.19.0",
     "tailwindcss": "^4",
     "ts-node": "^10.9.2",
+    "tsx": "^4.20.6",
     "typescript": "^5.9.3"
   }
 }
