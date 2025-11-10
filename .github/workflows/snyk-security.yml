@@ -21,11 +21,12 @@ jobs:
       - uses: actions/checkout@master
       - name: Run Snyk test (open source deps)
         uses: snyk/actions/node@master
-        continue-on-error: true # allow SARIF upload even when vulnerabilities are found
+        continue-on-error: true
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
         with:
-          args: test --sarif-file-output=snyk-deps.sarif --severity-threshold=high --all-projects
+          command: test
+          args: --sarif-file-output=snyk-deps.sarif --severity-threshold=high --all-projects
       - name: Run Snyk code test (SAST)
         uses: snyk/actions/node@master
         continue-on-error: true
