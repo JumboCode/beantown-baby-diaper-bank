@@ -70,6 +70,8 @@ export default function CityInfo() {
 
 			<div className='p-4 border border-gray-300 rounded-xl'>
 				<form onSubmit={form.onSubmit((values) => console.log(values))} className='flex flex-col gap-5'>
+
+					{/* Name of Organization */}
 					<Group justify='space-between' align='flex-start'>
 						<Text fw={600}>Name of Organzation <span className='text-red-600'>*</span></Text>
 						<TextInput
@@ -82,6 +84,8 @@ export default function CityInfo() {
 							required
 						/>
 					</Group>
+
+					{/* Description */}
 					<Group justify='space-between' align='flex-start'>
 						<Text fw={600}>Description <span className='text-red-600'>*</span></Text>
 						<Textarea
@@ -94,6 +98,7 @@ export default function CityInfo() {
 						/>
 					</Group>
 
+					{/* Cities Served */}
 					<Group align='right' justify='space-between'>
 						{/* Selected Cities MultiSelect */}
 						<Text fw={600}>Cities Served <span className='text-red-600'>*</span></Text>
@@ -115,6 +120,7 @@ export default function CityInfo() {
 						/>
 					</Group>
 
+					{/* Selected Cities Table with Percentages, sorry this looks digusting */}
 					<Group justify='space-between' align='flex-start'>
 						{/* Selected Cities Table */}
 						{selectedCities.length > 0 && (
@@ -156,41 +162,44 @@ export default function CityInfo() {
 						)}
 					</Group>
 
-			<Group justify='space-between' align='flex-start'>
-				<Text fw={600}>Time it started <span className='text-red-600'>*</span></Text>
-				<NumberInput
-					placeholder='Time'
-					key={form.key('time')}
-					value={form.values.time as any}
-					onChange={(val) => {
-						const valStr = val?.toString() || '';
-						if (valStr.length <= 4) {
-							form.setFieldValue('time', val as any);
-						}
-					}}
-					error={form.errors.time}
-					size="md"
-					className='min-w-170'
-					radius="md"
-					min={0}
-					max={9999}
-					step={1}
-					clampBehavior="strict"
-				/>
-			</Group>
-			<Radio.Group key={form.key('status')} {...form.getInputProps('status')} error={form.errors.status} required>
-				<Group>
-					<Text fw={600}>Status <span className='text-red-600'>*</span></Text>
-					<div className='flex gap-40 ml-72'>
-						<Radio value="active" label="Active" />
-						<Radio value="waitlisted" label="Waitlisted" />
-					</div>
+					{/* Time Started*/}
+					<Group justify='space-between' align='flex-start'>
+						<Text fw={600}>Time it started <span className='text-red-600'>*</span></Text>
+						<NumberInput
+							placeholder='Time'
+							key={form.key('time')}
+							value={form.values.time as any}
+							onChange={(val) => {
+								const valStr = val?.toString() || '';
+								if (valStr.length <= 4) {
+									form.setFieldValue('time', val as any);
+								}
+							}}
+							error={form.errors.time}
+							size="md"
+							className='min-w-170'
+							radius="md"
+							min={0}
+							max={9999}
+							step={1}
+							clampBehavior="strict"
+						/>
+					</Group>
 
-				</Group>
-			</Radio.Group>
+					{/* Status */}
+					<Radio.Group key={form.key('status')} {...form.getInputProps('status')} error={form.errors.status} required>
+						<Group>
+							<Text fw={600}>Status <span className='text-red-600'>*</span></Text>
+							<div className='flex gap-40 ml-72'>
+								<Radio value="active" label="Active" />
+								<Radio value="waitlisted" label="Waitlisted" />
+							</div>
+
+						</Group>
+					</Radio.Group>
 
 
-
+					{/* Latitude and Longitude */}
 					<Group justify='space-between' align='flex-start'>
 						<Text fw={600}>Coords <span className='text-red-600'>*</span></Text>
 						<div className='gap-4 flex'>
@@ -219,6 +228,7 @@ export default function CityInfo() {
 						</div>
 					</Group>
 
+					{/* Address */}
 					<Group justify='space-between' align='flex-start'>
 						<Text fw={600}>Address <span className='text-red-600'>*</span></Text>
 						<TextInput
@@ -281,6 +291,8 @@ export default function CityInfo() {
 						/>
 						</div>
 					</Group>
+
+					{/* Logo File Upload */}
 					<Group justify='space-between' align='flex-start'>
 						<Text fw={600}>Logo file or link</Text>
 						<div className='gap-4 flex'>
@@ -304,7 +316,7 @@ export default function CityInfo() {
 						</div>
 					</Group>
 
-
+					{/* Submit and Cancel Buttons */}
 					<Group justify="flex-end" mt="md">
 						<Button
 							variant="outline"
