@@ -95,8 +95,8 @@ export default function LeafletMap() {
       return {
         cityId: data["properties"]["id"],
         cityName: data["properties"]["name"],
-        lat: data["geometry"]["coordinates"][0],
-        lng: data["geometry"]["coordinates"][1],
+        lng: data["geometry"]["coordinates"][0],
+        lat: data["geometry"]["coordinates"][1],
       };
     }
   };
