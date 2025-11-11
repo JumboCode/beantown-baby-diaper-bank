@@ -1,7 +1,11 @@
 "use client";
 
-import LeafletMap from "@/components/map/Map";
+const LeafletMap = dynamic(() => import("@/components/map/Map"), {
+  ssr: false,
+});
+
 import { Paper, Box, Stack, Card, Title } from "@mantine/core";
+import dynamic from "next/dynamic";
 
 export default function Page() {
   return (

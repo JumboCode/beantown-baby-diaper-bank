@@ -5,6 +5,11 @@ import { useLeafletMap } from "./useLeafletMap";
 import { useBaseTileLayer } from "./useBaseTileLayer";
 import { useState, useEffect } from "react";
 import type { City } from "@/generated/prisma/client";
+import { Popup, TileLayer } from "react-leaflet";
+import { Icon } from "leaflet";
+
+import "leaflet/dist/leaflet.css";
+import { MapContainer } from "react-leaflet";
 
 // Dynamically import react-leaflet components with SSR disabled
 // because they depend on the browser environment (e.g., window, document).
@@ -32,26 +37,11 @@ export class LatLng {
 
 */
 
-export const Popup = dynamic(
-  () => import("react-leaflet").then((module) => module.Popup),
-  { ssr: false }
-);
-
-const MapContainer = dynamic(
-  () => import("react-leaflet").then((module) => module.MapContainer),
-  { ssr: false }
-);
-
-const TileLayer = dynamic(
-  () => import("react-leaflet").then((module) => module.TileLayer),
-  { ssr: false }
-);
-
 type coordinates = {
-  cityId: number,
-  cityName: string,
-  lat: number,
-  lng: number,
+  cityId: number;
+  cityName: string;
+  lat: number;
+  lng: number;
 };
 
 export default function LeafletMap() {
@@ -61,42 +51,55 @@ export default function LeafletMap() {
   const [cities, setCities] = useState<City[]>([]);
   const [coordinates, setCoordinates] = useState<coordinates[]>([]);
 
-  useEffect( () => {
-    const fetchCities = async() => {
+  // Use leaflet's Icon class to create a custom icon
+  // See https://leafletjs.com/reference.html#icon for more details
+  const customIcon = new Icon({
+    iconUrl: "/marker.svg",
+    iconSize: [32, 40],
+    iconAnchor: [16, 40],
+    popupAnchor: [0, -36],
+  });
+
+  useEffect(() => {
+    const fetchCities = async () => {
       const response = await fetch("/api/cities");
       const data = await response.json();
       setCities(data.data);
-    }
+    };
     fetchCities();
-  }, [])
+  }, []);
 
   useEffect(() => {
-    const updateCoordinates = async() => {
+    const updateCoordinates = async () => {
       if (cities.length === 0) return;
-      const coordinatePromises = cities.map((city) => getCoordinates(city.name));
+      const coordinatePromises = cities.map((city) =>
+        getCoordinates(city.name)
+      );
       const coordinateRes = await Promise.all(coordinatePromises);
-      const validCoordinates = coordinateRes.filter((coordinate) => coordinate !== undefined);
+      const validCoordinates = coordinateRes.filter(
+        (coordinate) => coordinate !== undefined
+      );
       setCoordinates(validCoordinates);
-    }
+    };
     updateCoordinates();
   }, [cities]);
 
   useEffect(() => {
-    console.log('latest coordinates', coordinates);
-  }, [coordinates])
+    console.log("latest coordinates", coordinates);
+  }, [coordinates]);
 
   const getCoordinates = async (name: string | null) => {
     if (name) {
       const response = await fetch(`/api/cities/centroids?name=${name}`);
       const data = await response.json();
       return {
-        cityId: data['properties']['id'],
-        cityName: data['properties']['name'],
-        lat: data['geometry']['coordinates'][0], 
-        lng: data['geometry']['coordinates'][1]
+        cityId: data["properties"]["id"],
+        cityName: data["properties"]["name"],
+        lat: data["geometry"]["coordinates"][0],
+        lng: data["geometry"]["coordinates"][1],
       };
     }
-  }
+  };
 
   return (
     <div
@@ -110,16 +113,18 @@ export default function LeafletMap() {
         {...mapOptions}
         style={mapStyle}>
         <TileLayer {...tileLayerProps} />
-        {(cities && coordinates) &&
-        coordinates.map(city => {
-          return (
-            <Marker key={city.cityId} position={{lat: city.lat, lng: city.lng}}>
-              <Popup>
-                {city.cityName}
-              </Popup>
-            </Marker>
-          )
-        })}
+        {cities &&
+          coordinates &&
+          coordinates.map((city) => {
+            return (
+              <Marker
+                key={city.cityId}
+                position={{ lat: city.lat, lng: city.lng }}
+                icon={customIcon}>
+                <Popup>{city.cityName}</Popup>
+              </Marker>
+            );
+          })}
       </MapContainer>
     </div>
   );
