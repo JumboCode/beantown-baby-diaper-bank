@@ -1,12 +1,16 @@
 openapi: 3.0.3
 info:
   title: Beantown Baby Diaper Bank API
-  version: 1.0.0
+  version: 1.0.1
   description: >
-    MVP API for the Hot Map. Public read-only endpoints; admin endpoints for creating and updating data are JWT-protected. Fields of routes and JSON returned align with Prisma schema.
+    OpenAPI specification for Beantown Baby Diaper Bank backend API.
+    This API provides endpoints for public data access, admin data management, and authentication. Currently in the beginning stages of development. We are only working on the Public endpoints for the Hot Map UI, and a few of the Admin endpoints for data management.
 
 servers:
   - url: http://localhost:3000/api
+    description: Local development server
+  - url: https://beantown-baby-diaper-bank.vercel.app/api
+    description: Production server
 
 tags:
   - name: Public
@@ -24,15 +28,39 @@ paths:
   /cities:
     get:
       tags: [Public]
-      summary: List cities and their fields in database
+      summary: Lists all cities with active (not waitlisted) partner data and aggregated distribution data
+      parameters:
+        - name: year
+          in: query
+          required: false
+          schema: { type: string }
+          description: Filter distributions by year (e.g., "2024")
+        - name: month
+          in: query
+          required: false
+          schema: { type: string }
+          description: Filter distributions by month (e.g., "March")
       responses:
         "200":
-          description: Cities list with GeoJSON fields for city boundary and centroid
+          description: Cities list with partners and totals
           content:
             application/json:
               schema:
                 type: array
                 items: { $ref: "#/components/schemas/City" }
+        "400":
+          description: Invalid year/month filter supplied
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Unexpected server error while aggregating city data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
   /cities/boundaries:
     get:
       tags: [Public]
@@ -48,24 +76,30 @@ paths:
                   type: object
                   properties:
                     id: { type: integer }
-                    name: { type: string }
                     boundary:
-                      type: object
-                      description: GeoJSON Polygon
-                      example:
-                        type: "Polygon"
-                        coordinates:
-                          - [
-                              [-71.11, 42.38],
-                              [-71.10, 42.38],
-                              [-71.10, 42.39],
-                              [-71.11, 42.39],
-                              [-71.11, 42.38],
-                            ]
+                      $ref: "#/components/schemas/GeoJSONPolygon"
+        "404":
+          description: No boundary data available
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Failed to load boundary data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
   /cities/centroids:
     get:
       tags: [Public]
       summary: List city centroids only
+      parameters:
+        - name: name
+          in: query
+          required: false
+          schema: { type: string }
+          description: Filter by city name (e.g., "Cambridge")
       responses:
         "200":
           description: Cities list with only centroid GeoJSON field
@@ -77,59 +111,25 @@ paths:
                   type: object
                   properties:
                     id: { type: integer }
-                    name: { type: string }
                     centroid:
-                      type: object
-                      description: GeoJSON Point
-                      example:
-                        { type: "Point", coordinates: [-71.0995, 42.3876] }
-
-  /cities/{id}/yearly:
-    get:
-      tags: [Public]
-      summary: Yearly totals for a city
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema: { type: integer }
-      responses:
-        "200":
-          description: Yearly diaper distribution and babies helped data for the city
+                      $ref: "#/components/schemas/GeoJSONPoint"
+        "404":
+          description: No centroids matched the filter
           content:
             application/json:
               schema:
-                type: array
-                items: { $ref: "#/components/schemas/YearlyData" }
-        "404": { description: City not found }
-
-  /hotmap:
-    get:
-      tags: [Public]
-      summary: Get Hot Map data, aggregated by city with time filters
-      description: >
-        Aggregates distribution rows by city for the given filters and returns
-        totals plus partner marker metadata for rendering the Hot Map.
-      parameters:
-        - name: year
-          in: query
-          schema: { type: string }
-          description: Filter by year (e.g., "2025")
-        - name: month
-          in: query
-          schema: { type: string }
-          description: Optional month filter (e.g., "April")
-      responses:
-        "200":
-          description: Aggregated values by city for the requested filters
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Failed to load centroid data
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/HotmapResponse"
+                $ref: "#/components/schemas/ErrorResponse"
+
   /partners:
     get:
       tags: [Public]
-      summary: List partners with basic info to display on map
+      summary: List all partners with all details to be displayed in admin view
       responses:
         "200":
           description: Partner list
@@ -137,7 +137,13 @@ paths:
             application/json:
               schema:
                 type: array
-                items: { $ref: "#/components/schemas/PartnerSimple" }
+                items: { $ref: "#/components/schemas/Partner" }
+        "500":
+          description: Failed to load partners
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
 
   /partners/{id}:
     get:
@@ -154,154 +160,93 @@ paths:
           content:
             application/json:
               schema: { $ref: "#/components/schemas/Partner" }
-        "404": { description: Partner not found }
+        "400":
+          description: Partner ID must be a positive integer
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Partner not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Failed to load partner details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /partners/percentages:
+    get:
+      tags: [Public]
+      summary: Get list of partners and their percentages contributed to each city they serve.
+      responses:
+        "200":
+          description: List of partners with percentages per city
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/PartnerCityPercentage" }
+        "404":
+          description: No partner percentage data available for the provided filters
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Failed to load partner percentage data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /timeline-slider:
+    get:
+      tags: [Public]
+      summary: Gets years and months that have distribution data for timeline slider.
+      responses:
+        "200":
+          description: List of years and months
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/TimelineSliderData" }
+        "500":
+          description: Failed to load timeline metadata
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /total-diapers:
+    get:
+      tags: [Public]
+      summary: Get total number of diapers distributed across all cities
+      responses:
+        "200":
+          description: Total diapers distributed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  total_diapers: { type: integer, example: 42630225 }
+        "500":
+          description: Failed to calculate total diapers distributed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
 
   ############################
   # Admin – CRUD + Import   #
   ############################
 
-  /admin/cities:
-    post:
-      tags: [Admin]
-      security: [{ bearerAuth: [] }]
-      summary: Create city
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema: { $ref: "#/components/schemas/CityInput" }
-      responses:
-        "201": { description: City created }
-    put:
-      tags: [Admin]
-      security: [{ bearerAuth: [] }]
-      summary: Update city
-      parameters:
-        - name: id
-          in: query
-          required: true
-          schema: { type: integer }
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema: { $ref: "#/components/schemas/CityInput" }
-      responses:
-        "200": { description: City updated }
-    delete:
-      tags: [Admin]
-      security: [{ bearerAuth: [] }]
-      summary: Delete city
-      parameters:
-        - name: id
-          in: query
-          required: true
-          schema: { type: integer }
-      responses:
-        "204": { description: City deleted }
-
-  /admin/distributions:
-    post:
-      tags: [Admin]
-      security: [{ bearerAuth: [] }]
-      summary: Create distribution row
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema: { $ref: "#/components/schemas/DistributionInput" }
-      responses:
-        "201": { description: Distribution created }
-    put:
-      tags: [Admin]
-      security: [{ bearerAuth: [] }]
-      summary: Update distribution row
-      parameters:
-        - name: id
-          in: query
-          required: true
-          schema: { type: integer }
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema: { $ref: "#/components/schemas/DistributionPartial" }
-      responses:
-        "200": { description: Distribution updated }
-    delete:
-      tags: [Admin]
-      security: [{ bearerAuth: [] }]
-      summary: Delete distribution row
-      parameters:
-        - name: id
-          in: query
-          required: true
-          schema: { type: integer }
-      responses:
-        "204": { description: Distribution deleted }
-
-  /admin/distributions/import:
-    post:
-      tags: [Admin]
-      security: [{ bearerAuth: [] }]
-      summary: Bulk import distributions from CSV
-      requestBody:
-        required: true
-        content:
-          text/csv:
-            schema:
-              type: string
-              format: binary
-            examples:
-              sample:
-                summary: Headers must match DistributionInput fields
-                description: >
-                  CSV with columns: partner_id,city_id,year,month,number_diapers,number_children,percentage
-                value: |
-                  partner_id,city_id,year,month,number_diapers,number_children,percentage
-                  3,2,2025,April,18450,163,0.15
-      responses:
-        "202": { description: Import accepted }
-
-  /admin/partners:
-    post:
-      tags: [Admin]
-      security: [{ bearerAuth: [] }]
-      summary: Create partner
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema: { $ref: "#/components/schemas/PartnerInput" }
-      responses:
-        "201": { description: Partner created }
-    put:
-      tags: [Admin]
-      security: [{ bearerAuth: [] }]
-      summary: Update partner
-      parameters:
-        - name: id
-          in: query
-          required: true
-          schema: { type: integer }
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema: { $ref: "#/components/schemas/PartnerPartial" }
-      responses:
-        "200": { description: Partner updated }
-    delete:
-      tags: [Admin]
-      security: [{ bearerAuth: [] }]
-      summary: Delete partner
-      parameters:
-        - name: id
-          in: query
-          required: true
-          schema: { type: integer }
-      responses:
-        "204": { description: Partner deleted }
+  # TODO: Admin endpoints to be added in future sprints
 
   ############################
   # Auth – JWT (no DB req)  #
@@ -383,23 +328,11 @@ components:
       properties:
         id: { type: integer }
         name: { type: string }
-        centroid:
-          type: object
-          description: GeoJSON Point
-          example: { type: "Point", coordinates: [-71.0995, 42.3876] }
-        boundary:
-          type: object
-          description: GeoJSON Polygon
-          example:
-            type: "Polygon"
-            coordinates:
-              - [
-                  [-71.11, 42.38],
-                  [-71.10, 42.38],
-                  [-71.10, 42.39],
-                  [-71.11, 42.39],
-                  [-71.11, 42.38],
-                ]
+        partners:
+          type: array
+          items: { $ref: "#/components/schemas/PartnerSimple" }
+        num_diapers: { type: integer }
+        num_babies: { type: integer }
 
     Partner:
       description: Matches Prisma model "Partner"
@@ -423,6 +356,16 @@ components:
         id: { type: integer }
         name: { type: string }
         logo_url: { type: string }
+
+    PartnerCityPercentage:
+      description: Partner with percentage contributed to a city
+      type: object
+      properties:
+        partner_id: { type: integer }
+        partner_name: { type: string }
+        city_id: { type: integer }
+        city_name: { type: string }
+        percentage: { type: number }
 
     HotmapResponse:
       type: object
@@ -450,7 +393,8 @@ components:
         city_id: { type: integer }
         city_name: { type: string }
         centroid:
-          type: object
+          allOf:
+            - $ref: "#/components/schemas/GeoJSONPoint"
           description: GeoJSON Point representing the city centroid
         totals:
           $ref: "#/components/schemas/HotmapTotals"
@@ -476,7 +420,8 @@ components:
         partner_id: { type: integer }
         partner_name: { type: string }
         coords:
-          type: object
+          allOf:
+            - $ref: "#/components/schemas/GeoJSONPoint"
           description: GeoJSON Point for the partner location
         logo_url:
           type: string
@@ -484,15 +429,86 @@ components:
           description: Public URL for the partner logo, if available
       required: [partner_id, partner_name, coords]
 
-    YearlyData:
-      description: Matches Prisma model "YearlyData"
+    TimelineSliderData:
+      description: Years and months with distribution data for timeline slider
       type: object
       properties:
-        id: { type: string, format: uuid }
-        city_id: { type: integer }
-        year: { type: string }
-        num_diapers: { type: integer }
-        num_babies: { type: integer }
+        years:
+          type: array
+          items: { type: string }
+        months:
+          type: array
+          items:
+            type: object
+            properties:
+              Month: { type: string }
+              Year: { type: string }
+
+    ################
+    # Shared Types #
+    ################
+    ErrorResponse:
+      description: Standard error payload for invalid requests or server failures
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: object
+          required: [code, message]
+          properties:
+            code: { type: string, example: "BAD_REQUEST" }
+            message:
+              {
+                type: string,
+                example: "Month must be one of: January, February, ...",
+              }
+
+    GeoJSONPoint:
+      description: GeoJSON Point as defined by RFC 7946 (longitude, latitude, optional altitude)
+      type: object
+      required: [type, coordinates]
+      properties:
+        type:
+          type: string
+          enum: [Point]
+        coordinates:
+          type: array
+          minItems: 2
+          items:
+            type: number
+          description: Position array ordered as [longitude, latitude, (optional) altitude]
+      example:
+        type: Point
+        coordinates: [-71.0995, 42.3876]
+
+    GeoJSONPolygon:
+      description: GeoJSON Polygon following RFC 7946 (outer ring first, subsequent holes)
+      type: object
+      required: [type, coordinates]
+      properties:
+        type:
+          type: string
+          enum: [Polygon]
+        coordinates:
+          type: array
+          minItems: 1
+          description: Array of linear rings; each ring has 4+ positions and is closed
+          items:
+            type: array
+            minItems: 4
+            items:
+              type: array
+              minItems: 2
+              items:
+                type: number
+      example:
+        type: Polygon
+        coordinates:
+          - - [-71.11, 42.38]
+            - [-71.10, 42.38]
+            - [-71.10, 42.39]
+            - [-71.11, 42.39]
+            - [-71.11, 42.38]
 
     ################
     # Admin Types  #
@@ -504,10 +520,12 @@ components:
       properties:
         name: { type: string }
         centroid:
-          type: object
+          allOf:
+            - $ref: "#/components/schemas/GeoJSONPoint"
           description: GeoJSON geometry(Point)
         boundary:
-          type: object
+          allOf:
+            - $ref: "#/components/schemas/GeoJSONPolygon"
           description: GeoJSON geography(Polygon) (optional in MVP)
 
     DistributionInput:
