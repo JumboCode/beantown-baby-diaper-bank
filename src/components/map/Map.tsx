@@ -128,8 +128,8 @@ export default function LeafletMap() {
         {cities &&
           coordinates &&
           coordinates.map((city) => {
-            let cityInfo = cities.find(info => Number(info.id) === city.cityId);
-            let partnerNames = cityInfo?.partners.map(partner => partner.name);
+            const cityInfo = cities.find(info => Number(info.id) === city.cityId);
+            const partnerNames = cityInfo?.partners.map(partner => partner.name);
             return (
               <Marker
                 key={city.cityId}

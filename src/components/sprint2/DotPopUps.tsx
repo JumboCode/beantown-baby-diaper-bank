@@ -40,7 +40,6 @@ export default function DotPopUps() {
           cityName={dot.cityName}
           numDiapers={dot.numDiapers}
           partnerOrgs={dot.partnerOrgs}
-          children={<CircleDot />}
         />
       ))}
     </div>
@@ -54,13 +53,10 @@ type InfoDisplayerProps = {
   childrenHelped?: number | null;
 }
 
-type SinglePopUpProps = InfoDisplayerProps & {
-  children: React.ReactNode,
-};
-
 export const InfoDisplayer = ({
   cityName,
   numDiapers,
+  childrenHelped,
   partnerOrgs,
 }: InfoDisplayerProps) => {
   return (
@@ -70,6 +66,7 @@ export const InfoDisplayer = ({
         City: {cityName}
       </p>
       <p> Diapers Distributed: {numDiapers?.toString()} </p>
+      <p> Children helped: {childrenHelped} </p>
       <PartnerInfo 
         name={partnerOrgs}
         fromMarker={true}
@@ -83,16 +80,17 @@ export const SinglePopUp = ({
   numDiapers,
   partnerOrgs,
   childrenHelped,
-  children,
-}: SinglePopUpProps) => {
+}: InfoDisplayerProps) => {
   const [opened, { close, open }] = useDisclosure(false);
 
   return (
     <Popover width={200} position="top" withArrow shadow="md" opened={opened}>
       <Popover.Target>
-        <div onMouseEnter={open} onMouseLeave={close}>
-          {children}
-        </div>
+        <CircleDot
+          style={{ color: "blue" }}
+          onMouseEnter={open}
+          onMouseLeave={close}
+        ></CircleDot>
       </Popover.Target>
       <Popover.Dropdown style={{ pointerEvents: "none" }}>
         <InfoDisplayer 
