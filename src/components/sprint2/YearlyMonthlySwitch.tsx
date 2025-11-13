@@ -1,24 +1,23 @@
-import { useState } from "react";
 import { Switch, Group, Text } from "@mantine/core";
 import Image from "next/image";
-export default function YearlyMonthlySwitch() {
-  // Create a state to track the current view
-  // view - current value/view (starts with "monthly")
-  // setView - a function to update view
-  const [view, setView] = useState("monthly"); // Create a state to track the switch's status
-  // checked - current status, true or false (starts with false)
-  // setChecked - a function to update checked
-  const [checked, setChecked] = useState(false);
-  const [monthlyColor, setMonthlyColor] = useState("#138D8A");
-  const [yearlyColor, setYearlyColor] = useState("#344054"); // Create a function that defines what happens when the switch is toggled
+
+type YearlyMonthlySwitchProps = {
+  value: "monthly" | "yearly";
+  onChange: (value: "monthly" | "yearly") => void;
+};
+
+export default function YearlyMonthlySwitch({
+  value,
+  onChange,
+}: YearlyMonthlySwitchProps) {
+  const isChecked = value === "yearly";
+
+  const monthlyColor = isChecked ? "#344054" : "#138D8A";
+  const yearlyColor = isChecked ? "#138D8A" : "#344054";
 
   function handleChange(event: React.ChangeEvent<HTMLInputElement>) {
-    // Store the NEW checked state from the switch
-    const isChecked = event.currentTarget.checked; // Update checked variable, using setChecked, to isChecked
-    setChecked(isChecked); // Update view using setView (if true, set to "yearly", if false, set to "monthly")
-    setView(isChecked ? "yearly" : "monthly");
-    setMonthlyColor(isChecked ? "#344054" : "#138D8A");
-    setYearlyColor(isChecked ? "#138D8A" : "#344054");
+    const isChecked = event.currentTarget.checked;
+    onChange(isChecked ? "yearly" : "monthly");
   }
 
   return (
@@ -37,7 +36,7 @@ export default function YearlyMonthlySwitch() {
             },
           }}
           size="xl"
-          checked={checked}
+          checked={isChecked}
           color="#E4E7EC"
           onChange={handleChange}
         />
@@ -45,16 +44,6 @@ export default function YearlyMonthlySwitch() {
           Yearly
         </Text>
       </Group>
-      <Image
-        src={
-          view === "yearly"
-            ? "/funnypictures/yearly.jpg"
-            : "/funnypictures/monthly.jpg"
-        }
-        width={500}
-        height={500}
-        alt={view === "yearly" ? "Yearly funny pic" : "Monthly funny pic"}
-      />
     </div>
   );
 }
