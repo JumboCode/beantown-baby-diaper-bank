@@ -12,17 +12,19 @@ export async function GET(request: Request) {
       distributions: {
         include: {
           partner: true,
-        }
+        },
       },
       partnerRegions: {
         include: {
           partner: true,
-        }
-      }
-    }
+        },
+      },
+    },
   } satisfies PrismaTypes.CityFindManyArgs;
 
-  type CityWithRelations = PrismaTypes.CityGetPayload<typeof cityWithRelationArgs>;
+  type CityWithRelations = PrismaTypes.CityGetPayload<
+    typeof cityWithRelationArgs
+  >;
 
   /* build filters based on city name */
   const where: PrismaTypes.CityWhereInput = {};
@@ -38,7 +40,7 @@ export async function GET(request: Request) {
       where,
       orderBy: { name: "asc" },
       include: cityWithRelationArgs.include,
-    }); 
+    });
 
     const dataToReturn = cities.map((city) => ({
       id: Number(city.id),
@@ -52,26 +54,23 @@ export async function GET(request: Request) {
         percentage: distribution.percentage,
         partner: {
           id: Number(distribution.partnerId),
-          name: distribution.partner?.name
-        }
+          name: distribution.partner?.name,
+        },
       })),
       partners: city.partnerRegions.map((partnerRegion) => ({
         id: Number(partnerRegion.partnerId),
         name: partnerRegion.partner.name,
+        logo_url: partnerRegion.partner.logoUrl,
       })),
     }));
 
-    return NextResponse.json(
-      { data: dataToReturn, }
-    );
+    return NextResponse.json({ data: dataToReturn });
   } catch (error) {
-    const message = error instanceof Error
-      ? error.message
-      : `Unable to retrieve from the database.`;
+    const message =
+      error instanceof Error
+        ? error.message
+        : `Unable to retrieve from the database.`;
 
-    return NextResponse.json(
-      { error: message },
-      { status: 500 },
-    );
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }
