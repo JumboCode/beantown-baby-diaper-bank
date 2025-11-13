@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { Container, Title, Paper, Divider, Text } from "@mantine/core";
 import ImpactModal from "../../components/ImpactModal";
 import OurSlider from "../../components/sprint2/OurSlider";
@@ -8,6 +9,10 @@ import YearlyMonthlySwitch from "@/components/sprint2/YearlyMonthlySwitch";
 import FileUpload from "@/components/sprint2/FileUpload";
 
 export default function Sprint2Page() {
+  const [billingPeriod, setBillingPeriod] = useState<"monthly" | "yearly">(
+    "monthly"
+  );
+
   return (
     <Container size="sm" py="xl">
       <Paper shadow="md" p="xl" radius="md" withBorder>
@@ -52,7 +57,10 @@ export default function Sprint2Page() {
         Yearly vs Monthly Switch
       </Title>
       <div>
-        <YearlyMonthlySwitch />
+        <YearlyMonthlySwitch
+          value={billingPeriod}
+          onChange={setBillingPeriod}
+        />
       </div>
 
       <div>{/* Yearly vs Monthly Switch component goes here */}</div>

@@ -1,5 +1,4 @@
 import { Switch, Group, Text } from "@mantine/core";
-import Image from "next/image";
 
 type YearlyMonthlySwitchProps = {
   value: "monthly" | "yearly";
