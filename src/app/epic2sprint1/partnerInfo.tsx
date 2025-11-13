@@ -16,7 +16,7 @@ type Partner = {
 };
 
 type PartnerInfoProps = {
-	name: string[] | undefined;
+	name?: string[] | undefined;
 	fromMarker?: boolean;
 }
 
@@ -62,7 +62,7 @@ export default function PartnerInfo({ name, fromMarker = false } : PartnerInfoPr
 			}
 		}
 
-		if (name) {
+		if (name && name.length > 0) {
 			loadSelectedPartners();
 		} else {
 			fetchPartner().then((data) => setData(data));
