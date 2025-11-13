@@ -18,6 +18,7 @@ type Partner = {
 export default function PartnerInfo() {
   const [data, setData] = useState<Partner[]>([]);
 
+  // Retrieve data from API, store each partner as Partner type
   useEffect(() => {
     const fetchAndStoreData = async () => {
       try {
@@ -45,6 +46,7 @@ function PartnerTable({ partners }: { partners: Partner[] }) {
   const tableData: TableData = {
     head: ['Name', 'Description', 'Partner Since', 'Status', 'Coordinates', 'Address'],
     body: partners.map((partner) => [
+      // Image if applicable, followed by name
       <div key={partner.id} className="flex items-center gap-3">
         {partner.logo_url && (
           <img
@@ -57,36 +59,40 @@ function PartnerTable({ partners }: { partners: Partner[] }) {
           />
         )}
         <span className="font-bold text-gray-900">{partner.name}</span>
-        </div>,
-        <div key={partner.id} className="text-sm text-gray-600 max-w-md">
-          {partner.description || <span className="text-gray-400 italic">No description</span>}
-        </div>,
-        <span key={partner.id} className="text-sm text-gray-600">
-          {partner.start_partner ? 
-            new Date(partner.start_partner).toLocaleDateString() : 
-            <span className="text-gray-400 italic">N/A</span>
-          }
-        </span>,
-        partner.waitlisted ? (
-          <span key={partner.id} className="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-amber-100 text-amber-800">
-            Waitlisted
-          </span>
-        ) : (
-          <span key={partner.id} className="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
-            Active
-          </span>
-        ),
-        <span key={partner.id} className="text-xs text-gray-500">
-          {partner.coords ? 
-            `${partner.coords.lat.toFixed(4)}, ${partner.coords.lng.toFixed(4)}` : 
-            <span className="text-gray-400 italic">N/A</span>
-          }
-        </span>,
-        <span key={partner.id} className="text-sm text-gray-600">
-          {partner.address || <span className="text-gray-400 italic">N/A</span>}
-        </span>,
-      ]
-    )
+      </div>,
+      // Description
+      <div key={partner.id} className="text-sm text-gray-600 max-w-md">
+        {partner.description || <span className="text-gray-400 italic">No description</span>}
+      </div>,
+      // Start partner date if applicable
+      <span key={partner.id} className="text-sm text-gray-600">
+        {partner.start_partner ? 
+          new Date(partner.start_partner).toLocaleDateString() : 
+          <span className="text-gray-400 italic">N/A</span>
+        }
+      </span>,
+      // Convert waitlisted boolean into output
+      partner.waitlisted ? (
+        <span key={partner.id} className="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-amber-100 text-amber-800">
+          Waitlisted
+        </span>
+      ) : (
+        <span key={partner.id} className="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+          Active
+        </span>
+      ),
+      // Coordinates if applicable
+      <span key={partner.id} className="text-xs text-gray-500">
+        {partner.coords ? 
+          `${partner.coords.lat.toFixed(4)}, ${partner.coords.lng.toFixed(4)}` : 
+           <span className="text-gray-400 italic">N/A</span>
+        }
+      </span>,
+      // Address if applicable
+      <span key={partner.id} className="text-sm text-gray-600">
+        {partner.address || <span className="text-gray-400 italic">N/A</span>}
+      </span>,
+    ])
   };
 
   return (
