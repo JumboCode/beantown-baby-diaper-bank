@@ -34,7 +34,7 @@ export default function Page() {
             p="md">
             {/* Partner Table Will Go Here */}
             {/* TODO: Replace the box component below with the actual Partner Table */}
-            <Box h={"50vh"}>
+            <Box h={"120vh"}>
               <PartnerTable />
             </Box>
           </Card>
