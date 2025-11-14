@@ -6,10 +6,25 @@ import { Prisma as PrismaTypes } from "@/generated/prisma/client";
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const cityName = searchParams.get("name");
+  const month = searchParams.get("month");
+  const year = searchParams.get("year");
+
+  if (month && !year) {
+    return NextResponse.json({ error: "Year must be provided if month is provided." }, { status: 400 });
+  }
+
+  let distributionWhere: PrismaTypes.DistributionWhereInput = {};
+  if (month) {
+    distributionWhere.month = month;
+  }
+  if (year) {
+    distributionWhere.year = year;
+  }
 
   const cityWithRelationArgs = {
     include: {
       distributions: {
+        where: distributionWhere,
         include: {
           partner: true,
         },
