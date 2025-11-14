@@ -15,8 +15,8 @@ import {
   ThemeIcon,
 } from "@mantine/core";
 import { FaGithub } from "react-icons/fa";
+import PartnerForm from "../sprint4/partnerForm";
 
-import CityInfo from "../sprint4/cityInfo";
 
 export default function Home() {
   return (
@@ -202,7 +202,7 @@ export default function Home() {
           <Stack gap="xs">
             <Title order={2}>Sprint 4</Title>
             <Divider />
-              <CityInfo/>
+              <PartnerForm/>
           </Stack>
         </Card>
 

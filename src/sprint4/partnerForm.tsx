@@ -1,5 +1,6 @@
 import { Button, Checkbox, Group, TextInput, MultiSelect, Text, Textarea, Table, NumberInput, Radio, FileInput, Select } from '@mantine/core';
 import { useForm } from '@mantine/form';
+import { MonthPickerInput } from '@mantine/dates';
 import { useState } from 'react';
 
 const cities = ['Boston', 'Medford', 'Somerville', 'Arlington', 'Cambridge', 'Quincy', 'Brookline', 'Newton', 'Watertown'];
@@ -19,9 +20,7 @@ const requiredInteger = (label: string) => (value: unknown) => {
 };
 
 
-export default function CityInfo() {
-	const [selectedCities, setSelectedCities] = useState<string[]>([]);
-	const [selectedCountry, setSelectedCountry] = useState<string | null>(null);
+export default function PartnerForm() {
 	const [percentages, setPercentages] = useState<Record<string, number>>({});
 
 	const form = useForm({
@@ -46,7 +45,7 @@ export default function CityInfo() {
 		},
 		validate: {
 			organization: (value) => (typeof value === 'string' ? null : 'Organization name must be a string'),
-			time: requiredInteger('Time'),
+			time: (value) => (value.length > 0 ? null : 'Select a start time'),
 			cities: (value) => (value.length > 0 ? null : 'Pick at least one city'),
 			latitude: requiredNumber('Latitude'),
 			longitude: requiredNumber('Longitude'),
@@ -67,6 +66,8 @@ export default function CityInfo() {
 				<h1 className='text-3xl font-semibold'>Add New Partner</h1>
 				<h2 className='text-lg text-gray-500'>Upload your partner data</h2>
 			</div>
+
+			
 
 			<div className='p-4 border border-gray-300 rounded-xl'>
 				<form onSubmit={form.onSubmit((values) => console.log(values))} className='flex flex-col gap-5'>
@@ -98,6 +99,8 @@ export default function CityInfo() {
 						/>
 					</Group>
 
+					
+
 					{/* Cities Served */}
 					<Group align='right' justify='space-between'>
 						{/* Selected Cities MultiSelect */}
@@ -108,9 +111,8 @@ export default function CityInfo() {
 							searchable
 							nothingFoundMessage="Nothing found..."
 							key={form.key('cities')}
-							value={selectedCities}
+							value={form.values.cities}
 							onChange={(values) => {
-								setSelectedCities(values);
 								form.setFieldValue('cities', values);
 							}}
 							error={form.errors.cities}
@@ -123,7 +125,7 @@ export default function CityInfo() {
 					{/* Selected Cities Table with Percentages, sorry this looks digusting */}
 					<Group justify='space-between' align='flex-start'>
 						{/* Selected Cities Table */}
-						{selectedCities.length > 0 && (
+						{form.values.cities.length > 0 && (
 							<>
 								<div></div>
 								<div className='min-w-170'>
@@ -135,7 +137,7 @@ export default function CityInfo() {
 											</Table.Tr>
 										</Table.Thead>
 										<Table.Tbody>
-											{selectedCities.map((city) => (
+											{form.values.cities.map((city) => (
 												<Table.Tr key={city}>
 													<Table.Td>{city}</Table.Td>
 													<Table.Td>
@@ -165,25 +167,13 @@ export default function CityInfo() {
 					{/* Time Started*/}
 					<Group justify='space-between' align='flex-start'>
 						<Text fw={600}>Time it started <span className='text-red-600'>*</span></Text>
-						<NumberInput
-							placeholder='Time'
-							key={form.key('time')}
-							value={form.values.time as any}
-							onChange={(val) => {
-								const valStr = val?.toString() || '';
-								if (valStr.length <= 4) {
-									form.setFieldValue('time', val as any);
-								}
-							}}
-							error={form.errors.time}
-							size="md"
-							className='min-w-170'
-							radius="md"
-							min={0}
-							max={9999}
-							step={1}
-							clampBehavior="strict"
-						/>
+						    <MonthPickerInput
+								placeholder="Pick date"
+								key={form.key('time')}
+								{...form.getInputProps('time')}
+								required
+								className = "min-w-170"
+							/>
 					</Group>
 
 					{/* Status */}
@@ -212,7 +202,7 @@ export default function CityInfo() {
 								size="md"
 								className='min-w-83'
 								radius="md"
-								step={0.0001}
+								hideControls
 							/>
 							<NumberInput
 								placeholder='Longitude'
@@ -223,7 +213,7 @@ export default function CityInfo() {
 								size="md"
 								className='min-w-83'
 								radius="md"
-								step={0.0001}
+								hideControls
 							/>
 						</div>
 					</Group>
@@ -270,8 +260,7 @@ export default function CityInfo() {
 								size="md"
 								className='min-w-83'
 								radius="md"
-								step={1}
-								min={0}
+								hideControls
 							/>
 						<Select
 							placeholder="Country"
@@ -281,7 +270,6 @@ export default function CityInfo() {
 							key={form.key('country')}
 							value={form.values.country || null}
 							onChange={(val) => {
-								setSelectedCountry(val);
 								form.setFieldValue('country', val || '');
 							}}
 							error={form.errors.country}
@@ -325,9 +313,7 @@ export default function CityInfo() {
 							type="button"
 							onClick={() => {
 								form.reset();
-								setSelectedCities([]);
 								setPercentages({});
-								setSelectedCountry(null);
 							}}
 						>
 							Cancel
