@@ -65,10 +65,6 @@ export async function GET(request: Request) {
       orderBy: { name: "asc" },
     });
 
-    // Look at your server console(i.e terminal) to see the retrieved partners
-    console.log(`Retrieved ${partners.length} partners from the database.`);
-    console.log(partners);
-
     // Format the partners for the response
     // everything needs to be serializable to JSON
     // Date objects are converted to ISO strings
