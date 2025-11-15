@@ -10,10 +10,13 @@ export async function GET(request: Request) {
   const year = searchParams.get("year");
 
   if (month && !year) {
-    return NextResponse.json({ error: "Year must be provided if month is provided." }, { status: 400 });
+    return NextResponse.json(
+      { error: "Year must be provided if month is provided." },
+      { status: 400 }
+    );
   }
 
-  let distributionWhere: PrismaTypes.DistributionWhereInput = {};
+  const distributionWhere: PrismaTypes.DistributionWhereInput = {};
   if (month) {
     distributionWhere.month = month;
   }
