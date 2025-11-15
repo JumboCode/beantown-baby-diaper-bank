@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Table, TableData } from "@mantine/core";
+import { Center, Loader, Skeleton, Table, TableData } from "@mantine/core";
 
 type Partner = {
   id: number;
@@ -17,9 +17,11 @@ type Partner = {
 
 export default function PartnerInfo() {
   const [data, setData] = useState<Partner[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
 
   // Retrieve data from API, store each partner as Partner type
   useEffect(() => {
+    setLoading(true);
     const fetchAndStoreData = async () => {
       try {
         const response = await fetch("http://localhost:3000/api/partners");
@@ -27,6 +29,8 @@ export default function PartnerInfo() {
         setData(result.data);
       } catch (err) {
         console.error("Error fetching data:", err);
+      } finally {
+        setLoading(false);
       }
     };
 
@@ -36,7 +40,13 @@ export default function PartnerInfo() {
   return (
     <div className="min-h-screen p-8">
       <div className="max-w-[95%] mx-auto">
-        <PartnerTable partners={data} />
+        {loading ? (
+          <Center className="h-64">
+            <Loader type="bars" />
+          </Center>
+        ) : (
+          <PartnerTable partners={data} />
+        )}
       </div>
     </div>
   );
