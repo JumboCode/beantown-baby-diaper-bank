@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Center, Loader, Skeleton, Table, TableData } from "@mantine/core";
+import { Center, Loader, Table, TableData } from "@mantine/core";
 
 type Partner = {
   id: number;
