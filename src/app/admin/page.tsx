@@ -32,8 +32,6 @@ export default function Page() {
             radius="lg"
             withBorder
             p="md">
-            {/* Partner Table Will Go Here */}
-            {/* TODO: Replace the box component below with the actual Partner Table */}
             <Box h={"120vh"}>
               <PartnerTable />
             </Box>
