@@ -21,8 +21,12 @@ export default function YearlyMonthlySwitch({
 
   return (
     <div className="flex flex-col gap-3 justify-center items-center">
-      <Group gap="md" wrap="nowrap">
-        <Text c={monthlyColor} size="lg">
+      <Group
+        gap="md"
+        wrap="nowrap">
+        <Text
+          c={monthlyColor}
+          size="lg">
           Monthly
         </Text>
         <Switch
@@ -39,7 +43,9 @@ export default function YearlyMonthlySwitch({
           color="#E4E7EC"
           onChange={handleChange}
         />
-        <Text c={yearlyColor} size="lg">
+        <Text
+          c={yearlyColor}
+          size="lg">
           Yearly
         </Text>
       </Group>

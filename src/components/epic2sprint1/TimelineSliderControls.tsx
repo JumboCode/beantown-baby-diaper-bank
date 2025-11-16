@@ -2,10 +2,8 @@ import { useTimelinePeriod } from "../useTimelinePeriod";
 import TimelineSlider from "./TimelineSlider";
 import { Group, Stack, ActionIcon } from "@mantine/core";
 import YearlyMonthlySwitch from "../sprint2/YearlyMonthlySwitch";
-
 export default function TimelineSliderControls() {
-  const { view, index, setIndex, toggleView, move, length } =
-    useTimelinePeriod();
+  const { view, index, setIndex, toggleView, move } = useTimelinePeriod();
 
   return (
     <Stack>
@@ -13,15 +11,13 @@ export default function TimelineSliderControls() {
 
       <YearlyMonthlySwitch
         value={view}
-        onChange={(newView) => {
-          if (newView !== view) {
-            toggleView();
-          }
-        }}
+        onChange={toggleView}
       />
 
       <Group align="flex-end">
-        <ActionIcon color="#053766" onClick={() => move(-1)}>
+        <ActionIcon
+          color="#053766"
+          onClick={() => move(-1)}>
           <img src="/timelineSlider/left.svg" />
         </ActionIcon>
 
@@ -33,7 +29,9 @@ export default function TimelineSliderControls() {
           />
         </div>
 
-        <ActionIcon color="#053766" onClick={() => move(1)}>
+        <ActionIcon
+          color="#053766"
+          onClick={() => move(1)}>
           <img src="/timelineSlider/right.svg" />
         </ActionIcon>
       </Group>
