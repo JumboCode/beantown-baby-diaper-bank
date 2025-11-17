@@ -9,15 +9,10 @@ export default function TimelineSliderControls() {
     <Stack>
       <h1 style={{ color: "#21325b", fontWeight: 700 }}>Timeline Slider</h1>
 
-      <YearlyMonthlySwitch
-        value={view}
-        onChange={toggleView}
-      />
+      <YearlyMonthlySwitch value={view} onChange={toggleView} />
 
       <Group align="flex-end">
-        <ActionIcon
-          color="#053766"
-          onClick={() => move(-1)}>
+        <ActionIcon color="#053766" onClick={() => move(-1)}>
           <img src="/timelineSlider/left.svg" />
         </ActionIcon>
 
@@ -29,9 +24,7 @@ export default function TimelineSliderControls() {
           />
         </div>
 
-        <ActionIcon
-          color="#053766"
-          onClick={() => move(1)}>
+        <ActionIcon color="#053766" onClick={() => move(1)}>
           <img src="/timelineSlider/right.svg" />
         </ActionIcon>
       </Group>

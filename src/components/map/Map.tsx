@@ -18,7 +18,7 @@ import { MapContainer } from "react-leaflet";
 
 export const Marker = dynamic(
   () => import("react-leaflet").then((module) => module.Marker),
-  { ssr: false }
+  { ssr: false },
 );
 
 /*
@@ -47,14 +47,14 @@ type Coordinates = {
 };
 
 type PartnerInfo = {
-  id: number,
-  name: string,
-}
+  id: number;
+  name: string;
+};
 
 type CityMapInfo = City & {
-  distributions: Distribution[],
-  partners: PartnerInfo[],
-}
+  distributions: Distribution[];
+  partners: PartnerInfo[];
+};
 
 export default function LeafletMap() {
   const { mapConfig } = useLeafletMap();
@@ -85,11 +85,11 @@ export default function LeafletMap() {
     const updateCoordinates = async () => {
       if (cities.length === 0) return;
       const coordinatePromises = cities.map((city) =>
-        getCoordinates(city.name)
+        getCoordinates(city.name),
       );
       const coordinateRes = await Promise.all(coordinatePromises);
       const validCoordinates = coordinateRes.filter(
-        (coordinate) => coordinate !== undefined
+        (coordinate) => coordinate !== undefined,
       );
       setCoordinates(validCoordinates);
     };
@@ -120,23 +120,27 @@ export default function LeafletMap() {
         height: "100%",
         width: "100%",
         zIndex: 0,
-      }}>
-      <MapContainer
-        {...mapOptions}
-        style={mapStyle}>
+      }}
+    >
+      <MapContainer {...mapOptions} style={mapStyle}>
         <TileLayer {...tileLayerProps} />
         {cities &&
           coordinates &&
           coordinates.map((city) => {
-            const cityInfo = cities.find(info => Number(info.id) === city.cityId);
-            const partnerNames = cityInfo?.partners.map(partner => partner.name);
+            const cityInfo = cities.find(
+              (info) => Number(info.id) === city.cityId,
+            );
+            const partnerNames = cityInfo?.partners.map(
+              (partner) => partner.name,
+            );
             return (
               <Marker
                 key={city.cityId}
                 position={{ lat: city.lat, lng: city.lng }}
-                icon={customIcon}>
+                icon={customIcon}
+              >
                 <Popup minWidth={280}>
-                  <InfoDisplayer 
+                  <InfoDisplayer
                     cityName={cityInfo?.name}
                     numDiapers={300}
                     childrenHelped={300}

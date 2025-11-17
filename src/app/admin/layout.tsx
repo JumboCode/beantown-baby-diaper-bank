@@ -8,21 +8,13 @@ import {
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   return (
-    <AppShell
-      padding="md"
-      header={{ height: 64 }}>
+    <AppShell padding="md" header={{ height: 64 }}>
       <AppShellHeader px="md">
-        <Group
-          h="100%"
-          justify="space-between">
-          <Text
-            fw={700}
-            c="blue.9">
+        <Group h="100%" justify="space-between">
+          <Text fw={700} c="blue.9">
             Beantown Baby Admin
           </Text>
-          <Text
-            size="sm"
-            c="dimmed">
+          <Text size="sm" c="dimmed">
             Rachel
           </Text>
         </Group>

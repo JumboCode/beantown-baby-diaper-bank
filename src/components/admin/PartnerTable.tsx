@@ -64,9 +64,7 @@ function PartnerTable({ partners }: { partners: Partner[] }) {
     ],
     body: partners.map((partner) => [
       // Image if applicable, followed by name
-      <div
-        key={partner.id}
-        className="flex items-center gap-3">
+      <div key={partner.id} className="flex items-center gap-3">
         {partner.logo_url && (
           <img
             src={partner.logo_url}
@@ -80,17 +78,13 @@ function PartnerTable({ partners }: { partners: Partner[] }) {
         <span className="font-bold text-gray-900">{partner.name}</span>
       </div>,
       // Description
-      <div
-        key={partner.id}
-        className="text-sm text-gray-600 max-w-md">
+      <div key={partner.id} className="text-sm text-gray-600 max-w-md">
         {partner.description || (
           <span className="text-gray-400 italic">No description</span>
         )}
       </div>,
       // Start partner date if applicable
-      <span
-        key={partner.id}
-        className="text-sm text-gray-600">
+      <span key={partner.id} className="text-sm text-gray-600">
         {partner.start_partner ? (
           new Date(partner.start_partner).toLocaleDateString()
         ) : (
@@ -101,20 +95,20 @@ function PartnerTable({ partners }: { partners: Partner[] }) {
       partner.waitlisted ? (
         <span
           key={partner.id}
-          className="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-amber-100 text-amber-800">
+          className="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-amber-100 text-amber-800"
+        >
           Waitlisted
         </span>
       ) : (
         <span
           key={partner.id}
-          className="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+          className="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800"
+        >
           Active
         </span>
       ),
       // Coordinates if applicable
-      <span
-        key={partner.id}
-        className="text-xs text-gray-500">
+      <span key={partner.id} className="text-xs text-gray-500">
         {partner.coords ? (
           `${partner.coords.lat.toFixed(4)}, ${partner.coords.lng.toFixed(4)}`
         ) : (
@@ -122,9 +116,7 @@ function PartnerTable({ partners }: { partners: Partner[] }) {
         )}
       </span>,
       // Address if applicable
-      <span
-        key={partner.id}
-        className="text-sm text-gray-600">
+      <span key={partner.id} className="text-sm text-gray-600">
         {partner.address || <span className="text-gray-400 italic">N/A</span>}
       </span>,
     ]),

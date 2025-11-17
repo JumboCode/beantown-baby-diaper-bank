@@ -7,17 +7,11 @@ export default function Page() {
       <Card>
         <Stack gap={4}>
           <Title order={2}>Hello, Rachel 👋</Title>
-          <Group
-            gap="xl"
-            wrap="wrap">
-            <Text
-              size="sm"
-              c="dimmed">
+          <Group gap="xl" wrap="wrap">
+            <Text size="sm" c="dimmed">
               Last data uploaded: Monday, 30 Aug, 2025
             </Text>
-            <Text
-              size="sm"
-              c="dimmed">
+            <Text size="sm" c="dimmed">
               Last updated: Friday, 2 Sep, 2025
             </Text>
           </Group>

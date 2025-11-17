@@ -41,15 +41,15 @@ export function useTimelinePeriod() {
         }
       });
     },
-    [length]
+    [length],
   );
 
   return {
-    view,      // "monthly" | "yearly"
-    index,     // current index
-    setIndex,  // setter
+    view, // "monthly" | "yearly"
+    index, // current index
+    setIndex, // setter
     toggleView,
     move,
-    length,    // number of months or years
+    length, // number of months or years
   };
 }
