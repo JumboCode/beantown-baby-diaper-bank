@@ -1,6 +1,6 @@
 "use client";
-import TimelineSliderControls from "@/components/epic2sprint1/TimelineSliderControls";
-import { Box, Paper, Stack, Title } from "@mantine/core";
+import TimelineSliderControls from "@/components/TimelineSliderControls";
+import { Box, Center, Paper, Stack, Title } from "@mantine/core";
 
 import PartnerInfo from "./partnerInfo";
 import dynamic from "next/dynamic";

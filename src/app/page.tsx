@@ -15,6 +15,7 @@ import {
   ThemeIcon,
 } from "@mantine/core";
 import { FaGithub } from "react-icons/fa";
+import PartnerForm from "../components/PartnerForm";
 
 export default function Home() {
   return (
@@ -263,6 +264,17 @@ export default function Home() {
             <Anchor href="/epic2sprint1">
               <Title order={2}>Click here for Epic 2 Sprint 1 Tickets</Title>
             </Anchor>
+          </Stack>
+        </Card>
+
+        <Card
+          shadow="md"
+          radius="md"
+          withBorder>
+          <Stack gap="xs">
+            <Title order={2}>Sprint 4</Title>
+            <Divider />
+            <PartnerForm />
           </Stack>
         </Card>
 
