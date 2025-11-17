@@ -5,6 +5,6 @@ import { NextResponse } from "next/server";
 export async function GET() {
   return NextResponse.json(
     { message: "City boundary endpoint not implemented yet." },
-    { status: 501 },
+    { status: 501 }
   );
 }
