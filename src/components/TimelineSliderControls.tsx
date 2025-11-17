@@ -1,7 +1,7 @@
-import { useTimelinePeriod } from "../useTimelinePeriod";
 import TimelineSlider from "./TimelineSlider";
 import { Group, Stack, ActionIcon } from "@mantine/core";
-import YearlyMonthlySwitch from "../sprint2/YearlyMonthlySwitch";
+import { useTimelinePeriod } from "./useTimelinePeriod";
+import YearlyMonthlySwitch from "./sprint2/YearlyMonthlySwitch";
 export default function TimelineSliderControls() {
   const { view, index, setIndex, toggleView, move } = useTimelinePeriod();
 

@@ -26,7 +26,7 @@ import LeafletMap from "./WeiKimLeafletMap";
 import type { ChoroplethBucket } from "./useRegionsLayerWeiKim";
 import type { RegionsGeoJSON } from "@/lib/types";
 import baseRegions from "./baseRegionsWeiKim";
-import type { DotDatum } from "@/lib/DotPopupContent";
+import type { DotDatum } from "@/components/DotPopupContent";
 
 const emptyRegions: RegionsGeoJSON = {
   type: "FeatureCollection",
@@ -161,7 +161,7 @@ export default function HanahCaitlynMap() {
     return {
       ...baseRegions,
       features: baseRegions.features.filter(
-        (feature) => feature.properties?.id === regionFilter,
+        (feature) => feature.properties?.id === regionFilter
       ),
     };
   }, [regionFilter, showRegions]);
@@ -195,7 +195,7 @@ export default function HanahCaitlynMap() {
         acc[regionId] = value;
         return acc;
       },
-      {} as Record<string, number>,
+      {} as Record<string, number>
     );
   }, []);
 
@@ -207,17 +207,17 @@ export default function HanahCaitlynMap() {
         label: feature.properties?.name ?? "Unnamed region",
       })),
     ],
-    [],
+    []
   );
 
   const hoveredRegionName =
     baseRegions.features.find(
-      (feature) => feature.properties?.id === hoveredRegionId,
+      (feature) => feature.properties?.id === hoveredRegionId
     )?.properties?.name ?? "None";
 
   const selectedRegionName =
     baseRegions.features.find(
-      (feature) => feature.properties?.id === selectedRegionId,
+      (feature) => feature.properties?.id === selectedRegionId
     )?.properties?.name ?? "None";
 
   const activeRegionId = selectedRegionId ?? hoveredRegionId ?? null;
@@ -227,7 +227,7 @@ export default function HanahCaitlynMap() {
 
   const activeRegionLabel =
     baseRegions.features.find(
-      (feature) => feature.properties?.id === activeRegionId,
+      (feature) => feature.properties?.id === activeRegionId
     )?.properties?.name ?? "Select a region";
 
   const modalRegionStats = modalRegionId
@@ -238,7 +238,7 @@ export default function HanahCaitlynMap() {
     : null;
   const modalRegionLabel =
     baseRegions.features.find(
-      (feature) => feature.properties?.id === modalRegionId,
+      (feature) => feature.properties?.id === modalRegionId
     )?.properties?.name ?? "Region detail";
   const isModalOpen = modalRegionId != null;
 
@@ -251,17 +251,15 @@ export default function HanahCaitlynMap() {
     const amount = Math.max(0, donationAmount);
     const effectiveBudget = amount * impactAssumptions.distributionEfficiency;
     const diapersFunded = Math.floor(
-      effectiveBudget / impactAssumptions.diaperCost,
+      effectiveBudget / impactAssumptions.diaperCost
     );
     const coverageWeeks = Math.floor(
-      diapersFunded / impactAssumptions.diapersPerChildPerWeek,
+      diapersFunded / impactAssumptions.diapersPerChildPerWeek
     );
     const coverageMonths = coverageWeeks / 4;
     const ChildrenPerMonth = Math.max(
       0,
-      Math.floor(
-        diapersFunded / (impactAssumptions.diapersPerChildPerWeek * 4),
-      ),
+      Math.floor(diapersFunded / (impactAssumptions.diapersPerChildPerWeek * 4))
     );
 
     return {
@@ -309,7 +307,11 @@ export default function HanahCaitlynMap() {
 
   const leftOverlay = (
     <Stack gap="md">
-      <Paper radius="lg" shadow="xl" withBorder p="md">
+      <Paper
+        radius="lg"
+        shadow="xl"
+        withBorder
+        p="md">
         <Stack gap="sm">
           <Title order={4}>Map Controls</Title>
           <Checkbox
@@ -325,31 +327,42 @@ export default function HanahCaitlynMap() {
             onChange={(value) => setRegionFilter(value ?? "all")}
             disabled={!showRegions}
           />
-          <Stack gap={0} mt="sm">
-            <Text size="sm" c="dimmed">
+          <Stack
+            gap={0}
+            mt="sm">
+            <Text
+              size="sm"
+              c="dimmed">
               Hovering:
             </Text>
-            <Badge color="teal" variant="light">
+            <Badge
+              color="teal"
+              variant="light">
               {hoveredRegionName}
             </Badge>
           </Stack>
           <Stack gap={0}>
-            <Text size="sm" c="dimmed">
+            <Text
+              size="sm"
+              c="dimmed">
               Last clicked:
             </Text>
-            <Badge color="blue" variant="light">
+            <Badge
+              color="blue"
+              variant="light">
               {selectedRegionName}
             </Badge>
           </Stack>
-          <Group justify="flex-end" mt="sm">
+          <Group
+            justify="flex-end"
+            mt="sm">
             <Button
               variant="subtle"
               size="xs"
               onClick={() => {
                 setRegionFilter("all");
                 setSelectedRegionId(null);
-              }}
-            >
+              }}>
               Reset
             </Button>
           </Group>
@@ -376,16 +389,21 @@ export default function HanahCaitlynMap() {
         style={{
           cursor: activeRegionStats ? "pointer" : "default",
           outline: "none",
-        }}
-      >
+        }}>
         <Stack gap="sm">
           <Title order={4}>Region spotlight</Title>
           {activeRegionStats ? (
             <Stack gap="xs">
-              <Group justify="space-between" align="center">
+              <Group
+                justify="space-between"
+                align="center">
                 <Text fw={600}>{activeRegionLabel}</Text>
-                <Group gap="xs" align="center">
-                  <Badge variant="light" color="teal">
+                <Group
+                  gap="xs"
+                  align="center">
+                  <Badge
+                    variant="light"
+                    color="teal">
                     Active
                   </Badge>
                   <ThemeIcon
@@ -393,32 +411,39 @@ export default function HanahCaitlynMap() {
                     color="teal"
                     radius="xl"
                     size={26}
-                    aria-hidden
-                  >
+                    aria-hidden>
                     <ExternalLink size={16} />
                   </ThemeIcon>
                 </Group>
               </Group>
               <Text size="sm">
-                <Text component="span" fw={600}>
+                <Text
+                  component="span"
+                  fw={600}>
                   {activeRegionStats.ChildrenServed.toLocaleString()}
                 </Text>{" "}
                 Children supported
               </Text>
               <Text size="sm">
-                <Text component="span" fw={600}>
+                <Text
+                  component="span"
+                  fw={600}>
                   {activeRegionStats.diapersDelivered.toLocaleString()}
                 </Text>{" "}
                 diapers delivered YTD
               </Text>
               <Text size="sm">
                 Partner sites:{" "}
-                <Text component="span" fw={600}>
+                <Text
+                  component="span"
+                  fw={600}>
                   {activeRegionStats.partnerSites}
                 </Text>
               </Text>
               <Stack gap={4}>
-                <Text size="xs" c="dimmed">
+                <Text
+                  size="xs"
+                  c="dimmed">
                   Fulfillment rate
                 </Text>
                 <Progress
@@ -433,7 +458,9 @@ export default function HanahCaitlynMap() {
               </Stack>
             </Stack>
           ) : (
-            <Text size="sm" c="dimmed">
+            <Text
+              size="sm"
+              c="dimmed">
               Hover or click a region to see local distribution metrics.
             </Text>
           )}
@@ -444,15 +471,23 @@ export default function HanahCaitlynMap() {
 
   const rightOverlay = (
     <Stack gap="md">
-      <Paper radius="lg" shadow="xl" withBorder p="md">
+      <Paper
+        radius="lg"
+        shadow="xl"
+        withBorder
+        p="md">
         <Stack gap="sm">
           <Group justify="space-between">
             <Title order={4}>Impact at a glance</Title>
-            <Badge color="teal" variant="dot">
+            <Badge
+              color="teal"
+              variant="dot">
               +{distributionSummary.yoyGrowth}% YoY
             </Badge>
           </Group>
-          <Group align="center" gap="md">
+          <Group
+            align="center"
+            gap="md">
             {/* <RingProgress
               size={120}
               thickness={12}
@@ -477,19 +512,25 @@ export default function HanahCaitlynMap() {
             /> */}
             <Stack gap={4}>
               <Text size="sm">
-                <Text component="span" fw={700}>
+                <Text
+                  component="span"
+                  fw={700}>
                   {distributionSummary.delivered.toLocaleString()}
                 </Text>{" "}
                 diapers delivered
               </Text>
               <Text size="sm">
-                <Text component="span" fw={700}>
+                <Text
+                  component="span"
+                  fw={700}>
                   {distributionSummary.ChildrenServed.toLocaleString()}
                 </Text>{" "}
                 Children served
               </Text>
               <Text size="sm">
-                <Text component="span" fw={700}>
+                <Text
+                  component="span"
+                  fw={700}>
                   {distributionSummary.partnerCount}
                 </Text>{" "}
                 partner sites
@@ -512,12 +553,19 @@ export default function HanahCaitlynMap() {
         </Stack>
       </Paper>
 
-      <Paper radius="lg" shadow="xl" withBorder p="md">
+      <Paper
+        radius="lg"
+        shadow="xl"
+        withBorder
+        p="md">
         <Stack gap="sm">
           <Title order={4}>Distribution legend</Title>
           <Stack gap="xs">
             {diaperLegendBuckets.map((bucket) => (
-              <Group key={bucket.label} justify="space-between" align="center">
+              <Group
+                key={bucket.label}
+                justify="space-between"
+                align="center">
                 <Group gap="sm">
                   <Box
                     style={{
@@ -529,7 +577,9 @@ export default function HanahCaitlynMap() {
                   />
                   <Text size="sm">{bucket.label}</Text>
                 </Group>
-                <Text size="xs" c="dimmed">
+                <Text
+                  size="xs"
+                  c="dimmed">
                   {bucket.max === Infinity
                     ? `${bucket.min.toLocaleString()}+`
                     : `${bucket.min.toLocaleString()}–${bucket.max.toLocaleString()}`}
@@ -540,15 +590,25 @@ export default function HanahCaitlynMap() {
         </Stack>
       </Paper>
 
-      <Paper radius="lg" shadow="xl" withBorder p="md">
+      <Paper
+        radius="lg"
+        shadow="xl"
+        withBorder
+        p="md">
         <Stack gap="md">
-          <Group justify="space-between" align="center">
+          <Group
+            justify="space-between"
+            align="center">
             <Title order={4}>Your impact</Title>
-            <Badge color="teal" variant="light">
+            <Badge
+              color="teal"
+              variant="light">
               ≈ ${impactAssumptions.diaperCost.toFixed(2)}/diaper
             </Badge>
           </Group>
-          <Text size="sm" c="dimmed">
+          <Text
+            size="sm"
+            c="dimmed">
             Estimate how far a contribution travels through our distribution
             network.
           </Text>
@@ -582,7 +642,9 @@ export default function HanahCaitlynMap() {
           <Grid gutter="md">
             <Grid.Col span={{ base: 12, sm: 4 }}>
               <Stack gap={2}>
-                <Text size="xs" c="dimmed">
+                <Text
+                  size="xs"
+                  c="dimmed">
                   Diapers funded
                 </Text>
                 <Text fw={700}>
@@ -592,7 +654,9 @@ export default function HanahCaitlynMap() {
             </Grid.Col>
             <Grid.Col span={{ base: 12, sm: 4 }}>
               <Stack gap={2}>
-                <Text size="xs" c="dimmed">
+                <Text
+                  size="xs"
+                  c="dimmed">
                   Weeks of care
                 </Text>
                 <Text fw={700}>
@@ -602,7 +666,9 @@ export default function HanahCaitlynMap() {
             </Grid.Col>
             <Grid.Col span={{ base: 12, sm: 4 }}>
               <Stack gap={2}>
-                <Text size="xs" c="dimmed">
+                <Text
+                  size="xs"
+                  c="dimmed">
                   Children/month supported
                 </Text>
                 <Text fw={700}>
@@ -612,7 +678,9 @@ export default function HanahCaitlynMap() {
             </Grid.Col>
           </Grid>
 
-          <Text size="xs" c="dimmed">
+          <Text
+            size="xs"
+            c="dimmed">
             Assumes {Math.round(impactAssumptions.distributionEfficiency * 100)}
             % of funds reach diaper purchasing and delivery with{" "}
             {impactAssumptions.diapersPerChildPerWeek} diapers per child each
@@ -630,18 +698,24 @@ export default function HanahCaitlynMap() {
         onClose={handleModalClose}
         size="lg"
         title={`${modalRegionLabel} impact`}
-        centered
-      >
+        centered>
         {modalRegionDetails && modalRegionStats ? (
           <Stack gap="md">
-            <Text size="sm" c="dimmed">
+            <Text
+              size="sm"
+              c="dimmed">
               {modalRegionDetails.narrative}
             </Text>
-            <Divider label="Snapshot" labelPosition="center" />
+            <Divider
+              label="Snapshot"
+              labelPosition="center"
+            />
             <Grid gutter="md">
               <Grid.Col span={{ base: 12, sm: 4 }}>
                 <Stack gap={2}>
-                  <Text size="xs" c="dimmed">
+                  <Text
+                    size="xs"
+                    c="dimmed">
                     Latest delivery
                   </Text>
                   <Text fw={700}>
@@ -652,7 +726,9 @@ export default function HanahCaitlynMap() {
               </Grid.Col>
               <Grid.Col span={{ base: 12, sm: 4 }}>
                 <Stack gap={2}>
-                  <Text size="xs" c="dimmed">
+                  <Text
+                    size="xs"
+                    c="dimmed">
                     Children helped
                   </Text>
                   <Text fw={700}>
@@ -662,7 +738,9 @@ export default function HanahCaitlynMap() {
               </Grid.Col>
               <Grid.Col span={{ base: 12, sm: 4 }}>
                 <Stack gap={2}>
-                  <Text size="xs" c="dimmed">
+                  <Text
+                    size="xs"
+                    c="dimmed">
                     Volunteer hours
                   </Text>
                   <Text fw={700}>
@@ -671,27 +749,44 @@ export default function HanahCaitlynMap() {
                 </Stack>
               </Grid.Col>
             </Grid>
-            <Divider label="Top needs" labelPosition="center" />
-            <List spacing="xs" size="sm">
+            <Divider
+              label="Top needs"
+              labelPosition="center"
+            />
+            <List
+              spacing="xs"
+              size="sm">
               {modalRegionDetails.topNeeds.map((need) => (
                 <List.Item key={need}>{need}</List.Item>
               ))}
             </List>
-            <Divider label="Key partners" labelPosition="center" />
-            <List spacing="xs" size="sm">
+            <Divider
+              label="Key partners"
+              labelPosition="center"
+            />
+            <List
+              spacing="xs"
+              size="sm">
               {modalRegionDetails.partners.map((partner) => (
                 <List.Item key={partner}>{partner}</List.Item>
               ))}
             </List>
-            <Divider label="Upcoming engagements" labelPosition="center" />
-            <List spacing="xs" size="sm">
+            <Divider
+              label="Upcoming engagements"
+              labelPosition="center"
+            />
+            <List
+              spacing="xs"
+              size="sm">
               {modalRegionDetails.upcomingEvents.map((event) => (
                 <List.Item key={event}>{event}</List.Item>
               ))}
             </List>
           </Stack>
         ) : (
-          <Text size="sm" c="dimmed">
+          <Text
+            size="sm"
+            c="dimmed">
             Select a region to explore detailed impact metrics.
           </Text>
         )}
