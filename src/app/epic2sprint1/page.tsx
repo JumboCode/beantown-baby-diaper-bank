@@ -2,6 +2,9 @@
 import TimelineSliderControls from "@/components/TimelineSliderControls";
 import { Box, Center, Paper, Stack, Title } from "@mantine/core";
 
+import PartnerInfo from "./partnerInfo";
+import LeafletMap from "@/components/map/Map";
+
 export default function Page() {
   return (
     <Stack align="space-between">
@@ -11,15 +14,17 @@ export default function Page() {
         withBorder>
         <Title>Epic 2 Sprint 1 Page</Title>
       </Paper>
+      <Paper>
+        <PartnerInfo />
+      </Paper>
       <Paper
         mt="md"
         p="xl"
         radius="md"
         withBorder>
-        <Center>
-          <Title order={2}>Map will go here</Title>
-        </Center>
-        <Box h={500}></Box>
+        <Box h={600}>
+          <LeafletMap />
+        </Box>
       </Paper>
       <Paper
         p="xl"

@@ -6,26 +6,22 @@
  *   - Prisma warns about exhausting database connections in development; the `globalThis`
  *     caching pattern side-steps that while keeping production safe.
  */
-import { PrismaClient } from "@/generated/prisma/client";
+import { PrismaClient } from "../generated/prisma/client";
+import { withAccelerate } from "@prisma/extension-accelerate";
+import { PrismaPg } from "@prisma/adapter-pg";
 
-/**
- * Extend the global type definition so TypeScript knows we stash the client there in dev.
- * This mirrors the official Prisma with Next.js recipe.
- */
-declare global {
-  var prisma: PrismaClient | undefined;
-}
+const connectionString = `${process.env.DATABASE_URL}`;
 
-const createPrismaClient = () =>
-  new PrismaClient({
-    log:
-      process.env.NODE_ENV === "development"
-        ? ["query", "error", "warn"]
-        : ["error"],
-  });
+const adapter = new PrismaPg({ connectionString });
 
-export const prisma = globalThis.prisma ?? createPrismaClient();
+const globalForPrisma = global as unknown as {
+  prisma: PrismaClient;
+};
 
-if (process.env.NODE_ENV !== "production") {
-  globalThis.prisma = prisma;
-}
+const prisma =
+  globalForPrisma.prisma ||
+  new PrismaClient({ adapter }).$extends(withAccelerate());
+
+if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = prisma;
+
+export { prisma };

@@ -69,7 +69,9 @@ export default function ChoroplethMap({
 
   if (!geojson || !geojson.features || !pathGenerator) {
     return (
-      <svg width={width} height={height}>
+      <svg
+        width={width}
+        height={height}>
         <text>Loading or Error...</text>
       </svg>
     );
@@ -123,15 +125,16 @@ export default function ChoroplethMap({
 
   return (
     <div>
-      <svg width={width} height={height}>
+      <svg
+        width={width}
+        height={height}>
         {allSvgPaths}
       </svg>
 
       <Popover
         opened={!hoveredData && !popOverPosition}
         shadow="md"
-        position="right"
-      >
+        position="right">
         <Popover.Target>
           <div
             style={{
@@ -141,8 +144,7 @@ export default function ChoroplethMap({
               width: 0,
               height: 0,
               pointerEvents: "none",
-            }}
-          ></div>
+            }}></div>
         </Popover.Target>
         <Popover.Dropdown>
           {hoveredData && (
