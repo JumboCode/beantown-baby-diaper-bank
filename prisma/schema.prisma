@@ -1,9 +1,9 @@
 generator client {
   provider        = "prisma-client"
-  engineType      = "client"
   output          = "../src/generated/prisma"
   previewFeatures = ["postgresqlExtensions"]
-  binaryTargets = ["native"]
+  binaryTargets   = ["native"]
+  engineType      = "client"
 }
 
 datasource db {
@@ -52,6 +52,7 @@ model Partner {
   address        String?
   coords         Json?           @db.Json
   logoUrl        String?         @map("logo_url")
+  active         Boolean?
   distributions  Distribution[]
   partnerRegions PartnerRegion[]
 
@@ -59,10 +60,11 @@ model Partner {
 }
 
 model PartnerRegion {
-  partnerId BigInt  @map("partner_id")
-  cityId    BigInt  @map("city_id")
-  city      City    @relation(fields: [cityId], references: [id], onDelete: Cascade)
-  partner   Partner @relation(fields: [partnerId], references: [id], onDelete: Cascade)
+  partnerId  BigInt  @map("partner_id")
+  cityId     BigInt  @map("city_id")
+  percentage Float?
+  city       City    @relation(fields: [cityId], references: [id], onDelete: Cascade)
+  partner    Partner @relation(fields: [partnerId], references: [id], onDelete: Cascade)
 
   @@id([partnerId, cityId])
   @@map("partner_regions")

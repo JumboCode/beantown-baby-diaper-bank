@@ -1,9 +1,14 @@
 "use client";
-import TimelineSliderControls from "@/components/epic2sprint1/TimelineSliderControls";
+import TimelineSliderControls from "@/components/TimelineSliderControls";
 import { Box, Center, Paper, Stack, Title } from "@mantine/core";
 
 import PartnerInfo from "./partnerInfo";
-import LeafletMap from "@/components/map/Map";
+import dynamic from "next/dynamic";
+
+const LeafletMap = dynamic(
+  () => import("@/components/map/Map").then((module) => module.default),
+  { ssr: false }
+);
 
 export default function Page() {
   return (
