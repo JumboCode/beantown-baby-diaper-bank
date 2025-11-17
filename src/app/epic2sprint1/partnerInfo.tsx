@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import { useDisclosure } from '@mantine/hooks';
 import { Drawer, Button } from '@mantine/core';
 
 // this is the format of the data that we are retrieving using API
@@ -16,8 +15,13 @@ type Partner = {
 	logo_url: string | null;
 };
 
+type PartnerInfoProps = {
+	name?: string[] | undefined;
+	fromMarker?: boolean;
+}
 
-export default function PartnerInfo() {
+
+export default function PartnerInfo({ name, fromMarker = false } : PartnerInfoProps) {
 
 	// Generic form of useState is const[state, setState] = useState<type>(initialValue);
 	// state is the current value (whatever it may be), this is the variable
@@ -30,74 +34,115 @@ export default function PartnerInfo() {
 
 	// use useEffect so that we fetch data after the component renders. i.e. visuals will load first, then it worries about retrieving data
 	useEffect(() => {
-
 		// async is a function that is asynchronous, it means it promises to return something and lets us use await inside it, like a place holder
-		const fetchPartners = async () => {
-			// using a try-catch to handle errors
+		let ignore = false;
+
+		const fetchPartner = async (partnerName? : string) => {
 			try {
-				const response = await fetch('/api/partners');
+				const url = partnerName ? `/api/partners?search=${partnerName}` : `/api/partners`;
+				const response = await fetch(url);
 				if (!response.ok) {
-					console.log('Failed to fetch partners');
+					console.log(`Failed to fetch partner: ${partnerName}`);
+					return [];
 				}
-				const result = await response.json();
-				// update data to retrieved data
-				setData(result.data);
+				const result = await response.json() as { data: Partner[] };
+				return result.data;
 			} catch (err) {
 				console.log('Unexpected error:', err);
+				return [];
 			}
-		};
+		}
+		
+		const loadSelectedPartners = async() => {
+			const fetchPromises = name!.map((name) => fetchPartner(name));
+			const allPartners = await Promise.all(fetchPromises);
+			const flatData = allPartners.flat();
+			if (!ignore) {
+				setData(flatData);
+			}
+		}
 
-		// we call the function that we wrote above
-		fetchPartners();
+		if (name && name.length > 0) {
+			loadSelectedPartners();
+		} else {
+			fetchPartner().then((data) => setData(data));
+		}
 
-	}, []); 
+		return () => {
+			ignore = true;
+		}
+	}, [name]); 
 
   return (
 
     <div>
-		<h2 style={{ margin: '1rem', textAlign: 'center', fontWeight: 'bold', fontSize: '1.5rem' }}>Partner Information</h2>
+			{fromMarker ? 
+				<p>Partner Information</p>
+			: 
+				<h2 style={{ margin: '1rem', textAlign: 'center', fontWeight: 'bold', fontSize: '1.5rem' }}>
+					Partner Information
+				</h2> 
+			}
 
-		<div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', justifyContent: 'center' }}>
-			{data.map((partner) => (
-				<Button 
-					key={partner.id}
-					variant="outline" 
-					size="xl" 
-					radius="lg" 
-					color="dark"
-					leftSection={partner.logo_url && (
-						<img
-							src={partner.logo_url}
-							style={{ height: 30}}
-						/>
-					)}
-					onClick={() => setSelectedPartner(partner)}
-				>
-					{partner.name}
-				</Button>
-			))}
-		</div>
+			<div 
+				style={{ 
+					display: 'flex', 
+					flexWrap: 'wrap', 
+					gap: '0.5rem', 
+					justifyContent: 'center',
+					flexDirection: fromMarker ? 'column' : 'row', 
+				}}
+			>
+				{data.map((partner) => {
+					return (
+					<Button
+						key={partner.id}
+						variant="outline" 
+						size={ fromMarker ? "sm" : "xl"}
+						radius="lg" 
+						color="dark"
+						leftSection={partner.logo_url && (
+							<img
+								src={partner.logo_url}
+								style={{ height: 30 }}
+							/>
+						)}
+						onClick={() => setSelectedPartner(partner)}
+					>
+						<span
+							style={{ 
+								display: 'inline-block', 
+								overflow: 'hidden', 
+								textOverflow: 'ellipsis',
+								whiteSpace: 'nowrap'
+							}} 
+						>
+							{partner.name}
+						</span>
+					</Button>)
+				})}
+			</div>
 
-		{/* drawer info changes depending on what partner is selected*/}
-		<Drawer 
-			opened={selectedPartner !== null} 
-			onClose={() => setSelectedPartner(null)} 
-			title={selectedPartner?.name || "Information"} 
-			overlayProps={{ opacity: 0.1 }}
-		>
-			{selectedPartner && (
-				<>
-					<p><strong>Name:</strong> {selectedPartner.name}</p>
-					<p><strong>Description:</strong> {selectedPartner.description || 'N/A'}</p>
-					<p><strong>Start Year:</strong> {selectedPartner.start_partner || 'N/A'}</p>
-					<p><strong>Active:</strong> {selectedPartner.waitlisted ? "No" : "Yes"}</p>
-					<p><strong>Address:</strong> {selectedPartner.address || 'N/A'}</p>
-					{selectedPartner.logo_url && (
-						<img src={selectedPartner.logo_url} alt={`${selectedPartner.name} logo`} style={{ maxWidth: '200px', marginTop: '1rem' }} />
-					)}
-				</>
-			)}
-		</Drawer>
+			{/* drawer info changes depending on what partner is selected*/}
+			<Drawer 
+				opened={selectedPartner !== null} 
+				onClose={() => setSelectedPartner(null)} 
+				title={selectedPartner?.name || "Information"} 
+				overlayProps={{ opacity: 0.1 }}
+			>
+				{selectedPartner && (
+					<>
+						<p><strong>Name:</strong> {selectedPartner.name}</p>
+						<p><strong>Description:</strong> {selectedPartner.description || 'N/A'}</p>
+						<p><strong>Start Year:</strong> {selectedPartner.start_partner || 'N/A'}</p>
+						<p><strong>Active:</strong> {selectedPartner.waitlisted ? "No" : "Yes"}</p>
+						<p><strong>Address:</strong> {selectedPartner.address || 'N/A'}</p>
+						{selectedPartner.logo_url && (
+							<img src={selectedPartner.logo_url} alt={`${selectedPartner.name} logo`} style={{ maxWidth: '200px', marginTop: '1rem' }} />
+						)}
+					</>
+				)}
+			</Drawer>
 
     </div>
   );

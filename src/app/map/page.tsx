@@ -15,8 +15,13 @@ import {
   Accordion,
 } from "@mantine/core";
 import { ExternalLink } from "lucide-react";
-import LeafletMap from "@/components/map/Map";
 import { baseRegions, regionImpact, regionDetails } from "@/data/map-data";
+import dynamic from "next/dynamic";
+
+const LeafletMap = dynamic(
+  () => import("@/components/map/Map").then((module) => module.default),
+  { ssr: false }
+);
 
 const findRegionFeature = (regionId: string | null | undefined) =>
   baseRegions.features.find((feature) => feature.properties?.id === regionId) ??

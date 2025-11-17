@@ -1,6 +1,8 @@
 import { useDisclosure } from "@mantine/hooks";
 import { Popover } from "@mantine/core";
 import { CircleDot } from "lucide-react";
+import React from "react";
+import PartnerInfo from "@/app/epic2sprint1/partnerInfo";
 
 const dotData = [
   {
@@ -44,18 +46,43 @@ export default function DotPopUps() {
   );
 }
 
-type SinglePopUpProps = {
-  cityName: string;
-  numDiapers: number;
-  partnerOrgs: string[];
-};
+type InfoDisplayerProps = {
+  cityName: string | null | undefined;
+  numDiapers: number | null;
+  partnerOrgs: string[] | undefined;
+  childrenHelped?: number | null;
+}
 
-const SinglePopUp = ({
+export const InfoDisplayer = ({
+  cityName,
+  numDiapers,
+  childrenHelped,
+  partnerOrgs,
+}: InfoDisplayerProps) => {
+  return (
+    <div>
+      <p style={{ fontSize: "20px", fontWeight: "bold" }}>
+        {" "}
+        City: {cityName}
+      </p>
+      <p> Diapers Distributed: {numDiapers?.toString()} </p>
+      <p> Children helped: {childrenHelped} </p>
+      <PartnerInfo 
+        name={partnerOrgs}
+        fromMarker={true}
+      />
+    </div>
+  )
+}
+
+export const SinglePopUp = ({
   cityName,
   numDiapers,
   partnerOrgs,
-}: SinglePopUpProps) => {
+  childrenHelped,
+}: InfoDisplayerProps) => {
   const [opened, { close, open }] = useDisclosure(false);
+
   return (
     <Popover width={200} position="top" withArrow shadow="md" opened={opened}>
       <Popover.Target>
@@ -66,14 +93,12 @@ const SinglePopUp = ({
         ></CircleDot>
       </Popover.Target>
       <Popover.Dropdown style={{ pointerEvents: "none" }}>
-        <div>
-          <p style={{ fontSize: "20px", fontWeight: "bold" }}>
-            {" "}
-            City: {cityName}
-          </p>
-          <p> Diapers Distributed: {numDiapers.toString()} </p>
-          <p> Partners: {partnerOrgs.toString()} </p>
-        </div>
+        <InfoDisplayer 
+          cityName={cityName}
+          numDiapers={numDiapers}
+          partnerOrgs={partnerOrgs}
+          childrenHelped={childrenHelped}
+        />
       </Popover.Dropdown>
     </Popover>
   );
