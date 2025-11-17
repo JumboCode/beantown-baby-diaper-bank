@@ -11,8 +11,8 @@ import { renderToString } from "react-dom/server";
 
 // NEW: bring in Leaflet runtime for icons, and popup content + types
 // import * as L from "leaflet";
-import { DotPopupContent } from "@/lib/DotPopupContent";
-import type { DotDatum } from "@/lib/DotPopupContent";
+import { DotPopupContent } from "@/components/DotPopupContent";
+import type { DotDatum } from "@/components/DotPopupContent";
 import { useLeafletMap } from "../map/useLeafletMap";
 import { useBaseTileLayer } from "../map/useBaseTileLayer";
 // import { Tooltip } from "react-leaflet";
@@ -21,28 +21,28 @@ import { useBaseTileLayer } from "../map/useBaseTileLayer";
 // because they depend on the browser environment (e.g., window, document).
 const MapContainer = dynamic(
   () => import("react-leaflet").then((module) => module.MapContainer),
-  { ssr: false },
+  { ssr: false }
 );
 
 const TileLayer = dynamic(
   () => import("react-leaflet").then((module) => module.TileLayer),
-  { ssr: false },
+  { ssr: false }
 );
 
 const GeoJSON = dynamic(
   () => import("react-leaflet").then((module) => module.GeoJSON),
-  { ssr: false },
+  { ssr: false }
 );
 
 // NEW: dynamic imports for Marker and Popup
 const Marker = dynamic(
   () => import("react-leaflet").then((module) => module.Marker),
-  { ssr: false },
+  { ssr: false }
 );
 
 const Tooltip = dynamic(
   () => import("react-leaflet").then((module) => module.Tooltip),
-  { ssr: false },
+  { ssr: false }
 );
 
 type LeafletMapProps = {
@@ -100,7 +100,11 @@ export default function LeafletMap({
     (async () => {
       const L = await import("leaflet"); // dynamically import leaflet
       const svgString = renderToString(
-        <Baby size={30} color="#008080" strokeWidth={3.5} />,
+        <Baby
+          size={30}
+          color="#008080"
+          strokeWidth={3.5}
+        />
       );
 
       const icon = L.divIcon({
@@ -122,8 +126,7 @@ export default function LeafletMap({
         height: "100%",
         width: "100%",
         zIndex: 0,
-      }}
-    >
+      }}>
       <MapContainer
         {...mapOptions}
         style={mapStyle}
@@ -133,17 +136,18 @@ export default function LeafletMap({
           // we can ensure the ref is populated
           if (!mapRef.current) return;
           // mapRef.current is your Leaflet map instance
-        }}
-      >
+        }}>
         <TileLayer {...tileLayerProps} />
         <GeoJSON {...geoJsonProps} />
         {dotData.map((dot) => (
           <Marker
             key={dot.cityId}
             position={[dot.lat, dot.lng]}
-            {...(babyIcon ? { icon: babyIcon } : {})}
-          >
-            <Tooltip sticky direction="top" offset={[0, -10]}>
+            {...(babyIcon ? { icon: babyIcon } : {})}>
+            <Tooltip
+              sticky
+              direction="top"
+              offset={[0, -10]}>
               <DotPopupContent
                 cityName={dot.cityName}
                 numDiapers={dot.numDiapers}
@@ -163,8 +167,7 @@ export default function LeafletMap({
             zIndex: 1000,
             pointerEvents: "none",
             maxWidth: "min(320px, 90vw)",
-          }}
-        >
+          }}>
           <div style={{ pointerEvents: "auto" }}>{leftControls}</div>
         </div>
       )}
@@ -177,8 +180,7 @@ export default function LeafletMap({
             zIndex: 1000,
             pointerEvents: "none",
             maxWidth: "min(320px, 90vw)",
-          }}
-        >
+          }}>
           <div style={{ pointerEvents: "auto" }}>{rightControls}</div>
         </div>
       )}
