@@ -2,8 +2,10 @@
 
 import { useState, useEffect } from "react";
 import { Center, Loader, Table, TableData } from "@mantine/core";
+import { PartnerRegion } from "@/generated/prisma/client";
+import UpdatePercentPartnerForm from "../UpdatePercentPartnerForm";
 
-type Partner = {
+export type Partner = {
   id: number;
   created_at: string;
   name: string;
@@ -17,6 +19,7 @@ type Partner = {
 
 export default function PartnerInfo() {
   const [data, setData] = useState<Partner[]>([]);
+  const [percentages, setPercentages] = useState<PartnerRegion[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
 
   // Retrieve data from API, store each partner as Partner type
@@ -35,6 +38,18 @@ export default function PartnerInfo() {
     };
 
     fetchAndStoreData();
+    
+    const getPercentagesWithCityId = async () => {
+      try {
+        const response = await fetch("http://localhost:3000/api/partners/percentages");
+        const result = await response.json();
+        setPercentages(result.data);
+      } catch (err) {
+        console.log("Error fetching percentages data", err);
+      }
+    }
+
+    getPercentagesWithCityId();    
   }, []);
 
   return (
@@ -45,14 +60,15 @@ export default function PartnerInfo() {
             <Loader type="bars" />
           </Center>
         ) : (
-          <PartnerTable partners={data} />
+          <PartnerTable partners={data} percentages={percentages} />
         )}
+        <UpdatePercentPartnerForm partners={data} percentages={percentages} />
       </div>
     </div>
   );
 }
 
-function PartnerTable({ partners }: { partners: Partner[] }) {
+function PartnerTable({ partners, percentages }: { partners: Partner[], percentages: PartnerRegion[] }) {
   const tableData: TableData = {
     head: [
       "Name",
@@ -61,6 +77,7 @@ function PartnerTable({ partners }: { partners: Partner[] }) {
       "Status",
       "Coordinates",
       "Address",
+      "Cities Served"
     ],
     body: partners.map((partner) => [
       // Image if applicable, followed by name
@@ -127,6 +144,18 @@ function PartnerTable({ partners }: { partners: Partner[] }) {
         className="text-sm text-gray-600">
         {partner.address || <span className="text-gray-400 italic">N/A</span>}
       </span>,
+      // Cities Served
+      <span
+        key={partner.id}
+        className="text-sm text-gray-600">
+          <span>{percentages.filter(percentage => Number(percentage.partnerId) == partner.id)
+            .map((percentage, index, arr) => {
+              if (percentage.percentage) {
+                return percentage.cityId + " (" +
+                  (percentage.percentage)*100 + "%)" + ((index != arr.length - 1) ? ", ": "")
+              }
+            })}</span>
+        </span>
     ]),
   };
 
