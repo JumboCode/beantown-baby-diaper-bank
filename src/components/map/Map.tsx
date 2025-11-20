@@ -3,12 +3,11 @@
 import dynamic from "next/dynamic";
 import { useLeafletMap } from "./useLeafletMap";
 import { useBaseTileLayer } from "./useBaseTileLayer";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import type { City, Distribution } from "@/generated/prisma/client";
 import { Popup, TileLayer } from "react-leaflet";
 import { Icon } from "leaflet";
 import { InfoDisplayer } from "../sprint2/DotPopUps";
-import PartnerInfo from "@/app/epic2sprint1/partnerInfo";
 
 import "leaflet/dist/leaflet.css";
 import { MapContainer } from "react-leaflet";
@@ -46,17 +45,28 @@ type Coordinates = {
   lng: number;
 };
 
-type PartnerInfo = {
-  id: number,
-  name: string,
-}
+type PartnerInfoType = {
+  id: number;
+  name: string;
+  logo_url?: string | null;
+};
 
 type CityMapInfo = City & {
-  distributions: Distribution[],
-  partners: PartnerInfo[],
-}
+  distributions: Distribution[];
+  partners: PartnerInfoType[];
+};
 
-export default function LeafletMap() {
+
+export default function LeafletMap({
+  view,
+  index,
+  labels,
+
+} : {
+  view: "monthly" | "yearly";
+  index: number;
+  labels: (string | number)[];
+}) {
   const { mapConfig } = useLeafletMap();
   const { style: mapStyle, ...mapOptions } = mapConfig;
   const { tileLayerProps } = useBaseTileLayer();
@@ -72,14 +82,34 @@ export default function LeafletMap() {
     popupAnchor: [0, -36],
   });
 
+  const { monthParam, yearParam } = useMemo(() => {
+    const currentLabel = labels?.[index];
+    if (view === "monthly" && currentLabel) {
+      const [month, year] = String(currentLabel).split(" ");
+      return { monthParam: month, yearParam: year };
+    }
+    if (view === "yearly" && currentLabel) {
+      return { monthParam: undefined, yearParam: String(currentLabel) };
+    }
+    return { monthParam: undefined, yearParam: undefined };
+  }, [labels, index, view]);
+  
+
   useEffect(() => {
+    if (view === "yearly" && !yearParam) return;
+    if (view === "monthly" && (!monthParam || !yearParam)) return;
+
     const fetchCities = async () => {
-      const response = await fetch("/api/cities");
+      const params = new URLSearchParams();
+      if (monthParam) params.set("month", monthParam);
+      if (yearParam) params.set("year", yearParam);
+      const qs = params.toString();
+      const response = await fetch(`/api/cities${qs ? `?${qs}` : ""}`);
       const data = await response.json();
       setCities(data.data);
     };
     fetchCities();
-  }, []);
+  }, [monthParam, yearParam, view]);
 
   useEffect(() => {
     const updateCoordinates = async () => {
@@ -129,7 +159,10 @@ export default function LeafletMap() {
           coordinates &&
           coordinates.map((city) => {
             const cityInfo = cities.find(info => Number(info.id) === city.cityId);
-            const partnerNames = cityInfo?.partners.map(partner => partner.name);
+            const partnerNames = cityInfo?.partners.map(p => p.name);
+            // const partnerLogos = cityInfo?.partners.map(p => p.logo_url).filter(Boolean);
+            const totalDiapers = cityInfo?.distributions.reduce((sum, d) => sum + d.numberDiapers, 0) ?? 0;
+            const totalChildren = cityInfo?.distributions.reduce((sum, d) => sum + d.numberChildren, 0) ?? 0;
             return (
               <Marker
                 key={city.cityId}
@@ -138,9 +171,10 @@ export default function LeafletMap() {
                 <Popup minWidth={280}>
                   <InfoDisplayer 
                     cityName={cityInfo?.name}
-                    numDiapers={300}
-                    childrenHelped={300}
+                    numDiapers={totalDiapers}
+                    childrenHelped={totalChildren}
                     partnerOrgs={partnerNames}
+                    // partnerLogos={partnerLogos}
                   />
                 </Popup>
               </Marker>

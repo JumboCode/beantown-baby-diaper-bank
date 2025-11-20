@@ -20,7 +20,9 @@ export function useTimelinePeriod() {
   const [view, setView] = useState<TimelineView>("monthly");
   const [index, setIndex] = useState(0);
 
-  const length = view === "monthly" ? MONTHS.length : YEARS.length;
+  const labels = view === "monthly" ? MONTHS : YEARS.map(String);
+  const length = labels.length;
+  
 
   const toggleView = useCallback(() => {
     setView((prev) => (prev === "monthly" ? "yearly" : "monthly"));
@@ -51,5 +53,6 @@ export function useTimelinePeriod() {
     toggleView,
     move,
     length,    // number of months or years
+    labels,
   };
 }
