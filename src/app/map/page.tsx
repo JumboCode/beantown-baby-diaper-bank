@@ -17,7 +17,7 @@ import {
 import { ExternalLink } from "lucide-react";
 import { baseRegions, regionImpact, regionDetails } from "@/data/map-data";
 import dynamic from "next/dynamic";
-import TimelineSliderControls from "@/components/TimelineSliderControls";
+// import TimelineSliderControls from "@/components/TimelineSliderControls";
 import { useTimelinePeriod } from "@/components/useTimelinePeriod";
 
 const LeafletMap = dynamic(
@@ -224,7 +224,7 @@ export default function MapPage() {
           // onRegionClick={setSelectedRegionId}
           // leftControls={leftOverlay}
         />
-        <TimelineSliderControls {...timeline} />
+        {/* <TimelineSliderControls {...timeline} /> */}
       </div>
     </div>
   );

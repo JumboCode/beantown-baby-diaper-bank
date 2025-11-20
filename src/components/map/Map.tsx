@@ -61,17 +61,22 @@ export default function LeafletMap({
   view,
   index,
   labels,
+  mapData,
 
 } : {
   view: "monthly" | "yearly";
   index: number;
   labels: (string | number)[];
+  mapData?: CityMapInfo[];
 }) {
   const { mapConfig } = useLeafletMap();
   const { style: mapStyle, ...mapOptions } = mapConfig;
   const { tileLayerProps } = useBaseTileLayer();
   const [cities, setCities] = useState<CityMapInfo[]>([]);
   const [coordinates, setCoordinates] = useState<Coordinates[]>([]);
+  const GeoJSON = dynamic(() => import("react-leaflet").then(m => m.GeoJSON), { ssr: false });
+  const [regions, setRegions] = useState<RegionsGeoJSON>();
+  const [choroplethData, setChoroplethData] = useState<Record<string, number>>({});
 
   // Use leaflet's Icon class to create a custom icon
   // See https://leafletjs.com/reference.html#icon for more details
@@ -96,6 +101,10 @@ export default function LeafletMap({
   
 
   useEffect(() => {
+    if (mapData !== undefined && mapData !== null) {
+      setCities(mapData);
+      return;
+    }
     if (view === "yearly" && !yearParam) return;
     if (view === "monthly" && (!monthParam || !yearParam)) return;
 
@@ -109,7 +118,7 @@ export default function LeafletMap({
       setCities(data.data);
     };
     fetchCities();
-  }, [monthParam, yearParam, view]);
+  }, [mapData, monthParam, yearParam, view]);
 
   useEffect(() => {
     const updateCoordinates = async () => {
