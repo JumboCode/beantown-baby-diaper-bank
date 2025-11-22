@@ -1,7 +1,10 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Center, Loader, Table, TableData } from "@mantine/core";
+import { Center, Loader, Table, TableData, Modal } from "@mantine/core";
+import { RiPencilFill } from "react-icons/ri";
+import EditPartnerForm from "../EditPartnerForm";
+import { useDisclosure } from '@mantine/hooks';
 
 type Partner = {
   id: number;
@@ -53,6 +56,9 @@ export default function PartnerInfo() {
 }
 
 function PartnerTable({ partners }: { partners: Partner[] }) {
+  const [partner, setPartner] = useState<Partner | null>(null);
+  const [opened, { open, close }] = useDisclosure(false);
+
   const tableData: TableData = {
     head: [
       "Name",
@@ -61,6 +67,7 @@ function PartnerTable({ partners }: { partners: Partner[] }) {
       "Status",
       "Coordinates",
       "Address",
+      ""
     ],
     body: partners.map((partner) => [
       // Image if applicable, followed by name
@@ -127,10 +134,18 @@ function PartnerTable({ partners }: { partners: Partner[] }) {
         className="text-sm text-gray-600">
         {partner.address || <span className="text-gray-400 italic">N/A</span>}
       </span>,
+      <span
+        key={partner.id}
+        className="text-md text-teal-800 font-semibold">
+          <button onClick={() => setPartner(partner)} className="cursor-pointer">
+            <RiPencilFill size={20} />
+          </button>
+      </span>
     ]),
   };
 
   return (
+    <>
     <div className="bg-white rounded-xl shadow-lg overflow-hidden flex flex-col">
       <div className="overflow-x-auto flex-1">
         <Table
@@ -141,5 +156,14 @@ function PartnerTable({ partners }: { partners: Partner[] }) {
         />
       </div>
     </div>
+
+    {partner && <Modal
+        opened={!!partner}
+        onClose={() => setPartner(null)}
+        size="75%"
+        centered
+      ><EditPartnerForm partner={partner} onClose={() => setPartner(null)} /> </Modal>}
+
+    </>
   );
 }

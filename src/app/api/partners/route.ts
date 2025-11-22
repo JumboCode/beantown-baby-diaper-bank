@@ -97,3 +97,33 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }
+
+export async function POST(request: Request) {
+  const body = await request.json();
+
+  try {
+    const partner = await prisma.partner.create({
+      data: {
+        name: body.name,
+        description: body.description,
+        startPartner: body.start_partner,
+        waitlisted: body.status,
+        coords: body.coordinates,
+        address: body.address,
+        logoUrl: body.logo
+      }
+    })
+
+    return NextResponse.json({
+      data: partner,
+    });
+
+  } catch (error) {
+    const message =
+      error instanceof Error
+        ? error.message
+        : "Unable to insert partner into database.";
+
+    return NextResponse.json({ error: message }, { status: 500 });
+  }
+}
