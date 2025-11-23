@@ -45,8 +45,8 @@ export default function PartnerForm() {
         const data = await res.json();
         
         if (data.geonames) {
-          let cityNames = data.geonames.map((city: any) => city.name);
-          let cityUniqueSorted = Array.from(new Set(cityNames)).sort();
+          const cityNames = data.geonames.map((city: { name: string }) => city.name);
+          const cityUniqueSorted = Array.from(new Set(cityNames)).sort();
           setCitiesAPI(cityUniqueSorted as string[]);
         }
       } catch (err) {
