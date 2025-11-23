@@ -2,10 +2,8 @@ import {
   Button,
   Group,
   TextInput,
-  MultiSelect,
   Text,
   Textarea,
-  Table,
   NumberInput,
   Radio,
   FileInput,
@@ -13,7 +11,6 @@ import {
 } from "@mantine/core";
 import { useForm } from "@mantine/form";
 import { MonthPickerInput } from "@mantine/dates";
-import { useState } from "react";
 import "@mantine/dates/styles.css";
 
 type Partner = {
@@ -29,8 +26,8 @@ type Partner = {
 };
 
 interface EditPartnerFormProps {
-  partner: Partner,
-  onClose: () => void
+  partner: Partner;
+  onClose: () => void;
 }
 
 const countries = ["United States", "Canada"];
@@ -48,24 +45,20 @@ const requiredInteger = (label: string) => (value: unknown) => {
   return /^\d+$/.test(v) ? null : `${label} must be a number`;
 };
 
-export default function EditPartnerForm({ partner, onClose }: EditPartnerFormProps) {
-
-  if (!partner) {
-    return null;
-  }
-
-  function parseAddress(fullAddress: String) {
-
+export default function EditPartnerForm({
+  partner,
+  onClose,
+}: EditPartnerFormProps) {
+  function parseAddress(fullAddress: string) {
     // currently, this assumes that all of the addresses are in the form "addressLine, city, state zipcode, country"
     // which is how the add partner form adds addresses to the database
-    const parts = fullAddress.split(",").map(s => s.trim());
+    const parts = fullAddress.split(",").map((s) => s.trim());
 
     const addressLine = parts[0];
     const city = parts[1];
     let state = "";
     let zipCode = "";
     let country = "";
-
 
     if (parts.length == 3) {
       const stateZip = parts[2].split(/\s+/);
@@ -75,7 +68,6 @@ export default function EditPartnerForm({ partner, onClose }: EditPartnerFormPro
     if (parts.length == 4) {
       country = parts.slice(3).join(", ");
     }
-
 
     return { addressLine, city, state, zipCode, country };
   }
@@ -118,8 +110,7 @@ export default function EditPartnerForm({ partner, onClose }: EditPartnerFormPro
       //     ? "Provide a file or a link"
       //     : null,
       logoUrl: (value, values) => {
-        if (!value.trim() && !values.logoFile)
-          return; // logos are optional according to the figma?
+        if (!value.trim() && !values.logoFile) return; // logos are optional according to the figma?
         return typeof value === "string" ? null : "Enter a valid URL";
       },
     },
@@ -133,11 +124,19 @@ export default function EditPartnerForm({ partner, onClose }: EditPartnerFormPro
       waitlisted: values.status,
       coordinates: {
         lat: values.latitude,
-        long: values.longitude
+        long: values.longitude,
       },
-      address: values.addressLine + ", " + values.city + ", " + values.state + ", " + " " + values.zipCode,
-      logo: values.logoUrl
-    }
+      address:
+        values.addressLine +
+        ", " +
+        values.city +
+        ", " +
+        values.state +
+        ", " +
+        " " +
+        values.zipCode,
+      logo: values.logoUrl,
+    };
 
     const response = await fetch("http://localhost:3000/api/partners", {
       method: "POST",
@@ -158,14 +157,18 @@ export default function EditPartnerForm({ partner, onClose }: EditPartnerFormPro
     <div>
       <div className="mb-5">
         <div>
-          <h1 className="text-3xl text-black font-semibold">Edit Partner Information</h1>
+          <h1 className="text-3xl text-black font-semibold">
+            Edit Partner Information
+          </h1>
           <h2 className="text-lg text-gray-500">Change your partner data</h2>
         </div>
       </div>
 
       <div className="p-4 border border-gray-300 rounded-xl">
         <form
-          onSubmit={form.onSubmit((values) => { submitEditPartner(values) })}
+          onSubmit={form.onSubmit((values) => {
+            submitEditPartner(values);
+          })}
           className="flex flex-col gap-5">
           {/* Name of Organization */}
           <Group
@@ -218,32 +221,44 @@ export default function EditPartnerForm({ partner, onClose }: EditPartnerFormPro
             />
           </Group>
 
-          <Group justify="space-between" align="flex-start" w="100%">
+          <Group
+            justify="space-between"
+            align="flex-start"
+            w="100%">
             <Radio.Group
               key={form.key("status")}
               {...form.getInputProps("status")}
               error={form.errors.status}
-              required
-            >
-              <Group justify="space-between" align="flex-start" w="150%">
-
+              required>
+              <Group
+                justify="space-between"
+                align="flex-start"
+                w="150%">
                 {/* Label with fixed width */}
-                <Text fw={600} className="w-40">
+                <Text
+                  fw={600}
+                  className="w-40">
                   Status <span className="text-red-600">*</span>
                 </Text>
 
                 {/* Radios */}
                 <div className="flex gap-20">
-                  <Radio value="active" label="Active" />
-                  <Radio value="inactive" label="Inactive" />
-                  <Radio value="waitlisted" label="Waitlisted" />
+                  <Radio
+                    value="active"
+                    label="Active"
+                  />
+                  <Radio
+                    value="inactive"
+                    label="Inactive"
+                  />
+                  <Radio
+                    value="waitlisted"
+                    label="Waitlisted"
+                  />
                 </div>
-
               </Group>
             </Radio.Group>
           </Group>
-
-
 
           {/* Latitude and Longitude */}
           <Group
@@ -277,7 +292,10 @@ export default function EditPartnerForm({ partner, onClose }: EditPartnerFormPro
           </Group>
 
           {/* Address */}
-          <Group justify="space-between" align="flex-start" w="100%">
+          <Group
+            justify="space-between"
+            align="flex-start"
+            w="100%">
             <Text fw={600}>
               Address <span className="text-red-600">*</span>
             </Text>
@@ -385,13 +403,12 @@ export default function EditPartnerForm({ partner, onClose }: EditPartnerFormPro
               variant="filled"
               color="#053766"
               radius="md"
-              type="submit"
-            >
+              type="submit">
               Submit
             </Button>
           </Group>
         </form>
       </div>
     </div>
-  )
+  );
 }
