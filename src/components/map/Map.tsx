@@ -74,9 +74,9 @@ export default function LeafletMap({
   const { tileLayerProps } = useBaseTileLayer();
   const [cities, setCities] = useState<CityMapInfo[]>([]);
   const [coordinates, setCoordinates] = useState<Coordinates[]>([]);
-  const GeoJSON = dynamic(() => import("react-leaflet").then(m => m.GeoJSON), { ssr: false });
-  const [regions, setRegions] = useState<RegionsGeoJSON>();
-  const [choroplethData, setChoroplethData] = useState<Record<string, number>>({});
+  // const GeoJSON = dynamic(() => import("react-leaflet").then(m => m.GeoJSON), { ssr: false });
+  // const [regions, setRegions] = useState<RegionsGeoJSON>();
+  // const [choroplethData, setChoroplethData] = useState<Record<string, number>>({});
 
   // Use leaflet's Icon class to create a custom icon
   // See https://leafletjs.com/reference.html#icon for more details

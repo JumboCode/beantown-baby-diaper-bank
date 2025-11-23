@@ -228,8 +228,8 @@ const impactAssumptions = {
 };
 
 export default function ColinMadelineAryaaHotmap() {
-  const [showRegions, setShowRegions] = useState(true);
-  const [regionFilter, setRegionFilter] = useState<string>("all");
+  // const [showRegions, setShowRegions] = useState(true);
+  // const [regionFilter, setRegionFilter] = useState<string>("all");
   const [hoveredRegionId, setHoveredRegionId] = useState<string | undefined>();
   const [selectedRegionId, setSelectedRegionId] = useState<string | null>(null);
   const [donationAmount, setDonationAmount] = useState<number>(250);
