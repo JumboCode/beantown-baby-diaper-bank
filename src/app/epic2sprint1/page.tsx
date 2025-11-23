@@ -27,9 +27,7 @@ export default function Page() {
         p="xl"
         radius="md"
         withBorder>
-        <Box h={600}>
-          <LeafletMap />
-        </Box>
+        <Box h={600}></Box>
       </Paper>
       <Paper
         p="xl"
@@ -37,7 +35,6 @@ export default function Page() {
         withBorder>
         <Stack>
           <Title order={2}>Timeline Slider</Title>
-          <TimelineSliderControls />
         </Stack>
       </Paper>
     </Stack>

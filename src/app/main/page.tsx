@@ -92,9 +92,7 @@ export default function Page() {
   }, []);
 
   return (
-    <Box
-      p="xl"
-      style={{ backgroundColor: "#f8f9fa", minHeight: "100vh" }}>
+    <Box style={{ backgroundColor: "#f8f9fa", minHeight: "100vh" }}>
       <Stack
         gap="xl"
         maw={1400}
