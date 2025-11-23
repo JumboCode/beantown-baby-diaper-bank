@@ -54,24 +54,52 @@ export default function EditPartnerForm({ partner, onClose }: EditPartnerFormPro
     return null;
   }
 
+  function parseAddress(fullAddress: String) {
+
+    // currently, this assumes that all of the addresses are in the form "addressLine, city, state zipcode, country"
+    // which is how the add partner form adds addresses to the database
+    const parts = fullAddress.split(",").map(s => s.trim());
+
+    const addressLine = parts[0];
+    const city = parts[1];
+    let state = "";
+    let zipCode = "";
+    let country = "";
+
+
+    if (parts.length == 3) {
+      const stateZip = parts[2].split(/\s+/);
+      state = stateZip[0];
+      zipCode = stateZip.slice(1).join(" ");
+    }
+    if (parts.length == 4) {
+      country = parts.slice(3).join(", ");
+    }
+
+
+    return { addressLine, city, state, zipCode, country };
+  }
+
+  const address = parseAddress(partner.address || "");
+
   const form = useForm({
     mode: "controlled",
     validateInputOnChange: true,
     validateInputOnBlur: true,
     initialValues: {
-      organization: "",
-      description: "",
-      time: "",
-      status: "",
-      latitude: "",
-      longitude: "",
-      addressLine: "",
-      city: "",
-      state: "",
-      zipCode: "",
-      country: "",
+      organization: partner.name,
+      description: partner.description || "",
+      time: partner.start_partner || "",
+      status: partner.waitlisted,
+      latitude: partner.coords ? partner.coords.lat : "",
+      longitude: partner.coords ? partner.coords.lng : "",
+      addressLine: address.addressLine || "",
+      city: address.city || "",
+      state: address.state || "",
+      zipCode: address.zipCode || "",
+      country: address.country || "United States",
       logoFile: null as File | null,
-      logoUrl: "",
+      logoUrl: partner.logo_url || "",
     },
     validate: {
       organization: (value) =>
@@ -84,17 +112,47 @@ export default function EditPartnerForm({ partner, onClose }: EditPartnerFormPro
       zipCode: requiredInteger("Zip Code"),
       country: (value) => (value ? null : "Select a country"),
       status: (value) => (value ? null : "Select a status"),
-      logoFile: (_value, values) =>
-        !values.logoFile && !values.logoUrl.trim()
-          ? "Provide a file or a link"
-          : null,
+      // logos are optional according to the figma?
+      // logoFile: (_value, values) =>
+      //   !values.logoFile && !values.logoUrl.trim()
+      //     ? "Provide a file or a link"
+      //     : null,
       logoUrl: (value, values) => {
         if (!value.trim() && !values.logoFile)
-          return "Provide a file or a link";
+          return; // logos are optional according to the figma?
         return typeof value === "string" ? null : "Enter a valid URL";
       },
     },
   });
+
+  async function submitEditPartner(values: typeof form.values) {
+    const formData = {
+      name: values.organization,
+      description: values.description,
+      start_partner: new Date(values.time).toISOString(),
+      waitlisted: values.status,
+      coordinates: {
+        lat: values.latitude,
+        long: values.longitude
+      },
+      address: values.addressLine + ", " + values.city + ", " + values.state + ", " + " " + values.zipCode,
+      logo: values.logoUrl
+    }
+
+    const response = await fetch("http://localhost:3000/api/partners", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(formData),
+    });
+
+    if (!response.ok) {
+      const err = await response.text();
+      console.error("Failed to update partner data", err);
+      return;
+    }
+  }
 
   return (
     <div>
@@ -107,7 +165,7 @@ export default function EditPartnerForm({ partner, onClose }: EditPartnerFormPro
 
       <div className="p-4 border border-gray-300 rounded-xl">
         <form
-          //   onSubmit={}
+          onSubmit={form.onSubmit((values) => { submitEditPartner(values) })}
           className="flex flex-col gap-5">
           {/* Name of Organization */}
           <Group
@@ -123,7 +181,6 @@ export default function EditPartnerForm({ partner, onClose }: EditPartnerFormPro
               size="md"
               className="min-w-170"
               radius="md"
-              value={partner.name}
               required
             />
           </Group>
@@ -141,7 +198,6 @@ export default function EditPartnerForm({ partner, onClose }: EditPartnerFormPro
               size="md"
               className="min-w-170"
               radius="md"
-              value={partner.description ? partner.description : "No description"}
               required
             />
           </Group>
@@ -159,36 +215,35 @@ export default function EditPartnerForm({ partner, onClose }: EditPartnerFormPro
               {...form.getInputProps("time")}
               required
               className="min-w-170"
-              value={partner.start_partner}
             />
           </Group>
 
-          {/* Status */}
-          <Radio.Group
-            key={form.key("status")}
-            {...form.getInputProps("status")}
-            error={form.errors.status}
-            required>
-            <Group>
-              <Text fw={600}>
-                Status <span className="text-red-600">*</span>
-              </Text>
-              <div className="flex gap-40 ml-72">
-                <Radio
-                  value="active"
-                  label="Active"
-                />
-                <Radio
-                  value="inactive"
-                  label="Inactive"
-                />
-                <Radio
-                  value="waitlisted"
-                  label="Waitlisted"
-                />
-              </div>
-            </Group>
-          </Radio.Group>
+          <Group justify="space-between" align="flex-start" w="100%">
+            <Radio.Group
+              key={form.key("status")}
+              {...form.getInputProps("status")}
+              error={form.errors.status}
+              required
+            >
+              <Group justify="space-between" align="flex-start" w="150%">
+
+                {/* Label with fixed width */}
+                <Text fw={600} className="w-40">
+                  Status <span className="text-red-600">*</span>
+                </Text>
+
+                {/* Radios */}
+                <div className="flex gap-20">
+                  <Radio value="active" label="Active" />
+                  <Radio value="inactive" label="Inactive" />
+                  <Radio value="waitlisted" label="Waitlisted" />
+                </div>
+
+              </Group>
+            </Radio.Group>
+          </Group>
+
+
 
           {/* Latitude and Longitude */}
           <Group
@@ -201,7 +256,6 @@ export default function EditPartnerForm({ partner, onClose }: EditPartnerFormPro
               <NumberInput
                 placeholder="Latitude"
                 key={form.key("latitude")}
-                value={partner.coords ? partner.coords.lat : "N/A"}
                 onChange={(val) => form.setFieldValue("latitude", String(val))}
                 error={form.errors.latitude}
                 size="md"
@@ -212,7 +266,6 @@ export default function EditPartnerForm({ partner, onClose }: EditPartnerFormPro
               <NumberInput
                 placeholder="Longitude"
                 key={form.key("longitude")}
-                value={partner.coords ? partner.coords.lng : "N/A"}
                 onChange={(val) => form.setFieldValue("longitude", String(val))}
                 error={form.errors.longitude}
                 size="md"
@@ -224,71 +277,68 @@ export default function EditPartnerForm({ partner, onClose }: EditPartnerFormPro
           </Group>
 
           {/* Address */}
-          <Group
-            justify="space-between"
-            align="flex-start">
+          <Group justify="space-between" align="flex-start" w="100%">
             <Text fw={600}>
               Address <span className="text-red-600">*</span>
             </Text>
-            <div className="flex flex-col gap-4 min-w-170">
-                <TextInput
+
+            <div className="flex flex-col gap-4 min-w-170 w-full max-w-[600px]">
+              <TextInput
                 placeholder="Address Line"
                 key={form.key("addressLine")}
                 {...form.getInputProps("addressLine")}
                 size="md"
-                className="min-w-170"
                 radius="md"
                 required
-                value={partner.address ? partner.address : "N/A"}
-                />
-                <div className="gap-4 flex ml-68.5">
+              />
+
+              <div className="flex gap-4 w-full">
                 <TextInput
-                    placeholder="City"
-                    key={form.key("city")}
-                    {...form.getInputProps("city")}
-                    size="md"
-                    className="min-w-83"
-                    radius="md"
-                    required
+                  placeholder="City"
+                  key={form.key("city")}
+                  {...form.getInputProps("city")}
+                  size="md"
+                  className="flex-1"
+                  radius="md"
+                  required
                 />
                 <TextInput
-                    placeholder="State"
-                    key={form.key("state")}
-                    {...form.getInputProps("state")}
-                    size="md"
-                    className="min-w-83"
-                    radius="md"
-                    required
+                  placeholder="State"
+                  key={form.key("state")}
+                  {...form.getInputProps("state")}
+                  size="md"
+                  className="w-[120px]"
+                  radius="md"
+                  required
                 />
-                </div>
-                <div className="gap-4 flex ml-68.5">
+              </div>
+
+              <div className="flex gap-4 w-full">
                 <NumberInput
-                    placeholder="Zip Code"
-                    key={form.key("zipCode")}
-                    value={form.values.zipCode}
-                    onChange={(val) => form.setFieldValue("zipCode", String(val))}
-                    error={form.errors.zipCode}
-                    size="md"
-                    className="min-w-83"
-                    radius="md"
-                    hideControls
+                  placeholder="Zip Code"
+                  key={form.key("zipCode")}
+                  value={form.values.zipCode}
+                  onChange={(val) => form.setFieldValue("zipCode", String(val))}
+                  error={form.errors.zipCode}
+                  size="md"
+                  className="w-[120px]"
+                  radius="md"
+                  hideControls
                 />
                 <Select
-                    placeholder="Country"
-                    data={countries}
-                    searchable
-                    nothingFoundMessage="Nothing found..."
-                    key={form.key("country")}
-                    value={form.values.country || null}
-                    onChange={(val) => {
-                    form.setFieldValue("country", val || "");
-                    }}
-                    error={form.errors.country}
-                    size="md"
-                    className="min-w-83"
-                    radius="md"
+                  placeholder="Country"
+                  data={countries}
+                  searchable
+                  nothingFoundMessage="Nothing found..."
+                  key={form.key("country")}
+                  value={form.values.country || null}
+                  onChange={(val) => form.setFieldValue("country", val || "")}
+                  error={form.errors.country}
+                  size="md"
+                  className="flex-1"
+                  radius="md"
                 />
-                </div>
+              </div>
             </div>
           </Group>
 
@@ -303,7 +353,6 @@ export default function EditPartnerForm({ partner, onClose }: EditPartnerFormPro
                 placeholder="Upload image file"
                 radius="md"
                 clearable
-                value={form.values.logoFile}
                 onChange={(file) => form.setFieldValue("logoFile", file)}
                 error={form.errors.logoFile || form.errors.logoUrl}
                 className="min-w-83"
@@ -314,7 +363,6 @@ export default function EditPartnerForm({ partner, onClose }: EditPartnerFormPro
                 {...form.getInputProps("logoUrl")}
                 radius="md"
                 className="min-w-83"
-                value={partner.logo_url || ""}
               />
             </div>
           </Group>
@@ -337,7 +385,8 @@ export default function EditPartnerForm({ partner, onClose }: EditPartnerFormPro
               variant="filled"
               color="#053766"
               radius="md"
-              type="submit">
+              type="submit"
+            >
               Submit
             </Button>
           </Group>

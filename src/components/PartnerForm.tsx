@@ -78,13 +78,15 @@ export default function PartnerForm() {
       zipCode: requiredInteger("Zip Code"),
       country: (value) => (value ? null : "Select a country"),
       status: (value) => (value ? null : "Select a status"),
-      logoFile: (_value, values) =>
-        !values.logoFile && !values.logoUrl.trim()
-          ? "Provide a file or a link"
-          : null,
+      // logoFile: (_value, values) =>
+      //   !values.logoFile && !values.logoUrl.trim()
+      //     ? "Provide a file or a link"
+      //     : null,
+      // 
+      // logos are optional according to the figma?
       logoUrl: (value, values) => {
         if (!value.trim() && !values.logoFile)
-          return "Provide a file or a link";
+          return ;
         return typeof value === "string" ? null : "Enter a valid URL";
       },
     },
@@ -100,8 +102,8 @@ export default function PartnerForm() {
         lat: values.latitude, 
         long: values.longitude
       },
-      address: values.addressLine,
-      logo: values.logoUrl
+      address: values.addressLine + ", " + values.city + ", " + values.state + ", " + " " + values.zipCode + ", " + values.country,
+      logo: values.logoUrl || ""
     }
     
     const response = await fetch("http://localhost:3000/api/partners", {
