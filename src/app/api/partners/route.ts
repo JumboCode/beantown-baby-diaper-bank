@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { Prisma as PrismaTypes } from "@/generated/prisma/client";
 import type { Partner } from "@/generated/prisma/client";
+import { stringifyWithBigInt } from "@/lib/util";
 
 /**
  * GET /api/partners
@@ -101,23 +102,24 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   const body = await request.json();
 
+  console.log("Received partner data:", body);
+
   try {
     const partner = await prisma.partner.create({
       data: {
         name: body.name,
         description: body.description,
-        startPartner: body.start_partner,
+        startPartner: new Date(body.start_partner).toISOString(),
         waitlisted: body.status,
         coords: body.coordinates,
         address: body.address,
-        logoUrl: body.logo
-      }
-    })
-
-    return NextResponse.json({
-      data: partner,
+        logoUrl: body.logo,
+      },
     });
 
+    return NextResponse.json({
+      data: stringifyWithBigInt(partner),
+    });
   } catch (error) {
     const message =
       error instanceof Error
