@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Table, Loader, Center, Text, Button, ActionIcon } from '@mantine/core';
+import { Table, Text, ActionIcon } from '@mantine/core';
 import Image from 'next/image';
 
 interface Distribution {
