@@ -16,6 +16,7 @@ import {
 } from "@mantine/core";
 import { FaGithub } from "react-icons/fa";
 import PartnerForm from "../components/PartnerForm";
+import RakshiValentinaTicket from "../components/sprint4/RakshiValentinaTicket";
 
 export default function Home() {
   return (
@@ -275,6 +276,9 @@ export default function Home() {
             <Title order={2}>Sprint 4</Title>
             <Divider />
             <PartnerForm />
+
+            <Divider />
+            <RakshiValentinaTicket />
           </Stack>
         </Card>
 
