@@ -1,4 +1,5 @@
 import PartnerTable from "@/components/admin/PartnerTable";
+import DistributionsTable from "@/components/DistributionsTable";
 import { Card, Group, Stack, Text, Title, Box } from "@mantine/core";
 
 export default function Page() {
@@ -26,6 +27,10 @@ export default function Page() {
 
       <Card>
         <PartnerTable />
+      </Card>
+
+      <Card>
+        <DistributionsTable />
       </Card>
     </Stack>
   );
