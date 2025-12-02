@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { Prisma as PrismaTypes } from "@/generated/prisma/client";
+import { Prisma as PrismaTypes, status } from "@/generated/prisma/client";
 import type { Partner } from "@/generated/prisma/client";
 import { stringifyWithBigInt } from "@/lib/util";
+import { PartnerUpdateArgs } from "@/generated/prisma/models";
 
 /**
  * GET /api/partners
@@ -78,6 +79,7 @@ export async function GET(request: Request) {
       start_partner: partner.startPartner
         ? partner.startPartner.toISOString()
         : null,
+      status: partner.status,
       waitlisted: partner.waitlisted,
       address: partner.address,
       coords: partner.coords,
@@ -102,20 +104,23 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   const body = await request.json();
 
+  const updatePartnerRequest = {
+    where: { id: body.id },
+    data: {
+      name: body.name,
+      description: body.description,
+      startPartner: new Date(body.start_partner).toISOString(),
+      status: body.status as status,
+      coords: body.coordinates,
+      address: body.address,
+      logoUrl: body.logo,
+    },
+  } as PartnerUpdateArgs;
+
   console.log("Received partner data:", body);
 
   try {
-    const partner = await prisma.partner.create({
-      data: {
-        name: body.name,
-        description: body.description,
-        startPartner: new Date(body.start_partner).toISOString(),
-        waitlisted: body.status,
-        coords: body.coordinates,
-        address: body.address,
-        logoUrl: body.logo,
-      },
-    });
+    const partner = await prisma.partner.update(updatePartnerRequest);
 
     return NextResponse.json({
       data: stringifyWithBigInt(partner),

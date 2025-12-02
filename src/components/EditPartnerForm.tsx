@@ -8,22 +8,17 @@ import {
   Radio,
   FileInput,
   Select,
+  Stack,
+  LoadingOverlay,
+  Box,
 } from "@mantine/core";
 import { useForm } from "@mantine/form";
 import { MonthPickerInput } from "@mantine/dates";
 import "@mantine/dates/styles.css";
-
-type Partner = {
-  id: number;
-  created_at: string;
-  name: string;
-  description: string | null;
-  start_partner: string | null;
-  waitlisted: boolean;
-  address: string | null;
-  coords: { lat: number; lng: number } | null;
-  logo_url: string | null;
-};
+import { Partner } from "./admin/PartnerTable";
+import parser from "parse-address";
+import { useState } from "react";
+import { status } from "@/generated/prisma/enums";
 
 interface EditPartnerFormProps {
   partner: Partner;
@@ -45,34 +40,59 @@ const requiredInteger = (label: string) => (value: unknown) => {
   return /^\d+$/.test(v) ? null : `${label} must be a number`;
 };
 
+interface RequiredAddressComponents {
+  number: string;
+  street: string;
+  city: string;
+  state: string;
+  zip: string;
+}
+
+type AddressWithExtras = RequiredAddressComponents &
+  Partial<parser.ParsedLocation>;
+
+function parseAddress(fullAddress: string | null): AddressWithExtras {
+  const defaults = {
+    number: "",
+    street: "",
+    city: "",
+    state: "",
+    zip: "",
+  };
+
+  if (!fullAddress) return defaults;
+
+  try {
+    const parsed = parser.parseAddress(fullAddress) ?? {};
+    return { ...defaults, ...parsed };
+  } catch (error) {
+    console.error("Error parsing address:", error);
+    return defaults;
+  }
+}
+function formatAddress(address: AddressWithExtras) {
+  try {
+    const parts = [];
+    if (address.number) parts.push(address.number);
+    if (address.prefix) parts.push(address.prefix);
+    if (address.street) parts.push(address.street);
+    if (address.type) parts.push(address.type);
+    if (address.suffix) parts.push(address.suffix);
+    return parts.join(" ");
+  } catch (error) {
+    console.error("Error formatting address:", error);
+    return "";
+  }
+}
 export default function EditPartnerForm({
   partner,
   onClose,
 }: EditPartnerFormProps) {
-  function parseAddress(fullAddress: string) {
-    // currently, this assumes that all of the addresses are in the form "addressLine, city, state zipcode, country"
-    // which is how the add partner form adds addresses to the database
-    const parts = fullAddress.split(",").map((s) => s.trim());
+  const [loading, setLoading] = useState(false);
 
-    const addressLine = parts[0];
-    const city = parts[1];
-    let state = "";
-    let zipCode = "";
-    let country = "";
+  console.log("Editing partner:", partner);
 
-    if (parts.length == 3) {
-      const stateZip = parts[2].split(/\s+/);
-      state = stateZip[0];
-      zipCode = stateZip.slice(1).join(" ");
-    }
-    if (parts.length == 4) {
-      country = parts.slice(3).join(", ");
-    }
-
-    return { addressLine, city, state, zipCode, country };
-  }
-
-  const address = parseAddress(partner.address || "");
+  const address = parseAddress(partner.address);
 
   const form = useForm({
     mode: "controlled",
@@ -82,14 +102,14 @@ export default function EditPartnerForm({
       organization: partner.name,
       description: partner.description || "",
       time: partner.start_partner || "",
-      status: partner.waitlisted,
+      status: partner.status,
       latitude: partner.coords ? partner.coords.lat : "",
       longitude: partner.coords ? partner.coords.lng : "",
-      addressLine: address.addressLine || "",
+      addressLine: formatAddress(address),
       city: address.city || "",
       state: address.state || "",
-      zipCode: address.zipCode || "",
-      country: address.country || "United States",
+      zipCode: address.zip || "",
+      country: "United States",
       logoFile: null as File | null,
       logoUrl: partner.logo_url || "",
     },
@@ -104,11 +124,7 @@ export default function EditPartnerForm({
       zipCode: requiredInteger("Zip Code"),
       country: (value) => (value ? null : "Select a country"),
       status: (value) => (value ? null : "Select a status"),
-      // logos are optional according to the figma?
-      // logoFile: (_value, values) =>
-      //   !values.logoFile && !values.logoUrl.trim()
-      //     ? "Provide a file or a link"
-      //     : null,
+
       logoUrl: (value, values) => {
         if (!value.trim() && !values.logoFile) return; // logos are optional according to the figma?
         return typeof value === "string" ? null : "Enter a valid URL";
@@ -117,14 +133,17 @@ export default function EditPartnerForm({
   });
 
   async function submitEditPartner(values: typeof form.values) {
+    setLoading(true);
+    console.log("Submitting edited partner values:", values);
     const formData = {
+      id: partner.id,
       name: values.organization,
       description: values.description,
       start_partner: new Date(values.time).toISOString(),
-      waitlisted: values.status,
+      status: values.status,
       coordinates: {
         lat: values.latitude,
-        long: values.longitude,
+        lng: values.longitude,
       },
       address:
         values.addressLine +
@@ -149,20 +168,21 @@ export default function EditPartnerForm({
     if (!response.ok) {
       const err = await response.text();
       console.error("Failed to update partner data", err);
+      setLoading(false);
       return;
     }
+    setLoading(false);
+    onClose();
   }
 
   return (
-    <div>
-      <div className="mb-5">
-        <div>
-          <h1 className="text-3xl text-black font-semibold">
-            Edit Partner Information
-          </h1>
-          <h2 className="text-lg text-gray-500">Change your partner data</h2>
-        </div>
-      </div>
+    <Box pos="relative">
+      <LoadingOverlay
+        visible={loading}
+        zIndex={1000}
+        overlayProps={{ radius: "sm", blur: 2 }}
+      />
+      <h2 className="text-lg text-gray-500">Change your partner data</h2>
 
       <div className="p-4 border border-gray-300 rounded-xl">
         <form
@@ -223,41 +243,69 @@ export default function EditPartnerForm({
 
           <Group
             justify="space-between"
-            align="flex-start"
+            align="flex-end"
             w="100%">
-            <Radio.Group
-              key={form.key("status")}
-              {...form.getInputProps("status")}
-              error={form.errors.status}
-              required>
-              <Group
-                justify="space-between"
-                align="flex-start"
-                w="150%">
-                {/* Label with fixed width */}
-                <Text
-                  fw={600}
-                  className="w-40">
-                  Status <span className="text-red-600">*</span>
-                </Text>
+            {/* Label with fixed width */}
+            <Text
+              fw={600}
+              className="w-40">
+              Status <span className="text-red-600">*</span>
+            </Text>
 
-                {/* Radios */}
-                <div className="flex gap-20">
-                  <Radio
-                    value="active"
-                    label="Active"
-                  />
-                  <Radio
-                    value="inactive"
-                    label="Inactive"
-                  />
-                  <Radio
-                    value="waitlisted"
-                    label="Waitlisted"
-                  />
-                </div>
-              </Group>
-            </Radio.Group>
+            <Group justify="flex-start">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                {[
+                  {
+                    value: "active",
+                    title: "Active",
+                    description: "Partner is currently active",
+                  },
+                  {
+                    value: "inactive",
+                    title: "Inactive",
+                    description: "Partner is not currently active",
+                  },
+                  {
+                    value: "waitlisted",
+                    title: "Waitlisted",
+                    description: "Partner is on the waitlist",
+                  },
+                ].map((option) => (
+                  <Radio.Card
+                    key={form.key(`status-${option.value}`)}
+                    radius="md"
+                    p="md"
+                    className="w-52 border border-gray-200 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md data-[checked=true]:border-[#053766] data-[checked=true]:bg-blue-50"
+                    checked={form.values.status === option.value}
+                    onClick={() =>
+                      form.setFieldValue("status", option.value as status)
+                    }>
+                    <Group
+                      wrap="nowrap"
+                      align="flex-start"
+                      gap="sm">
+                      <Radio.Indicator />
+                      <Stack gap={4}>
+                        <Text fw={700}>{option.title}</Text>
+                        <Text
+                          size="xs"
+                          color="dimmed">
+                          {option.description}
+                        </Text>
+                      </Stack>
+                    </Group>
+                  </Radio.Card>
+                ))}
+              </div>
+
+              {form.errors.status && (
+                <Text
+                  color="red"
+                  size="sm">
+                  {form.errors.status}
+                </Text>
+              )}
+            </Group>
           </Group>
 
           {/* Latitude and Longitude */}
@@ -271,7 +319,7 @@ export default function EditPartnerForm({
               <NumberInput
                 placeholder="Latitude"
                 key={form.key("latitude")}
-                onChange={(val) => form.setFieldValue("latitude", String(val))}
+                {...form.getInputProps("latitude")}
                 error={form.errors.latitude}
                 size="md"
                 className="min-w-83"
@@ -281,7 +329,7 @@ export default function EditPartnerForm({
               <NumberInput
                 placeholder="Longitude"
                 key={form.key("longitude")}
-                onChange={(val) => form.setFieldValue("longitude", String(val))}
+                {...form.getInputProps("longitude")}
                 error={form.errors.longitude}
                 size="md"
                 className="min-w-83"
@@ -409,6 +457,6 @@ export default function EditPartnerForm({
           </Group>
         </form>
       </div>
-    </div>
+    </Box>
   );
 }

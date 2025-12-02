@@ -15,7 +15,6 @@ import { useForm } from "@mantine/form";
 import { MonthPickerInput } from "@mantine/dates";
 import { useState } from "react";
 import "@mantine/dates/styles.css";
-import { POST } from "../app/api/partners/route"
 
 const cities = [
   "Boston",

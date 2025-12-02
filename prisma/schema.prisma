@@ -53,6 +53,7 @@ model Partner {
   coords         Json?           @db.Json
   logoUrl        String?         @map("logo_url")
   active         Boolean?
+  status         status          @default(inactive)
   distributions  Distribution[]
   partnerRegions PartnerRegion[]
 
@@ -80,4 +81,11 @@ model YearlyData {
   Cities     City    @relation(fields: [cityId], references: [id], onDelete: Cascade)
 
   @@map("Yearly Data")
+}
+
+/// This enum is commented in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+enum status {
+  active
+  waitlisted
+  inactive
 }
