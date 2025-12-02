@@ -3,7 +3,7 @@
 import dynamic from "next/dynamic";
 import { useLeafletMap } from "./useLeafletMap";
 import { useBaseTileLayer } from "./useBaseTileLayer";
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect } from "react";
 import type { City, Distribution } from "@/generated/prisma/client";
 import { Popup, TileLayer } from "react-leaflet";
 import { Icon } from "leaflet";
@@ -39,17 +39,7 @@ type CityMapInfo = City & {
   partners: PartnerInfoType[];
 };
 
-export default function LeafletMap({
-  view,
-  index,
-  labels,
-  mapData,
-}: {
-  view: "monthly" | "yearly";
-  index: number;
-  labels: (string | number)[];
-  mapData?: MapData | null;
-}) {
+export default function LeafletMap({ mapData }: { mapData?: MapData | null }) {
   const { mapConfig } = useLeafletMap();
   const { style: mapStyle, ...mapOptions } = mapConfig;
   const { tileLayerProps } = useBaseTileLayer();
@@ -62,18 +52,6 @@ export default function LeafletMap({
     iconAnchor: [16, 40],
     popupAnchor: [0, -36],
   });
-
-  const { monthParam, yearParam } = useMemo(() => {
-    const currentLabel = labels?.[index];
-    if (view === "monthly" && currentLabel) {
-      const [month, year] = String(currentLabel).split(" ");
-      return { monthParam: month, yearParam: year };
-    }
-    if (view === "yearly" && currentLabel) {
-      return { monthParam: undefined, yearParam: String(currentLabel) };
-    }
-    return { monthParam: undefined, yearParam: undefined };
-  }, [labels, index, view]);
 
   useEffect(() => {
     if (!mapData) return;

@@ -161,7 +161,7 @@ export default function Page() {
           <Grid.Col span={4}>
             <ImpactModal />
           </Grid.Col>
-        </Grid>
+        </Grid>x
       </Stack>
     </Box>
   );
