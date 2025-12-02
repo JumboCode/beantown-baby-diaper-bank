@@ -16,7 +16,47 @@ export async function GET(request: Request) {
   }
   catch(error){
     console.log("Unable to fetch partner regions");
+    return NextResponse.json({ status: 500 });
+  }
+}
 
+export async function POST(request: Request) {
+  try{
+    const newPercentages: PartnerRegion[] = await request.json();
+
+    if (!Array.isArray(newPercentages)) {
+      return NextResponse.json(
+        { error: "Expected an array of PartnerRegion values" },
+        { status: 400 }
+      );
+    }
+
+    const updated = await prisma.$transaction(
+      newPercentages.map((p) =>
+        prisma.partnerRegion.update({
+          where: {
+            partnerId_cityId: {
+              partnerId: p.partnerId,
+              cityId: p.cityId,
+            },
+          },
+          data: {
+            percentage: p.percentage,
+          },
+        })
+      )
+    );
+
+
+    const data_response = stringifyWithBigInt({data: newPercentages}); 
+
+    return new Response(data_response, {
+      status: 200, 
+      headers: { "Content-Type": "application/json" }
+    })
+  }
+  catch(error){
+    console.log("Unable to update percentages");
     return NextResponse.json({ status: 500 });
   }
 }
