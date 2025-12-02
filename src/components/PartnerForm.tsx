@@ -118,7 +118,7 @@ export default function PartnerForm() {
       logo: values.logoUrl || ""
     }
     
-    const response = await fetch("http://localhost:3000/api/partners", {
+    const response = await fetch("/api/partners", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",

@@ -102,26 +102,28 @@ export default function DistributionsTable() {
   });
 
   return (
-    <div>
-      <Table
-        highlightOnHover
-        withTableBorder
-        styles={{ th: { color: "#667085" } }}
-        tabularNums>
-        <Table.Thead style={{ backgroundColor: "#F9FAFB" }}>
-          <Table.Tr>
-            <Table.Th></Table.Th>
-            <Table.Th>Organization Name</Table.Th>
-            <Table.Th>City</Table.Th>
-            <Table.Th>Number of Diapers Distributed</Table.Th>
-            <Table.Th>Number of Children Helped</Table.Th>
-            <Table.Th>Month</Table.Th>
-            <Table.Th>Year</Table.Th>
-            <Table.Th>Percentage</Table.Th>
-          </Table.Tr>
-        </Table.Thead>
-        <Table.Tbody>{rows}</Table.Tbody>
-      </Table>
+    <div className="bg-white rounded-xl shadow-lg overflow-hidden flex flex-col">
+      <div className="overflow-x-auto flex-1">
+        <Table
+          highlightOnHover
+          withTableBorder
+          styles={{ th: { color: "#667085" } }}
+          tabularNums>
+          <Table.Thead style={{ backgroundColor: "#F9FAFB" }}>
+            <Table.Tr>
+              <Table.Th></Table.Th>
+              <Table.Th>Organization Name</Table.Th>
+              <Table.Th>City</Table.Th>
+              <Table.Th>Number of Diapers Distributed</Table.Th>
+              <Table.Th>Number of Children Helped</Table.Th>
+              <Table.Th>Month</Table.Th>
+              <Table.Th>Year</Table.Th>
+              <Table.Th>Percentage</Table.Th>
+            </Table.Tr>
+          </Table.Thead>
+          <Table.Tbody>{rows}</Table.Tbody>
+        </Table>
+      </div>
     </div>
   );
 }
