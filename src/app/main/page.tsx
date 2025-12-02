@@ -48,7 +48,7 @@ const flipBoundaries = (
 
   return {
     ...data,
-    features: flippedFeatures as any,
+    features: flippedFeatures,
   };
 };
 
