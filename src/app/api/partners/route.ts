@@ -1,7 +1,9 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { Prisma as PrismaTypes } from "@/generated/prisma/client";
+import { Prisma as PrismaTypes, status } from "@/generated/prisma/client";
 import type { Partner } from "@/generated/prisma/client";
+import { stringifyWithBigInt } from "@/lib/util";
+import { PartnerUpdateArgs } from "@/generated/prisma/models";
 
 /**
  * GET /api/partners
@@ -77,6 +79,7 @@ export async function GET(request: Request) {
       start_partner: partner.startPartner
         ? partner.startPartner.toISOString()
         : null,
+      status: partner.status,
       waitlisted: partner.waitlisted,
       address: partner.address,
       coords: partner.coords,
@@ -93,6 +96,40 @@ export async function GET(request: Request) {
       error instanceof Error
         ? error.message
         : "Unable to load partners from the database.";
+
+    return NextResponse.json({ error: message }, { status: 500 });
+  }
+}
+
+export async function POST(request: Request) {
+  const body = await request.json();
+
+  const updatePartnerRequest = {
+    where: { id: body.id },
+    data: {
+      name: body.name,
+      description: body.description,
+      startPartner: new Date(body.start_partner).toISOString(),
+      status: body.status as status,
+      coords: body.coordinates,
+      address: body.address,
+      logoUrl: body.logo,
+    },
+  } as PartnerUpdateArgs;
+
+  console.log("Received partner data:", body);
+
+  try {
+    const partner = await prisma.partner.update(updatePartnerRequest);
+
+    return NextResponse.json({
+      data: stringifyWithBigInt(partner),
+    });
+  } catch (error) {
+    const message =
+      error instanceof Error
+        ? error.message
+        : "Unable to insert partner into database.";
 
     return NextResponse.json({ error: message }, { status: 500 });
   }
