@@ -31,7 +31,6 @@ export type Partner = {
 };
 
 function roundCoords(coords: { lat: number; lng: number }) {
-  console.log("Rounding coords", coords);
   if (coords.lat.toString().length > 4 && coords.lng.toString().length > 4) {
     return {
       lat: coords.lat.toFixed(4),
@@ -72,9 +71,7 @@ export default function PartnerInfo() {
 
     const getPercentagesWithCityId = async () => {
       try {
-        const response = await fetch(
-          "http://localhost:3000/api/partners/percentages"
-        );
+        const response = await fetch("/api/partners/percentages");
         const result = await response.json();
         setPercentages(result.data);
       } catch (err) {
@@ -159,6 +156,10 @@ function PartnerTable({
                   <Table.Td style={{ verticalAlign: "middle" }}>
                     <ActionIcon
                       variant="light"
+                      onClick={() => {
+                        setPartner(partner);
+                        open();
+                      }}
                       size="lg">
                       <Image
                         src="/admin_view/pen.svg"

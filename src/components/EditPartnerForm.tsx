@@ -380,16 +380,18 @@ export default function EditPartnerForm({
               </div>
 
               <div className="flex gap-4 w-full">
-                <NumberInput
+                <TextInput
                   placeholder="Zip Code"
+                  {...form.getInputProps("zipCode")}
                   key={form.key("zipCode")}
                   value={form.values.zipCode}
-                  onChange={(val) => form.setFieldValue("zipCode", String(val))}
+                  onChange={(val) =>
+                    form.setFieldValue("zipCode", val.target.value)
+                  }
                   error={form.errors.zipCode}
                   size="md"
                   className="w-[120px]"
                   radius="md"
-                  hideControls
                 />
                 <Select
                   placeholder="Country"
