@@ -2,8 +2,9 @@ import {
   Button,
   Group,
   TextInput,
-  MultiSelect,
+  ComboboxItem,
   Text,
+  TagsInput,
   Textarea,
   Table,
   NumberInput,
@@ -13,20 +14,9 @@ import {
 } from "@mantine/core";
 import { useForm } from "@mantine/form";
 import { MonthPickerInput } from "@mantine/dates";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import "@mantine/dates/styles.css";
 
-const cities = [
-  "Boston",
-  "Medford",
-  "Somerville",
-  "Arlington",
-  "Cambridge",
-  "Quincy",
-  "Brookline",
-  "Newton",
-  "Watertown",
-];
 const countries = ["United States", "Canada"];
 
 // Checks if input is a number (can be decimal)
@@ -44,6 +34,29 @@ const requiredInteger = (label: string) => (value: unknown) => {
 
 export default function PartnerForm() {
   const [percentages, setPercentages] = useState<Record<string, number>>({});
+  const [citiesAPI, setCitiesAPI] = useState<string[]>([]);
+  const [isLoadingCities, setIsLoadingCities] = useState<boolean>(false);
+
+  useEffect(() => {
+    const fetchCities = async() => {
+      setIsLoadingCities(true);
+      try {
+        const res = await fetch('http://api.geonames.org/searchJSON?q=&adminCode1=MA&country=US&featureClass=P&username=jumbocodebbdb');
+        const data = await res.json();
+        
+        if (data.geonames) {
+          const cityNames = data.geonames.map((city: { name: string }) => city.name);
+          const cityUniqueSorted = Array.from(new Set(cityNames)).sort();
+          setCitiesAPI(cityUniqueSorted as string[]);
+        }
+      } catch (err) {
+        console.log(`Failed to fetch cities: ${err}`);
+      } finally {
+        setIsLoadingCities(false);
+      }
+    }
+    fetchCities();
+  }, []);
 
   const form = useForm({
     mode: "controlled",
@@ -105,7 +118,7 @@ export default function PartnerForm() {
       logo: values.logoUrl || ""
     }
     
-    const response = await fetch("http://localhost:3000/api/partners", {
+    const response = await fetch("/api/partners", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -174,11 +187,19 @@ export default function PartnerForm() {
             <Text fw={600}>
               Cities Served <span className="text-red-600">*</span>
             </Text>
-            <MultiSelect
-              placeholder="Select cities"
-              data={cities}
-              searchable
-              nothingFoundMessage="Nothing found..."
+            <TagsInput
+              placeholder={isLoadingCities ? 'Loading cities...' : 'Select cities'}
+              data={citiesAPI}
+              filter={({options, search}) => {
+                const splittedSearch = search.toLowerCase().trim().split(" ");
+                return (options as ComboboxItem[]).filter((option) => {
+                const words = option.label.toLowerCase().trim().split(" ");
+                return splittedSearch.every((searchWord) =>
+                  words.some((word: string) => word.includes(searchWord))
+                );
+              });
+              }}
+              disabled={isLoadingCities}
               key={form.key("cities")}
               value={form.values.cities}
               onChange={(values) => {
@@ -189,6 +210,19 @@ export default function PartnerForm() {
               className="min-w-170"
               radius="md"
             />
+            {/* <MultiSelect
+              disabled={isLoadingCities}
+              nothingFoundMessage="Nothing found..."
+              key={form.key("cities")}
+              value={form.values.cities}
+              onChange={(values) => {
+                form.setFieldValue("cities", values);
+              }}
+              error={form.errors.cities}
+              size="md"
+              className="min-w-170"
+              radius="md"
+            /> */}
           </Group>
 
           {/* Selected Cities Table with Percentages, sorry this looks digusting */}
