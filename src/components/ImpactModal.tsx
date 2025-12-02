@@ -9,17 +9,18 @@ export default function ImpactModal() {
       shadow="sm"
       padding="lg"
       radius="md"
-      withBorder
-      style={{
-        maxWidth: "450px",
-        backgroundColor: "white",
-      }}
-    >
-      <Text size="xl" fw={600} c="#000000" mb="xs">
+      withBorder>
+      <Text
+        size="xl"
+        fw={600}
+        mb="xs">
         Make an impact
       </Text>
 
-      <Text size="sm" c="dimmed" mb="lg">
+      <Text
+        size="sm"
+        c="dimmed"
+        mb="lg">
         Calculate how you can help!
       </Text>
 
@@ -42,15 +43,23 @@ export default function ImpactModal() {
         }}
       />
 
-      {value !== undefined && value !== null && value !== "" && Number(value) > 0 && (
-        <Text size="sm" mb="md">
-          You could help{" "}
-          <Text component="span" fw={700} c="#000000">
-            {Number(value) * 4}
-          </Text>{" "}
-          families!
-        </Text>
-      )}
+      {value !== undefined &&
+        value !== null &&
+        value !== "" &&
+        Number(value) > 0 && (
+          <Text
+            size="sm"
+            mb="md">
+            You could help{" "}
+            <Text
+              component="span"
+              fw={700}
+              c="#000000">
+              {Number(value) * 4}
+            </Text>{" "}
+            families!
+          </Text>
+        )}
 
       <Button
         fullWidth
@@ -68,8 +77,7 @@ export default function ImpactModal() {
               backgroundColor: "#163050",
             },
           },
-        }}
-      >
+        }}>
         Donate
       </Button>
     </Card>

@@ -9,6 +9,7 @@ import { useState, useEffect } from "react";
 import ImpactModal from "@/components/ImpactModal";
 import { FeatureCollection, Point } from "geojson";
 import { City, Distribution } from "@/generated/prisma/client";
+import { Grid } from "@mantine/core";
 
 const LeafletMap = dynamic(() => import("@/components/map/Map"), {
   ssr: false,
@@ -94,8 +95,8 @@ export default function Page() {
   return (
     <Box style={{ backgroundColor: "#f8f9fa", minHeight: "100vh" }}>
       <Stack
+        p="md"
         gap="xl"
-        maw={1400}
         mx="auto">
         {/* Header */}
         <Box>
@@ -121,14 +122,9 @@ export default function Page() {
         )}
 
         {/* Map Section with Timeline and Impact Modal - Two Column Layout */}
-        <Box
-          style={{
-            display: "grid",
-            gridTemplateColumns: "1fr 400px",
-            gap: "24px",
-          }}>
+        <Grid align="flex-end">
           {/* Left Column: Map */}
-          <Box>
+          <Grid.Col span="auto">
             <Title
               order={2}
               size="h4"
@@ -142,7 +138,7 @@ export default function Page() {
               radius="md"
               withBorder>
               <Box
-                h="500px"
+                h="50vh"
                 pos="relative"
                 mb="md">
                 <LeafletMap
@@ -159,13 +155,13 @@ export default function Page() {
                 onTimelineChange={handleTimelineChange}
               />
             </Paper>
-          </Box>
+          </Grid.Col>
 
           {/* Right Column: Impact Modal */}
-          <Box>
+          <Grid.Col span={4}>
             <ImpactModal />
-          </Box>
-        </Box>
+          </Grid.Col>
+        </Grid>
       </Stack>
     </Box>
   );
