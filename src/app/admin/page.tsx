@@ -27,6 +27,10 @@ export default function Page() {
       <Card>
         <PartnerTable />
       </Card>
+
+      <Card>
+        <DistributionsTable />
+      </Card>
     </Stack>
   );
 }
