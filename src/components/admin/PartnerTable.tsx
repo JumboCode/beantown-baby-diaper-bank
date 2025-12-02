@@ -5,16 +5,16 @@ import {
   Center,
   Loader,
   Table,
-  TableData,
   Modal,
   Pill,
   Mark,
   Text,
+  ActionIcon,
 } from "@mantine/core";
-import { RiPencilFill } from "react-icons/ri";
 import EditPartnerForm from "../EditPartnerForm";
 import { useDisclosure } from "@mantine/hooks";
 import { status } from "@/generated/prisma/enums";
+import Image from "next/image";
 
 export type Partner = {
   id: number;
@@ -54,7 +54,7 @@ export default function PartnerInfo() {
     setLoading(true);
     const fetchAndStoreData = async () => {
       try {
-        const response = await fetch("http://localhost:3000/api/partners");
+        const response = await fetch("/api/partners");
         const result = await response.json();
         console.log("Fetched partner data:", result.data);
         setData(result.data);
@@ -70,7 +70,7 @@ export default function PartnerInfo() {
 
   const refreshTable = () => {
     setLoading(true);
-    fetch("http://localhost:3000/api/partners")
+    fetch("/api/partners")
       .then((response) => response.json())
       .then((result) => {
         console.log("Refetched partner data:", result.data);
@@ -84,21 +84,15 @@ export default function PartnerInfo() {
       });
   };
 
-  return (
-    <div className="min-h-screen p-8">
-      <div className="max-w-[95%] mx-auto">
-        {loading ? (
-          <Center className="h-64">
-            <Loader type="bars" />
-          </Center>
-        ) : (
-          <PartnerTable
-            partners={data}
-            refreshTable={refreshTable}
-          />
-        )}
-      </div>
-    </div>
+  return loading ? (
+    <Center className="h-64">
+      <Loader type="bars" />
+    </Center>
+  ) : (
+    <PartnerTable
+      partners={data}
+      refreshTable={refreshTable}
+    />
   );
 }
 
@@ -112,106 +106,103 @@ function PartnerTable({
   const [partner, setPartner] = useState<Partner | null>(null);
   const [opened, { open, close }] = useDisclosure(false);
 
-  const tableData: TableData = {
-    head: [
-      "Name",
-      "Description",
-      "Partner Since",
-      "Status",
-      "Coordinates",
-      "Address",
-      "",
-    ],
-    body: partners.map((partner) => [
-      // Image if applicable, followed by name
-      <div
-        key={partner.id}
-        className="flex items-center gap-3">
-        {partner.logo_url && (
-          <img
-            src={partner.logo_url}
-            alt={partner.name}
-            className="h-10 w-10 object-contain"
-            onError={(e) => {
-              e.currentTarget.style.display = "none";
-            }}
-          />
-        )}
-        <span className="font-bold text-gray-900">{partner.name}</span>
-      </div>,
-      // Description
-      <div
-        key={partner.id}
-        className="text-sm text-gray-600 max-w-md">
-        {partner.description || (
-          <span className="text-gray-400 italic">No description</span>
-        )}
-      </div>,
-      // Start partner date if applicable
-      <span
-        key={partner.id}
-        className="text-sm text-gray-600">
-        {partner.start_partner ? (
-          new Date(partner.start_partner).toLocaleDateString()
-        ) : (
-          <span className="text-gray-400 italic">N/A</span>
-        )}
-      </span>,
-
-      // Status
-      <Pill
-        key={partner.id}
-        className={`text-sm font-semibold ${
-          partner.status === "active"
-            ? "text-green-600"
-            : partner.status === "inactive"
-              ? "text-red-600"
-              : "text-yellow-600"
-        }`}>
-        {partner.status.charAt(0).toUpperCase() + partner.status.slice(1)}
-      </Pill>,
-
-      // Coordinates if applicable
-      <span
-        key={partner.id}
-        className="text-xs text-gray-500">
-        {partner.coords ? (
-          joinCoords(partner.coords)
-        ) : (
-          <span className="text-gray-400 italic">N/A</span>
-        )}
-      </span>,
-      // Address if applicable
-      <span
-        key={partner.id}
-        className="text-sm text-gray-600">
-        {partner.address || <span className="text-gray-400 italic">N/A</span>}
-      </span>,
-      <span
-        key={partner.id}
-        className="text-md text-teal-800 font-semibold">
-        <button
-          onClick={() => {
-            setPartner(partner);
-            open();
-          }}
-          className="cursor-pointer">
-          <RiPencilFill size={20} />
-        </button>
-      </span>,
-    ]),
-  };
-
   return (
     <>
       <div className="bg-white rounded-xl shadow-lg overflow-hidden flex flex-col">
         <div className="overflow-x-auto flex-1">
           <Table
-            data={tableData}
             highlightOnHover
             withTableBorder
-            styles={{ th: { color: "#667085", backgroundColor: "#F9FAFB" } }}
-          />
+            styles={{ th: { color: "#667085" } }}
+            tabularNums>
+            <Table.Thead style={{ backgroundColor: "#F9FAFB" }}>
+              <Table.Tr>
+                <Table.Th></Table.Th>
+                <Table.Th>Partner Name</Table.Th>
+                <Table.Th>Description</Table.Th>
+                <Table.Th>Partner Since</Table.Th>
+                <Table.Th>Status</Table.Th>
+                <Table.Th>Coordinates</Table.Th>
+                <Table.Th>Address</Table.Th>
+                <Table.Th></Table.Th>
+              </Table.Tr>
+            </Table.Thead>
+            <Table.Tbody>
+              {partners.map((partner) => (
+                <Table.Tr key={partner.id}>
+                  <Table.Td style={{ verticalAlign: "middle" }}>
+                    <ActionIcon
+                      variant="light"
+                      size="lg">
+                      <Image
+                        src="/admin_view/pen.svg"
+                        alt="Edit"
+                        width={20}
+                        height={20}
+                      />
+                    </ActionIcon>
+                  </Table.Td>
+                  <Table.Td>
+                    <div className="flex items-center gap-3">
+                      {partner.logo_url && (
+                        <img
+                          src={partner.logo_url}
+                          alt={partner.name}
+                          className="h-10 w-10 object-contain"
+                          onError={(e) => {
+                            e.currentTarget.style.display = "none";
+                          }}
+                        />
+                      )}
+                      <span className="font-bold text-gray-900">
+                        {partner.name}
+                      </span>
+                    </div>
+                  </Table.Td>
+                  <Table.Td className="text-sm text-gray-600 max-w-md">
+                    {partner.description || (
+                      <span className="text-gray-400 italic">
+                        No description
+                      </span>
+                    )}
+                  </Table.Td>
+                  <Table.Td className="text-sm text-gray-600">
+                    {partner.start_partner ? (
+                      new Date(partner.start_partner).toLocaleDateString()
+                    ) : (
+                      <span className="text-gray-400 italic">N/A</span>
+                    )}
+                  </Table.Td>
+                  <Table.Td>
+                    <Pill
+                      className={`text-sm font-semibold ${
+                        partner.status === "active"
+                          ? "text-green-600"
+                          : partner.status === "inactive"
+                            ? "text-red-600"
+                            : "text-yellow-600"
+                      }`}>
+                      {partner.status.charAt(0).toUpperCase() +
+                        partner.status.slice(1)}
+                    </Pill>
+                  </Table.Td>
+                  <Table.Td className="text-xs text-gray-500">
+                    {partner.coords ? (
+                      joinCoords(partner.coords)
+                    ) : (
+                      <span className="text-gray-400 italic">N/A</span>
+                    )}
+                  </Table.Td>
+                  <Table.Td className="text-sm text-gray-600">
+                    {partner.address || (
+                      <span className="text-gray-400 italic">N/A</span>
+                    )}
+                  </Table.Td>
+                  <Table.Td></Table.Td>
+                </Table.Tr>
+              ))}
+            </Table.Tbody>
+          </Table>
         </div>
       </div>
 
