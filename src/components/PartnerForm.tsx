@@ -77,17 +77,49 @@ export default function PartnerForm() {
       zipCode: requiredInteger("Zip Code"),
       country: (value) => (value ? null : "Select a country"),
       status: (value) => (value ? null : "Select a status"),
-      logoFile: (_value, values) =>
-        !values.logoFile && !values.logoUrl.trim()
-          ? "Provide a file or a link"
-          : null,
+      // logoFile: (_value, values) =>
+      //   !values.logoFile && !values.logoUrl.trim()
+      //     ? "Provide a file or a link"
+      //     : null,
+      // 
+      // logos are optional according to the figma?
       logoUrl: (value, values) => {
         if (!value.trim() && !values.logoFile)
-          return "Provide a file or a link";
+          return ;
         return typeof value === "string" ? null : "Enter a valid URL";
       },
     },
   });
+
+  async function submitPartner(values: typeof form.values) {
+    const formData = {
+      name: values.organization,
+      description: values.description,
+      start_partner: new Date(values.time).toISOString(),
+      waitlisted: values.status,
+      coordinates: {
+        lat: values.latitude, 
+        long: values.longitude
+      },
+      address: values.addressLine + ", " + values.city + ", " + values.state + ", " + " " + values.zipCode + ", " + values.country,
+      logo: values.logoUrl || ""
+    }
+    
+    const response = await fetch("http://localhost:3000/api/partners", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(formData),
+        });
+    
+    if (!response.ok) {
+      const err = await response.text();
+      console.error("Failed to create partner", err);
+      return;
+    }
+  }
+
   return (
     <div>
       <div className="mb-5">
@@ -97,7 +129,7 @@ export default function PartnerForm() {
 
       <div className="p-4 border border-gray-300 rounded-xl">
         <form
-          onSubmit={form.onSubmit((values) => console.log(values))}
+          onSubmit={form.onSubmit((values) => {submitPartner(values)})}
           className="flex flex-col gap-5">
           {/* Name of Organization */}
           <Group
