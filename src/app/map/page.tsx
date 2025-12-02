@@ -217,12 +217,12 @@ export default function MapPage() {
       </Modal>
       <div className="w-full h-[100vh]">
         <LeafletMap
-          view={timeline.view}
-          index={timeline.index}
-          labels={timeline.labels}
-          // regions={baseRegions}
-          // onRegionClick={setSelectedRegionId}
-          // leftControls={leftOverlay}
+        // view={timeline.view}
+        // index={timeline.index}
+        // labels={timeline.labels}
+        // regions={baseRegions}
+        // onRegionClick={setSelectedRegionId}
+        // leftControls={leftOverlay}
         />
         {/* <TimelineSliderControls {...timeline} /> */}
       </div>

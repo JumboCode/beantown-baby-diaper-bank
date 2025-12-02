@@ -113,14 +113,12 @@ export default function Page() {
             Last updated: Sep 9th, 2025.
           </Text>
         </Box>
-
         {/* Total Diapers Card */}
         {totalDiapers ? (
           <TotalDiapersDistributed totalDiapers={totalDiapers} />
         ) : (
           <Loader />
         )}
-
         {/* Map Section with Timeline and Impact Modal - Two Column Layout */}
         <Grid align="flex-end">
           {/* Left Column: Map */}
@@ -141,12 +139,7 @@ export default function Page() {
                 h="50vh"
                 pos="relative"
                 mb="md">
-                <LeafletMap
-                  view={timeline.view}
-                  index={timeline.index}
-                  labels={timeline.labels}
-                  mapData={mapData}
-                />
+                <LeafletMap mapData={mapData} />
               </Box>
 
               {/* Timeline Slider below map */}
@@ -161,7 +154,8 @@ export default function Page() {
           <Grid.Col span={4}>
             <ImpactModal />
           </Grid.Col>
-        </Grid>x
+        </Grid>
+        x
       </Stack>
     </Box>
   );
