@@ -1,11 +1,12 @@
 "use client";
 
 import PartnerTable from "@/components/admin/PartnerTable";
-import { Card, Group, Stack, Text, Title, Tabs, Button } from "@mantine/core";
+import { Card, Group, Stack, Text, Title, Tabs, Button, Box, Flex} from "@mantine/core";
 import { useState } from "react";
 import Image from "next/image";
 import { Poppins } from "next/font/google";
 import DistributionsTable from "@/components/DistributionsTable";
+import MonthSelectionModal from "@/components/admin/MonthSelectionModal";
 
 const poppins = Poppins({
   subsets: ["latin"],
@@ -108,21 +109,33 @@ export default function Page() {
             }>
             Diapers
           </Tabs.Tab>
-          <Button
-            ml="auto"
-            variant="default"
-            radius={5}
-            style={{ alignSelf: "center", marginRight: 4, marginBottom: 4 }}
-            rightSection={
-              <Image
-                src="/admin_view/filter.svg"
-                alt="filter icon"
-                width={16}
-                height={16}
-              />
-            }>
-            Filter
-          </Button>
+
+          <Flex
+            style={{
+              position: "absolute",
+              right: 0,
+              top: "50%",
+              transform: "translateY(-50%)",
+              gap:10,
+            }}
+          >
+            <MonthSelectionModal />
+            <Button
+              ml="auto"
+              variant="default"
+              radius={5}
+              // style={{ alignSelf: "center", marginRight: 4, marginBottom: 4 }}
+              rightSection={
+                <Image
+                  src="/admin_view/filter.svg"
+                  alt="filter icon"
+                  width={16}
+                  height={16}
+                />
+              }>
+              Filter
+            </Button>
+          </Flex>
         </Tabs.List>
 
         <Tabs.Panel value="Partners">
