@@ -7,9 +7,11 @@ import { useTimelinePeriod } from "@/components/useTimelinePeriod";
 import TotalDiapersDistributed from "@/components/TotalDiapersDistributed";
 import { useState, useEffect } from "react";
 import ImpactModal from "@/components/ImpactModal";
-import { FeatureCollection, Point } from "geojson";
+import { FeatureCollection, Point, Polygon } from "geojson";
 import { City, Distribution } from "@/generated/prisma/client";
 import { Grid } from "@mantine/core";
+
+// hex values: 1(#B2E5FF) 2(#7EC3E5) 3(#51A3CC) 4(#2C85B2) 5(#0F6B99)
 
 const LeafletMap = dynamic(() => import("@/components/map/Map"), {
   ssr: false,
@@ -27,7 +29,27 @@ type CityMapInfo = City & {
 
 export type MapData = {
   centroids: FeatureCollection<Point>;
+  boundaries: FeatureCollection<Polygon>;
   cities: { data: CityMapInfo[] };
+};
+
+const flipBoundaries = (
+  data: FeatureCollection<Polygon>
+): FeatureCollection<Polygon> => {
+  const flippedFeatures = data.features.map((feature) => ({
+    ...feature,
+    geometry: {
+      ...feature.geometry,
+      coordinates: feature.geometry.coordinates.map((ring) =>
+        ring.map((coord) => [coord[1], coord[0]]) // Swap index 0 and 1
+      ),
+    },
+  }));
+
+  return {
+    ...data,
+    features: flippedFeatures,
+  };
 };
 
 export default function Page() {
@@ -48,14 +70,17 @@ export default function Page() {
         queryParams.append("month", params.month);
       }
 
-      const [cities, centroids] = await Promise.all([
+      const [cities, centroids, boundaries] = await Promise.all([
         fetch(`/api/cities?${queryParams.toString()}`).then((res) =>
           res.json()
         ),
         fetch(`/api/cities/centroids`).then((res) => res.json()),
+        fetch(`/api/cities/boundaries`).then((res) => res.json()),
       ]);
 
-      setMapData({ centroids, cities });
+      const boundariesFlipped = flipBoundaries(boundaries);
+
+      setMapData({ centroids, cities, boundaries: boundariesFlipped });
     } catch (error) {
       console.error("Error fetching map data:", error);
     }
