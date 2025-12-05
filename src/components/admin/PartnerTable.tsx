@@ -12,7 +12,6 @@ import {
   ActionIcon,
 } from "@mantine/core";
 import { PartnerRegion } from "@/generated/prisma/client";
-import UpdatePercentPartnerForm from "../UpdatePercentPartnerForm";
 import EditPartnerForm from "../EditPartnerForm";
 import { useDisclosure } from "@mantine/hooks";
 import { status } from "@/generated/prisma/enums";
