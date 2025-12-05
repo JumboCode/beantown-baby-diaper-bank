@@ -338,10 +338,12 @@ export default function Page() {
                 <h3>
                   <strong>Status</strong>
                 </h3>
-                <Checkbox label="All"></Checkbox>
-                <Checkbox label="Active"></Checkbox>
-                <Checkbox label="Inactive"></Checkbox>
-                <Checkbox label="Waitlisted"></Checkbox>
+                <Stack>
+                  <Checkbox label="Ally"></Checkbox>
+                  <Checkbox label="Active"></Checkbox>
+                  <Checkbox label="Inactive"></Checkbox>
+                  <Checkbox label="Waitlisted"></Checkbox>
+                </Stack>
               </div>
             </Popover.Dropdown>
           </Popover>
