@@ -1,4 +1,4 @@
-import { Feature, Point } from "geojson";
+import { Feature, FeatureCollection, Point } from "geojson";
 import { NextResponse } from "next/server";
 
 import { City } from "@/generated/prisma/client";
@@ -31,8 +31,7 @@ export type CityWithCentroid = City & {
  * }
  */
 
-export async function GET(request: Request) {
-  const { searchParams } = new URL(request.url);
+export async function GET() {
   try {
     const result: CityWithCentroid[] = await prisma.$queryRaw`
         SELECT
@@ -40,25 +39,27 @@ export async function GET(request: Request) {
           "name",
           ST_AsGeoJSON("centroid")::json AS centroid
         FROM "Cities"
-        WHERE "centroid" IS NOT NULL AND "name" ILIKE '%' || ${searchParams.get("name")} || '%'
+        WHERE "centroid" IS NOT NULL
         ORDER BY "name"
-        LIMIT 1
       `;
 
-    const processedResult = result[0];
-
-    if (!processedResult) {
+    if (!result || result.length === 0) {
       console.log("No city found matching the provided name.");
       return new NextResponse("City not found", { status: 404 });
     }
 
-    const feature: Feature<Point, { name: string; id: number }> = {
+    const features: Feature<Point>[] = result.map((city) => ({
       type: "Feature",
-      geometry: processedResult.centroid,
+      geometry: city.centroid,
       properties: {
-        name: processedResult.name ?? "Unknown",
-        id: Number(processedResult.id),
+        name: city.name ?? "Unknown",
+        id: Number(city.id),
       },
+    }));
+
+    const feature: FeatureCollection<Point> = {
+      type: "FeatureCollection",
+      features,
     };
 
     const data_response = stringifyWithBigInt(feature);

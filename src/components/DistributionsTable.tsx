@@ -69,23 +69,9 @@ export default function DistributionsTable() {
         <Table.Tr key={`${orgName}-${dist.id}`}>
           {idx === 0 && (
             <Table.Td
+              fz={"lg"}
               rowSpan={dists.length}
-              style={{ verticalAlign: "middle" }}>
-              <ActionIcon
-                variant="light"
-                size="lg">
-                <Image
-                  src="/admin_view/pen.svg"
-                  alt="Edit"
-                  width={20}
-                  height={20}
-                />
-              </ActionIcon>
-            </Table.Td>
-          )}
-          {idx === 0 && (
-            <Table.Td
-              rowSpan={dists.length}
+              p={"xl"}
               style={{ verticalAlign: "middle", fontWeight: "bold" }}>
               {orgName}
             </Table.Td>
@@ -102,26 +88,27 @@ export default function DistributionsTable() {
   });
 
   return (
-    <div>
-      <Table
-        highlightOnHover
-        withTableBorder
-        styles={{ th: { color: "#667085" } }}
-        tabularNums>
-        <Table.Thead style={{ backgroundColor: "#F9FAFB" }}>
-          <Table.Tr>
-            <Table.Th></Table.Th>
-            <Table.Th>Organization Name</Table.Th>
-            <Table.Th>City</Table.Th>
-            <Table.Th>Number of Diapers Distributed</Table.Th>
-            <Table.Th>Number of Children Helped</Table.Th>
-            <Table.Th>Month</Table.Th>
-            <Table.Th>Year</Table.Th>
-            <Table.Th>Percentage</Table.Th>
-          </Table.Tr>
-        </Table.Thead>
-        <Table.Tbody>{rows}</Table.Tbody>
-      </Table>
+    <div className="bg-white rounded-xl shadow-lg overflow-hidden flex flex-col">
+      <div className="overflow-x-auto flex-1">
+        <Table
+          highlightOnHover
+          withTableBorder
+          styles={{ th: { color: "#667085" } }}
+          tabularNums>
+          <Table.Thead style={{ backgroundColor: "#F9FAFB" }}>
+            <Table.Tr>
+              <Table.Th>Organization Name</Table.Th>
+              <Table.Th>City</Table.Th>
+              <Table.Th>Number of Diapers Distributed</Table.Th>
+              <Table.Th>Number of Children Helped</Table.Th>
+              <Table.Th>Month</Table.Th>
+              <Table.Th>Year</Table.Th>
+              <Table.Th>Percentage</Table.Th>
+            </Table.Tr>
+          </Table.Thead>
+          <Table.Tbody>{rows}</Table.Tbody>
+        </Table>
+      </div>
     </div>
   );
 }
