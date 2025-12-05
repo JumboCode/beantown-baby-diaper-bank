@@ -1,71 +1,85 @@
-import { useDisclosure } from "@mantine/hooks";
-import { Modal, Button, NumberInput, Text, Mark } from "@mantine/core";
+import { Card, NumberInput, Text, Button } from "@mantine/core";
 import { useState } from "react";
 
 export default function ImpactModal() {
-  const [opened, { open, close }] = useDisclosure(false);
-  const [value, setValue] = useState<string | number>();
+  const [value, setValue] = useState<string | number>("");
 
   return (
-    <>
-      <Modal
-        c="#138D8A"
-        title="Make An Impact!"
-        opened={opened}
-        onClose={close}
-        centered
-      >
-        <NumberInput
-          size="lg"
-          label="Donation Amount"
-          placeholder="$ USD"
-          value={value}
-          onChange={setValue}
-          allowNegative={false}
-        />
-        {value !== undefined && value !== null && value !== "" && (
+    <Card
+      shadow="sm"
+      padding="lg"
+      radius="md"
+      withBorder>
+      <Text
+        size="xl"
+        fw={600}
+        mb="xs">
+        Make an impact
+      </Text>
+
+      <Text
+        size="sm"
+        c="dimmed"
+        mb="lg">
+        Calculate how you can help!
+      </Text>
+
+      <NumberInput
+        label="Donation Amount"
+        placeholder="USD"
+        prefix="$ "
+        value={value}
+        onChange={setValue}
+        allowNegative={false}
+        size="md"
+        mb="md"
+        styles={{
+          label: {
+            fontSize: "14px",
+            fontWeight: 600,
+            color: "#000000",
+            marginBottom: "8px",
+          },
+        }}
+      />
+
+      {value !== undefined &&
+        value !== null &&
+        value !== "" &&
+        Number(value) > 0 && (
           <Text
-            size="md"
-            style={{
-              padding: "3px",
-            }}
-          >
-            You can help
-            <Mark
-              p={1}
-              m={4}
-              bd="2px solid #138D8A"
-              c="#138D8A"
-              fw={600}
-              bg="none"
-            >
-              {" "}
-              {value && Number(value) * 4}{" "}
-            </Mark>
+            size="sm"
+            mb="md">
+            You could help{" "}
+            <Text
+              component="span"
+              fw={700}
+              c="#000000">
+              {Number(value) * 4}
+            </Text>{" "}
             families!
           </Text>
         )}
-        <Button
-          style={{
-            backgroundColor: "#138D8A",
+
+      <Button
+        fullWidth
+        component="a"
+        href="https://beantownbabydiaperbank.org/donate"
+        target="_blank"
+        styles={{
+          root: {
+            backgroundColor: "#1e3a5f",
             color: "white",
-            fontSize: "12px",
-            fontWeight: "bold",
-            borderRadius: "10px",
-            width: "auto",
-            display: "inline-flex",
-          }}
-          component="a"
-          my="md"
-          href="https://beantownbabydiaperbank.org/donate"
-          target="_blank"
-        >
-          Donate
-        </Button>
-      </Modal>
-      <Button size="auto" variant="default" onClick={open}>
-        Open Modal
+            fontSize: "16px",
+            fontWeight: 600,
+            borderRadius: "8px",
+            "&:hover": {
+              backgroundColor: "#163050",
+            },
+          },
+        }}>
+        Donate
       </Button>
-    </>
+    </Card>
   );
 }
