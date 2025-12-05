@@ -99,7 +99,7 @@ export default function Page() {
                 />
               ) : (
                 <Image
-                  src="/admin_view/Diapers_tab_gray.svg"
+                  src="/admin_view/diapers_tab_gray.svg"
                   alt="partners inactive icon"
                   height={16}
                   width={16}
