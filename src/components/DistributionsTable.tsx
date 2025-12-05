@@ -22,30 +22,17 @@ interface Distribution {
   };
 }
 
-export default function DistributionsTable() {
+export default function DistributionsTable(props: {
+  distributionData: Distribution[];
+}) {
   const [distributions, setDistributions] = useState<Distribution[]>([]);
-  const [error, setError] = useState<string>();
+  // const [error, setError] = useState<string>();
 
   useEffect(() => {
-    const fetchDistributions = async () => {
-      try {
-        const response = await fetch("/api/distributions");
-        if (!response.ok) throw new Error("Failed to fetch distributions");
-        const data = await response.json();
-        // Handle both array and object responses
-        const distributions = Array.isArray(data)
-          ? data
-          : data.distributions || [];
-        setDistributions(distributions);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "An error occurred");
-      }
-    };
+    setDistributions(props.distributionData);
+  }, [props.distributionData]);
 
-    fetchDistributions();
-  }, []);
-
-  if (error) return <Text c="red">Error: {error}</Text>;
+  // if (error) return <Text c="red">Error: {error}</Text>;
 
   // Group by organization
   const grouped = distributions.reduce(
@@ -70,10 +57,9 @@ export default function DistributionsTable() {
           {idx === 0 && (
             <Table.Td
               rowSpan={dists.length}
-              style={{ verticalAlign: "middle" }}>
-              <ActionIcon
-                variant="light"
-                size="lg">
+              style={{ verticalAlign: "middle" }}
+            >
+              <ActionIcon variant="light" size="lg">
                 <Image
                   src="/admin_view/pen.svg"
                   alt="Edit"
@@ -86,7 +72,8 @@ export default function DistributionsTable() {
           {idx === 0 && (
             <Table.Td
               rowSpan={dists.length}
-              style={{ verticalAlign: "middle", fontWeight: "bold" }}>
+              style={{ verticalAlign: "middle", fontWeight: "bold" }}
+            >
               {orgName}
             </Table.Td>
           )}
@@ -108,7 +95,8 @@ export default function DistributionsTable() {
           highlightOnHover
           withTableBorder
           styles={{ th: { color: "#667085" } }}
-          tabularNums>
+          tabularNums
+        >
           <Table.Thead style={{ backgroundColor: "#F9FAFB" }}>
             <Table.Tr>
               <Table.Th></Table.Th>
