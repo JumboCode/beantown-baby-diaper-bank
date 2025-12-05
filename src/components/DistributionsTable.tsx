@@ -69,23 +69,9 @@ export default function DistributionsTable() {
         <Table.Tr key={`${orgName}-${dist.id}`}>
           {idx === 0 && (
             <Table.Td
+              fz={"lg"}
               rowSpan={dists.length}
-              style={{ verticalAlign: "middle" }}>
-              <ActionIcon
-                variant="light"
-                size="lg">
-                <Image
-                  src="/admin_view/pen.svg"
-                  alt="Edit"
-                  width={20}
-                  height={20}
-                />
-              </ActionIcon>
-            </Table.Td>
-          )}
-          {idx === 0 && (
-            <Table.Td
-              rowSpan={dists.length}
+              p={"xl"}
               style={{ verticalAlign: "middle", fontWeight: "bold" }}>
               {orgName}
             </Table.Td>
@@ -111,7 +97,6 @@ export default function DistributionsTable() {
           tabularNums>
           <Table.Thead style={{ backgroundColor: "#F9FAFB" }}>
             <Table.Tr>
-              <Table.Th></Table.Th>
               <Table.Th>Organization Name</Table.Th>
               <Table.Th>City</Table.Th>
               <Table.Th>Number of Diapers Distributed</Table.Th>
