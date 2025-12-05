@@ -42,13 +42,13 @@ export default function PartnerForm() {
       setIsLoadingCities(true);
       try {
         const res = await fetch(
-          "http://api.geonames.org/searchJSON?q=&adminCode1=MA&country=US&featureClass=P&username=jumbocodebbdb"
+          "http://api.geonames.org/searchJSON?q=&adminCode1=MA&country=US&featureClass=P&username=jumbocodebbdb",
         );
         const data = await res.json();
 
         if (data.geonames) {
           const cityNames = data.geonames.map(
-            (city: { name: string }) => city.name
+            (city: { name: string }) => city.name,
           );
           const cityUniqueSorted = Array.from(new Set(cityNames)).sort();
           setCitiesAPI(cityUniqueSorted as string[]);
@@ -158,11 +158,10 @@ export default function PartnerForm() {
           onSubmit={form.onSubmit((values) => {
             submitPartner(values);
           })}
-          className="flex flex-col gap-5">
+          className="flex flex-col gap-5"
+        >
           {/* Name of Organization */}
-          <Group
-            justify="space-between"
-            align="flex-start">
+          <Group justify="space-between" align="flex-start">
             <Text fw={600}>
               Name of Organzation <span className="text-red-600">*</span>
             </Text>
@@ -178,9 +177,7 @@ export default function PartnerForm() {
           </Group>
 
           {/* Description */}
-          <Group
-            justify="space-between"
-            align="flex-start">
+          <Group justify="space-between" align="flex-start">
             <Text fw={600}>
               Description <span className="text-red-600">*</span>
             </Text>
@@ -195,9 +192,7 @@ export default function PartnerForm() {
           </Group>
 
           {/* Cities Served */}
-          <Group
-            align="right"
-            justify="space-between">
+          <Group align="right" justify="space-between">
             {/* Selected Cities MultiSelect */}
             <Text fw={600}>
               Cities Served <span className="text-red-600">*</span>
@@ -212,7 +207,7 @@ export default function PartnerForm() {
                 return (options as ComboboxItem[]).filter((option) => {
                   const words = option.label.toLowerCase().trim().split(" ");
                   return splittedSearch.every((searchWord) =>
-                    words.some((word: string) => word.includes(searchWord))
+                    words.some((word: string) => word.includes(searchWord)),
                   );
                 });
               }}
@@ -243,18 +238,13 @@ export default function PartnerForm() {
           </Group>
 
           {/* Selected Cities Table with Percentages, sorry this looks digusting */}
-          <Group
-            justify="space-between"
-            align="flex-start">
+          <Group justify="space-between" align="flex-start">
             {/* Selected Cities Table */}
             {form.values.cities.length > 0 && (
               <>
                 <div></div>
                 <div className="min-w-170">
-                  <Table
-                    striped
-                    highlightOnHover
-                    withTableBorder>
+                  <Table striped highlightOnHover withTableBorder>
                     <Table.Thead>
                       <Table.Tr>
                         <Table.Th>Cities</Table.Th>
@@ -290,9 +280,7 @@ export default function PartnerForm() {
           </Group>
 
           {/* Time Started*/}
-          <Group
-            justify="space-between"
-            align="flex-start">
+          <Group justify="space-between" align="flex-start">
             <Text fw={600}>
               Time it started <span className="text-red-600">*</span>
             </Text>
@@ -310,28 +298,21 @@ export default function PartnerForm() {
             key={form.key("status")}
             {...form.getInputProps("status")}
             error={form.errors.status}
-            required>
+            required
+          >
             <Group>
               <Text fw={600}>
                 Status <span className="text-red-600">*</span>
               </Text>
               <div className="flex gap-40 ml-72">
-                <Radio
-                  value="active"
-                  label="Active"
-                />
-                <Radio
-                  value="waitlisted"
-                  label="Waitlisted"
-                />
+                <Radio value="active" label="Active" />
+                <Radio value="waitlisted" label="Waitlisted" />
               </div>
             </Group>
           </Radio.Group>
 
           {/* Latitude and Longitude */}
-          <Group
-            justify="space-between"
-            align="flex-start">
+          <Group justify="space-between" align="flex-start">
             <Text fw={600}>
               Coords <span className="text-red-600">*</span>
             </Text>
@@ -362,9 +343,7 @@ export default function PartnerForm() {
           </Group>
 
           {/* Address */}
-          <Group
-            justify="space-between"
-            align="flex-start">
+          <Group justify="space-between" align="flex-start">
             <Text fw={600}>
               Address <span className="text-red-600">*</span>
             </Text>
@@ -428,9 +407,7 @@ export default function PartnerForm() {
           </Group>
 
           {/* Logo File Upload */}
-          <Group
-            justify="space-between"
-            align="flex-start">
+          <Group justify="space-between" align="flex-start">
             <Text fw={600}>Logo file or link</Text>
             <div className="gap-4 flex">
               <FileInput
@@ -454,9 +431,7 @@ export default function PartnerForm() {
           </Group>
 
           {/* Submit and Cancel Buttons */}
-          <Group
-            justify="flex-end"
-            mt="md">
+          <Group justify="flex-end" mt="md">
             <Button
               variant="outline"
               color="#053766"
@@ -465,14 +440,11 @@ export default function PartnerForm() {
               onClick={() => {
                 form.reset();
                 setPercentages({});
-              }}>
+              }}
+            >
               Cancel
             </Button>
-            <Button
-              variant="filled"
-              color="#053766"
-              radius="md"
-              type="submit">
+            <Button variant="filled" color="#053766" radius="md" type="submit">
               Submit
             </Button>
           </Group>

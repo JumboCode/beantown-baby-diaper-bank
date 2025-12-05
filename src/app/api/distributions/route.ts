@@ -45,7 +45,7 @@ export async function GET() {
     console.error("Error fetching distributions:", error);
     return NextResponse.json(
       { error: "Failed to fetch distributions" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

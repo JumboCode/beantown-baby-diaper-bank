@@ -15,13 +15,7 @@ import type { MapData } from "@/app/main/page";
 // Dynamically import react-leaflet components with SSR disabled
 // because they depend on the browser environment (e.g., window, document).
 
-const LEVEL_COLORS = [
-  "#B2E5FF",
-  "#7EC3E5",
-  "#51A3CC",
-  "#2C85B2",
-  "#0F6B99",
-];
+const LEVEL_COLORS = ["#B2E5FF", "#7EC3E5", "#51A3CC", "#2C85B2", "#0F6B99"];
 
 const getColor = (value: number, max: number) => {
   if (value === 0 || max === 0) return LEVEL_COLORS[0];
@@ -35,7 +29,7 @@ const getColor = (value: number, max: number) => {
 
 export const Marker = dynamic(
   () => import("react-leaflet").then((module) => module.Marker),
-  { ssr: false }
+  { ssr: false },
 );
 
 type Coordinates = {
@@ -98,7 +92,7 @@ export default function LeafletMap({ mapData }: { mapData?: MapData | null }) {
     cities.forEach((city) => {
       const total = city.distributions.reduce(
         (sum, d) => sum + Number(d.numberDiapers),
-        0
+        0,
       );
       if (city.name) cityTotals[city.name] = total;
       if (total > maxDiapers) maxDiapers = total;
@@ -108,13 +102,14 @@ export default function LeafletMap({ mapData }: { mapData?: MapData | null }) {
       const name = feature.properties?.name;
       // Look up the total using the name, default to 0
       const total = name ? cityTotals[name] || 0 : 0;
-      
+
       return {
         id: name || Math.random(),
-        positions: feature.geometry.coordinates as unknown as LatLngExpression[][],
+        positions: feature.geometry
+          .coordinates as unknown as LatLngExpression[][],
         name: name,
         fillColor: getColor(total, maxDiapers),
-        totalDiapers: total
+        totalDiapers: total,
       };
     });
   }, [mapData, cities]);
@@ -126,10 +121,9 @@ export default function LeafletMap({ mapData }: { mapData?: MapData | null }) {
         height: "100%",
         width: "100%",
         zIndex: 0,
-      }}>
-      <MapContainer
-        {...mapOptions}
-        style={mapStyle}>
+      }}
+    >
+      <MapContainer {...mapOptions} style={mapStyle}>
         <TileLayer {...tileLayerProps} />
         {boundaryPolygons.map((boundary, index) => (
           <Polygon
@@ -137,7 +131,7 @@ export default function LeafletMap({ mapData }: { mapData?: MapData | null }) {
             pathOptions={{
               color: "#2C85B2",
               weight: 2,
-              fillColor: boundary.fillColor, 
+              fillColor: boundary.fillColor,
               fillOpacity: 0.5,
             }}
             positions={boundary.positions}
@@ -151,25 +145,26 @@ export default function LeafletMap({ mapData }: { mapData?: MapData | null }) {
             console.log(cities);
             console.log("Mapping city:", city);
             const cityInfo = cities.find(
-              (info) => Number(info.id) === city.cityId
+              (info) => Number(info.id) === city.cityId,
             );
             const partnerNames = cityInfo?.partners.map((p) => p.name);
             // const partnerLogos = cityInfo?.partners.map(p => p.logo_url).filter(Boolean);
             const totalDiapers =
               cityInfo?.distributions.reduce(
                 (sum, d) => sum + Number(d.numberDiapers),
-                0
+                0,
               ) ?? 0;
             const totalChildren =
               cityInfo?.distributions.reduce(
                 (sum, d) => sum + Number(d.numberChildren),
-                0
+                0,
               ) ?? 0;
             return (
               <Marker
                 key={city.cityId}
                 position={{ lat: city.lat, lng: city.lng }}
-                icon={customIcon}>
+                icon={customIcon}
+              >
                 <Popup minWidth={280}>
                   <InfoDisplayer
                     cityName={cityInfo?.name}
