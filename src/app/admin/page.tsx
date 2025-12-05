@@ -1,11 +1,12 @@
 "use client";
 
 import PartnerTable from "@/components/admin/PartnerTable";
-import { Card, Group, Stack, Text, Title, Tabs, Button } from "@mantine/core";
+import { Card, Group, Stack, Text, Title, Tabs, Button, Drawer, Select } from "@mantine/core";
 import { useState } from "react";
 import Image from "next/image";
 import { Poppins } from "next/font/google";
 import DistributionsTable from "@/components/DistributionsTable";
+import { useDisclosure } from '@mantine/hooks';
 
 const poppins = Poppins({
   subsets: ["latin"],
@@ -14,6 +15,7 @@ const poppins = Poppins({
 
 export default function Page() {
   const [activeTab, setActiveTab] = useState<string | null>("Partners");
+  const [opened, { open, close }] = useDisclosure(false);
 
   return (
     <Stack
@@ -108,11 +110,17 @@ export default function Page() {
             }>
             Diapers
           </Tabs.Tab>
+          <Drawer opened={opened} onClose={close} position="right">
+              <h1>Filter Data</h1>
+              <p>Filter the diaper distribution data by organization, city, and date range.</p>
+              <Select/>
+          </Drawer>
           <Button
             ml="auto"
             variant="default"
             radius={5}
             style={{ alignSelf: "center", marginRight: 4, marginBottom: 4 }}
+            onClick={open}
             rightSection={
               <Image
                 src="/admin_view/filter.svg"
