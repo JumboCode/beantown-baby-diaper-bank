@@ -1,16 +1,7 @@
 "use client";
 
 import PartnerTable from "@/components/admin/PartnerTable";
-import {
-  Card,
-  Group,
-  Stack,
-  Text,
-  Title,
-  Tabs,
-  Button,
-  Modal,
-} from "@mantine/core";
+import { Card, Group, Stack, Text, Title, Tabs, Button } from "@mantine/core";
 import { useState } from "react";
 import Image from "next/image";
 import { Poppins } from "next/font/google";
@@ -28,22 +19,37 @@ export default function Page() {
   const [opened, { open, close }] = useDisclosure(false);
 
   return (
-    <Stack gap="lg" className={poppins.className}>
-      <Card>
-        <Group justify="space-between" align="flex-start">
+    <Stack
+      mx="72px"
+      my="44px"
+      gap="lg"
+      className={poppins.className}>
+      <Card p={0}>
+        <Group
+          justify="space-between"
+          align="flex-start">
           <Stack gap={4}>
             <Title order={2}>Hello, Rachel 👋</Title>
-            <Group gap="xl" wrap="wrap">
-              <Text size="sm" c="dimmed">
+            <Group
+              gap="xl"
+              wrap="wrap">
+              <Text
+                size="sm"
+                c="dimmed">
                 Last data uploaded: Monday, 30 Aug, 2025
               </Text>
-              <Text size="sm" c="dimmed">
+              <Text
+                size="sm"
+                c="dimmed">
                 Last updated: Friday, 2 Sep, 2025
               </Text>
             </Group>
           </Stack>
 
-          <UploadNewData opened={opened} onClose={close} />
+          <UploadNewData
+            opened={opened}
+            onClose={close}
+          />
 
           <Button
             onClick={() => {
@@ -60,8 +66,7 @@ export default function Page() {
                 width={16}
                 height={16}
               />
-            }
-          >
+            }>
             {activeTab === "Partners" ? "Add A New Partner" : "Upload New Data"}
           </Button>
         </Group>
@@ -74,8 +79,7 @@ export default function Page() {
           list: {
             "--tabs-border-color": "transparent",
           },
-        }}
-      >
+        }}>
         <Tabs.List>
           <Tabs.Tab
             value="Partners"
@@ -95,8 +99,7 @@ export default function Page() {
                   width={16}
                 />
               )
-            }
-          >
+            }>
             Partners
           </Tabs.Tab>
           <Tabs.Tab
@@ -117,8 +120,7 @@ export default function Page() {
                   width={16}
                 />
               )
-            }
-          >
+            }>
             Diapers
           </Tabs.Tab>
           <Button
@@ -133,8 +135,7 @@ export default function Page() {
                 width={16}
                 height={16}
               />
-            }
-          >
+            }>
             Filter
           </Button>
         </Tabs.List>
