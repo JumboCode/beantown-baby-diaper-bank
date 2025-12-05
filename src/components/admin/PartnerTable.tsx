@@ -109,10 +109,6 @@ export default function PartnerInfo() {
         refreshTable={refreshTable}
         percentages={percentages}
       />
-      <UpdatePercentPartnerForm
-        partners={data}
-        percentages={percentages}
-      />
     </>
   );
 }
