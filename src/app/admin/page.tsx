@@ -1,11 +1,15 @@
 "use client";
 
 import PartnerTable from "@/components/admin/PartnerTable";
-import { Card, Group, Stack, Text, Title, Tabs, Button } from "@mantine/core";
+import { Card, Group, Stack, Text, Title, Tabs, Button, Modal } from "@mantine/core";
 import { useState } from "react";
 import Image from "next/image";
 import { Poppins } from "next/font/google";
 import DistributionsTable from "@/components/DistributionsTable";
+import { useDisclosure } from '@mantine/hooks';
+import UploadNewData from "./UploadNewData";
+
+
 
 const poppins = Poppins({
   subsets: ["latin"],
@@ -14,6 +18,8 @@ const poppins = Poppins({
 
 export default function Page() {
   const [activeTab, setActiveTab] = useState<string | null>("Partners");
+  const [opened, { open, close }] = useDisclosure(false);
+  
 
   return (
     <Stack
@@ -41,7 +47,15 @@ export default function Page() {
             </Group>
           </Stack>
 
+          <UploadNewData opened={opened} onClose={close} />
+          
+
           <Button
+            onClick={() => {
+              if (activeTab === "Diapers") {
+                open();
+              }
+            }}
             variant="default"
             radius="md"
             rightSection={
@@ -51,6 +65,7 @@ export default function Page() {
                 width={16}
                 height={16}
               />
+              
             }>
             {activeTab === "Partners" ? "Add A New Partner" : "Upload New Data"}
           </Button>
