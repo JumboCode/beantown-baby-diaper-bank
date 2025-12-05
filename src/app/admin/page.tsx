@@ -1,7 +1,7 @@
 "use client";
 
 import PartnerTable from "@/components/admin/PartnerTable";
-import { Card, Group, Stack, Text, Title, Tabs, Button, Drawer, Select } from "@mantine/core";
+import { Card, Group, Stack, Text, Title, Tabs, Button, Drawer, Select, Popover } from "@mantine/core";
 import { useState } from "react";
 import Image from "next/image";
 import { Poppins } from "next/font/google";
@@ -15,6 +15,7 @@ const poppins = Poppins({
 
 export default function Page() {
   const [activeTab, setActiveTab] = useState<string | null>("Partners");
+  const [isOpened, setOpened] = useState(false);
   const [opened, { open, close }] = useDisclosure(false);
 
   return (
@@ -115,12 +116,31 @@ export default function Page() {
               <p>Filter the diaper distribution data by organization, city, and date range.</p>
               <Select/>
           </Drawer>
+          <Popover opened={isOpened && activeTab === "Partners"} onChange={setOpened} position="bottom-end" width={300} shadow="md">
+            <Popover.Dropdown>
+            {/* Your filter content here */}
+            <div>
+              <h3>Year Since</h3>
+              {/* Year buttons */}
+          
+              <h3>Status</h3>
+              {/* Checkboxes */}
+            </div>
+            </Popover.Dropdown>
+          </Popover>
           <Button
             ml="auto"
             variant="default"
             radius={5}
             style={{ alignSelf: "center", marginRight: 4, marginBottom: 4 }}
-            onClick={open}
+            onClick={() => {
+              if (activeTab === "Partners") {
+                setOpened(!isOpened);
+              }
+              else if (activeTab === "Diapers") {
+                open;
+              }
+            }}
             rightSection={
               <Image
                 src="/admin_view/filter.svg"
