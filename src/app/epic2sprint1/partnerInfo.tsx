@@ -5,21 +5,21 @@ import { Drawer, Button } from '@mantine/core';
 // one we call one index of the retrieved data as one instance of Partner
 type Partner = {
 	id: number;
-	created_at: string;
 	name: string;
 	description: string | null;
 	start_partner: string | null;
-	waitlisted: boolean;
+	status: boolean;
 	address: string | null;
 	coords: { lat: number; lng: number };
 	logo_url: string | null;
+	number_babies_helped: number;
+	number_diapers: number;
 };
 
 type PartnerInfoProps = {
 	name?: string[] | undefined;
 	fromMarker?: boolean;
 }
-
 
 export default function PartnerInfo({ name, fromMarker = false } : PartnerInfoProps) {
 
@@ -31,6 +31,17 @@ export default function PartnerInfo({ name, fromMarker = false } : PartnerInfoPr
 	const [data, setData] = useState<Partner[]>([]);
 	//changed this b/c disclosure was only showing info for one partner
 	const [selectedPartner, setSelectedPartner] = useState<Partner | null>(null);
+
+	async function fetchPartnerDetails(id: number) {
+		const response = await fetch(`/api/partners/${id}`);
+		const result = await response.json();
+		return result.data;
+	}
+
+	async function handlePartnerClick(id: number) {
+		const fullPartner = await fetchPartnerDetails(id);
+		setSelectedPartner(fullPartner);
+	}
 
 	// use useEffect so that we fetch data after the component renders. i.e. visuals will load first, then it worries about retrieving data
 	useEffect(() => {
@@ -107,7 +118,7 @@ export default function PartnerInfo({ name, fromMarker = false } : PartnerInfoPr
 								style={{ height: 30 }}
 							/>
 						)}
-						onClick={() => setSelectedPartner(partner)}
+						onClick={() => handlePartnerClick(partner.id)}
 					>
 						<span
 							style={{ 
@@ -135,15 +146,16 @@ export default function PartnerInfo({ name, fromMarker = false } : PartnerInfoPr
 						<p><strong>Name:</strong> {selectedPartner.name}</p>
 						<p><strong>Description:</strong> {selectedPartner.description || 'N/A'}</p>
 						<p><strong>Start Year:</strong> {selectedPartner.start_partner || 'N/A'}</p>
-						<p><strong>Active:</strong> {selectedPartner.waitlisted ? "No" : "Yes"}</p>
+						<p><strong>Active:</strong> {selectedPartner.status ? "No" : "Yes"}</p>
 						<p><strong>Address:</strong> {selectedPartner.address || 'N/A'}</p>
 						{selectedPartner.logo_url && (
 							<img src={selectedPartner.logo_url} alt={`${selectedPartner.name} logo`} style={{ maxWidth: '200px', marginTop: '1rem' }} />
 						)}
+						<p><strong>Babies Helped:</strong>{" "}{selectedPartner.number_babies_helped}</p>
+						<p><strong>Diapers Provided:</strong>{" "}{selectedPartner.number_diapers}</p>
 					</>
 				)}
 			</Drawer>
-
     </div>
   );
 }
