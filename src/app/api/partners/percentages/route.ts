@@ -4,30 +4,30 @@ import { PartnerRegion } from "@/generated/prisma/client";
 import { stringifyWithBigInt } from "@/lib/util";
 
 export async function GET(request: Request) {
-  try{
-    const partnerRegions: PartnerRegion[]  = await prisma.partnerRegion.findMany();
+  try {
+    const partnerRegions: PartnerRegion[] =
+      await prisma.partnerRegion.findMany();
 
-    const data_response = stringifyWithBigInt({data: partnerRegions});
-    
+    const data_response = stringifyWithBigInt({ data: partnerRegions });
+
     return new Response(data_response, {
       status: 200,
-      headers: { "Content-Type": "application/json" }
-    })
-  }
-  catch(error){
+      headers: { "Content-Type": "application/json" },
+    });
+  } catch (error) {
     console.log("Unable to fetch partner regions");
     return NextResponse.json({ status: 500 });
   }
 }
 
 export async function POST(request: Request) {
-  try{
+  try {
     const newPercentages: PartnerRegion[] = await request.json();
 
     if (!Array.isArray(newPercentages)) {
       return NextResponse.json(
         { error: "Expected an array of PartnerRegion values" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -43,19 +43,17 @@ export async function POST(request: Request) {
           data: {
             percentage: p.percentage,
           },
-        })
-      )
+        }),
+      ),
     );
 
-
-    const data_response = stringifyWithBigInt({data: newPercentages}); 
+    const data_response = stringifyWithBigInt({ data: newPercentages });
 
     return new Response(data_response, {
-      status: 200, 
-      headers: { "Content-Type": "application/json" }
-    })
-  }
-  catch(error){
+      status: 200,
+      headers: { "Content-Type": "application/json" },
+    });
+  } catch (error) {
     console.log("Unable to update percentages");
     return NextResponse.json({ status: 500 });
   }

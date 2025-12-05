@@ -18,8 +18,7 @@ export default function TimelineSliderControls({
   move: (dir: number) => void;
   onTimelineChange?: (params: { month?: string; year: string }) => void;
 }) {
-  
-  // Define your data arrays 
+  // Define your data arrays
   const months = [
     { month: "January", year: "2025" },
     { month: "February", year: "2025" },
@@ -34,8 +33,17 @@ export default function TimelineSliderControls({
     { month: "November", year: "2025" },
     { month: "December", year: "2025" },
   ];
-  
-  const years = ["2018", "2019", "2020", "2021", "2022", "2023", "2024", "2025"];
+
+  const years = [
+    "2018",
+    "2019",
+    "2020",
+    "2021",
+    "2022",
+    "2023",
+    "2024",
+    "2025",
+  ];
 
   // Trigger API update whenever index or view changes
   useEffect(() => {
@@ -61,15 +69,10 @@ export default function TimelineSliderControls({
     <Stack>
       <h1 style={{ color: "#21325b", fontWeight: 700 }}>Timeline Slider</h1>
 
-      <YearlyMonthlySwitch
-        value={view}
-        onChange={toggleView}
-      />
+      <YearlyMonthlySwitch value={view} onChange={toggleView} />
 
       <Group align="flex-end">
-        <ActionIcon
-          color="#053766"
-          onClick={() => move(-1)}>
+        <ActionIcon color="#053766" onClick={() => move(-1)}>
           <img src="/timelineSlider/left.svg" />
         </ActionIcon>
 
@@ -81,9 +84,7 @@ export default function TimelineSliderControls({
           />
         </div>
 
-        <ActionIcon
-          color="#053766"
-          onClick={() => move(1)}>
+        <ActionIcon color="#053766" onClick={() => move(1)}>
           <img src="/timelineSlider/right.svg" />
         </ActionIcon>
       </Group>

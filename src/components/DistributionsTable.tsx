@@ -57,7 +57,7 @@ export default function DistributionsTable() {
       acc[orgName].push(dist);
       return acc;
     },
-    {} as Record<string, Distribution[]>
+    {} as Record<string, Distribution[]>,
   );
 
   const rows: React.ReactNode[] = [];
@@ -72,7 +72,8 @@ export default function DistributionsTable() {
               fz={"lg"}
               rowSpan={dists.length}
               p={"xl"}
-              style={{ verticalAlign: "middle", fontWeight: "bold" }}>
+              style={{ verticalAlign: "middle", fontWeight: "bold" }}
+            >
               {orgName}
             </Table.Td>
           )}
@@ -82,8 +83,8 @@ export default function DistributionsTable() {
           <Table.Td>{dist.month}</Table.Td>
           <Table.Td>{dist.year}</Table.Td>
           <Table.Td>{(dist.percentage * 100).toFixed(2)}%</Table.Td>
-        </Table.Tr>
-      )
+        </Table.Tr>,
+      ),
     );
   });
 
@@ -94,7 +95,8 @@ export default function DistributionsTable() {
           highlightOnHover
           withTableBorder
           styles={{ th: { color: "#667085" } }}
-          tabularNums>
+          tabularNums
+        >
           <Table.Thead style={{ backgroundColor: "#F9FAFB" }}>
             <Table.Tr>
               <Table.Th>Organization Name</Table.Th>

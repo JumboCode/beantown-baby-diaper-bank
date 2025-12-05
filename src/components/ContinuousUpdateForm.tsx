@@ -14,32 +14,19 @@ export default function ContinuousUpdateForm() {
   const [fromMonth, setFromMonth] = useState<Month | null>(null);
 
   return (
-    <Paper
-      withBorder
-      radius="lg"
-      p="lg">
+    <Paper withBorder radius="lg" p="lg">
       <Stack gap="md">
         <Group gap="xs">
-          <RiLineChartLine
-            size={20}
-            color="#0B3A79"
-          />
-          <Text
-            fw={700}
-            size="lg"
-            c="#0B3A79">
+          <RiLineChartLine size={20} color="#0B3A79" />
+          <Text fw={700} size="lg" c="#0B3A79">
             Continuous Update
           </Text>
         </Group>
-        <Text
-          size="sm"
-          c="dimmed">
+        <Text size="sm" c="dimmed">
           This will update distributions for a continuous range of months
         </Text>
         <Stack gap={6}>
-          <Text
-            fw={600}
-            size="sm">
+          <Text fw={600} size="sm">
             Effective From
           </Text>
           <RadioGroup>
