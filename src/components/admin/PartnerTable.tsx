@@ -10,6 +10,7 @@ import {
   Mark,
   Text,
   ActionIcon,
+  Button,
 } from "@mantine/core";
 import { PartnerRegion } from "@/generated/prisma/client";
 import EditPartnerForm from "../EditPartnerForm";
@@ -131,12 +132,9 @@ function PartnerTable({
           <Table
             highlightOnHover
             withTableBorder
-            styles={{ th: { color: "#667085" } }}
-            tabularNums
-          >
+            tabularNums>
             <Table.Thead style={{ backgroundColor: "#F9FAFB" }}>
               <Table.Tr>
-                <Table.Th></Table.Th>
                 <Table.Th>Partner Name</Table.Th>
                 <Table.Th>Description</Table.Th>
                 <Table.Th>Partner Since</Table.Th>
@@ -144,28 +142,12 @@ function PartnerTable({
                 <Table.Th>Coordinates</Table.Th>
                 <Table.Th>Address</Table.Th>
                 <Table.Th>Cities Served</Table.Th>
+                <Table.Th></Table.Th>
               </Table.Tr>
             </Table.Thead>
             <Table.Tbody>
               {partners.map((partner) => (
                 <Table.Tr key={partner.id}>
-                  <Table.Td style={{ verticalAlign: "middle" }}>
-                    <ActionIcon
-                      variant="light"
-                      onClick={() => {
-                        setPartner(partner);
-                        open();
-                      }}
-                      size="lg"
-                    >
-                      <Image
-                        src="/admin_view/pen.svg"
-                        alt="Edit"
-                        width={20}
-                        height={20}
-                      />
-                    </ActionIcon>
-                  </Table.Td>
                   <Table.Td>
                     <div className="flex items-center gap-3">
                       {partner.logo_url && (
@@ -205,8 +187,7 @@ function PartnerTable({
                           : partner.status === "inactive"
                             ? "text-red-600"
                             : "text-yellow-600"
-                      }`}
-                    >
+                      }`}>
                       {partner.status.charAt(0).toUpperCase() +
                         partner.status.slice(1)}
                     </Pill>
@@ -224,12 +205,14 @@ function PartnerTable({
                     )}
                   </Table.Td>
                   <Table.Td>
-                    <span key={partner.id} className="text-sm text-gray-600">
+                    <span
+                      key={partner.id}
+                      className="text-sm text-gray-600">
                       <span>
                         {percentages
                           .filter(
                             (percentage) =>
-                              Number(percentage.partnerId) == partner.id,
+                              Number(percentage.partnerId) == partner.id
                           )
                           .map((percentage, index, arr) => {
                             if (percentage.percentage) {
@@ -245,6 +228,35 @@ function PartnerTable({
                       </span>
                     </span>
                   </Table.Td>
+                  <Table.Td style={{ verticalAlign: "middle" }}>
+                    <Button
+                      variant="transparent"
+                      // size="14px"
+                      fz="14px"
+                      c="#14215A"
+                      onClick={() => {
+                        setPartner(partner);
+                        open();
+                      }}
+                      w="100px"
+                      rightSection={
+                        <Image
+                          src="/admin_view/pen.svg"
+                          alt="Edit"
+                          width={20}
+                          height={20}
+                        />
+                      }>
+                      Edit
+                    </Button>
+                    {/* <ActionIcon
+                      variant="light"
+                      onClick={() => {
+                        setPartner(partner);
+                        open();
+                      }}
+                      size="lg"></ActionIcon> */}
+                  </Table.Td>
                 </Table.Tr>
               ))}
             </Table.Tbody>
@@ -256,9 +268,13 @@ function PartnerTable({
         <Modal
           opened={opened}
           title={
-            <Text fw={700} size="32px">
+            <Text
+              fw={700}
+              size="32px">
               Edit{" "}
-              <Mark bg="none" c="blue">
+              <Mark
+                bg="none"
+                c="blue">
                 {partner.name}
               </Mark>{" "}
               Partner Information
@@ -266,8 +282,7 @@ function PartnerTable({
           }
           onClose={() => setPartner(null)}
           size="75%"
-          centered
-        >
+          centered>
           <EditPartnerForm
             partner={partner}
             onClose={() => {

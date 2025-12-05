@@ -9,10 +9,6 @@ export const metadata: Metadata = {
   description: "Providing diapers to families in need.",
 };
 
-const theme = createTheme({
-  primaryColor: "teal",
-});
-
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -21,7 +17,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
-        <MantineProvider theme={theme}>{children}</MantineProvider>
+        <MantineProvider>{children}</MantineProvider>
       </body>
     </html>
   );
