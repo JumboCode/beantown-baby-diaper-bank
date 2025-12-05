@@ -22,7 +22,7 @@ export function useTimelinePeriod() {
 
   const labels = useMemo(
     () => (view === "monthly" ? MONTHS : YEARS.map(String)),
-    [view]
+    [view],
   );
   const length = labels.length;
 
@@ -45,16 +45,16 @@ export function useTimelinePeriod() {
         }
       });
     },
-    [length]
+    [length],
   );
 
   return {
-    view,      // "monthly" | "yearly"
-    index,     // current index
-    setIndex,  // setter
+    view, // "monthly" | "yearly"
+    index, // current index
+    setIndex, // setter
     toggleView,
     move,
-    length,    // number of months or years
+    length, // number of months or years
     labels,
   };
 }

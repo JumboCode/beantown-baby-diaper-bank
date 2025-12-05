@@ -132,7 +132,8 @@ function PartnerTable({
             highlightOnHover
             withTableBorder
             styles={{ th: { color: "#667085" } }}
-            tabularNums>
+            tabularNums
+          >
             <Table.Thead style={{ backgroundColor: "#F9FAFB" }}>
               <Table.Tr>
                 <Table.Th></Table.Th>
@@ -155,7 +156,8 @@ function PartnerTable({
                         setPartner(partner);
                         open();
                       }}
-                      size="lg">
+                      size="lg"
+                    >
                       <Image
                         src="/admin_view/pen.svg"
                         alt="Edit"
@@ -203,7 +205,8 @@ function PartnerTable({
                           : partner.status === "inactive"
                             ? "text-red-600"
                             : "text-yellow-600"
-                      }`}>
+                      }`}
+                    >
                       {partner.status.charAt(0).toUpperCase() +
                         partner.status.slice(1)}
                     </Pill>
@@ -221,14 +224,12 @@ function PartnerTable({
                     )}
                   </Table.Td>
                   <Table.Td>
-                    <span
-                      key={partner.id}
-                      className="text-sm text-gray-600">
+                    <span key={partner.id} className="text-sm text-gray-600">
                       <span>
                         {percentages
                           .filter(
                             (percentage) =>
-                              Number(percentage.partnerId) == partner.id
+                              Number(percentage.partnerId) == partner.id,
                           )
                           .map((percentage, index, arr) => {
                             if (percentage.percentage) {
@@ -255,13 +256,9 @@ function PartnerTable({
         <Modal
           opened={opened}
           title={
-            <Text
-              fw={700}
-              size="32px">
+            <Text fw={700} size="32px">
               Edit{" "}
-              <Mark
-                bg="none"
-                c="blue">
+              <Mark bg="none" c="blue">
                 {partner.name}
               </Mark>{" "}
               Partner Information
@@ -269,7 +266,8 @@ function PartnerTable({
           }
           onClose={() => setPartner(null)}
           size="75%"
-          centered>
+          centered
+        >
           <EditPartnerForm
             partner={partner}
             onClose={() => {

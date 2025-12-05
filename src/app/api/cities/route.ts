@@ -12,7 +12,7 @@ export async function GET(request: Request) {
   if (month && !year) {
     return NextResponse.json(
       { error: "Year must be provided if month is provided." },
-      { status: 400 }
+      { status: 400 },
     );
   }
 

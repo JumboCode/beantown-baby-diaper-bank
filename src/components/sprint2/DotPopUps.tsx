@@ -51,7 +51,7 @@ type InfoDisplayerProps = {
   numDiapers: number | null;
   partnerOrgs: string[] | undefined;
   childrenHelped?: number | null;
-}
+};
 
 export const InfoDisplayer = ({
   cityName,
@@ -61,19 +61,13 @@ export const InfoDisplayer = ({
 }: InfoDisplayerProps) => {
   return (
     <div>
-      <p style={{ fontSize: "20px", fontWeight: "bold" }}>
-        {" "}
-        City: {cityName}
-      </p>
+      <p style={{ fontSize: "20px", fontWeight: "bold" }}> City: {cityName}</p>
       <p> Diapers Distributed: {numDiapers?.toString()} </p>
       <p> Children helped: {childrenHelped} </p>
-      <PartnerInfo 
-        name={partnerOrgs}
-        fromMarker={true}
-      />
+      <PartnerInfo name={partnerOrgs} fromMarker={true} />
     </div>
-  )
-}
+  );
+};
 
 export const SinglePopUp = ({
   cityName,
@@ -93,7 +87,7 @@ export const SinglePopUp = ({
         ></CircleDot>
       </Popover.Target>
       <Popover.Dropdown style={{ pointerEvents: "none" }}>
-        <InfoDisplayer 
+        <InfoDisplayer
           cityName={cityName}
           numDiapers={numDiapers}
           partnerOrgs={partnerOrgs}
