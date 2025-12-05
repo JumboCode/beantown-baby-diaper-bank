@@ -179,15 +179,22 @@ function PartnerTable({
                       <span className="text-gray-400 italic">N/A</span>
                     )}
                   </Table.Td>
-                  <Table.Td>
+                  <Table.Td align="center">
                     <Pill
-                      className={`text-sm font-semibold ${
+                      // Fix me: colors
+                      ta="center"
+                      px="sm"
+                      radius="sm"
+                      fw="bold"
+                      c="white"
+                      fz="10px"
+                      bg={
                         partner.status === "active"
-                          ? "text-green-600"
+                          ? "#558D22"
                           : partner.status === "inactive"
-                            ? "text-red-600"
-                            : "text-yellow-600"
-                      }`}>
+                            ? "#E2383F"
+                            : "#98A2B3"
+                      }>
                       {partner.status.charAt(0).toUpperCase() +
                         partner.status.slice(1)}
                     </Pill>
