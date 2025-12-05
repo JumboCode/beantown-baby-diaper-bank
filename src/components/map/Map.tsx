@@ -3,18 +3,35 @@
 import dynamic from "next/dynamic";
 import { useLeafletMap } from "./useLeafletMap";
 import { useBaseTileLayer } from "./useBaseTileLayer";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import type { City, Distribution } from "@/generated/prisma/client";
-import { Popup, TileLayer } from "react-leaflet";
-import { Icon } from "leaflet";
+import { Popup, TileLayer, Polygon, MapContainer } from "react-leaflet";
+import { Icon, LatLngExpression } from "leaflet";
 import { InfoDisplayer } from "../sprint2/DotPopUps";
 
 import "leaflet/dist/leaflet.css";
-import { MapContainer } from "react-leaflet";
 import type { MapData } from "@/app/main/page";
 
 // Dynamically import react-leaflet components with SSR disabled
 // because they depend on the browser environment (e.g., window, document).
+
+const LEVEL_COLORS = [
+  "#B2E5FF",
+  "#7EC3E5",
+  "#51A3CC",
+  "#2C85B2",
+  "#0F6B99",
+];
+
+const getColor = (value: number, max: number) => {
+  if (value === 0 || max === 0) return LEVEL_COLORS[0];
+  const ratio = value / max;
+  if (ratio > 0.8) return LEVEL_COLORS[4];
+  if (ratio > 0.6) return LEVEL_COLORS[3];
+  if (ratio > 0.4) return LEVEL_COLORS[2];
+  if (ratio > 0.2) return LEVEL_COLORS[1];
+  return LEVEL_COLORS[0];
+};
 
 export const Marker = dynamic(
   () => import("react-leaflet").then((module) => module.Marker),
@@ -72,6 +89,36 @@ export default function LeafletMap({ mapData }: { mapData?: MapData | null }) {
     setCoordinates(validCoordinates);
   }, [mapData]);
 
+  const boundaryPolygons = useMemo(() => {
+    if (!mapData?.boundaries) return [];
+
+    let maxDiapers = 0;
+    const cityTotals: Record<string, number> = {};
+
+    cities.forEach((city) => {
+      const total = city.distributions.reduce(
+        (sum, d) => sum + Number(d.numberDiapers),
+        0
+      );
+      if (city.name) cityTotals[city.name] = total;
+      if (total > maxDiapers) maxDiapers = total;
+    });
+
+    return mapData.boundaries.features.map((feature) => {
+      const name = feature.properties?.name;
+      // Look up the total using the name, default to 0
+      const total = name ? cityTotals[name] || 0 : 0;
+      
+      return {
+        id: name || Math.random(),
+        positions: feature.geometry.coordinates as unknown as LatLngExpression[][],
+        name: name,
+        fillColor: getColor(total, maxDiapers),
+        totalDiapers: total
+      };
+    });
+  }, [mapData, cities]);
+
   return (
     <div
       style={{
@@ -84,6 +131,20 @@ export default function LeafletMap({ mapData }: { mapData?: MapData | null }) {
         {...mapOptions}
         style={mapStyle}>
         <TileLayer {...tileLayerProps} />
+        {boundaryPolygons.map((boundary, index) => (
+          <Polygon
+            key={boundary.id || index}
+            pathOptions={{
+              color: "#2C85B2",
+              weight: 2,
+              fillColor: boundary.fillColor, 
+              fillOpacity: 0.5,
+            }}
+            positions={boundary.positions}
+          >
+            {boundary.name && <Popup>{boundary.name}</Popup>}
+          </Polygon>
+        ))}
         {cities &&
           coordinates &&
           coordinates.map((city) => {
