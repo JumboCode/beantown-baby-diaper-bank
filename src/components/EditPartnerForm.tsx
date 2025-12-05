@@ -11,7 +11,9 @@ import {
   Stack,
   LoadingOverlay,
   Box,
+  Tabs,
 } from "@mantine/core";
+import { RiCalendarEventLine, RiLineChartLine } from "react-icons/ri";
 import { useForm } from "@mantine/form";
 import { MonthPickerInput } from "@mantine/dates";
 import "@mantine/dates/styles.css";
@@ -19,6 +21,8 @@ import { Partner } from "./admin/PartnerTable";
 import parser from "parse-address";
 import { useState } from "react";
 import { status } from "@/generated/prisma/enums";
+import OneTimeUpdateForm from "./OneTimeUpdateForm";
+import ContinuousUpdateForm from "./ContinuousUpdateForm";
 
 interface EditPartnerFormProps {
   partner: Partner;
@@ -47,6 +51,8 @@ interface RequiredAddressComponents {
   state: string;
   zip: string;
 }
+
+type UpdatePercentagesOptions = "one-time" | "continuous";
 
 type AddressWithExtras = RequiredAddressComponents &
   Partial<parser.ParsedLocation>;
@@ -89,6 +95,8 @@ export default function EditPartnerForm({
   onClose,
 }: EditPartnerFormProps) {
   const [loading, setLoading] = useState(false);
+  const [activePercentTab, setActivePercentTab] =
+    useState<UpdatePercentagesOptions>("one-time");
 
   console.log("Editing partner:", partner);
 
@@ -112,6 +120,7 @@ export default function EditPartnerForm({
       country: "United States",
       logoFile: null as File | null,
       logoUrl: partner.logo_url || "",
+      updatePercentagesType: "one-time" as UpdatePercentagesOptions,
     },
     validate: {
       organization: (value) =>
@@ -243,17 +252,21 @@ export default function EditPartnerForm({
 
           <Group
             justify="space-between"
-            align="flex-end"
+            align="flex-start"
             w="100%">
-            {/* Label with fixed width */}
             <Text
               fw={600}
               className="w-40">
               Status <span className="text-red-600">*</span>
             </Text>
 
-            <Group justify="flex-start">
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+            <Radio.Group
+              value={form.values.status}
+              onChange={(val) => form.setFieldValue("status", val as status)}
+              className="min-w-170 w-full max-w-[600px]">
+              <Group
+                gap="md"
+                grow>
                 {[
                   {
                     value: "active",
@@ -263,7 +276,7 @@ export default function EditPartnerForm({
                   {
                     value: "inactive",
                     title: "Inactive",
-                    description: "Partner is not currently active",
+                    description: "Partner no longer active",
                   },
                   {
                     value: "waitlisted",
@@ -273,13 +286,10 @@ export default function EditPartnerForm({
                 ].map((option) => (
                   <Radio.Card
                     key={form.key(`status-${option.value}`)}
+                    value={option.value}
                     radius="md"
                     p="md"
-                    className="w-52 border border-gray-200 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md data-[checked=true]:border-[#053766] data-[checked=true]:bg-blue-50"
-                    checked={form.values.status === option.value}
-                    onClick={() =>
-                      form.setFieldValue("status", option.value as status)
-                    }>
+                    className="border border-gray-200 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md data-[checked=true]:border-[#053766] data-[checked=true]:bg-blue-50 h-full">
                     <Group
                       wrap="nowrap"
                       align="flex-start"
@@ -289,23 +299,23 @@ export default function EditPartnerForm({
                         <Text fw={700}>{option.title}</Text>
                         <Text
                           size="xs"
-                          color="dimmed">
+                          c="dimmed">
                           {option.description}
                         </Text>
                       </Stack>
                     </Group>
                   </Radio.Card>
                 ))}
-              </div>
+              </Group>
 
               {form.errors.status && (
                 <Text
-                  color="red"
+                  c="red"
                   size="sm">
                   {form.errors.status}
                 </Text>
               )}
-            </Group>
+            </Radio.Group>
           </Group>
 
           {/* Latitude and Longitude */}
@@ -380,16 +390,18 @@ export default function EditPartnerForm({
               </div>
 
               <div className="flex gap-4 w-full">
-                <NumberInput
+                <TextInput
                   placeholder="Zip Code"
+                  {...form.getInputProps("zipCode")}
                   key={form.key("zipCode")}
                   value={form.values.zipCode}
-                  onChange={(val) => form.setFieldValue("zipCode", String(val))}
+                  onChange={(val) =>
+                    form.setFieldValue("zipCode", val.target.value)
+                  }
                   error={form.errors.zipCode}
                   size="md"
                   className="w-[120px]"
                   radius="md"
-                  hideControls
                 />
                 <Select
                   placeholder="Country"
@@ -431,6 +443,92 @@ export default function EditPartnerForm({
                 className="min-w-83"
               />
             </div>
+          </Group>
+
+          {/* Update Percentages */}
+          <Group
+            justify="space-between"
+            align="flex-start"
+            w="100%">
+            <Text fw={600}>Update City Distribution Percentages</Text>
+            <Tabs
+              value={activePercentTab}
+              onChange={(val) => {
+                if (!val) return;
+                setActivePercentTab(val as UpdatePercentagesOptions);
+                form.setFieldValue(
+                  "updatePercentagesType",
+                  val as UpdatePercentagesOptions
+                );
+              }}
+              className="min-w-170 w-full max-w-[600px]">
+              <Tabs.List
+                grow
+                mb="xl">
+                {[
+                  {
+                    value: "one-time",
+                    title: "One-Time Update",
+                    description: "Update a specific month only",
+                    icon: <RiCalendarEventLine size={22} />,
+                  },
+                  {
+                    value: "continuous",
+                    title: "Continuous Update",
+                    description: "Apply to all future distributions",
+                    icon: <RiLineChartLine size={22} />,
+                  },
+                ].map((option) => (
+                  <Tabs.Tab
+                    key={option.value}
+                    value={option.value}
+                    className="px-0">
+                    {(() => {
+                      const isActive = activePercentTab === option.value;
+                      return (
+                        <div
+                          className={`rounded-xl shadow-sm transition hover:-translate-y-0.5 hover:shadow-md h-full border ${
+                            isActive
+                              ? "border-[#1D3A8A] bg-[#EEF2FF]"
+                              : "border-gray-300 bg-white"
+                          }`}
+                          style={{ borderWidth: isActive ? 2 : 1 }}>
+                          <Stack
+                            gap="xs"
+                            align="center"
+                            p="md">
+                            <div
+                              className={`${
+                                isActive ? "text-[#1D3A8A]" : "text-gray-500"
+                              } opacity-80`}>
+                              {option.icon}
+                            </div>
+                            <Text
+                              fw={700}
+                              size="md"
+                              className={isActive ? "text-[#1D3A8A]" : ""}>
+                              {option.title}
+                            </Text>
+                            <Text
+                              size="sm"
+                              c={isActive ? "gray.6" : "dimmed"}
+                              ta="center">
+                              {option.description}
+                            </Text>
+                          </Stack>
+                        </div>
+                      );
+                    })()}
+                  </Tabs.Tab>
+                ))}
+              </Tabs.List>
+              <Tabs.Panel value="one-time">
+                <OneTimeUpdateForm />
+              </Tabs.Panel>
+              <Tabs.Panel value="continuous">
+                <ContinuousUpdateForm />
+              </Tabs.Panel>
+            </Tabs>
           </Group>
 
           {/* Submit and Cancel Buttons */}

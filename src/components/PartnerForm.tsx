@@ -38,14 +38,18 @@ export default function PartnerForm() {
   const [isLoadingCities, setIsLoadingCities] = useState<boolean>(false);
 
   useEffect(() => {
-    const fetchCities = async() => {
+    const fetchCities = async () => {
       setIsLoadingCities(true);
       try {
-        const res = await fetch('http://api.geonames.org/searchJSON?q=&adminCode1=MA&country=US&featureClass=P&username=jumbocodebbdb');
+        const res = await fetch(
+          "http://api.geonames.org/searchJSON?q=&adminCode1=MA&country=US&featureClass=P&username=jumbocodebbdb"
+        );
         const data = await res.json();
-        
+
         if (data.geonames) {
-          const cityNames = data.geonames.map((city: { name: string }) => city.name);
+          const cityNames = data.geonames.map(
+            (city: { name: string }) => city.name
+          );
           const cityUniqueSorted = Array.from(new Set(cityNames)).sort();
           setCitiesAPI(cityUniqueSorted as string[]);
         }
@@ -54,7 +58,7 @@ export default function PartnerForm() {
       } finally {
         setIsLoadingCities(false);
       }
-    }
+    };
     fetchCities();
   }, []);
 
@@ -94,11 +98,10 @@ export default function PartnerForm() {
       //   !values.logoFile && !values.logoUrl.trim()
       //     ? "Provide a file or a link"
       //     : null,
-      // 
+      //
       // logos are optional according to the figma?
       logoUrl: (value, values) => {
-        if (!value.trim() && !values.logoFile)
-          return ;
+        if (!value.trim() && !values.logoFile) return;
         return typeof value === "string" ? null : "Enter a valid URL";
       },
     },
@@ -111,21 +114,31 @@ export default function PartnerForm() {
       start_partner: new Date(values.time).toISOString(),
       waitlisted: values.status,
       coordinates: {
-        lat: values.latitude, 
-        long: values.longitude
+        lat: values.latitude,
+        long: values.longitude,
       },
-      address: values.addressLine + ", " + values.city + ", " + values.state + ", " + " " + values.zipCode + ", " + values.country,
-      logo: values.logoUrl || ""
-    }
-    
+      address:
+        values.addressLine +
+        ", " +
+        values.city +
+        ", " +
+        values.state +
+        ", " +
+        " " +
+        values.zipCode +
+        ", " +
+        values.country,
+      logo: values.logoUrl || "",
+    };
+
     const response = await fetch("/api/partners", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(formData),
-        });
-    
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(formData),
+    });
+
     if (!response.ok) {
       const err = await response.text();
       console.error("Failed to create partner", err);
@@ -142,7 +155,9 @@ export default function PartnerForm() {
 
       <div className="p-4 border border-gray-300 rounded-xl">
         <form
-          onSubmit={form.onSubmit((values) => {submitPartner(values)})}
+          onSubmit={form.onSubmit((values) => {
+            submitPartner(values);
+          })}
           className="flex flex-col gap-5">
           {/* Name of Organization */}
           <Group
@@ -188,16 +203,18 @@ export default function PartnerForm() {
               Cities Served <span className="text-red-600">*</span>
             </Text>
             <TagsInput
-              placeholder={isLoadingCities ? 'Loading cities...' : 'Select cities'}
+              placeholder={
+                isLoadingCities ? "Loading cities..." : "Select cities"
+              }
               data={citiesAPI}
-              filter={({options, search}) => {
+              filter={({ options, search }) => {
                 const splittedSearch = search.toLowerCase().trim().split(" ");
                 return (options as ComboboxItem[]).filter((option) => {
-                const words = option.label.toLowerCase().trim().split(" ");
-                return splittedSearch.every((searchWord) =>
-                  words.some((word: string) => word.includes(searchWord))
-                );
-              });
+                  const words = option.label.toLowerCase().trim().split(" ");
+                  return splittedSearch.every((searchWord) =>
+                    words.some((word: string) => word.includes(searchWord))
+                  );
+                });
               }}
               disabled={isLoadingCities}
               key={form.key("cities")}

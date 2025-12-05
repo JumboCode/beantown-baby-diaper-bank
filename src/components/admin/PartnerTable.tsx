@@ -11,6 +11,7 @@ import {
   Text,
   ActionIcon,
 } from "@mantine/core";
+import { PartnerRegion } from "@/generated/prisma/client";
 import EditPartnerForm from "../EditPartnerForm";
 import { useDisclosure } from "@mantine/hooks";
 import { status } from "@/generated/prisma/enums";
@@ -29,7 +30,6 @@ export type Partner = {
 };
 
 function roundCoords(coords: { lat: number; lng: number }) {
-  console.log("Rounding coords", coords);
   if (coords.lat.toString().length > 4 && coords.lng.toString().length > 4) {
     return {
       lat: coords.lat.toFixed(4),
@@ -48,6 +48,7 @@ function joinCoords(coords: { lat: number; lng: number }) {
 
 export default function PartnerInfo() {
   const [data, setData] = useState<Partner[]>([]);
+  const [percentages, setPercentages] = useState<PartnerRegion[]>([]);
   const [loading, setLoading] = useState(true);
   // Retrieve data from API, store each partner as Partner type
   useEffect(() => {
@@ -66,6 +67,18 @@ export default function PartnerInfo() {
     };
 
     fetchAndStoreData();
+
+    const getPercentagesWithCityId = async () => {
+      try {
+        const response = await fetch("/api/partners/percentages");
+        const result = await response.json();
+        setPercentages(result.data);
+      } catch (err) {
+        console.log("Error fetching percentages data", err);
+      }
+    };
+
+    getPercentagesWithCityId();
   }, []);
 
   const refreshTable = () => {
@@ -89,19 +102,24 @@ export default function PartnerInfo() {
       <Loader type="bars" />
     </Center>
   ) : (
-    <PartnerTable
-      partners={data}
-      refreshTable={refreshTable}
-    />
+    <>
+      <PartnerTable
+        partners={data}
+        refreshTable={refreshTable}
+        percentages={percentages}
+      />
+    </>
   );
 }
 
 function PartnerTable({
   partners,
   refreshTable,
+  percentages,
 }: {
   partners: Partner[];
   refreshTable: () => void;
+  percentages: PartnerRegion[];
 }) {
   const [partner, setPartner] = useState<Partner | null>(null);
   const [opened, { open, close }] = useDisclosure(false);
@@ -124,7 +142,7 @@ function PartnerTable({
                 <Table.Th>Status</Table.Th>
                 <Table.Th>Coordinates</Table.Th>
                 <Table.Th>Address</Table.Th>
-                <Table.Th></Table.Th>
+                <Table.Th>Cities Served</Table.Th>
               </Table.Tr>
             </Table.Thead>
             <Table.Tbody>
@@ -133,6 +151,10 @@ function PartnerTable({
                   <Table.Td style={{ verticalAlign: "middle" }}>
                     <ActionIcon
                       variant="light"
+                      onClick={() => {
+                        setPartner(partner);
+                        open();
+                      }}
                       size="lg">
                       <Image
                         src="/admin_view/pen.svg"
@@ -198,7 +220,30 @@ function PartnerTable({
                       <span className="text-gray-400 italic">N/A</span>
                     )}
                   </Table.Td>
-                  <Table.Td></Table.Td>
+                  <Table.Td>
+                    <span
+                      key={partner.id}
+                      className="text-sm text-gray-600">
+                      <span>
+                        {percentages
+                          .filter(
+                            (percentage) =>
+                              Number(percentage.partnerId) == partner.id
+                          )
+                          .map((percentage, index, arr) => {
+                            if (percentage.percentage) {
+                              return (
+                                percentage.cityId +
+                                " (" +
+                                percentage.percentage * 100 +
+                                "%)" +
+                                (index != arr.length - 1 ? ", " : "")
+                              );
+                            }
+                          })}
+                      </span>
+                    </span>
+                  </Table.Td>
                 </Table.Tr>
               ))}
             </Table.Tbody>
