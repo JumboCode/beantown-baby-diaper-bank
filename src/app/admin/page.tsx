@@ -7,14 +7,85 @@ import Image from "next/image";
 import { Poppins } from "next/font/google";
 import DistributionsTable from "@/components/DistributionsTable";
 import MonthSelectionModal from "@/components/admin/MonthSelectionModal";
+import PreviewModal from "@/components/admin/PreviewModal";
+import { useDisclosure } from '@mantine/hooks';
+import type { MonthSelectionData } from "@/components/admin/MonthSelectionModal";
 
 const poppins = Poppins({
   subsets: ["latin"],
   weight: ["400", "500", "600", "700"],
 });
 
+// const MONTH_NAMES = [
+//   "January",
+//   "February",
+//   "March",
+//   "April",
+//   "May",
+//   "June",
+//   "July",
+//   "August",
+//   "September",
+//   "October",
+//   "November",
+//   "December",
+// ];
+
 export default function Page() {
   const [activeTab, setActiveTab] = useState<string | null>("Partners");
+  const [monthModalOpen, { open: openMonthModal, close: closeMonthModal }] = useDisclosure(false);
+  // const [previewData, setPreviewData] = useState<any[]>([]);
+
+  // async function fetchPreviewMonthSelection(selection:MonthSelectionData) {
+  //   const { mode, start, end } = selection;
+  //   if (mode === "one_month") {
+  //     console.log("in fetch: one month");
+  //     console.log(start.month);
+
+  //     const monthName = MONTH_NAMES[start.month + 1];
+  //     console.log(monthName);
+
+  //     const preview = await fetch(`http://localhost:3000/api/distributions?month=${monthName}&year=${start.year}`);
+  //     if (!preview.ok) {
+  //       console.error("Error: could not fetch distributions for", monthName);
+  //     } else {
+  //       const preview_json = await preview.json()
+  //       setPreviewData(preview_json);
+  //       console.log(preview_json);
+  //     }
+  //   } else { // i think we can just make this else but idk  
+  //     console.log("in fetch: range");
+  //     let currMonth = start.month;
+  //     let currYear = start.year;
+
+  //     if (end === null) return;
+  //     const allResults = [];
+
+  //     // need to have the months increment even if at the end of the year
+  //     // year takes on 2 states, at the end, or less than the end?
+  //     while ((currMonth <= end.month) && (currYear < end.year || currYear == end.year)) {
+  //       const monthName = MONTH_NAMES[end.month + 1];
+  //       const curr_preview = await fetch(`http://localhost:3000/api/distributions?month=${monthName}&year=${currYear}`)
+  //       if (!curr_preview.ok) {
+  //         console.error("Error: could not fetch distributions for", monthName);
+  //       } else {
+  //         const json = await curr_preview.json();
+  //         allResults.push(...json); // ... spreads out the json items
+  //       }
+
+  //       currMonth++;
+  //       if (currMonth > 12) {
+  //         currMonth = 1;
+  //         currYear++;
+  //       }
+  //     }
+      
+  //     setPreviewData(allResults);
+  //   }
+
+  //   console.log(previewData);
+  // }
+
 
   return (
     <Stack
@@ -119,7 +190,17 @@ export default function Page() {
               gap:10,
             }}
           >
+            {/* <Button
+              variant="default"
+              radius={5}
+              onClick={openMonthModal}
+            >
+              Delete
+            </Button> */}
+
+            
             <MonthSelectionModal />
+            {/* <PreviewModal /> */}
             <Button
               ml="auto"
               variant="default"
@@ -145,6 +226,13 @@ export default function Page() {
           <DistributionsTable />
         </Tabs.Panel>
       </Tabs>
+      
+      {/* <MonthSelectionModal 
+        opened={monthModalOpen}
+        onClose={closeMonthModal}
+        onSubmit={fetchPreviewMonthSelection}
+      /> */}
+
     </Stack>
   );
 }
