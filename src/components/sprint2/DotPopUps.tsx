@@ -64,7 +64,10 @@ export const InfoDisplayer = ({
       <p style={{ fontSize: "20px", fontWeight: "bold" }}> City: {cityName}</p>
       <p> Diapers Distributed: {numDiapers?.toString()} </p>
       <p> Children helped: {childrenHelped} </p>
-      <PartnerInfo name={partnerOrgs} fromMarker={true} />
+      <PartnerInfo
+        name={"test"}
+        fromMarker={true}
+      />
     </div>
   );
 };
@@ -78,13 +81,17 @@ export const SinglePopUp = ({
   const [opened, { close, open }] = useDisclosure(false);
 
   return (
-    <Popover width={200} position="top" withArrow shadow="md" opened={opened}>
+    <Popover
+      width={200}
+      position="top"
+      withArrow
+      shadow="md"
+      opened={opened}>
       <Popover.Target>
         <CircleDot
           style={{ color: "blue" }}
           onMouseEnter={open}
-          onMouseLeave={close}
-        ></CircleDot>
+          onMouseLeave={close}></CircleDot>
       </Popover.Target>
       <Popover.Dropdown style={{ pointerEvents: "none" }}>
         <InfoDisplayer

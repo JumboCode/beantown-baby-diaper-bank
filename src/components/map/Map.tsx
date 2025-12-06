@@ -169,7 +169,6 @@ export default function LeafletMap({ mapData }: { mapData: MapData }) {
                   city.name === boundary.name && (
                     <PopupContent
                       key={city.id.toString()}
-                      boundaryName={boundary.name!}
                       city={city}
                     />
                   ),
