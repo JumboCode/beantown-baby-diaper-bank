@@ -15,7 +15,7 @@ import {
   ThemeIcon,
 } from "@mantine/core";
 import { FaGithub } from "react-icons/fa";
-import PartnerForm from "../components/PartnerForm";
+import AddPartnerForm from "../components/AddPartnerForm";
 
 export default function Home() {
   return (
@@ -219,7 +219,7 @@ export default function Home() {
           <Stack gap="xs">
             <Title order={2}>Sprint 4</Title>
             <Divider />
-            <PartnerForm />
+            <AddPartnerForm />
           </Stack>
         </Card>
 

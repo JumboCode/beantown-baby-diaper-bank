@@ -5,6 +5,7 @@ import { parse } from "csv-parse";
 import { prisma } from "../src/lib/prisma";
 import { YearlyDataCreateManyInput } from "@/generated/prisma/models";
 import { randomUUID } from "node:crypto";
+import { promises as fs } from "node:fs";
 
 // generic CSV loader -> array of plain objects
 async function loadCsv<T extends Record<string, string | undefined>>(
@@ -27,6 +28,23 @@ const toDate = (value: string | undefined) =>
   value && value.length > 0 ? new Date(value) : undefined;
 const toStringOrNull = (value: string | undefined) =>
   value && value.length > 0 ? value : null;
+
+async function loadBoundaryGeometry(cityName?: string) {
+  if (!cityName) return null;
+  const slug = cityName.toLowerCase().replace(/\s+/g, "-");
+  const file = path.join(__dirname, "data/geojson", `${slug}.geojson`);
+  try {
+    const raw = await fs.readFile(file, "utf8");
+    const json = JSON.parse(raw);
+    const feature =
+      json.type === "FeatureCollection" ? json.features?.[0] : json;
+    if (!feature?.geometry) return null;
+    return JSON.stringify(feature.geometry);
+  } catch (err) {
+    console.warn(`No boundary file for ${cityName}:`, err);
+    return null;
+  }
+}
 
 async function seedCities() {
   type Row = {
@@ -53,6 +71,15 @@ async function seedCities() {
     SET "centroid" = ST_GeomFromGeoJSON(${row.centroid})
     WHERE id = ${toBigInt(row.id)}
   `;
+  }
+  for (const row of rows) {
+    const boundary = await loadBoundaryGeometry(row.name);
+    if (!boundary) continue;
+    await prisma.$executeRaw`
+  UPDATE "Cities"
+  SET "boundary" = ST_SetSRID(ST_GeomFromGeoJSON(${boundary}), 4326)::geography
+  WHERE id = ${toBigInt(row.id)}
+`;
   }
 }
 
@@ -196,10 +223,10 @@ async function main() {
   //   prisma.city.deleteMany(),
   // ]);
   await seedCities();
-  await seedPartners();
-  await seedDistributions();
-  await seedPartnerRegions();
-  await seedYearlyData();
+  // await seedPartners();
+  // await seedDistributions();
+  // await seedPartnerRegions();
+  // await seedYearlyData();
 }
 
 main()

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, use } from "react";
 import { Drawer, Button } from "@mantine/core";
 
 // this is the format of the data that we are retrieving using API
@@ -17,22 +17,21 @@ type Partner = {
 };
 
 type PartnerInfoProps = {
-  name?: string[] | undefined;
+  id?: number | undefined;
   fromMarker?: boolean;
+  name?: string | undefined;
+  url?: string | null;
 };
 
 export default function PartnerInfo({
+  id,
   name,
+  url,
   fromMarker = false,
 }: PartnerInfoProps) {
-  // Generic form of useState is const[state, setState] = useState<type>(initialValue);
-  // state is the current value (whatever it may be), this is the variable
-  // setState is the function to update the state, so whenever you call setState(newValue), it will rerender the component to update the value
-  // <type> is what data type the state holds, in this case, an empty array [] of Partner types
-  // initialValue is the initial value of the state, in this case the empty array [] within the parenthesis
-  const [data, setData] = useState<Partner[]>([]);
   //changed this b/c disclosure was only showing info for one partner
   const [selectedPartner, setSelectedPartner] = useState<Partner | null>(null);
+  const [loadingPartner, setLoadingPartner] = useState<boolean>(false);
 
   async function fetchPartnerDetails(id: number) {
     const response = await fetch(`/api/partners/${id}`);
@@ -41,70 +40,15 @@ export default function PartnerInfo({
   }
 
   async function handlePartnerClick(id: number) {
+    setLoadingPartner(true);
     const fullPartner = await fetchPartnerDetails(id);
+    console.log("Fetched partner details:", fullPartner);
     setSelectedPartner(fullPartner);
+    setLoadingPartner(false);
   }
-
-  // use useEffect so that we fetch data after the component renders. i.e. visuals will load first, then it worries about retrieving data
-  useEffect(() => {
-    // async is a function that is asynchronous, it means it promises to return something and lets us use await inside it, like a place holder
-    let ignore = false;
-
-    const fetchPartner = async (partnerName?: string) => {
-      try {
-        const url = partnerName
-          ? `/api/partners?search=${partnerName}`
-          : `/api/partners`;
-        const response = await fetch(url);
-        if (!response.ok) {
-          console.log(`Failed to fetch partner: ${partnerName}`);
-          return [];
-        }
-        const result = (await response.json()) as { data: Partner[] };
-        return result.data;
-      } catch (err) {
-        console.log("Unexpected error:", err);
-        return [];
-      }
-    };
-
-    const loadSelectedPartners = async () => {
-      const fetchPromises = name!.map((name) => fetchPartner(name));
-      const allPartners = await Promise.all(fetchPromises);
-      const flatData = allPartners.flat();
-      if (!ignore) {
-        setData(flatData);
-      }
-    };
-
-    if (name && name.length > 0) {
-      loadSelectedPartners();
-    } else {
-      fetchPartner().then((data) => setData(data));
-    }
-
-    return () => {
-      ignore = true;
-    };
-  }, [name]);
 
   return (
     <div>
-      {fromMarker ? (
-        <p>Partner Information</p>
-      ) : (
-        <h2
-          style={{
-            margin: "1rem",
-            textAlign: "center",
-            fontWeight: "bold",
-            fontSize: "1.5rem",
-          }}
-        >
-          Partner Information
-        </h2>
-      )}
-
       <div
         style={{
           display: "flex",
@@ -114,78 +58,117 @@ export default function PartnerInfo({
           flexDirection: fromMarker ? "column" : "row",
         }}
       >
-        {data.map((partner) => {
-          return (
-            <Button
-              key={partner.id}
-              variant="outline"
-              size={fromMarker ? "sm" : "xl"}
-              radius="lg"
-              color="dark"
-              leftSection={
-                partner.logo_url && (
-                  <img src={partner.logo_url} style={{ height: 30 }} />
-                )
-              }
-              onClick={() => handlePartnerClick(partner.id)}
-            >
-              <span
-                style={{
-                  display: "inline-block",
-                  overflow: "hidden",
-                  textOverflow: "ellipsis",
-                  whiteSpace: "nowrap",
-                }}
-              >
-                {partner.name}
-              </span>
-            </Button>
-          );
-        })}
+        <Button
+          key={id}
+          variant="outline"
+          // size={fromMarker ? "sm" : "xl"}
+          radius="lg"
+          color="dark"
+          leftSection={url && <img src={url} style={{ height: 30 }} />}
+          loading={loadingPartner}
+          onClick={() => handlePartnerClick(id!)}
+        >
+          <span
+            style={{
+              display: "inline-block",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              whiteSpace: "nowrap",
+            }}
+          >
+            {name}
+          </span>
+        </Button>
       </div>
 
       {/* drawer info changes depending on what partner is selected*/}
       <Drawer
         opened={selectedPartner !== null}
         onClose={() => setSelectedPartner(null)}
-        title={selectedPartner?.name || "Information"}
-        overlayProps={{ opacity: 0.1 }}
+        // title={selectedPartner?.name || "Information"}
+
+        overlayProps={{ opacity: 0.2 }}
       >
         {selectedPartner && (
-          <>
-            <p>
-              <strong>Name:</strong> {selectedPartner.name}
+          <div style={{ lineHeight: 1.5 }}>
+            <p style={{ marginBottom: "1.75rem" }}>
+              <span style={{ color: "#14215A", fontWeight: 600 }}>
+                Organization Name:
+              </span>{" "}
+              <span style={{ color: "#101828" }}>{selectedPartner.name}</span>
             </p>
-            <p>
-              <strong>Description:</strong>{" "}
-              {selectedPartner.description || "N/A"}
+
+            <p style={{ marginBottom: "1.75rem" }}>
+              <span style={{ color: "#14215A", fontWeight: 600 }}>
+                Description:
+              </span>{" "}
+              <span style={{ color: "#101828" }}>
+                {selectedPartner.description || "N/A"}
+              </span>
             </p>
-            <p>
-              <strong>Start Year:</strong>{" "}
-              {selectedPartner.start_partner || "N/A"}
+
+            <p style={{ marginBottom: "1.75rem" }}>
+              <span style={{ color: "#14215A", fontWeight: 600 }}>
+                Start Year:
+              </span>{" "}
+              <span style={{ color: "#101828" }}>
+                {selectedPartner.start_partner || "N/A"}
+              </span>
             </p>
-            <p>
-              <strong>Active:</strong> {selectedPartner.status ? "No" : "Yes"}
+
+            <p style={{ marginBottom: "1.75rem" }}>
+              <span style={{ color: "#14215A", fontWeight: 600 }}>Active:</span>{" "}
+              <span style={{ color: "#101828" }}>
+                {selectedPartner.status ? "No" : "Yes"}
+              </span>
             </p>
-            <p>
-              <strong>Address:</strong> {selectedPartner.address || "N/A"}
+
+            <p style={{ marginBottom: "1.75rem" }}>
+              <span style={{ color: "#14215A", fontWeight: 600 }}>
+                Address:
+              </span>{" "}
+              <span style={{ color: "#101828" }}>
+                {selectedPartner.address || "N/A"}
+              </span>
             </p>
+
+            <p style={{ marginBottom: "1.75rem" }}>
+              <span style={{ color: "#14215A", fontWeight: 600 }}>
+                Babies Helped:
+              </span>{" "}
+              <span style={{ color: "#101828" }}>
+                {selectedPartner.number_babies_helped}
+              </span>
+            </p>
+
+            <p style={{ marginBottom: "1.75rem" }}>
+              <span style={{ color: "#14215A", fontWeight: 600 }}>
+                Diapers Provided:
+              </span>{" "}
+              <span style={{ color: "#101828" }}>
+                {selectedPartner.number_diapers}
+              </span>
+            </p>
+
             {selectedPartner.logo_url && (
-              <img
-                src={selectedPartner.logo_url}
-                alt={`${selectedPartner.name} logo`}
-                style={{ maxWidth: "200px", marginTop: "1rem" }}
-              />
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "center",
+                  margin: "1rem 0",
+                }}
+              >
+                <img
+                  src={selectedPartner.logo_url}
+                  alt={`${selectedPartner.name} logo`}
+                  style={{
+                    maxWidth: "200px",
+                    borderRadius: "4px",
+                  }}
+                />
+              </div>
             )}
-            <p>
-              <strong>Babies Helped:</strong>{" "}
-              {selectedPartner.number_babies_helped}
-            </p>
-            <p>
-              <strong>Diapers Provided:</strong>{" "}
-              {selectedPartner.number_diapers}
-            </p>
-          </>
+          </div>
         )}
       </Drawer>
     </div>

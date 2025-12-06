@@ -11,6 +11,11 @@ import {
   Radio,
   FileInput,
   Select,
+  Modal,
+  Title,
+  Container,
+  Stack,
+  SimpleGrid,
 } from "@mantine/core";
 import { useForm } from "@mantine/form";
 import { MonthPickerInput } from "@mantine/dates";
@@ -32,7 +37,13 @@ const requiredInteger = (label: string) => (value: unknown) => {
   return /^\d+$/.test(v) ? null : `${label} must be a number`;
 };
 
-export default function PartnerForm() {
+export default function AddPartnerForm({
+  opened,
+  onClose,
+}: {
+  opened: boolean;
+  onClose: () => void;
+}) {
   const [percentages, setPercentages] = useState<Record<string, number>>({});
   const [citiesAPI, setCitiesAPI] = useState<string[]>([]);
   const [isLoadingCities, setIsLoadingCities] = useState<boolean>(false);
@@ -114,8 +125,8 @@ export default function PartnerForm() {
       start_partner: new Date(values.time).toISOString(),
       waitlisted: values.status,
       coordinates: {
-        lat: values.latitude,
-        long: values.longitude,
+        lat: Number(values.latitude),
+        long: Number(values.longitude),
       },
       address:
         values.addressLine +
@@ -132,7 +143,7 @@ export default function PartnerForm() {
     };
 
     const response = await fetch("/api/partners", {
-      method: "POST",
+      method: "PUT",
       headers: {
         "Content-Type": "application/json",
       },
@@ -147,30 +158,38 @@ export default function PartnerForm() {
   }
 
   return (
-    <div>
-      <div className="mb-5">
-        <h1 className="text-3xl font-semibold">Add New Partner</h1>
-        <h2 className="text-lg text-gray-500">Upload your partner data</h2>
-      </div>
+    <Modal
+      opened={opened}
+      onClose={onClose}
+      size={990}
+      padding={32}
+      title={
+        <Text fw={700} size="30px" c="#101828">
+          Add New Partner
+        </Text>
+      }
+    >
+      <Title order={2} c="#667085" fw="normal" fz={18} mb={"md"}>
+        Add your new partner data
+      </Title>
 
-      <div className="p-4 border border-gray-300 rounded-xl">
-        <form
-          onSubmit={form.onSubmit((values) => {
-            submitPartner(values);
-          })}
-          className="flex flex-col gap-5"
-        >
+      <form
+        onSubmit={form.onSubmit((values) => {
+          submitPartner(values);
+        })}
+      >
+        <Stack>
           {/* Name of Organization */}
           <Group justify="space-between" align="flex-start">
-            <Text fw={600}>
-              Name of Organzation <span className="text-red-600">*</span>
+            <Text c="#344054" fz={16} fw={600}>
+              Name of Organization <span className="text-red-600">*</span>
             </Text>
             <TextInput
               placeholder="Name"
               key={form.key("organization")}
               {...form.getInputProps("organization")}
               size="md"
-              className="min-w-170"
+              w={526}
               radius="md"
               required
             />
@@ -178,14 +197,14 @@ export default function PartnerForm() {
 
           {/* Description */}
           <Group justify="space-between" align="flex-start">
-            <Text fw={600}>
+            <Text c="#344054" fz={16} fw={600}>
               Description <span className="text-red-600">*</span>
             </Text>
             <Textarea
               key={form.key("description")}
               {...form.getInputProps("description")}
               size="md"
-              className="min-w-170"
+              w={526}
               radius="md"
               required
             />
@@ -194,7 +213,7 @@ export default function PartnerForm() {
           {/* Cities Served */}
           <Group align="right" justify="space-between">
             {/* Selected Cities MultiSelect */}
-            <Text fw={600}>
+            <Text c="#344054" fz={16} fw={600}>
               Cities Served <span className="text-red-600">*</span>
             </Text>
             <TagsInput
@@ -219,7 +238,7 @@ export default function PartnerForm() {
               }}
               error={form.errors.cities}
               size="md"
-              className="min-w-170"
+              w={526}
               radius="md"
             />
             {/* <MultiSelect
@@ -238,50 +257,47 @@ export default function PartnerForm() {
           </Group>
 
           {/* Selected Cities Table with Percentages, sorry this looks digusting */}
-          <Group justify="space-between" align="flex-start">
+          <Group w={526} ml="auto" justify="flex-end">
             {/* Selected Cities Table */}
             {form.values.cities.length > 0 && (
               <>
-                <div></div>
-                <div className="min-w-170">
-                  <Table striped highlightOnHover withTableBorder>
-                    <Table.Thead>
-                      <Table.Tr>
-                        <Table.Th>Cities</Table.Th>
-                        <Table.Th>Percentage</Table.Th>
+                <Table w="100%" striped highlightOnHover withTableBorder>
+                  <Table.Thead>
+                    <Table.Tr>
+                      <Table.Th>Cities</Table.Th>
+                      <Table.Th>Percentage</Table.Th>
+                    </Table.Tr>
+                  </Table.Thead>
+                  <Table.Tbody>
+                    {form.values.cities.map((city) => (
+                      <Table.Tr key={city}>
+                        <Table.Td>{city}</Table.Td>
+                        <Table.Td>
+                          <NumberInput
+                            placeholder="Enter %"
+                            min={0}
+                            max={100}
+                            suffix="%"
+                            value={percentages[city] || ""}
+                            onChange={(value) => {
+                              setPercentages((prev) => ({
+                                ...prev,
+                                [city]: typeof value === "number" ? value : 0,
+                              }));
+                            }}
+                          />
+                        </Table.Td>
                       </Table.Tr>
-                    </Table.Thead>
-                    <Table.Tbody>
-                      {form.values.cities.map((city) => (
-                        <Table.Tr key={city}>
-                          <Table.Td>{city}</Table.Td>
-                          <Table.Td>
-                            <NumberInput
-                              placeholder="Enter %"
-                              min={0}
-                              max={100}
-                              suffix="%"
-                              value={percentages[city] || ""}
-                              onChange={(value) => {
-                                setPercentages((prev) => ({
-                                  ...prev,
-                                  [city]: typeof value === "number" ? value : 0,
-                                }));
-                              }}
-                            />
-                          </Table.Td>
-                        </Table.Tr>
-                      ))}
-                    </Table.Tbody>
-                  </Table>
-                </div>
+                    ))}
+                  </Table.Tbody>
+                </Table>
               </>
             )}
           </Group>
 
           {/* Time Started*/}
           <Group justify="space-between" align="flex-start">
-            <Text fw={600}>
+            <Text c="#344054" fz={16} fw={600}>
               Time it started <span className="text-red-600">*</span>
             </Text>
             <MonthPickerInput
@@ -289,7 +305,7 @@ export default function PartnerForm() {
               key={form.key("time")}
               {...form.getInputProps("time")}
               required
-              className="min-w-170"
+              w={526}
             />
           </Group>
 
@@ -300,23 +316,24 @@ export default function PartnerForm() {
             error={form.errors.status}
             required
           >
-            <Group>
-              <Text fw={600}>
+            <Group justify="space-between">
+              <Text c="#344054" fz={16} fw={600}>
                 Status <span className="text-red-600">*</span>
               </Text>
-              <div className="flex gap-40 ml-72">
+              <Group w={526} justify="space-between">
                 <Radio value="active" label="Active" />
+                <Radio value="inactive" label="Inactive" />
                 <Radio value="waitlisted" label="Waitlisted" />
-              </div>
+              </Group>
             </Group>
           </Radio.Group>
 
           {/* Latitude and Longitude */}
           <Group justify="space-between" align="flex-start">
-            <Text fw={600}>
+            <Text c="#344054" fz={16} fw={600}>
               Coords <span className="text-red-600">*</span>
             </Text>
-            <div className="gap-4 flex">
+            <Group w={526} grow>
               <NumberInput
                 placeholder="Latitude"
                 key={form.key("latitude")}
@@ -324,7 +341,6 @@ export default function PartnerForm() {
                 onChange={(val) => form.setFieldValue("latitude", String(val))}
                 error={form.errors.latitude}
                 size="md"
-                className="min-w-83"
                 radius="md"
                 hideControls
               />
@@ -335,81 +351,80 @@ export default function PartnerForm() {
                 onChange={(val) => form.setFieldValue("longitude", String(val))}
                 error={form.errors.longitude}
                 size="md"
-                className="min-w-83"
                 radius="md"
                 hideControls
               />
-            </div>
+            </Group>
           </Group>
 
           {/* Address */}
           <Group justify="space-between" align="flex-start">
-            <Text fw={600}>
+            <Text c="#344054" fz={16} fw={600}>
               Address <span className="text-red-600">*</span>
             </Text>
-            <TextInput
-              placeholder="Address Line"
-              key={form.key("addressLine")}
-              {...form.getInputProps("addressLine")}
-              size="md"
-              className="min-w-170"
-              radius="md"
-              required
-            />
-            <div className="gap-4 flex ml-90">
+            <Stack>
               <TextInput
-                placeholder="City"
-                key={form.key("city")}
-                {...form.getInputProps("city")}
+                placeholder="Address Line"
+                key={form.key("addressLine")}
+                {...form.getInputProps("addressLine")}
                 size="md"
-                className="min-w-83"
+                w={526}
                 radius="md"
                 required
               />
-              <TextInput
-                placeholder="State"
-                key={form.key("state")}
-                {...form.getInputProps("state")}
-                size="md"
-                className="min-w-83"
-                radius="md"
-                required
-              />
-            </div>
-            <div className="gap-4 flex ml-90">
-              <NumberInput
-                placeholder="Zip Code"
-                key={form.key("zipCode")}
-                value={form.values.zipCode}
-                onChange={(val) => form.setFieldValue("zipCode", String(val))}
-                error={form.errors.zipCode}
-                size="md"
-                className="min-w-83"
-                radius="md"
-                hideControls
-              />
-              <Select
-                placeholder="Country"
-                data={countries}
-                searchable
-                nothingFoundMessage="Nothing found..."
-                key={form.key("country")}
-                value={form.values.country || null}
-                onChange={(val) => {
-                  form.setFieldValue("country", val || "");
-                }}
-                error={form.errors.country}
-                size="md"
-                className="min-w-83"
-                radius="md"
-              />
-            </div>
+
+              <SimpleGrid w={526} cols={2}>
+                <TextInput
+                  placeholder="City"
+                  key={form.key("city")}
+                  {...form.getInputProps("city")}
+                  size="md"
+                  radius="md"
+                  required
+                />
+                <TextInput
+                  placeholder="State"
+                  key={form.key("state")}
+                  {...form.getInputProps("state")}
+                  size="md"
+                  radius="md"
+                  required
+                />
+
+                <NumberInput
+                  placeholder="Zip Code"
+                  key={form.key("zipCode")}
+                  value={form.values.zipCode}
+                  onChange={(val) => form.setFieldValue("zipCode", String(val))}
+                  error={form.errors.zipCode}
+                  size="md"
+                  radius="md"
+                  hideControls
+                />
+                <Select
+                  placeholder="Country"
+                  data={countries}
+                  searchable
+                  nothingFoundMessage="Nothing found..."
+                  key={form.key("country")}
+                  value={form.values.country || null}
+                  onChange={(val) => {
+                    form.setFieldValue("country", val || "");
+                  }}
+                  error={form.errors.country}
+                  size="md"
+                  radius="md"
+                />
+              </SimpleGrid>
+            </Stack>
           </Group>
 
           {/* Logo File Upload */}
           <Group justify="space-between" align="flex-start">
-            <Text fw={600}>Logo file or link</Text>
-            <div className="gap-4 flex">
+            <Text c="#344054" fz={16} fw={600}>
+              Logo file or link
+            </Text>
+            <Group w={526} grow>
               <FileInput
                 accept="image/png,image/jpeg"
                 placeholder="Upload image file"
@@ -418,16 +433,16 @@ export default function PartnerForm() {
                 value={form.values.logoFile}
                 onChange={(file) => form.setFieldValue("logoFile", file)}
                 error={form.errors.logoFile || form.errors.logoUrl}
-                className="min-w-83"
+                size="md"
               />
               <TextInput
                 placeholder="Logo URL"
                 key={form.key("logoUrl")}
                 {...form.getInputProps("logoUrl")}
                 radius="md"
-                className="min-w-83"
+                size="md"
               />
-            </div>
+            </Group>
           </Group>
 
           {/* Submit and Cancel Buttons */}
@@ -448,8 +463,8 @@ export default function PartnerForm() {
               Submit
             </Button>
           </Group>
-        </form>
-      </div>
-    </div>
+        </Stack>
+      </form>
+    </Modal>
   );
 }

@@ -42,7 +42,7 @@ export async function GET(
       // created_at: partner.createdAt.toISOString(),
       name: partner.name,
       description: partner.description,
-      logo: partner.logoUrl,
+      logo_url: partner.logoUrl,
       coordinates: partner.coords,
       address: partner.address,
       status: partner.active, // TODO

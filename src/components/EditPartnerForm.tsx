@@ -191,9 +191,11 @@ export default function EditPartnerForm({
         zIndex={1000}
         overlayProps={{ radius: "sm", blur: 2 }}
       />
-      <h2 className="text-lg text-gray-500">Change your partner data</h2>
 
-      <div className="p-4 border border-gray-300 rounded-xl">
+      <div className="mx-8">
+        <h2 className="text-lg text-gray-500" style={{ marginBottom: "24px" }}>
+          Change your partner data
+        </h2>
         <form
           onSubmit={form.onSubmit((values) => {
             submitEditPartner(values);
@@ -202,8 +204,8 @@ export default function EditPartnerForm({
         >
           {/* Name of Organization */}
           <Group justify="space-between" align="flex-start">
-            <Text fw={600}>
-              Name of Organzation <span className="text-red-600">*</span>
+            <Text fw={600} c="#344054">
+              Name of Organization <span className="text-red-600">*</span>
             </Text>
             <TextInput
               placeholder="Name"
@@ -218,7 +220,7 @@ export default function EditPartnerForm({
 
           {/* Description */}
           <Group justify="space-between" align="flex-start">
-            <Text fw={600}>
+            <Text fw={600} c="#344054">
               Description <span className="text-red-600">*</span>
             </Text>
             <Textarea
@@ -233,7 +235,7 @@ export default function EditPartnerForm({
 
           {/* Time Started*/}
           <Group justify="space-between" align="flex-start">
-            <Text fw={600}>
+            <Text fw={600} c="#344054">
               Time it started <span className="text-red-600">*</span>
             </Text>
             <MonthPickerInput
@@ -246,7 +248,7 @@ export default function EditPartnerForm({
           </Group>
 
           <Group justify="space-between" align="flex-start" w="100%">
-            <Text fw={600} className="w-40">
+            <Text fw={600} c="#344054" className="w-40">
               Status <span className="text-red-600">*</span>
             </Text>
 
@@ -303,7 +305,7 @@ export default function EditPartnerForm({
 
           {/* Latitude and Longitude */}
           <Group justify="space-between" align="flex-start">
-            <Text fw={600}>
+            <Text fw={600} c="#344054">
               Coords <span className="text-red-600">*</span>
             </Text>
             <div className="gap-4 flex">
@@ -332,7 +334,7 @@ export default function EditPartnerForm({
 
           {/* Address */}
           <Group justify="space-between" align="flex-start" w="100%">
-            <Text fw={600}>
+            <Text fw={600} c="#344054">
               Address <span className="text-red-600">*</span>
             </Text>
 
@@ -400,7 +402,9 @@ export default function EditPartnerForm({
 
           {/* Logo File Upload */}
           <Group justify="space-between" align="flex-start">
-            <Text fw={600}>Logo file or link</Text>
+            <Text c="#344054" fw={600}>
+              Logo file or link
+            </Text>
             <div className="gap-4 flex">
               <FileInput
                 accept="image/png,image/jpeg"
@@ -422,8 +426,11 @@ export default function EditPartnerForm({
           </Group>
 
           {/* Update Percentages */}
-          <Group justify="space-between" align="flex-start" w="100%">
-            <Text fw={600}>Update City Distribution Percentages</Text>
+          <Group justify="space-between" align="flex-start">
+            <Text fw={600} c="#344054">
+              City Distribution Percentages
+            </Text>
+
             <Tabs
               value={activePercentTab}
               onChange={(val) => {

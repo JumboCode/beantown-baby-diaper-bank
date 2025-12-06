@@ -11,8 +11,8 @@ export default function YearlyMonthlySwitch({
 }: YearlyMonthlySwitchProps) {
   const isChecked = value === "yearly";
 
-  const monthlyColor = isChecked ? "#344054" : "#138D8A";
-  const yearlyColor = isChecked ? "#138D8A" : "#344054";
+  const monthlyColor = isChecked ? "#98A2B3" : "#053766";
+  const yearlyColor = isChecked ? "#053766" : "#98A2B3";
 
   function handleChange(event: React.ChangeEvent<HTMLInputElement>) {
     const isChecked = event.currentTarget.checked;
@@ -20,29 +20,27 @@ export default function YearlyMonthlySwitch({
   }
 
   return (
-    <div className="flex flex-col gap-3 justify-center items-center">
-      <Group gap="md" wrap="nowrap">
-        <Text c={monthlyColor} size="lg">
-          Monthly
-        </Text>
-        <Switch
-          styles={{
-            track: {
-              backgroundColor: "#E4E7EC",
-            },
-            thumb: {
-              backgroundColor: "#138D8A",
-            },
-          }}
-          size="xl"
-          checked={isChecked}
-          color="#E4E7EC"
-          onChange={handleChange}
-        />
-        <Text c={yearlyColor} size="lg">
-          Yearly
-        </Text>
-      </Group>
-    </div>
+    <Group gap="md">
+      <Text c={monthlyColor} size="md" fw={600}>
+        Monthly
+      </Text>
+      <Switch
+        styles={{
+          track: {
+            backgroundColor: "#98A2B3",
+          },
+          thumb: {
+            backgroundColor: "#053766",
+          },
+        }}
+        size="md"
+        checked={isChecked}
+        color="#98A2B3"
+        onChange={handleChange}
+      />
+      <Text c={yearlyColor} size="md" fw={600}>
+        Yearly
+      </Text>
+    </Group>
   );
 }

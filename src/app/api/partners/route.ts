@@ -100,9 +100,45 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }
+// Create put for new partner
+export async function PUT(request: Request) {
+  const body = await request.json();
+  // Need to fix for new partner
+
+  const newPartnerRequest = {
+    data: {
+      name: body.name,
+      description: body.description,
+      startPartner: new Date(body.start_partner).toISOString(),
+      status: body.status as status,
+      coords: body.coordinates,
+      address: body.address,
+      logoUrl: body.logo,
+    },
+  } as PrismaTypes.PartnerCreateArgs;
+
+  console.log("Received partner data:", body);
+  try {
+    const partner = await prisma.partner.create(newPartnerRequest);
+
+    // update partner region table
+
+    return NextResponse.json({
+      data: stringifyWithBigInt(partner),
+    });
+  } catch (error) {
+    const message =
+      error instanceof Error
+        ? error.message
+        : "Unable to insert partner into database.";
+
+    return NextResponse.json({ error: message }, { status: 500 });
+  }
+}
 
 export async function POST(request: Request) {
   const body = await request.json();
+  // Need to fix for new partner
 
   const updatePartnerRequest = {
     where: { id: body.id },

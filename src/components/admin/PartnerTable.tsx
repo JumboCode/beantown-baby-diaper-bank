@@ -11,12 +11,11 @@ import {
   Text,
   Button,
 } from "@mantine/core";
-import { PartnerRegion } from "@/generated/prisma/client";
 import EditPartnerForm from "../EditPartnerForm";
 import { useDisclosure } from "@mantine/hooks";
 import { status } from "@/generated/prisma/enums";
 import Image from "next/image";
-
+import classes from "./Table.module.css";
 export type Partner = {
   id: number;
   created_at: string;
@@ -46,6 +45,16 @@ function joinCoords(coords: { lat: number; lng: number }) {
   return `${roundCoords(coords).lat}, ${roundCoords(coords).lng}`;
 }
 
+type PartnerRegion = {
+  partnerId: number;
+  cityId: number;
+  percentage: number | null;
+  city: {
+    id: number;
+    name: string;
+  };
+};
+
 export default function PartnerInfo() {
   const [data, setData] = useState<Partner[]>([]);
   const [percentages, setPercentages] = useState<PartnerRegion[]>([]);
@@ -72,6 +81,7 @@ export default function PartnerInfo() {
       try {
         const response = await fetch("/api/partners/percentages");
         const result = await response.json();
+        console.log(result);
         setPercentages(result.data);
       } catch (err) {
         console.log("Error fetching percentages data", err);
@@ -128,19 +138,30 @@ function PartnerTable({
     <>
       <div className="bg-white rounded-xl shadow-lg overflow-hidden flex flex-col">
         <div className="overflow-x-auto flex-1">
-          <Table
-            highlightOnHover
-            withTableBorder
-            tabularNums>
-            <Table.Thead style={{ backgroundColor: "#F9FAFB" }}>
+          <Table highlightOnHover withTableBorder tabularNums>
+            <Table.Thead bg="#F9FAFB" c="#667085">
               <Table.Tr>
-                <Table.Th>Partner Name</Table.Th>
-                <Table.Th>Description</Table.Th>
-                <Table.Th>Partner Since</Table.Th>
-                <Table.Th>Status</Table.Th>
-                <Table.Th>Coordinates</Table.Th>
-                <Table.Th>Address</Table.Th>
-                <Table.Th>Cities Served</Table.Th>
+                <Table.Th fw="normal" fz="14px" w="15%">
+                  Partner Name
+                </Table.Th>
+                <Table.Th fw="normal" fz="14px">
+                  Description
+                </Table.Th>
+                <Table.Th fw="normal" fz="14px">
+                  Since
+                </Table.Th>
+                <Table.Th fw="normal" fz="14px">
+                  Cities Served
+                </Table.Th>
+                <Table.Th fw="normal" fz="14px">
+                  Status
+                </Table.Th>
+                <Table.Th fw="normal" fz="14px">
+                  Coordinates
+                </Table.Th>
+                <Table.Th fw="normal" fz="14px">
+                  Address
+                </Table.Th>
                 <Table.Th></Table.Th>
               </Table.Tr>
             </Table.Thead>
@@ -159,12 +180,12 @@ function PartnerTable({
                           }}
                         />
                       )}
-                      <span className="font-bold text-gray-900">
+                      <Text c="#101828" fw={600} fz={"16px"}>
                         {partner.name}
-                      </span>
+                      </Text>
                     </div>
                   </Table.Td>
-                  <Table.Td className="text-sm text-gray-600 max-w-md">
+                  <Table.Td className="text-sm text-gray-600">
                     {partner.description || (
                       <span className="text-gray-400 italic">
                         No description
@@ -177,6 +198,28 @@ function PartnerTable({
                     ) : (
                       <span className="text-gray-400 italic">N/A</span>
                     )}
+                  </Table.Td>
+                  <Table.Td>
+                    <span key={partner.id} className="text-sm text-gray-600">
+                      <span>
+                        {percentages
+                          .filter(
+                            (percentage) =>
+                              Number(percentage.partnerId) == partner.id,
+                          )
+                          .map((percentage, index, arr) => {
+                            if (percentage.percentage) {
+                              return (
+                                percentage.city.name +
+                                " (" +
+                                percentage.percentage * 100 +
+                                "%)" +
+                                (index != arr.length - 1 ? ", " : "")
+                              );
+                            }
+                          })}
+                      </span>
+                    </span>
                   </Table.Td>
                   <Table.Td align="center">
                     <Pill
@@ -193,12 +236,13 @@ function PartnerTable({
                           : partner.status === "inactive"
                             ? "#E2383F"
                             : "#98A2B3"
-                      }>
+                      }
+                    >
                       {partner.status.charAt(0).toUpperCase() +
                         partner.status.slice(1)}
                     </Pill>
                   </Table.Td>
-                  <Table.Td className="text-xs text-gray-500">
+                  <Table.Td className="text-sm text-gray-600">
                     {partner.coords ? (
                       joinCoords(partner.coords)
                     ) : (
@@ -210,30 +254,7 @@ function PartnerTable({
                       <span className="text-gray-400 italic">N/A</span>
                     )}
                   </Table.Td>
-                  <Table.Td>
-                    <span
-                      key={partner.id}
-                      className="text-sm text-gray-600">
-                      <span>
-                        {percentages
-                          .filter(
-                            (percentage) =>
-                              Number(percentage.partnerId) == partner.id
-                          )
-                          .map((percentage, index, arr) => {
-                            if (percentage.percentage) {
-                              return (
-                                percentage.cityId +
-                                " (" +
-                                percentage.percentage * 100 +
-                                "%)" +
-                                (index != arr.length - 1 ? ", " : "")
-                              );
-                            }
-                          })}
-                      </span>
-                    </span>
-                  </Table.Td>
+
                   <Table.Td style={{ verticalAlign: "middle" }}>
                     <Button
                       variant="transparent"
@@ -252,7 +273,8 @@ function PartnerTable({
                           width={20}
                           height={20}
                         />
-                      }>
+                      }
+                    >
                       Edit
                     </Button>
                     {/* <ActionIcon
@@ -274,13 +296,9 @@ function PartnerTable({
         <Modal
           opened={opened}
           title={
-            <Text
-              fw={700}
-              size="32px">
+            <Text fw={700} fz={30} c="#101828" ml="xl">
               Edit{" "}
-              <Mark
-                bg="none"
-                c="blue">
+              <Mark bg="none" c="#053766">
                 {partner.name}
               </Mark>{" "}
               Partner Information
@@ -288,7 +306,8 @@ function PartnerTable({
           }
           onClose={() => setPartner(null)}
           size="75%"
-          centered>
+          centered
+        >
           <EditPartnerForm
             partner={partner}
             onClose={() => {

@@ -1,12 +1,28 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { PartnerRegion } from "@/generated/prisma/client";
+import { PartnerRegion, Prisma } from "@/generated/prisma/client";
 import { stringifyWithBigInt } from "@/lib/util";
+import { PartnerRegionInclude } from "@/generated/prisma/models";
 
 export async function GET(request: Request) {
   try {
-    const partnerRegions: PartnerRegion[] =
-      await prisma.partnerRegion.findMany();
+    const include = {
+      city: {
+        select: {
+          id: true,
+          name: true,
+        },
+      },
+    } satisfies PartnerRegionInclude;
+
+    const query: Prisma.PartnerRegionFindManyArgs = {
+      include,
+    };
+
+    type returnTy = Prisma.PartnerRegionGetPayload<typeof query>;
+
+    const partnerRegions: returnTy[] =
+      await prisma.partnerRegion.findMany(query);
 
     const data_response = stringifyWithBigInt({ data: partnerRegions });
 
