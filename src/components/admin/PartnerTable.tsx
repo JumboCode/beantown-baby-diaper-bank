@@ -72,9 +72,7 @@ export default function PartnerInfo() {
       fetch("/api/partners/percentages").then((response) => response.json()),
     ])
       .then(([partnerResult, percentageResult]) => {
-        console.log("Refetched partner data:", partnerResult.data);
         setData(partnerResult.data);
-        console.log("Refetched percentage data:", percentageResult.data);
         setPercentages(percentageResult.data);
       })
       .catch((err) => {
@@ -101,7 +99,10 @@ export default function PartnerInfo() {
     </Center>
   ) : (
     <>
-      <PartnerTable partners={data} percentages={percentages} />
+      <PartnerTable
+        partners={data}
+        percentages={percentages}
+      />
     </>
   );
 }
@@ -120,28 +121,48 @@ function PartnerTable({
     <>
       <div className="bg-white rounded-xl shadow-lg overflow-hidden flex flex-col">
         <div className="overflow-x-auto flex-1">
-          <Table highlightOnHover withTableBorder tabularNums>
-            <Table.Thead bg="#F9FAFB" c="#667085">
+          <Table
+            highlightOnHover
+            withTableBorder
+            tabularNums>
+            <Table.Thead
+              bg="#F9FAFB"
+              c="#667085">
               <Table.Tr>
-                <Table.Th fw="normal" fz="14px" w="15%">
+                <Table.Th
+                  fw="normal"
+                  fz="14px"
+                  w="15%">
                   Partner Name
                 </Table.Th>
-                <Table.Th fw="normal" fz="14px">
+                <Table.Th
+                  fw="normal"
+                  fz="14px">
                   Description
                 </Table.Th>
-                <Table.Th fw="normal" fz="14px">
+                <Table.Th
+                  fw="normal"
+                  fz="14px">
                   Since
                 </Table.Th>
-                <Table.Th fw="normal" fz="14px">
+                <Table.Th
+                  fw="normal"
+                  fz="14px">
                   Cities Served
                 </Table.Th>
-                <Table.Th fw="normal" fz="14px">
+                <Table.Th
+                  fw="normal"
+                  fz="14px">
                   Status
                 </Table.Th>
-                <Table.Th fw="normal" fz="14px">
+                <Table.Th
+                  fw="normal"
+                  fz="14px">
                   Coordinates
                 </Table.Th>
-                <Table.Th fw="normal" fz="14px">
+                <Table.Th
+                  fw="normal"
+                  fz="14px">
                   Address
                 </Table.Th>
                 <Table.Th></Table.Th>
@@ -162,7 +183,10 @@ function PartnerTable({
                           }}
                         />
                       )}
-                      <Text c="#101828" fw={600} fz={"16px"}>
+                      <Text
+                        c="#101828"
+                        fw={600}
+                        fz={"16px"}>
                         {partner.name}
                       </Text>
                     </div>
@@ -182,16 +206,18 @@ function PartnerTable({
                     )}
                   </Table.Td>
                   <Table.Td>
-                    <span key={partner.id} className="text-sm text-gray-600">
+                    <span
+                      key={partner.id}
+                      className="text-sm text-gray-600">
                       <span>
                         {percentages
                           .filter(
                             (percentage) =>
-                              Number(percentage.partnerId) == partner.id,
+                              Number(percentage.partnerId) == partner.id
                           )
                           .map((percentage, index, arr) => {
                             const displayPct = formatPercentDisplay(
-                              percentage.percentage,
+                              percentage.percentage
                             );
                             if (displayPct) {
                               return (
@@ -222,8 +248,7 @@ function PartnerTable({
                           : partner.status === "inactive"
                             ? "#E2383F"
                             : "#98A2B3"
-                      }
-                    >
+                      }>
                       {partner.status.charAt(0).toUpperCase() +
                         partner.status.slice(1)}
                     </Pill>
@@ -259,8 +284,7 @@ function PartnerTable({
                           width={20}
                           height={20}
                         />
-                      }
-                    >
+                      }>
                       Edit
                     </Button>
                     {/* <ActionIcon
@@ -282,9 +306,15 @@ function PartnerTable({
         <Modal
           opened={opened}
           title={
-            <Text fw={700} fz={30} c="#101828" ml="xl">
+            <Text
+              fw={700}
+              fz={30}
+              c="#101828"
+              ml="xl">
               Edit{" "}
-              <Mark bg="none" c="#053766">
+              <Mark
+                bg="none"
+                c="#053766">
                 {partner.name}
               </Mark>{" "}
               Partner Information
@@ -292,8 +322,7 @@ function PartnerTable({
           }
           onClose={() => setPartner(null)}
           size="75%"
-          centered
-        >
+          centered>
           <EditPartnerForm
             partner={partner}
             onClose={() => {

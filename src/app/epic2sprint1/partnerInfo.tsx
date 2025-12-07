@@ -108,7 +108,6 @@ export default function PartnerInfo({
   async function handlePartnerClick(id: number) {
     setLoadingPartner(true);
     const fullPartner = await fetchPartnerDetails(id);
-    console.log("Fetched partner details:", fullPartner);
     setSelectedPartner(fullPartner);
     setLoadingPartner(false);
   }
@@ -122,8 +121,7 @@ export default function PartnerInfo({
           gap: "0.5rem",
           justifyContent: "center",
           flexDirection: fromMarker ? "column" : "row",
-        }}
-      >
+        }}>
         <Button
           key={id}
           variant="outline"
@@ -131,7 +129,13 @@ export default function PartnerInfo({
           radius="lg"
           color="dark"
           leftSection={
-            url && <img src={url} style={{ height: 30 }} alt="Partner Logo" />
+            url && (
+              <img
+                src={url}
+                style={{ height: 30 }}
+                alt="Partner Logo"
+              />
+            )
           }
           rightSection={
             !url ? (
@@ -145,23 +149,20 @@ export default function PartnerInfo({
                   border: "1px solid #fecdca",
                   textTransform: "none",
                   fontWeight: 700,
-                }}
-              >
+                }}>
                 Waitlisted
               </Badge>
             ) : undefined
           }
           loading={loadingPartner}
-          onClick={() => handlePartnerClick(id!)}
-        >
+          onClick={() => handlePartnerClick(id!)}>
           <span
             style={{
               display: "inline-block",
               overflow: "hidden",
               textOverflow: "ellipsis",
               whiteSpace: "nowrap",
-            }}
-          >
+            }}>
             {name}
           </span>
         </Button>
@@ -180,8 +181,7 @@ export default function PartnerInfo({
                 display: "flex",
                 alignItems: "center",
                 gap: "0.9rem",
-              }}
-            >
+              }}>
               {selectedPartner.logo_url && (
                 <div
                   style={{
@@ -194,8 +194,7 @@ export default function PartnerInfo({
                     justifyContent: "center",
                     padding: "0.45rem",
                     border: "1px solid #F2F4F7",
-                  }}
-                >
+                  }}>
                   <img
                     src={selectedPartner.logo_url}
                     alt={`${selectedPartner.name} logo`}
@@ -205,7 +204,9 @@ export default function PartnerInfo({
               )}
 
               <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-                <Title order={3} style={{ color: "#101828", margin: 0 }}>
+                <Title
+                  order={3}
+                  style={{ color: "#101828", margin: 0 }}>
                   {selectedPartner.name}
                 </Title>
                 <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
@@ -221,13 +222,15 @@ export default function PartnerInfo({
                           fontWeight: 700,
                           fontSize: "0.85rem",
                           border: `1px solid ${status.border}`,
-                        }}
-                      >
+                        }}>
                         {status.label}
                       </span>
                     );
                   })()}
-                  <Text c="#667085" fw={600} fz="0.9rem">
+                  <Text
+                    c="#667085"
+                    fw={600}
+                    fz="0.9rem">
                     Since {selectedPartner.start_partner || "N/A"}
                   </Text>
                 </div>
@@ -235,20 +238,23 @@ export default function PartnerInfo({
             </div>
           ) : null
         }
-        overlayProps={{ opacity: 0.2 }}
-      >
+        overlayProps={{ opacity: 0.2 }}>
         {selectedPartner && (
           <div
             style={{
               display: "flex",
               flexDirection: "column",
               gap: "1.25rem",
-            }}
-          >
+            }}>
             {selectedPartner.description && (
               <div style={infoCardStyle}>
                 <div style={infoLabelStyle}>Description</div>
-                <Text c="#344054" lh={1.7} fw={500} fz="1rem" mt={6}>
+                <Text
+                  c="#344054"
+                  lh={1.7}
+                  fw={500}
+                  fz="1rem"
+                  mt={6}>
                   {selectedPartner.description}
                 </Text>
               </div>
@@ -259,8 +265,7 @@ export default function PartnerInfo({
                 display: "grid",
                 gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
                 gap: "1rem",
-              }}
-            >
+              }}>
               <div style={infoCardStyle}>
                 <div style={infoLabelStyle}>Address</div>
                 <div style={infoValueStyle}>
@@ -281,8 +286,7 @@ export default function PartnerInfo({
                   display: "grid",
                   gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
                   gap: "1rem",
-                }}
-              >
+                }}>
                 <div style={statCardStyle}>
                   <div style={infoLabelStyle}>Babies Helped</div>
                   <div style={statValueStyle}>

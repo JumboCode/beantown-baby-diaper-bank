@@ -83,7 +83,6 @@ export default function Map({ mapData }: { mapData: MapData }) {
   const [activeId, setActiveId] = useState<string | number | null>(null);
 
   const cities = mapData?.cities.data;
-  console.log("Cities data:", cities);
 
   const boundaryPolygons = useMemo(() => {
     if (!mapData?.boundaries) return [];
@@ -193,7 +192,6 @@ export default function Map({ mapData }: { mapData: MapData }) {
 }
 
 function PopupContent({ city }: { city: CityMapInfo }) {
-  console.log("Popup for city:", city);
   const partners = city.partners;
   const totalDiapers =
     city.distributions.reduce((sum, d) => sum + Number(d.numberDiapers), 0) ??

@@ -166,7 +166,6 @@ export default function EditPartnerForm({
 
   async function submitEditPartner(values: typeof form.values) {
     setLoading(true);
-    console.log("Submitting edited partner values:", values);
     const formData = {
       id: partner.id,
       name: values.organization,
@@ -214,7 +213,9 @@ export default function EditPartnerForm({
       />
 
       <div className="mx-8">
-        <h2 className="text-lg text-gray-500" style={{ marginBottom: "24px" }}>
+        <h2
+          className="text-lg text-gray-500"
+          style={{ marginBottom: "24px" }}>
           Change your partner data
         </h2>
         <form
@@ -224,11 +225,14 @@ export default function EditPartnerForm({
               window.dispatchEvent(new Event("partners:refresh"));
             }
           })}
-          className="flex flex-col gap-5"
-        >
+          className="flex flex-col gap-5">
           {/* Name of Organization */}
-          <Group justify="space-between" align="flex-start">
-            <Text fw={600} c="#344054">
+          <Group
+            justify="space-between"
+            align="flex-start">
+            <Text
+              fw={600}
+              c="#344054">
               Name of Organization <span className="text-red-600">*</span>
             </Text>
             <TextInput
@@ -243,8 +247,12 @@ export default function EditPartnerForm({
           </Group>
 
           {/* Description */}
-          <Group justify="space-between" align="flex-start">
-            <Text fw={600} c="#344054">
+          <Group
+            justify="space-between"
+            align="flex-start">
+            <Text
+              fw={600}
+              c="#344054">
               Description <span className="text-red-600">*</span>
             </Text>
             <Textarea
@@ -260,8 +268,12 @@ export default function EditPartnerForm({
           </Group>
 
           {/* Time Started*/}
-          <Group justify="space-between" align="flex-start">
-            <Text fw={600} c="#344054">
+          <Group
+            justify="space-between"
+            align="flex-start">
+            <Text
+              fw={600}
+              c="#344054">
               Time it started <span className="text-red-600">*</span>
             </Text>
             <MonthPickerInput
@@ -273,17 +285,24 @@ export default function EditPartnerForm({
             />
           </Group>
 
-          <Group justify="space-between" align="flex-start" w="100%">
-            <Text fw={600} c="#344054" className="w-40">
+          <Group
+            justify="space-between"
+            align="flex-start"
+            w="100%">
+            <Text
+              fw={600}
+              c="#344054"
+              className="w-40">
               Status <span className="text-red-600">*</span>
             </Text>
 
             <Radio.Group
               value={form.values.status}
               onChange={(val) => form.setFieldValue("status", val as status)}
-              className="min-w-170 w-full max-w-[600px]"
-            >
-              <Group gap="md" grow>
+              className="min-w-170 w-full max-w-[600px]">
+              <Group
+                gap="md"
+                grow>
                 {[
                   {
                     value: "active",
@@ -306,13 +325,17 @@ export default function EditPartnerForm({
                     value={option.value}
                     radius="md"
                     p="md"
-                    className="border border-gray-200 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md data-[checked=true]:border-[#053766] data-[checked=true]:bg-blue-50 h-full"
-                  >
-                    <Group wrap="nowrap" align="flex-start" gap="sm">
+                    className="border border-gray-200 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md data-[checked=true]:border-[#053766] data-[checked=true]:bg-blue-50 h-full">
+                    <Group
+                      wrap="nowrap"
+                      align="flex-start"
+                      gap="sm">
                       <Radio.Indicator />
                       <Stack gap={4}>
                         <Text fw={700}>{option.title}</Text>
-                        <Text size="xs" c="dimmed">
+                        <Text
+                          size="xs"
+                          c="dimmed">
                           {option.description}
                         </Text>
                       </Stack>
@@ -322,7 +345,9 @@ export default function EditPartnerForm({
               </Group>
 
               {form.errors.status && (
-                <Text c="red" size="sm">
+                <Text
+                  c="red"
+                  size="sm">
                   {form.errors.status}
                 </Text>
               )}
@@ -330,8 +355,12 @@ export default function EditPartnerForm({
           </Group>
 
           {/* Latitude and Longitude */}
-          <Group justify="space-between" align="flex-start">
-            <Text fw={600} c="#344054">
+          <Group
+            justify="space-between"
+            align="flex-start">
+            <Text
+              fw={600}
+              c="#344054">
               Coords <span className="text-red-600">*</span>
             </Text>
             <div className="gap-4 flex">
@@ -359,8 +388,13 @@ export default function EditPartnerForm({
           </Group>
 
           {/* Address */}
-          <Group justify="space-between" align="flex-start" w="100%">
-            <Text fw={600} c="#344054">
+          <Group
+            justify="space-between"
+            align="flex-start"
+            w="100%">
+            <Text
+              fw={600}
+              c="#344054">
               Address <span className="text-red-600">*</span>
             </Text>
 
@@ -427,8 +461,12 @@ export default function EditPartnerForm({
           </Group>
 
           {/* Logo File Upload */}
-          <Group justify="space-between" align="flex-start">
-            <Text c="#344054" fw={600}>
+          <Group
+            justify="space-between"
+            align="flex-start">
+            <Text
+              c="#344054"
+              fw={600}>
               Logo file or link
             </Text>
             <div className="gap-4 flex">
@@ -452,8 +490,12 @@ export default function EditPartnerForm({
           </Group>
 
           {/* Update Percentages */}
-          <Group justify="space-between" align="flex-start">
-            <Text fw={600} c="#344054">
+          <Group
+            justify="space-between"
+            align="flex-start">
+            <Text
+              fw={600}
+              c="#344054">
               City Distribution Percentages
             </Text>
 
@@ -464,12 +506,13 @@ export default function EditPartnerForm({
                 setActivePercentTab(val as UpdatePercentagesOptions);
                 form.setFieldValue(
                   "updatePercentagesType",
-                  val as UpdatePercentagesOptions,
+                  val as UpdatePercentagesOptions
                 );
               }}
-              className="min-w-170 w-full max-w-[600px]"
-            >
-              <Tabs.List grow mb="xl">
+              className="min-w-170 w-full max-w-[600px]">
+              <Tabs.List
+                grow
+                mb="xl">
                 {[
                   {
                     value: "one-time",
@@ -487,8 +530,7 @@ export default function EditPartnerForm({
                   <Tabs.Tab
                     key={option.value}
                     value={option.value}
-                    className="px-0"
-                  >
+                    className="px-0">
                     {(() => {
                       const isActive = activePercentTab === option.value;
                       return (
@@ -498,28 +540,27 @@ export default function EditPartnerForm({
                               ? "border-[#1D3A8A] bg-[#EEF2FF]"
                               : "border-gray-300 bg-white"
                           }`}
-                          style={{ borderWidth: isActive ? 2 : 1 }}
-                        >
-                          <Stack gap="xs" align="center" p="md">
+                          style={{ borderWidth: isActive ? 2 : 1 }}>
+                          <Stack
+                            gap="xs"
+                            align="center"
+                            p="md">
                             <div
                               className={`${
                                 isActive ? "text-[#1D3A8A]" : "text-gray-500"
-                              } opacity-80`}
-                            >
+                              } opacity-80`}>
                               {option.icon}
                             </div>
                             <Text
                               fw={700}
                               size="md"
-                              className={isActive ? "text-[#1D3A8A]" : ""}
-                            >
+                              className={isActive ? "text-[#1D3A8A]" : ""}>
                               {option.title}
                             </Text>
                             <Text
                               size="sm"
                               c={isActive ? "gray.6" : "dimmed"}
-                              ta="center"
-                            >
+                              ta="center">
                               {option.description}
                             </Text>
                           </Stack>
@@ -543,7 +584,9 @@ export default function EditPartnerForm({
           </Group>
 
           {/* Submit and Cancel Buttons */}
-          <Group justify="flex-end" mt="md">
+          <Group
+            justify="flex-end"
+            mt="md">
             <Button
               variant="outline"
               color="#053766"
@@ -552,11 +595,14 @@ export default function EditPartnerForm({
               onClick={() => {
                 form.reset();
                 onClose();
-              }}
-            >
+              }}>
               Cancel
             </Button>
-            <Button variant="filled" color="#053766" radius="md" type="submit">
+            <Button
+              variant="filled"
+              color="#053766"
+              radius="md"
+              type="submit">
               Submit
             </Button>
           </Group>
