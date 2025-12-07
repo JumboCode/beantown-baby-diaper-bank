@@ -41,6 +41,8 @@ export async function GET(request: Request) {
 
   const search = searchParams.get("search");
   const waitlisted = searchParams.get("waitlisted");
+  const active = searchParams.get("active");
+  const inactive = searchParams.get("inactive");
 
   // Build the Prisma query filters based on provided params
   // WhereInput type helps ensure we build valid queries
@@ -104,13 +106,30 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   const body = await request.json();
 
+  let partnerStatus: status; 
+  let waitlisted: boolean;
+
+  if(body.waitlisted) {
+    partnerStatus = "waitlisted";
+    waitlisted = true; 
+  } else if (body.active) {
+    partnerStatus = "active";
+    waitlisted = false;
+  } else if (body.inactive) {
+    partnerStatus = "inactive";
+    waitlisted = false;
+  } else {
+    partnerStatus = body.status as status; 
+    waitlisted = body.waitlisted ?? false;
+  }
+
   const updatePartnerRequest = {
     where: { id: body.id },
     data: {
       name: body.name,
       description: body.description,
       startPartner: new Date(body.start_partner).toISOString(),
-      status: body.status as status,
+      status: partnerStatus,
       coords: body.coordinates,
       address: body.address,
       logoUrl: body.logo,
