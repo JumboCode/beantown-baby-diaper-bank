@@ -48,7 +48,7 @@ export async function GET(
         logo: partner.logoUrl,
         coordinates: partner.coords,
         address: partner.address,
-        status: partner.active, // TODO
+        status: partner.status, 
         start_year: partner.startPartner
           ? partner.startPartner.toISOString()
           : null,
