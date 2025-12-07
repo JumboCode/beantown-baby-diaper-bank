@@ -7,7 +7,7 @@ import { useTimelinePeriod } from "@/components/useTimelinePeriod";
 import TotalDiapersDistributed from "@/components/TotalDiapersDistributed";
 import { useState, useEffect, useCallback } from "react";
 import ImpactModal from "@/components/ImpactModal";
-import { FeatureCollection, Point, Polygon } from "geojson";
+import { FeatureCollection, Polygon } from "geojson";
 import { City, Distribution } from "@/generated/prisma/client";
 import { Grid } from "@mantine/core";
 import YearlyMonthlySwitch from "@/components/sprint2/YearlyMonthlySwitch";
@@ -29,20 +29,19 @@ type CityMapInfo = City & {
 };
 
 export type MapData = {
-  centroids: FeatureCollection<Point>;
   boundaries: FeatureCollection<Polygon>;
   cities: { data: CityMapInfo[] };
 };
 
 const flipBoundaries = (
-  data: FeatureCollection<Polygon>,
+  data: FeatureCollection<Polygon>
 ): FeatureCollection<Polygon> => {
   const flippedFeatures = data.features.map((feature) => ({
     ...feature,
     geometry: {
       ...feature.geometry,
       coordinates: feature.geometry.coordinates.map(
-        (ring) => ring.map((coord) => [coord[1], coord[0]]), // Swap index 0 and 1
+        (ring) => ring.map((coord) => [coord[1], coord[0]]) // Swap index 0 and 1
       ),
     },
   }));
@@ -57,6 +56,8 @@ export default function Page() {
   const timeline = useTimelinePeriod();
   const [mapData, setMapData] = useState<MapData | null>(null);
   const [totalDiapers, setTotalDiapers] = useState<number>();
+  const [cachedBoundaries, setCachedBoundaries] =
+    useState<FeatureCollection<Polygon> | null>(null);
 
   const handleTimelineChange = useCallback(
     async (params: { month?: string; year: string }) => {
@@ -69,35 +70,30 @@ export default function Page() {
           queryParams.append("month", params.month);
         }
 
-        const [cities, centroids, boundaries] = await Promise.all([
+        const boundariesPromise = cachedBoundaries
+          ? Promise.resolve(cachedBoundaries)
+          : fetch(`/api/cities/boundaries`)
+              .then((res) => res.json())
+              .then(flipBoundaries);
+
+        const [cities, boundaries] = await Promise.all([
           fetch(`/api/cities?${queryParams.toString()}`).then((res) =>
-            res.json(),
+            res.json()
           ),
-          fetch(`/api/cities/centroids`).then((res) => res.json()),
-          fetch(`/api/cities/boundaries`).then((res) => res.json()),
+          boundariesPromise,
         ]);
 
-        const boundariesFlipped = flipBoundaries(boundaries);
+        if (!cachedBoundaries) {
+          setCachedBoundaries(boundaries);
+        }
 
-        setMapData({ centroids, cities, boundaries: boundariesFlipped });
+        setMapData({ cities, boundaries });
       } catch (error) {
         console.error("Error fetching map data:", error);
       }
     },
-    [],
+    [cachedBoundaries]
   );
-
-  useEffect(() => {
-    const label = timeline.labels[timeline.index];
-    if (!label) return;
-
-    if (timeline.view === "monthly") {
-      const [month, year] = String(label).split(" ");
-      if (year) handleTimelineChange({ month, year });
-    } else {
-      handleTimelineChange({ year: String(label) });
-    }
-  }, [timeline.view, timeline.index, timeline.labels]);
 
   useEffect(() => {
     // fetch data for total diapers distributed
@@ -127,30 +123,24 @@ export default function Page() {
         paddingLeft: "72px",
         paddingTop: "44px",
         paddingBottom: "44px",
-      }}
-    >
+      }}>
       <Stack
         // p="md"
         gap="sm"
-        mx="auto"
-      >
+        mx="auto">
         {/* Header */}
         <Box>
           <Title
             order={1}
-            // size="h2"
             fz="30px"
             fw={500}
             mb="xs"
-            c="#101828"
-          >
+            c="#101828">
             See where diapers are distributed
           </Title>
           <Text
-            // size="sm"
             fz="18px"
-            c="#667085"
-          >
+            c="#667085">
             Last updated: Sep 9th, 2025.
           </Text>
         </Box>
@@ -159,30 +149,38 @@ export default function Page() {
 
         {/* Map Section with Timeline and Impact Modal - Two Column Layout */}
         <Title
-          // order={2}
           fz={24}
           c="#101728"
           // mb="md"
           mt="md"
-          fw={600}
-        >
+          fw={600}>
           Distribution Heat Map
         </Title>
         <Grid>
           {/* Left Column: Map */}
           <Grid.Col span="auto">
-            <Paper shadow="sm" p="md" radius="md" withBorder>
+            <Paper
+              shadow="sm"
+              p="md"
+              radius="md"
+              withBorder>
               <Box mb="md">
                 <YearlyMonthlySwitch
                   value={timeline.view}
                   onChange={timeline.toggleView}
                 />
               </Box>
-              <Box h="60vh" pos="relative" mb="md">
+              <Box
+                h="60vh"
+                pos="relative"
+                mb="md">
                 {mapData ? (
                   <LeafletMap mapData={mapData} />
                 ) : (
-                  <Skeleton h="60vh" mb="md" />
+                  <Skeleton
+                    h="60vh"
+                    mb="md"
+                  />
                 )}
               </Box>
 
@@ -206,8 +204,7 @@ export default function Page() {
               display: "flex",
               flexDirection: "column",
               justifyContent: "flex-start",
-            }}
-          >
+            }}>
             <ImpactModal />
           </Grid.Col>
         </Grid>

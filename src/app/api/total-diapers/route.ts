@@ -10,8 +10,6 @@ export async function GET() {
     const totalDiapers =
       results._sum.numDiapers == null ? 0 : Number(results._sum.numDiapers);
 
-    console.log("this is the number of diapers:", totalDiapers);
-
     return NextResponse.json({ totalDiapers });
   } catch (error) {
     const message =
