@@ -130,7 +130,9 @@ export default function PartnerInfo({
           // size={fromMarker ? "sm" : "xl"}
           radius="lg"
           color="dark"
-          leftSection={url && <img src={url} style={{ height: 30 }} />}
+          leftSection={
+            url && <img src={url} style={{ height: 30 }} alt="Partner Logo" />
+          }
           rightSection={
             !url ? (
               <Badge

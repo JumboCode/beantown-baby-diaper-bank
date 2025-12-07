@@ -34,7 +34,7 @@ export default function TimelineSliderControls({
     <Stack mb="xl">
       <Group align="flex-end">
         <ActionIcon color="#053766" onClick={() => move(-1)}>
-          <img src="/timelineSlider/left.svg" />
+          <img src="/timelineSlider/left.svg" alt="Left Button" />
         </ActionIcon>
 
         <div className="flex-1 px-5">
@@ -42,7 +42,7 @@ export default function TimelineSliderControls({
         </div>
 
         <ActionIcon color="#053766" onClick={() => move(1)}>
-          <img src="/timelineSlider/right.svg" />
+          <img src="/timelineSlider/right.svg" alt="Right Button" />
         </ActionIcon>
       </Group>
     </Stack>
