@@ -221,18 +221,11 @@ const diaperLegendBuckets: LegendBucket[] = [
   { min: 40000, max: Infinity, color: "#023E8A", label: "40k+ diapers" },
 ];
 
-const impactAssumptions = {
-  diaperCost: 0.27, // average cost per diaper in USD
-  distributionEfficiency: 0.92, // % of donation that goes directly to supplies & delivery
-  diapersPerChildPerWeek: 50, // typical usage per child
-};
-
 export default function ColinMadelineAryaaHotmap() {
-  const [showRegions, setShowRegions] = useState(true);
-  const [regionFilter, setRegionFilter] = useState<string>("all");
+  const [showRegions] = useState(true);
+  const [regionFilter] = useState<string>("all");
   const [hoveredRegionId, setHoveredRegionId] = useState<string | undefined>();
   const [selectedRegionId, setSelectedRegionId] = useState<string | null>(null);
-  const [donationAmount, setDonationAmount] = useState<number>(250);
   const [modalRegionId, setModalRegionId] = useState<string | null>(null);
 
   const filteredRegions = useMemo<RegionsGeoJSON>(() => {
@@ -266,25 +259,9 @@ export default function ColinMadelineAryaaHotmap() {
     );
   }, []);
 
-  const regionOptions = useMemo(
-    () => [
-      { value: "all", label: "All regions" },
-      ...baseRegions.features.map((feature) => ({
-        value: feature.properties?.id ?? "",
-        label: feature.properties?.name ?? "Unnamed region",
-      })),
-    ],
-    [],
-  );
-
   const hoveredRegionName =
     baseRegions.features.find(
       (feature) => feature.properties?.id === hoveredRegionId,
-    )?.properties?.name ?? "None";
-
-  const selectedRegionName =
-    baseRegions.features.find(
-      (feature) => feature.properties?.id === selectedRegionId,
     )?.properties?.name ?? "None";
 
   const activeRegionId = selectedRegionId ?? hoveredRegionId ?? null;
@@ -309,39 +286,6 @@ export default function ColinMadelineAryaaHotmap() {
     )?.properties?.name ?? "Region detail";
   const isModalOpen = modalRegionId != null;
 
-  const impactPercent = Math.min(
-    100,
-    Math.round(
-      (distributionSummary.delivered / distributionSummary.goal) * 100,
-    ),
-  );
-
-  const donationImpact = useMemo(() => {
-    const amount = Math.max(0, donationAmount);
-    const effectiveBudget = amount * impactAssumptions.distributionEfficiency;
-    const diapersFunded = Math.floor(
-      effectiveBudget / impactAssumptions.diaperCost,
-    );
-    const coverageWeeks = Math.floor(
-      diapersFunded / impactAssumptions.diapersPerChildPerWeek,
-    );
-    const coverageMonths = coverageWeeks / 4;
-    const ChildrenPerMonth = Math.max(
-      0,
-      Math.floor(
-        diapersFunded / (impactAssumptions.diapersPerChildPerWeek * 4),
-      ),
-    );
-
-    return {
-      amount,
-      diapersFunded,
-      coverageWeeks,
-      coverageMonths,
-      ChildrenPerMonth,
-    };
-  }, [donationAmount]);
-
   const handleOpenRegionModal = () => {
     if (activeRegionId) {
       setModalRegionId(activeRegionId);
@@ -351,30 +295,6 @@ export default function ColinMadelineAryaaHotmap() {
   const handleModalClose = () => {
     setModalRegionId(null);
   };
-
-  const handleDonationSliderChange = (value: number) => {
-    setDonationAmount(value);
-  };
-
-  const handleDonationInputChange = (value: number | string) => {
-    if (value === "" || value == null) {
-      setDonationAmount(0);
-      return;
-    }
-
-    const parsed = typeof value === "number" ? value : Number(value);
-    if (!Number.isNaN(parsed)) {
-      const clamped = Math.max(0, Math.min(5000, parsed));
-      setDonationAmount(clamped);
-    }
-  };
-
-  const coverageMonthsDisplay =
-    donationImpact.coverageMonths >= 1
-      ? donationImpact.coverageMonths.toFixed(1)
-      : donationImpact.coverageMonths > 0
-        ? donationImpact.coverageMonths.toFixed(2)
-        : "0";
 
   // --- Leaderboard logic START ---
   const regionLeaderboard = useMemo(() => {

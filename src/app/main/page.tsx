@@ -1,15 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import {
-  Box,
-  Stack,
-  Title,
-  Text,
-  Paper,
-  Loader,
-  Skeleton,
-} from "@mantine/core";
+import { Box, Stack, Title, Text, Paper, Skeleton } from "@mantine/core";
 import TimelineSliderControls from "@/components/TimelineSliderControls";
 import { useTimelinePeriod } from "@/components/useTimelinePeriod";
 import TotalDiapersDistributed from "@/components/TotalDiapersDistributed";
@@ -200,7 +192,6 @@ export default function Page() {
                 view={timeline.view}
                 index={timeline.index}
                 setIndex={timeline.setIndex}
-                toggleView={timeline.toggleView}
                 move={timeline.move}
                 labels={timeline.labels}
                 onTimelineChange={handleTimelineChange}

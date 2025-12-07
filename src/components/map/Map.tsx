@@ -3,9 +3,15 @@
 import dynamic from "next/dynamic";
 import { useLeafletMap } from "./useLeafletMap";
 import { useBaseTileLayer } from "./useBaseTileLayer";
-import { act, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import type { City, Distribution } from "@/generated/prisma/client";
-import { Popup, TileLayer, Polygon, MapContainer, Tooltip } from "react-leaflet";
+import {
+  Popup,
+  TileLayer,
+  Polygon,
+  MapContainer,
+  Tooltip,
+} from "react-leaflet";
 import { LatLngExpression } from "leaflet";
 
 import "leaflet/dist/leaflet.css";
@@ -57,13 +63,6 @@ export const Marker = dynamic(
   () => import("react-leaflet").then((module) => module.Marker),
   { ssr: false },
 );
-
-type Coordinates = {
-  cityId: number;
-  cityName: string;
-  lat: number;
-  lng: number;
-};
 
 type PartnerInfoType = {
   id: number;

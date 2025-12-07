@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Paper, Stack, Group, Text, RadioGroup, Radio } from "@mantine/core";
 import { RiLineChartLine } from "react-icons/ri";
-import { Month, MonthPicker, MonthPickerInput } from "@mantine/dates";
+import { Month, MonthPickerInput } from "@mantine/dates";
 import CityPercentagesForm, { CityPercentage } from "./CityPercentagesForm";
 
 type Month = string; // e.g., "2024-06"

@@ -7,7 +7,6 @@ export default function TimelineSliderControls({
   index,
   setIndex,
   labels,
-  toggleView,
   move,
   onTimelineChange,
 }: {
@@ -15,7 +14,6 @@ export default function TimelineSliderControls({
   index: number;
   labels: (string | number)[];
   setIndex: (n: number) => void;
-  toggleView: () => void;
   move: (dir: number) => void;
   onTimelineChange?: (params: { month?: string; year: string }) => void;
 }) {

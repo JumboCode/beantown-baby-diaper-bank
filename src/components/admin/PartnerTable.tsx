@@ -15,7 +15,6 @@ import EditPartnerForm from "../EditPartnerForm";
 import { useDisclosure } from "@mantine/hooks";
 import { status } from "@/generated/prisma/enums";
 import Image from "next/image";
-import classes from "./Table.module.css";
 export type Partner = {
   id: number;
   created_at: string;
@@ -102,22 +101,16 @@ export default function PartnerInfo() {
     </Center>
   ) : (
     <>
-      <PartnerTable
-        partners={data}
-        refreshTable={refreshTable}
-        percentages={percentages}
-      />
+      <PartnerTable partners={data} percentages={percentages} />
     </>
   );
 }
 
 function PartnerTable({
   partners,
-  refreshTable,
   percentages,
 }: {
   partners: Partner[];
-  refreshTable: () => void;
   percentages: PartnerRegion[];
 }) {
   const [partner, setPartner] = useState<Partner | null>(null);

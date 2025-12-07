@@ -15,7 +15,6 @@ import {
   ThemeIcon,
 } from "@mantine/core";
 import { FaGithub } from "react-icons/fa";
-import AddPartnerForm from "../components/AddPartnerForm";
 
 export default function Home() {
   return (

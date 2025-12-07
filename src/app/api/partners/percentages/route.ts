@@ -41,6 +41,7 @@ export async function GET(request: Request) {
       headers: { "Content-Type": "application/json" },
     });
   } catch (error) {
+    console.error("Error fetching partner regions:", error);
     console.log("Unable to fetch partner regions");
     return NextResponse.json({ status: 500 });
   }
@@ -57,7 +58,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const updated = await prisma.$transaction(
+    await prisma.$transaction(
       newPercentages.map((p) =>
         prisma.partnerRegion.update({
           where: {
@@ -80,6 +81,7 @@ export async function POST(request: Request) {
       headers: { "Content-Type": "application/json" },
     });
   } catch (error) {
+    console.error("Error updating percentages:", error);
     console.log("Unable to update percentages");
     return NextResponse.json({ status: 500 });
   }

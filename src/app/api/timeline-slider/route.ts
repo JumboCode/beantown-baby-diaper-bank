@@ -20,8 +20,11 @@ export async function GET() {
 
     return NextResponse.json({ years, months });
   } catch (error) {
+    console.error("Error fetching timeline data:", error);
     console.log("Unable to load timeline data from the database");
-
-    return NextResponse.json({ status: 500 });
+    return NextResponse.json(
+      { error: "Unable to load timeline data from the database" },
+      { status: 500 },
+    );
   }
 }

@@ -1,10 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Table, Text, ActionIcon } from "@mantine/core";
-import Image from "next/image";
-import classes from "./Table.module.css";
-
+import { Table, Text } from "@mantine/core";
 interface Distribution {
   id: string;
   createdAt: string;

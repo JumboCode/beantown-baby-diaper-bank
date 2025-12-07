@@ -2,7 +2,7 @@
 
 import PartnerTable from "@/components/admin/PartnerTable";
 import { Card, Group, Stack, Text, Title, Tabs, Button } from "@mantine/core";
-import { use, useState } from "react";
+import { useState } from "react";
 import Image from "next/image";
 import { Poppins } from "next/font/google";
 import DistributionsTable from "@/components/DistributionsTable";

@@ -1,10 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import {
-  Prisma,
-  Prisma as PrismaTypes,
-  status,
-} from "@/generated/prisma/client";
+import { Prisma as PrismaTypes, status } from "@/generated/prisma/client";
 import type { City, Partner } from "@/generated/prisma/client";
 import { stringifyWithBigInt } from "@/lib/util";
 import { PartnerUpdateArgs } from "@/generated/prisma/models";

@@ -71,28 +71,6 @@ export default function LeafletMap({
     return regions;
   }, [regions]);
 
-  const regionLabels = useMemo<Record<string, string>>(() => {
-    const labels: Record<string, string> = {};
-    normalizedRegions.features.forEach((feature) => {
-      const id = feature.properties?.id;
-      if (!id) return;
-      labels[id] = feature.properties?.name ?? id;
-    });
-    return labels;
-  }, [normalizedRegions]);
-
-  const regionFeatures = useMemo<
-    Record<string, (typeof normalizedRegions.features)[number]>
-  >(() => {
-    const map: Record<string, (typeof normalizedRegions.features)[number]> = {};
-    normalizedRegions.features.forEach((feature) => {
-      const id = feature.properties?.id;
-      if (!id) return;
-      map[id] = feature;
-    });
-    return map;
-  }, [normalizedRegions]);
-
   const { tileLayerProps } = useBaseTileLayer();
   const { geoJsonProps } = useRegionsLayer({
     regions: normalizedRegions,
