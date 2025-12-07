@@ -5,6 +5,9 @@ import { stringifyWithBigInt } from "@/lib/util";
 import { PartnerRegionInclude } from "@/generated/prisma/models";
 
 export async function GET(request: Request) {
+  const url = new URL(request.url);
+  const partnerId = url.searchParams.get("partnerId");
+
   try {
     const include = {
       city: {
@@ -15,8 +18,15 @@ export async function GET(request: Request) {
       },
     } satisfies PartnerRegionInclude;
 
+    const where: Prisma.PartnerRegionWhereInput = {};
+
+    if (partnerId) {
+      where.partnerId = BigInt(partnerId);
+    }
+
     const query: Prisma.PartnerRegionFindManyArgs = {
       include,
+      where,
     };
 
     type returnTy = Prisma.PartnerRegionGetPayload<typeof query>;

@@ -1,7 +1,11 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { Prisma as PrismaTypes, status } from "@/generated/prisma/client";
-import type { Partner } from "@/generated/prisma/client";
+import {
+  Prisma,
+  Prisma as PrismaTypes,
+  status,
+} from "@/generated/prisma/client";
+import type { City, Partner } from "@/generated/prisma/client";
 import { stringifyWithBigInt } from "@/lib/util";
 import { PartnerUpdateArgs } from "@/generated/prisma/models";
 
@@ -104,7 +108,11 @@ export async function GET(request: Request) {
 export async function PUT(request: Request) {
   const body = await request.json();
   // Need to fix for new partner
+  const cities = body.cities;
+  const cityNames = cities.map((city: { city: string }) => city.city);
 
+  console.log("Body cities:", body);
+  console.log("Cities for partner regions:", cities);
   const newPartnerRequest = {
     data: {
       name: body.name,
@@ -116,12 +124,49 @@ export async function PUT(request: Request) {
       logoUrl: body.logo,
     },
   } as PrismaTypes.PartnerCreateArgs;
+  let partner: Partner;
+  try {
+    partner = await prisma.partner.create(newPartnerRequest);
+  } catch (error) {
+    const message =
+      error instanceof Error
+        ? error.message
+        : "Unable to insert partner into database.";
+
+    return NextResponse.json({ error: message }, { status: 500 });
+  }
+
+  const partnerId = Number(partner.id);
+
+  type CityPercentage = {
+    city: string;
+    percentage: number;
+  };
+
+  const cityIds: City[] = await prisma.city.findMany({
+    where: {
+      name: {
+        in: cityNames,
+      },
+    },
+  });
+
+  const newPartnerRegionsRequest = {
+    data: body.cities.map((city: CityPercentage) => ({
+      partnerId: partnerId,
+      cityId: cityIds.find((c) => c.name === city.city)?.id,
+      percentage: city.percentage,
+    })),
+  } satisfies PrismaTypes.PartnerRegionCreateManyArgs;
 
   console.log("Received partner data:", body);
   try {
-    const partner = await prisma.partner.create(newPartnerRequest);
-
     // update partner region table
+    const partnerRegion = await prisma.partnerRegion.createMany(
+      newPartnerRegionsRequest,
+    );
+
+    console.log("Created partner regions:", partnerRegion);
 
     return NextResponse.json({
       data: stringifyWithBigInt(partner),

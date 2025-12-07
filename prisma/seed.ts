@@ -6,6 +6,16 @@ import { prisma } from "../src/lib/prisma";
 import { YearlyDataCreateManyInput } from "@/generated/prisma/models";
 import { randomUUID } from "node:crypto";
 import { promises as fs } from "node:fs";
+import { status as PartnerStatus } from "@/generated/prisma/client";
+
+const parseStatus = (value: string | undefined): PartnerStatus | undefined => {
+  if (!value) return undefined;
+  const normalized = value.trim().toLowerCase();
+  if (normalized === "active") return "active";
+  if (normalized === "inactive") return "inactive";
+  if (normalized === "waitlisted") return "waitlisted";
+  return undefined; // unknown values are ignored
+};
 
 // generic CSV loader -> array of plain objects
 async function loadCsv<T extends Record<string, string | undefined>>(
@@ -94,6 +104,7 @@ async function seedPartners() {
     address?: string;
     coords?: string;
     logo_url?: string;
+    status?: string;
   };
 
   const rows = await loadCsv<Row>(path.join(__dirname, "data/partners.csv"));
@@ -108,6 +119,7 @@ async function seedPartners() {
       address: toStringOrNull(row.address),
       coords: row.coords ? JSON.parse(row.coords) : undefined,
       logoUrl: toStringOrNull(row.logo_url),
+      status: parseStatus(row.status), // NEW
     })),
     skipDuplicates: true,
   });
@@ -144,17 +156,20 @@ async function seedDistributions() {
     skipDuplicates: true,
   });
 }
-
 async function seedPartnerRegions() {
   type Row = {
     partner_id: string;
     city_id: string;
+    percentage?: string;
   };
 
   const rows = await loadCsv<Row>(
     path.join(__dirname, "data/partner_regions.csv"),
   );
-  let data: { partnerId: bigint; cityId: bigint }[] = [];
+
+  let data: { partnerId: bigint; cityId: bigint; percentage: number | null }[] =
+    [];
+
   try {
     data = rows.map((row) => {
       const partnerId = toBigInt(row.partner_id);
@@ -164,7 +179,14 @@ async function seedPartnerRegions() {
           `Invalid partnerId or cityId in row: ${JSON.stringify(row)}`,
         );
       }
-      return { partnerId, cityId };
+
+      const raw = toNumber(row.percentage);
+      const percentage =
+        raw !== undefined && raw !== null
+          ? Math.round(raw * 10_000) / 10_000 // 4 decimal places
+          : null;
+
+      return { partnerId, cityId, percentage };
     });
   } catch (error) {
     console.error("Error parsing partner regions:", error);
@@ -216,17 +238,17 @@ async function seedYearlyData() {
 }
 
 async function main() {
-  // await prisma.$transaction([
-  //   prisma.partnerRegion.deleteMany(),
-  //   prisma.distribution.deleteMany(),
-  //   prisma.partner.deleteMany(),
-  //   prisma.city.deleteMany(),
-  // ]);
+  await prisma.$transaction([
+    prisma.partnerRegion.deleteMany(),
+    prisma.distribution.deleteMany(),
+    prisma.partner.deleteMany(),
+    prisma.city.deleteMany(),
+  ]);
   await seedCities();
-  // await seedPartners();
-  // await seedDistributions();
-  // await seedPartnerRegions();
-  // await seedYearlyData();
+  await seedPartners();
+  await seedDistributions();
+  await seedPartnerRegions();
+  await seedYearlyData();
 }
 
 main()

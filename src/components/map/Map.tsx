@@ -5,7 +5,7 @@ import { useLeafletMap } from "./useLeafletMap";
 import { useBaseTileLayer } from "./useBaseTileLayer";
 import { act, useMemo, useState } from "react";
 import type { City, Distribution } from "@/generated/prisma/client";
-import { Popup, TileLayer, Polygon, MapContainer } from "react-leaflet";
+import { Popup, TileLayer, Polygon, MapContainer, Tooltip } from "react-leaflet";
 import { LatLngExpression } from "leaflet";
 
 import "leaflet/dist/leaflet.css";
@@ -163,14 +163,18 @@ export default function LeafletMap({ mapData }: { mapData: MapData }) {
                 ),
             }}
           >
+            {boundary.name && (
+              <Tooltip sticky direction="top" offset={[0, -4]}>
+                <Text fw={700} fz="sm" c="#0F4F78">
+                  {boundary.name}
+                </Text>
+              </Tooltip>
+            )}
             {boundary.name &&
               cities.map(
                 (city) =>
                   city.name === boundary.name && (
-                    <PopupContent
-                      key={city.id.toString()}
-                      city={city}
-                    />
+                    <PopupContent key={city.id.toString()} city={city} />
                   ),
               )}
           </Polygon>

@@ -13,9 +13,9 @@ import {
   Select,
   Modal,
   Title,
-  Container,
   Stack,
   SimpleGrid,
+  LoadingOverlay,
 } from "@mantine/core";
 import { useForm } from "@mantine/form";
 import { MonthPickerInput } from "@mantine/dates";
@@ -23,6 +23,26 @@ import { useState, useEffect } from "react";
 import "@mantine/dates/styles.css";
 
 const countries = ["United States", "Canada"];
+const DEFAULT_COUNTRY = "United States";
+
+type AddressFields = {
+  addressLine: string;
+  city: string;
+  state: string;
+  zipCode: string;
+  country: string;
+};
+
+const buildAddressString = ({
+  addressLine,
+  city,
+  state,
+  zipCode,
+  country,
+}: AddressFields) =>
+  [addressLine, city, state, zipCode, country || DEFAULT_COUNTRY]
+    .filter((part) => Boolean(part))
+    .join(", ");
 
 // Checks if input is a number (can be decimal)
 const requiredNumber = (label: string) => (value: unknown) => {
@@ -47,6 +67,7 @@ export default function AddPartnerForm({
   const [percentages, setPercentages] = useState<Record<string, number>>({});
   const [citiesAPI, setCitiesAPI] = useState<string[]>([]);
   const [isLoadingCities, setIsLoadingCities] = useState<boolean>(false);
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
   useEffect(() => {
     const fetchCities = async () => {
@@ -80,7 +101,7 @@ export default function AddPartnerForm({
     initialValues: {
       organization: "",
       description: "",
-      time: "",
+      time: null as string | null,
       cities: [] as string[],
       status: "",
       latitude: "",
@@ -96,7 +117,7 @@ export default function AddPartnerForm({
     validate: {
       organization: (value) =>
         typeof value === "string" ? null : "Organization name must be a string",
-      time: (value) => (value.length > 0 ? null : "Select a start time"),
+      time: (value) => (value ? null : "Select a start time"),
       cities: (value) => (value.length > 0 ? null : "Pick at least one city"),
       latitude: requiredNumber("Latitude"),
       longitude: requiredNumber("Longitude"),
@@ -119,41 +140,57 @@ export default function AddPartnerForm({
   });
 
   async function submitPartner(values: typeof form.values) {
+    setIsSubmitting(true);
+    const cityPercentages = values.cities.map((city) => {
+      const raw = Number(percentages[city] ?? 0);
+      const normalized = Number.isFinite(raw) ? raw / 100 : 0;
+      return { city, percentage: normalized };
+    });
+
     const formData = {
       name: values.organization,
       description: values.description,
-      start_partner: new Date(values.time).toISOString(),
+      start_partner: values.time,
       waitlisted: values.status,
       coordinates: {
         lat: Number(values.latitude),
-        long: Number(values.longitude),
+        lng: Number(values.longitude),
       },
-      address:
-        values.addressLine +
-        ", " +
-        values.city +
-        ", " +
-        values.state +
-        ", " +
-        " " +
-        values.zipCode +
-        ", " +
-        values.country,
+      address: buildAddressString({
+        addressLine: values.addressLine,
+        city: values.city,
+        state: values.state,
+        zipCode: values.zipCode,
+        country: values.country,
+      }),
       logo: values.logoUrl || "",
+      cities: cityPercentages,
     };
 
-    const response = await fetch("/api/partners", {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(formData),
-    });
+    try {
+      const response = await fetch("/api/partners", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(formData),
+      });
 
-    if (!response.ok) {
-      const err = await response.text();
-      console.error("Failed to create partner", err);
-      return;
+      if (!response.ok) {
+        const err = await response.text();
+        console.error("Failed to create partner", err);
+        return;
+      }
+
+      form.reset();
+      setPercentages({});
+      onClose();
+
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new Event("partners:refresh"));
+      }
+    } finally {
+      setIsSubmitting(false);
     }
   }
 
@@ -172,6 +209,11 @@ export default function AddPartnerForm({
       <Title order={2} c="#667085" fw="normal" fz={18} mb={"md"}>
         Add your new partner data
       </Title>
+      <LoadingOverlay
+        visible={isSubmitting}
+        zIndex={1000}
+        overlayProps={{ radius: "sm", blur: 2 }}
+      />
 
       <form
         onSubmit={form.onSubmit((values) => {
@@ -201,12 +243,15 @@ export default function AddPartnerForm({
               Description <span className="text-red-600">*</span>
             </Text>
             <Textarea
+              placeholder="Description"
               key={form.key("description")}
               {...form.getInputProps("description")}
               size="md"
               w={526}
               radius="md"
               required
+              autosize
+              maxRows={6}
             />
           </Group>
 
@@ -235,25 +280,21 @@ export default function AddPartnerForm({
               value={form.values.cities}
               onChange={(values) => {
                 form.setFieldValue("cities", values);
+                setPercentages((prev) =>
+                  values.reduce(
+                    (acc, city) => {
+                      acc[city] = prev[city] ?? 0;
+                      return acc;
+                    },
+                    {} as Record<string, number>,
+                  ),
+                );
               }}
               error={form.errors.cities}
               size="md"
               w={526}
               radius="md"
             />
-            {/* <MultiSelect
-              disabled={isLoadingCities}
-              nothingFoundMessage="Nothing found..."
-              key={form.key("cities")}
-              value={form.values.cities}
-              onChange={(values) => {
-                form.setFieldValue("cities", values);
-              }}
-              error={form.errors.cities}
-              size="md"
-              className="min-w-170"
-              radius="md"
-            /> */}
           </Group>
 
           {/* Selected Cities Table with Percentages, sorry this looks digusting */}
@@ -302,8 +343,9 @@ export default function AddPartnerForm({
             </Text>
             <MonthPickerInput
               placeholder="Pick date"
-              key={form.key("time")}
-              {...form.getInputProps("time")}
+              value={form.values.time}
+              onChange={(val) => form.setFieldValue("time", val)}
+              error={form.errors.time}
               required
               w={526}
             />
@@ -391,15 +433,16 @@ export default function AddPartnerForm({
                   required
                 />
 
-                <NumberInput
+                <TextInput
                   placeholder="Zip Code"
                   key={form.key("zipCode")}
                   value={form.values.zipCode}
-                  onChange={(val) => form.setFieldValue("zipCode", String(val))}
+                  onChange={(event) =>
+                    form.setFieldValue("zipCode", event.currentTarget.value)
+                  }
                   error={form.errors.zipCode}
                   size="md"
                   radius="md"
-                  hideControls
                 />
                 <Select
                   placeholder="Country"
@@ -452,14 +495,22 @@ export default function AddPartnerForm({
               color="#053766"
               radius="md"
               type="button"
+              disabled={isSubmitting}
               onClick={() => {
                 form.reset();
                 setPercentages({});
+                onClose();
               }}
             >
               Cancel
             </Button>
-            <Button variant="filled" color="#053766" radius="md" type="submit">
+            <Button
+              variant="filled"
+              color="#053766"
+              radius="md"
+              type="submit"
+              loading={isSubmitting}
+            >
               Submit
             </Button>
           </Group>

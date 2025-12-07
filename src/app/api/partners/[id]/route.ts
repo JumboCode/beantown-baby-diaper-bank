@@ -45,9 +45,9 @@ export async function GET(
       logo_url: partner.logoUrl,
       coordinates: partner.coords,
       address: partner.address,
-      status: partner.active, // TODO
-      start_year: partner.startPartner
-        ? partner.startPartner.toISOString()
+      status: partner.status, // TODO
+      start_partner: partner.startPartner
+        ? partner.startPartner.toDateString()
         : null,
       number_babies_helped: Number(aggregate._sum.numberChildren),
       number_diapers: Number(aggregate._sum.numberDiapers),

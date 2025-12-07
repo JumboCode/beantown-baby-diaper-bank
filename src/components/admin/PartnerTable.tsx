@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   Center,
   Loader,
@@ -45,6 +45,12 @@ function joinCoords(coords: { lat: number; lng: number }) {
   return `${roundCoords(coords).lat}, ${roundCoords(coords).lng}`;
 }
 
+function formatPercentDisplay(value: number | null | undefined) {
+  if (value == null) return null;
+  const rounded = Number((value * 100).toFixed(4)); // round to 4 decimal places, drop trailing zeros
+  return `${rounded}%`;
+}
+
 type PartnerRegion = {
   partnerId: number;
   cityId: number;
@@ -59,45 +65,18 @@ export default function PartnerInfo() {
   const [data, setData] = useState<Partner[]>([]);
   const [percentages, setPercentages] = useState<PartnerRegion[]>([]);
   const [loading, setLoading] = useState(true);
-  // Retrieve data from API, store each partner as Partner type
-  useEffect(() => {
+
+  const refreshTable = useCallback(() => {
     setLoading(true);
-    const fetchAndStoreData = async () => {
-      try {
-        const response = await fetch("/api/partners");
-        const result = await response.json();
-        console.log("Fetched partner data:", result.data);
-        setData(result.data);
-      } catch (err) {
-        console.error("Error fetching data:", err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchAndStoreData();
-
-    const getPercentagesWithCityId = async () => {
-      try {
-        const response = await fetch("/api/partners/percentages");
-        const result = await response.json();
-        console.log(result);
-        setPercentages(result.data);
-      } catch (err) {
-        console.log("Error fetching percentages data", err);
-      }
-    };
-
-    getPercentagesWithCityId();
-  }, []);
-
-  const refreshTable = () => {
-    setLoading(true);
-    fetch("/api/partners")
-      .then((response) => response.json())
-      .then((result) => {
-        console.log("Refetched partner data:", result.data);
-        setData(result.data);
+    Promise.all([
+      fetch("/api/partners").then((response) => response.json()),
+      fetch("/api/partners/percentages").then((response) => response.json()),
+    ])
+      .then(([partnerResult, percentageResult]) => {
+        console.log("Refetched partner data:", partnerResult.data);
+        setData(partnerResult.data);
+        console.log("Refetched percentage data:", percentageResult.data);
+        setPercentages(percentageResult.data);
       })
       .catch((err) => {
         console.error("Error refetching data:", err);
@@ -105,7 +84,17 @@ export default function PartnerInfo() {
       .finally(() => {
         setLoading(false);
       });
-  };
+  }, []);
+
+  useEffect(() => {
+    refreshTable();
+  }, [refreshTable]);
+
+  useEffect(() => {
+    const handler = () => refreshTable();
+    window.addEventListener("partners:refresh", handler);
+    return () => window.removeEventListener("partners:refresh", handler);
+  }, [refreshTable]);
 
   return loading ? (
     <Center className="h-64">
@@ -208,15 +197,19 @@ function PartnerTable({
                               Number(percentage.partnerId) == partner.id,
                           )
                           .map((percentage, index, arr) => {
-                            if (percentage.percentage) {
+                            const displayPct = formatPercentDisplay(
+                              percentage.percentage,
+                            );
+                            if (displayPct) {
                               return (
                                 percentage.city.name +
                                 " (" +
-                                percentage.percentage * 100 +
-                                "%)" +
+                                displayPct +
+                                ")" +
                                 (index != arr.length - 1 ? ", " : "")
                               );
                             }
+                            return null;
                           })}
                       </span>
                     </span>
@@ -313,7 +306,7 @@ function PartnerTable({
             onClose={() => {
               close();
               setPartner(null);
-              refreshTable();
+              // refreshTable();
             }}
           />
         </Modal>
