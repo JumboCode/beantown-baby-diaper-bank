@@ -34,14 +34,14 @@ export type MapData = {
 };
 
 const flipBoundaries = (
-  data: FeatureCollection<Polygon>
+  data: FeatureCollection<Polygon>,
 ): FeatureCollection<Polygon> => {
   const flippedFeatures = data.features.map((feature) => ({
     ...feature,
     geometry: {
       ...feature.geometry,
       coordinates: feature.geometry.coordinates.map(
-        (ring) => ring.map((coord) => [coord[1], coord[0]]) // Swap index 0 and 1
+        (ring) => ring.map((coord) => [coord[1], coord[0]]), // Swap index 0 and 1
       ),
     },
   }));
@@ -78,7 +78,7 @@ export default function Page() {
 
         const [cities, boundaries] = await Promise.all([
           fetch(`/api/cities?${queryParams.toString()}`).then((res) =>
-            res.json()
+            res.json(),
           ),
           boundariesPromise,
         ]);
@@ -92,7 +92,7 @@ export default function Page() {
         console.error("Error fetching map data:", error);
       }
     },
-    [cachedBoundaries]
+    [cachedBoundaries],
   );
 
   useEffect(() => {
@@ -123,24 +123,19 @@ export default function Page() {
         paddingLeft: "72px",
         paddingTop: "44px",
         paddingBottom: "44px",
-      }}>
+      }}
+    >
       <Stack
         // p="md"
         gap="sm"
-        mx="auto">
+        mx="auto"
+      >
         {/* Header */}
         <Box>
-          <Title
-            order={1}
-            fz="30px"
-            fw={500}
-            mb="xs"
-            c="#101828">
+          <Title order={1} fz="30px" fw={500} mb="xs" c="#101828">
             See where diapers are distributed
           </Title>
-          <Text
-            fz="18px"
-            c="#667085">
+          <Text fz="18px" c="#667085">
             Last updated: Sep 9th, 2025.
           </Text>
         </Box>
@@ -153,34 +148,25 @@ export default function Page() {
           c="#101728"
           // mb="md"
           mt="md"
-          fw={600}>
+          fw={600}
+        >
           Distribution Heat Map
         </Title>
         <Grid>
           {/* Left Column: Map */}
           <Grid.Col span="auto">
-            <Paper
-              shadow="sm"
-              p="md"
-              radius="md"
-              withBorder>
+            <Paper shadow="sm" p="md" radius="md" withBorder>
               <Box mb="md">
                 <YearlyMonthlySwitch
                   value={timeline.view}
                   onChange={timeline.toggleView}
                 />
               </Box>
-              <Box
-                h="60vh"
-                pos="relative"
-                mb="md">
+              <Box h="60vh" pos="relative" mb="md">
                 {mapData ? (
                   <LeafletMap mapData={mapData} />
                 ) : (
-                  <Skeleton
-                    h="60vh"
-                    mb="md"
-                  />
+                  <Skeleton h="60vh" mb="md" />
                 )}
               </Box>
 
@@ -204,7 +190,8 @@ export default function Page() {
               display: "flex",
               flexDirection: "column",
               justifyContent: "flex-start",
-            }}>
+            }}
+          >
             <ImpactModal />
           </Grid.Col>
         </Grid>

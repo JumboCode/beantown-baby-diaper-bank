@@ -11,12 +11,12 @@ const getCities = unstable_cache(
   async (
     cityName: string | null,
     month: string | null,
-    year: string | null
+    year: string | null,
   ) => {
     if (month && !year) {
       return NextResponse.json(
         { error: "Year must be provided if month is provided." },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -88,7 +88,7 @@ const getCities = unstable_cache(
     return dataToReturn; // your mapped result
   },
   ["cities"], // base cache key; args are added automatically
-  { revalidate, tags: ["cities"] }
+  { revalidate, tags: ["cities"] },
 );
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -105,6 +105,6 @@ export async function GET(request: Request) {
         "Cache-Control":
           "public, s-maxage=2592000, stale-while-revalidate=604800",
       },
-    }
+    },
   );
 }

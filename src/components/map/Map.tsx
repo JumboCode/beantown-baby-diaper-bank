@@ -61,7 +61,7 @@ const rgbToHex = (r: number, g: number, b: number) =>
 
 export const Marker = dynamic(
   () => import("react-leaflet").then((module) => module.Marker),
-  { ssr: false }
+  { ssr: false },
 );
 
 type PartnerInfoType = {
@@ -93,7 +93,7 @@ export default function Map({ mapData }: { mapData: MapData }) {
     cities.forEach((city) => {
       const total = city.distributions.reduce(
         (sum, d) => sum + Number(d.numberDiapers),
-        0
+        0,
       );
       if (city.name) cityTotals[city.name] = total;
       if (total > maxDiapers) maxDiapers = total;
@@ -122,10 +122,9 @@ export default function Map({ mapData }: { mapData: MapData }) {
         height: "100%",
         width: "100%",
         zIndex: 0,
-      }}>
-      <MapContainer
-        {...mapOptions}
-        style={mapStyle}>
+      }}
+    >
+      <MapContainer {...mapOptions} style={mapStyle}>
         <TileLayer {...tileLayerProps} />
         {boundaryPolygons.map((boundary, index) => (
           <Polygon
@@ -153,23 +152,18 @@ export default function Map({ mapData }: { mapData: MapData }) {
               mouseover: () => setHoveredId(boundary.id),
               mouseout: () =>
                 setHoveredId((current) =>
-                  current === boundary.id ? null : current
+                  current === boundary.id ? null : current,
                 ),
               click: () => setActiveId(boundary.id),
               popupclose: () =>
                 setActiveId((current) =>
-                  current === boundary.id ? null : current
+                  current === boundary.id ? null : current,
                 ),
-            }}>
+            }}
+          >
             {boundary.name && (
-              <Tooltip
-                sticky
-                direction="top"
-                offset={[0, -4]}>
-                <Text
-                  fw={700}
-                  fz="sm"
-                  c="#0F4F78">
+              <Tooltip sticky direction="top" offset={[0, -4]}>
+                <Text fw={700} fz="sm" c="#0F4F78">
                   {boundary.name}
                 </Text>
               </Tooltip>
@@ -178,11 +172,8 @@ export default function Map({ mapData }: { mapData: MapData }) {
               cities.map(
                 (city) =>
                   city.name === boundary.name && (
-                    <PopupContent
-                      key={city.id.toString()}
-                      city={city}
-                    />
-                  )
+                    <PopupContent key={city.id.toString()} city={city} />
+                  ),
               )}
           </Polygon>
         ))}
@@ -202,28 +193,18 @@ function PopupContent({ city }: { city: CityMapInfo }) {
   return (
     <Popup minWidth={280}>
       <div>
-        <Title
-          order={3}
-          fz="18px"
-          c="#101828">
+        <Title order={3} fz="18px" c="#101828">
           {city.name}
         </Title>
-        <Text
-          fz="16px"
-          c="#344054">
+        <Text fz="16px" c="#344054">
           {" "}
           Diapers Distributed: {totalDiapers.toString()}{" "}
         </Text>
-        <Text
-          fz="16px"
-          c="#344054">
+        <Text fz="16px" c="#344054">
           {" "}
           Children helped: {totalChildren.toString()}{" "}
         </Text>
-        <Title
-          order={4}
-          fz="18px"
-          style={{ marginTop: "10px" }}>
+        <Title order={4} fz="18px" style={{ marginTop: "10px" }}>
           Partner Information
         </Title>
         <Stack gap="sm">

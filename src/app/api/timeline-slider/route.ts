@@ -26,7 +26,7 @@ export async function GET() {
     console.log("Unable to load timeline data from the database");
     return NextResponse.json(
       { error: "Unable to load timeline data from the database" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
