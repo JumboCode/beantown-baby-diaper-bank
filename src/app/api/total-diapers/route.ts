@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
+export const revalidate = 2592000;
+
 export async function GET() {
   try {
     const results = await prisma.yearlyData.aggregate({
