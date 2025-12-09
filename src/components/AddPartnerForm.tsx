@@ -69,30 +69,30 @@ export default function AddPartnerForm({
   const [isLoadingCities, setIsLoadingCities] = useState<boolean>(false);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
-  useEffect(() => {
-    const fetchCities = async () => {
-      setIsLoadingCities(true);
-      try {
-        const res = await fetch(
-          "http://api.geonames.org/searchJSON?q=&adminCode1=MA&country=US&featureClass=P&username=jumbocodebbdb",
-        );
-        const data = await res.json();
+  // useEffect(() => {
+  //   const fetchCities = async () => {
+  //     setIsLoadingCities(true);
+  //     try {
+  //       // const res = await fetch(
+  //       //   "http://api.geonames.org/searchJSON?q=&adminCode1=MA&country=US&featureClass=P&username=jumbocodebbdb",
+  //       // );
+  //       // const data = await res.json();
 
-        if (data.geonames) {
-          const cityNames = data.geonames.map(
-            (city: { name: string }) => city.name,
-          );
-          const cityUniqueSorted = Array.from(new Set(cityNames)).sort();
-          setCitiesAPI(cityUniqueSorted as string[]);
-        }
-      } catch (err) {
-        console.log(`Failed to fetch cities: ${err}`);
-      } finally {
-        setIsLoadingCities(false);
-      }
-    };
-    fetchCities();
-  }, []);
+  //       if (data.geonames) {
+  //         const cityNames = data.geonames.map(
+  //           (city: { name: string }) => city.name
+  //         );
+  //         const cityUniqueSorted = Array.from(new Set(cityNames)).sort();
+  //         setCitiesAPI(cityUniqueSorted as string[]);
+  //       }
+  //     } catch (err) {
+  //       console.log(`Failed to fetch cities: ${err}`);
+  //     } finally {
+  //       setIsLoadingCities(false);
+  //     }
+  //   };
+  //   fetchCities();
+  // }, []);
 
   const form = useForm({
     mode: "controlled",
@@ -201,12 +201,19 @@ export default function AddPartnerForm({
       size={990}
       padding={32}
       title={
-        <Text fw={700} size="30px" c="#101828">
+        <Text
+          fw={700}
+          size="30px"
+          c="#101828">
           Add New Partner
         </Text>
-      }
-    >
-      <Title order={2} c="#667085" fw="normal" fz={18} mb={"md"}>
+      }>
+      <Title
+        order={2}
+        c="#667085"
+        fw="normal"
+        fz={18}
+        mb={"md"}>
         Add your new partner data
       </Title>
       <LoadingOverlay
@@ -218,12 +225,16 @@ export default function AddPartnerForm({
       <form
         onSubmit={form.onSubmit((values) => {
           submitPartner(values);
-        })}
-      >
+        })}>
         <Stack>
           {/* Name of Organization */}
-          <Group justify="space-between" align="flex-start">
-            <Text c="#344054" fz={16} fw={600}>
+          <Group
+            justify="space-between"
+            align="flex-start">
+            <Text
+              c="#344054"
+              fz={16}
+              fw={600}>
               Name of Organization <span className="text-red-600">*</span>
             </Text>
             <TextInput
@@ -238,8 +249,13 @@ export default function AddPartnerForm({
           </Group>
 
           {/* Description */}
-          <Group justify="space-between" align="flex-start">
-            <Text c="#344054" fz={16} fw={600}>
+          <Group
+            justify="space-between"
+            align="flex-start">
+            <Text
+              c="#344054"
+              fz={16}
+              fw={600}>
               Description <span className="text-red-600">*</span>
             </Text>
             <Textarea
@@ -256,9 +272,14 @@ export default function AddPartnerForm({
           </Group>
 
           {/* Cities Served */}
-          <Group align="right" justify="space-between">
+          <Group
+            align="right"
+            justify="space-between">
             {/* Selected Cities MultiSelect */}
-            <Text c="#344054" fz={16} fw={600}>
+            <Text
+              c="#344054"
+              fz={16}
+              fw={600}>
               Cities Served <span className="text-red-600">*</span>
             </Text>
             <TagsInput
@@ -271,7 +292,7 @@ export default function AddPartnerForm({
                 return (options as ComboboxItem[]).filter((option) => {
                   const words = option.label.toLowerCase().trim().split(" ");
                   return splittedSearch.every((searchWord) =>
-                    words.some((word: string) => word.includes(searchWord)),
+                    words.some((word: string) => word.includes(searchWord))
                   );
                 });
               }}
@@ -286,8 +307,8 @@ export default function AddPartnerForm({
                       acc[city] = prev[city] ?? 0;
                       return acc;
                     },
-                    {} as Record<string, number>,
-                  ),
+                    {} as Record<string, number>
+                  )
                 );
               }}
               error={form.errors.cities}
@@ -298,11 +319,18 @@ export default function AddPartnerForm({
           </Group>
 
           {/* Selected Cities Table with Percentages, sorry this looks digusting */}
-          <Group w={526} ml="auto" justify="flex-end">
+          <Group
+            w={526}
+            ml="auto"
+            justify="flex-end">
             {/* Selected Cities Table */}
             {form.values.cities.length > 0 && (
               <>
-                <Table w="100%" striped highlightOnHover withTableBorder>
+                <Table
+                  w="100%"
+                  striped
+                  highlightOnHover
+                  withTableBorder>
                   <Table.Thead>
                     <Table.Tr>
                       <Table.Th>Cities</Table.Th>
@@ -337,8 +365,13 @@ export default function AddPartnerForm({
           </Group>
 
           {/* Time Started*/}
-          <Group justify="space-between" align="flex-start">
-            <Text c="#344054" fz={16} fw={600}>
+          <Group
+            justify="space-between"
+            align="flex-start">
+            <Text
+              c="#344054"
+              fz={16}
+              fw={600}>
               Time it started <span className="text-red-600">*</span>
             </Text>
             <MonthPickerInput
@@ -356,26 +389,46 @@ export default function AddPartnerForm({
             key={form.key("status")}
             {...form.getInputProps("status")}
             error={form.errors.status}
-            required
-          >
+            required>
             <Group justify="space-between">
-              <Text c="#344054" fz={16} fw={600}>
+              <Text
+                c="#344054"
+                fz={16}
+                fw={600}>
                 Status <span className="text-red-600">*</span>
               </Text>
-              <Group w={526} justify="space-between">
-                <Radio value="active" label="Active" />
-                <Radio value="inactive" label="Inactive" />
-                <Radio value="waitlisted" label="Waitlisted" />
+              <Group
+                w={526}
+                justify="space-between">
+                <Radio
+                  value="active"
+                  label="Active"
+                />
+                <Radio
+                  value="inactive"
+                  label="Inactive"
+                />
+                <Radio
+                  value="waitlisted"
+                  label="Waitlisted"
+                />
               </Group>
             </Group>
           </Radio.Group>
 
           {/* Latitude and Longitude */}
-          <Group justify="space-between" align="flex-start">
-            <Text c="#344054" fz={16} fw={600}>
+          <Group
+            justify="space-between"
+            align="flex-start">
+            <Text
+              c="#344054"
+              fz={16}
+              fw={600}>
               Coords <span className="text-red-600">*</span>
             </Text>
-            <Group w={526} grow>
+            <Group
+              w={526}
+              grow>
               <NumberInput
                 placeholder="Latitude"
                 key={form.key("latitude")}
@@ -400,8 +453,13 @@ export default function AddPartnerForm({
           </Group>
 
           {/* Address */}
-          <Group justify="space-between" align="flex-start">
-            <Text c="#344054" fz={16} fw={600}>
+          <Group
+            justify="space-between"
+            align="flex-start">
+            <Text
+              c="#344054"
+              fz={16}
+              fw={600}>
               Address <span className="text-red-600">*</span>
             </Text>
             <Stack>
@@ -415,7 +473,9 @@ export default function AddPartnerForm({
                 required
               />
 
-              <SimpleGrid w={526} cols={2}>
+              <SimpleGrid
+                w={526}
+                cols={2}>
                 <TextInput
                   placeholder="City"
                   key={form.key("city")}
@@ -463,11 +523,18 @@ export default function AddPartnerForm({
           </Group>
 
           {/* Logo File Upload */}
-          <Group justify="space-between" align="flex-start">
-            <Text c="#344054" fz={16} fw={600}>
+          <Group
+            justify="space-between"
+            align="flex-start">
+            <Text
+              c="#344054"
+              fz={16}
+              fw={600}>
               Logo file or link
             </Text>
-            <Group w={526} grow>
+            <Group
+              w={526}
+              grow>
               <FileInput
                 accept="image/png,image/jpeg"
                 placeholder="Upload image file"
@@ -489,7 +556,9 @@ export default function AddPartnerForm({
           </Group>
 
           {/* Submit and Cancel Buttons */}
-          <Group justify="flex-end" mt="md">
+          <Group
+            justify="flex-end"
+            mt="md">
             <Button
               variant="outline"
               color="#053766"
@@ -500,8 +569,7 @@ export default function AddPartnerForm({
                 form.reset();
                 setPercentages({});
                 onClose();
-              }}
-            >
+              }}>
               Cancel
             </Button>
             <Button
@@ -509,8 +577,7 @@ export default function AddPartnerForm({
               color="#053766"
               radius="md"
               type="submit"
-              loading={isSubmitting}
-            >
+              loading={isSubmitting}>
               Submit
             </Button>
           </Group>
