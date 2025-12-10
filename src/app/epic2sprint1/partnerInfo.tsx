@@ -29,7 +29,6 @@ export default function PartnerInfo({
   url,
   fromMarker = false,
 }: PartnerInfoProps) {
-  //changed this b/c disclosure was only showing info for one partner
   const [selectedPartner, setSelectedPartner] = useState<Partner | null>(null);
   const [loadingPartner, setLoadingPartner] = useState<boolean>(false);
 
