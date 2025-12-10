@@ -1,91 +1,48 @@
 import { useEffect } from "react";
 import TimelineSlider from "./TimelineSlider";
 import { Group, Stack, ActionIcon } from "@mantine/core";
-import YearlyMonthlySwitch from "./sprint2/YearlyMonthlySwitch";
 
 export default function TimelineSliderControls({
   view,
   index,
   setIndex,
-  toggleView,
+  labels,
   move,
   onTimelineChange,
 }: {
   view: "monthly" | "yearly";
   index: number;
+  labels: (string | number)[];
   setIndex: (n: number) => void;
-  toggleView: () => void;
   move: (dir: number) => void;
   onTimelineChange?: (params: { month?: string; year: string }) => void;
 }) {
-  // Define your data arrays
-  const months = [
-    { month: "January", year: "2025" },
-    { month: "February", year: "2025" },
-    { month: "March", year: "2025" },
-    { month: "April", year: "2025" },
-    { month: "May", year: "2025" },
-    { month: "June", year: "2025" },
-    { month: "July", year: "2025" },
-    { month: "August", year: "2025" },
-    { month: "September", year: "2025" },
-    { month: "October", year: "2025" },
-    { month: "November", year: "2025" },
-    { month: "December", year: "2025" },
-  ];
-
-  const years = [
-    "2018",
-    "2019",
-    "2020",
-    "2021",
-    "2022",
-    "2023",
-    "2024",
-    "2025",
-  ];
-
   // Trigger API update whenever index or view changes
   useEffect(() => {
+    const label = labels[index];
+    if (!label || !onTimelineChange) return;
+
     if (view === "monthly") {
-      const selectedMonth = months[index];
-      if (selectedMonth && onTimelineChange) {
-        onTimelineChange({
-          month: selectedMonth.month,
-          year: selectedMonth.year,
-        });
-      }
+      const [month, year] = label.toString().split(" ");
+      if (month && year) onTimelineChange({ month, year });
     } else {
-      const selectedYear = years[index];
-      if (selectedYear && onTimelineChange) {
-        onTimelineChange({
-          year: selectedYear,
-        });
-      }
+      onTimelineChange({ year: label.toString() });
     }
-  }, [index, view]);
+  }, [index, view, labels, onTimelineChange]);
 
   return (
-    <Stack>
-      <h1 style={{ color: "#21325b", fontWeight: 700 }}>Timeline Slider</h1>
-
-      <YearlyMonthlySwitch value={view} onChange={toggleView} />
-
+    <Stack mb="xl">
       <Group align="flex-end">
         <ActionIcon color="#053766" onClick={() => move(-1)}>
-          <img src="/timelineSlider/left.svg" />
+          <img src="/timelineSlider/left.svg" alt="Left Button" />
         </ActionIcon>
 
         <div className="flex-1 px-5">
-          <TimelineSlider
-            monthlyOrYearly={view}
-            value={index}
-            setValue={setIndex}
-          />
+          <TimelineSlider labels={labels} value={index} setValue={setIndex} />
         </div>
 
         <ActionIcon color="#053766" onClick={() => move(1)}>
-          <img src="/timelineSlider/right.svg" />
+          <img src="/timelineSlider/right.svg" alt="Right Button" />
         </ActionIcon>
       </Group>
     </Stack>

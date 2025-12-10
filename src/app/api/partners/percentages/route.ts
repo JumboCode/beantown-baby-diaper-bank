@@ -1,12 +1,38 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { PartnerRegion } from "@/generated/prisma/client";
+import { PartnerRegion, Prisma } from "@/generated/prisma/client";
 import { stringifyWithBigInt } from "@/lib/util";
+import { PartnerRegionInclude } from "@/generated/prisma/models";
 
 export async function GET(request: Request) {
+  const url = new URL(request.url);
+  const partnerId = url.searchParams.get("partnerId");
+
   try {
-    const partnerRegions: PartnerRegion[] =
-      await prisma.partnerRegion.findMany();
+    const include = {
+      city: {
+        select: {
+          id: true,
+          name: true,
+        },
+      },
+    } satisfies PartnerRegionInclude;
+
+    const where: Prisma.PartnerRegionWhereInput = {};
+
+    if (partnerId) {
+      where.partnerId = BigInt(partnerId);
+    }
+
+    const query: Prisma.PartnerRegionFindManyArgs = {
+      include,
+      where,
+    };
+
+    type returnTy = Prisma.PartnerRegionGetPayload<typeof query>;
+
+    const partnerRegions: returnTy[] =
+      await prisma.partnerRegion.findMany(query);
 
     const data_response = stringifyWithBigInt({ data: partnerRegions });
 
@@ -15,6 +41,7 @@ export async function GET(request: Request) {
       headers: { "Content-Type": "application/json" },
     });
   } catch (error) {
+    console.error("Error fetching partner regions:", error);
     console.log("Unable to fetch partner regions");
     return NextResponse.json({ status: 500 });
   }
@@ -31,7 +58,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const updated = await prisma.$transaction(
+    await prisma.$transaction(
       newPercentages.map((p) =>
         prisma.partnerRegion.update({
           where: {
@@ -54,6 +81,7 @@ export async function POST(request: Request) {
       headers: { "Content-Type": "application/json" },
     });
   } catch (error) {
+    console.error("Error updating percentages:", error);
     console.log("Unable to update percentages");
     return NextResponse.json({ status: 500 });
   }

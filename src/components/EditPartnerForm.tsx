@@ -18,11 +18,11 @@ import { useForm } from "@mantine/form";
 import { MonthPickerInput } from "@mantine/dates";
 import "@mantine/dates/styles.css";
 import { Partner } from "./admin/PartnerTable";
-import parser from "parse-address";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { status } from "@/generated/prisma/enums";
 import OneTimeUpdateForm from "./OneTimeUpdateForm";
 import ContinuousUpdateForm from "./ContinuousUpdateForm";
+import type { CityPercentage } from "./CityPercentagesForm";
 
 interface EditPartnerFormProps {
   partner: Partner;
@@ -30,6 +30,49 @@ interface EditPartnerFormProps {
 }
 
 const countries = ["United States", "Canada"];
+const DEFAULT_COUNTRY = "United States";
+
+type AddressFields = {
+  addressLine: string;
+  city: string;
+  state: string;
+  zipCode: string;
+  country: string;
+};
+
+const parseAddressFields = (address: string | null): AddressFields => {
+  const defaults: AddressFields = {
+    addressLine: "",
+    city: "",
+    state: "",
+    zipCode: "",
+    country: DEFAULT_COUNTRY,
+  };
+  if (!address) return defaults;
+
+  const parts = address
+    .split(",")
+    .map((p) => p.trim())
+    .filter(Boolean);
+  return {
+    addressLine: parts[0] || "",
+    city: parts[1] || "",
+    state: parts[2] || "",
+    zipCode: parts[3] || "",
+    country: parts[4] || DEFAULT_COUNTRY,
+  };
+};
+
+const buildAddressString = ({
+  addressLine,
+  city,
+  state,
+  zipCode,
+  country,
+}: AddressFields) =>
+  [addressLine, city, state, zipCode, country || DEFAULT_COUNTRY]
+    .filter((part) => Boolean(part))
+    .join(", ");
 
 // Checks if input is a number (can be decimal)
 const requiredNumber = (label: string) => (value: unknown) => {
@@ -44,52 +87,7 @@ const requiredInteger = (label: string) => (value: unknown) => {
   return /^\d+$/.test(v) ? null : `${label} must be a number`;
 };
 
-interface RequiredAddressComponents {
-  number: string;
-  street: string;
-  city: string;
-  state: string;
-  zip: string;
-}
-
 type UpdatePercentagesOptions = "one-time" | "continuous";
-
-type AddressWithExtras = RequiredAddressComponents &
-  Partial<parser.ParsedLocation>;
-
-function parseAddress(fullAddress: string | null): AddressWithExtras {
-  const defaults = {
-    number: "",
-    street: "",
-    city: "",
-    state: "",
-    zip: "",
-  };
-
-  if (!fullAddress) return defaults;
-
-  try {
-    const parsed = parser.parseAddress(fullAddress) ?? {};
-    return { ...defaults, ...parsed };
-  } catch (error) {
-    console.error("Error parsing address:", error);
-    return defaults;
-  }
-}
-function formatAddress(address: AddressWithExtras) {
-  try {
-    const parts = [];
-    if (address.number) parts.push(address.number);
-    if (address.prefix) parts.push(address.prefix);
-    if (address.street) parts.push(address.street);
-    if (address.type) parts.push(address.type);
-    if (address.suffix) parts.push(address.suffix);
-    return parts.join(" ");
-  } catch (error) {
-    console.error("Error formatting address:", error);
-    return "";
-  }
-}
 export default function EditPartnerForm({
   partner,
   onClose,
@@ -98,9 +96,34 @@ export default function EditPartnerForm({
   const [activePercentTab, setActivePercentTab] =
     useState<UpdatePercentagesOptions>("one-time");
 
-  console.log("Editing partner:", partner);
+  const [cityPercentages, setCityPercentages] = useState<
+    {
+      city: { id: number; name: string };
+      percentage: number;
+    }[]
+  >([]);
 
-  const address = parseAddress(partner.address);
+  useEffect(() => {
+    fetch(`/api/partners/percentages?partnerId=${partner.id}`)
+      .then((res) => res.json())
+      .then((data) => {
+        setCityPercentages(data.data);
+      })
+      .catch((error) => {
+        console.error("Error fetching partner percentages:", error);
+      });
+  }, [partner.id]);
+
+  const initialCityPercentEntries: CityPercentage[] =
+    cityPercentages.length > 0
+      ? cityPercentages.map((entry, idx) => ({
+          id: `${entry.city.name}-${idx}`,
+          city: entry.city.name,
+          percent: Math.round((entry.percentage ?? 0) * 100),
+        }))
+      : [];
+
+  const addressFields = parseAddressFields(partner.address);
 
   const form = useForm({
     mode: "controlled",
@@ -113,11 +136,11 @@ export default function EditPartnerForm({
       status: partner.status,
       latitude: partner.coords ? partner.coords.lat : "",
       longitude: partner.coords ? partner.coords.lng : "",
-      addressLine: formatAddress(address),
-      city: address.city || "",
-      state: address.state || "",
-      zipCode: address.zip || "",
-      country: "United States",
+      addressLine: addressFields.addressLine,
+      city: addressFields.city,
+      state: addressFields.state,
+      zipCode: addressFields.zipCode,
+      country: addressFields.country,
       logoFile: null as File | null,
       logoUrl: partner.logo_url || "",
       updatePercentagesType: "one-time" as UpdatePercentagesOptions,
@@ -143,7 +166,6 @@ export default function EditPartnerForm({
 
   async function submitEditPartner(values: typeof form.values) {
     setLoading(true);
-    console.log("Submitting edited partner values:", values);
     const formData = {
       id: partner.id,
       name: values.organization,
@@ -154,15 +176,13 @@ export default function EditPartnerForm({
         lat: values.latitude,
         lng: values.longitude,
       },
-      address:
-        values.addressLine +
-        ", " +
-        values.city +
-        ", " +
-        values.state +
-        ", " +
-        " " +
-        values.zipCode,
+      address: buildAddressString({
+        addressLine: values.addressLine,
+        city: values.city,
+        state: values.state,
+        zipCode: values.zipCode,
+        country: values.country,
+      }),
       logo: values.logoUrl,
     };
 
@@ -191,19 +211,24 @@ export default function EditPartnerForm({
         zIndex={1000}
         overlayProps={{ radius: "sm", blur: 2 }}
       />
-      <h2 className="text-lg text-gray-500">Change your partner data</h2>
 
-      <div className="p-4 border border-gray-300 rounded-xl">
+      <div className="mx-8">
+        <h2 className="text-lg text-gray-500" style={{ marginBottom: "24px" }}>
+          Change your partner data
+        </h2>
         <form
           onSubmit={form.onSubmit((values) => {
             submitEditPartner(values);
+            if (typeof window !== "undefined") {
+              window.dispatchEvent(new Event("partners:refresh"));
+            }
           })}
           className="flex flex-col gap-5"
         >
           {/* Name of Organization */}
           <Group justify="space-between" align="flex-start">
-            <Text fw={600}>
-              Name of Organzation <span className="text-red-600">*</span>
+            <Text fw={600} c="#344054">
+              Name of Organization <span className="text-red-600">*</span>
             </Text>
             <TextInput
               placeholder="Name"
@@ -218,7 +243,7 @@ export default function EditPartnerForm({
 
           {/* Description */}
           <Group justify="space-between" align="flex-start">
-            <Text fw={600}>
+            <Text fw={600} c="#344054">
               Description <span className="text-red-600">*</span>
             </Text>
             <Textarea
@@ -227,13 +252,15 @@ export default function EditPartnerForm({
               size="md"
               className="min-w-170"
               radius="md"
+              autosize
+              maxRows={6}
               required
             />
           </Group>
 
           {/* Time Started*/}
           <Group justify="space-between" align="flex-start">
-            <Text fw={600}>
+            <Text fw={600} c="#344054">
               Time it started <span className="text-red-600">*</span>
             </Text>
             <MonthPickerInput
@@ -246,7 +273,7 @@ export default function EditPartnerForm({
           </Group>
 
           <Group justify="space-between" align="flex-start" w="100%">
-            <Text fw={600} className="w-40">
+            <Text fw={600} c="#344054" className="w-40">
               Status <span className="text-red-600">*</span>
             </Text>
 
@@ -303,7 +330,7 @@ export default function EditPartnerForm({
 
           {/* Latitude and Longitude */}
           <Group justify="space-between" align="flex-start">
-            <Text fw={600}>
+            <Text fw={600} c="#344054">
               Coords <span className="text-red-600">*</span>
             </Text>
             <div className="gap-4 flex">
@@ -332,7 +359,7 @@ export default function EditPartnerForm({
 
           {/* Address */}
           <Group justify="space-between" align="flex-start" w="100%">
-            <Text fw={600}>
+            <Text fw={600} c="#344054">
               Address <span className="text-red-600">*</span>
             </Text>
 
@@ -400,7 +427,9 @@ export default function EditPartnerForm({
 
           {/* Logo File Upload */}
           <Group justify="space-between" align="flex-start">
-            <Text fw={600}>Logo file or link</Text>
+            <Text c="#344054" fw={600}>
+              Logo file or link
+            </Text>
             <div className="gap-4 flex">
               <FileInput
                 accept="image/png,image/jpeg"
@@ -422,8 +451,11 @@ export default function EditPartnerForm({
           </Group>
 
           {/* Update Percentages */}
-          <Group justify="space-between" align="flex-start" w="100%">
-            <Text fw={600}>Update City Distribution Percentages</Text>
+          <Group justify="space-between" align="flex-start">
+            <Text fw={600} c="#344054">
+              City Distribution Percentages
+            </Text>
+
             <Tabs
               value={activePercentTab}
               onChange={(val) => {
@@ -497,10 +529,14 @@ export default function EditPartnerForm({
                 ))}
               </Tabs.List>
               <Tabs.Panel value="one-time">
-                <OneTimeUpdateForm />
+                <OneTimeUpdateForm
+                  initialCityPercentages={initialCityPercentEntries}
+                />
               </Tabs.Panel>
               <Tabs.Panel value="continuous">
-                <ContinuousUpdateForm />
+                <ContinuousUpdateForm
+                  initialCityPercentages={initialCityPercentEntries}
+                />
               </Tabs.Panel>
             </Tabs>
           </Group>
@@ -514,6 +550,7 @@ export default function EditPartnerForm({
               type="button"
               onClick={() => {
                 form.reset();
+                onClose();
               }}
             >
               Cancel

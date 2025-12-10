@@ -19,5 +19,5 @@ id,name,centroid
 18,Woburn,"{""type"": ""Point"", ""coordinates"": [-71.1522766, 42.4792618]}"
 19,Winthrop,"{""type"": ""Point"", ""coordinates"": [-70.9825807, 42.3746525]}"
 20,Needham,"{""type"": ""Point"", ""coordinates"": [-71.2360624, 42.2802645]}"
-21,Hyde Park,"{""type"": ""Point"", ""coordinates"": [-71.1244963, 42.2556543]}"
-22,Jamaica Plain,"{""type"": ""Point"", ""coordinates"": [-71.1143838, 42.3116046]}"
+21,Winchester,"{""type"": ""Point"", ""coordinates"": [-71.2360624, 42.2802645]}"
+22,Milton,"{""type"": ""Point"", ""coordinates"": [-71.2360624, 42.2802645]}"

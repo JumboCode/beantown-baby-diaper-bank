@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   Center,
   Loader,
@@ -9,14 +9,12 @@ import {
   Pill,
   Mark,
   Text,
-  ActionIcon,
+  Button,
 } from "@mantine/core";
-import { PartnerRegion } from "@/generated/prisma/client";
 import EditPartnerForm from "../EditPartnerForm";
 import { useDisclosure } from "@mantine/hooks";
 import { status } from "@/generated/prisma/enums";
 import Image from "next/image";
-
 export type Partner = {
   id: number;
   created_at: string;
@@ -46,48 +44,36 @@ function joinCoords(coords: { lat: number; lng: number }) {
   return `${roundCoords(coords).lat}, ${roundCoords(coords).lng}`;
 }
 
+function formatPercentDisplay(value: number | null | undefined) {
+  if (value == null) return null;
+  const rounded = Number((value * 100).toFixed(4)); // round to 4 decimal places, drop trailing zeros
+  return `${rounded}%`;
+}
+
+type PartnerRegion = {
+  partnerId: number;
+  cityId: number;
+  percentage: number | null;
+  city: {
+    id: number;
+    name: string;
+  };
+};
+
 export default function PartnerInfo() {
   const [data, setData] = useState<Partner[]>([]);
   const [percentages, setPercentages] = useState<PartnerRegion[]>([]);
   const [loading, setLoading] = useState(true);
-  // Retrieve data from API, store each partner as Partner type
-  useEffect(() => {
+
+  const refreshTable = useCallback(() => {
     setLoading(true);
-    const fetchAndStoreData = async () => {
-      try {
-        const response = await fetch("/api/partners");
-        const result = await response.json();
-        console.log("Fetched partner data:", result.data);
-        setData(result.data);
-      } catch (err) {
-        console.error("Error fetching data:", err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchAndStoreData();
-
-    const getPercentagesWithCityId = async () => {
-      try {
-        const response = await fetch("/api/partners/percentages");
-        const result = await response.json();
-        setPercentages(result.data);
-      } catch (err) {
-        console.log("Error fetching percentages data", err);
-      }
-    };
-
-    getPercentagesWithCityId();
-  }, []);
-
-  const refreshTable = () => {
-    setLoading(true);
-    fetch("/api/partners")
-      .then((response) => response.json())
-      .then((result) => {
-        console.log("Refetched partner data:", result.data);
-        setData(result.data);
+    Promise.all([
+      fetch("/api/partners").then((response) => response.json()),
+      fetch("/api/partners/percentages").then((response) => response.json()),
+    ])
+      .then(([partnerResult, percentageResult]) => {
+        setData(partnerResult.data);
+        setPercentages(percentageResult.data);
       })
       .catch((err) => {
         console.error("Error refetching data:", err);
@@ -95,7 +81,17 @@ export default function PartnerInfo() {
       .finally(() => {
         setLoading(false);
       });
-  };
+  }, []);
+
+  useEffect(() => {
+    refreshTable();
+  }, [refreshTable]);
+
+  useEffect(() => {
+    const handler = () => refreshTable();
+    window.addEventListener("partners:refresh", handler);
+    return () => window.removeEventListener("partners:refresh", handler);
+  }, [refreshTable]);
 
   return loading ? (
     <Center className="h-64">
@@ -103,22 +99,16 @@ export default function PartnerInfo() {
     </Center>
   ) : (
     <>
-      <PartnerTable
-        partners={data}
-        refreshTable={refreshTable}
-        percentages={percentages}
-      />
+      <PartnerTable partners={data} percentages={percentages} />
     </>
   );
 }
 
 function PartnerTable({
   partners,
-  refreshTable,
   percentages,
 }: {
   partners: Partner[];
-  refreshTable: () => void;
   percentages: PartnerRegion[];
 }) {
   const [partner, setPartner] = useState<Partner | null>(null);
@@ -128,44 +118,36 @@ function PartnerTable({
     <>
       <div className="bg-white rounded-xl shadow-lg overflow-hidden flex flex-col">
         <div className="overflow-x-auto flex-1">
-          <Table
-            highlightOnHover
-            withTableBorder
-            styles={{ th: { color: "#667085" } }}
-            tabularNums
-          >
-            <Table.Thead style={{ backgroundColor: "#F9FAFB" }}>
+          <Table highlightOnHover withTableBorder tabularNums>
+            <Table.Thead bg="#F9FAFB" c="#667085">
               <Table.Tr>
+                <Table.Th fw="normal" fz="14px" w="15%">
+                  Partner Name
+                </Table.Th>
+                <Table.Th fw="normal" fz="14px">
+                  Description
+                </Table.Th>
+                <Table.Th fw="normal" fz="14px">
+                  Since
+                </Table.Th>
+                <Table.Th fw="normal" fz="14px">
+                  Cities Served
+                </Table.Th>
+                <Table.Th fw="normal" fz="14px">
+                  Status
+                </Table.Th>
+                <Table.Th fw="normal" fz="14px">
+                  Coordinates
+                </Table.Th>
+                <Table.Th fw="normal" fz="14px">
+                  Address
+                </Table.Th>
                 <Table.Th></Table.Th>
-                <Table.Th>Partner Name</Table.Th>
-                <Table.Th>Description</Table.Th>
-                <Table.Th>Partner Since</Table.Th>
-                <Table.Th>Status</Table.Th>
-                <Table.Th>Coordinates</Table.Th>
-                <Table.Th>Address</Table.Th>
-                <Table.Th>Cities Served</Table.Th>
               </Table.Tr>
             </Table.Thead>
             <Table.Tbody>
               {partners.map((partner) => (
                 <Table.Tr key={partner.id}>
-                  <Table.Td style={{ verticalAlign: "middle" }}>
-                    <ActionIcon
-                      variant="light"
-                      onClick={() => {
-                        setPartner(partner);
-                        open();
-                      }}
-                      size="lg"
-                    >
-                      <Image
-                        src="/admin_view/pen.svg"
-                        alt="Edit"
-                        width={20}
-                        height={20}
-                      />
-                    </ActionIcon>
-                  </Table.Td>
                   <Table.Td>
                     <div className="flex items-center gap-3">
                       {partner.logo_url && (
@@ -178,12 +160,12 @@ function PartnerTable({
                           }}
                         />
                       )}
-                      <span className="font-bold text-gray-900">
+                      <Text c="#101828" fw={600} fz={"16px"}>
                         {partner.name}
-                      </span>
+                      </Text>
                     </div>
                   </Table.Td>
-                  <Table.Td className="text-sm text-gray-600 max-w-md">
+                  <Table.Td className="text-sm text-gray-600">
                     {partner.description || (
                       <span className="text-gray-400 italic">
                         No description
@@ -198,20 +180,53 @@ function PartnerTable({
                     )}
                   </Table.Td>
                   <Table.Td>
+                    <span key={partner.id} className="text-sm text-gray-600">
+                      <span>
+                        {percentages
+                          .filter(
+                            (percentage) =>
+                              Number(percentage.partnerId) == partner.id,
+                          )
+                          .map((percentage, index, arr) => {
+                            const displayPct = formatPercentDisplay(
+                              percentage.percentage,
+                            );
+                            if (displayPct) {
+                              return (
+                                percentage.city.name +
+                                " (" +
+                                displayPct +
+                                ")" +
+                                (index != arr.length - 1 ? ", " : "")
+                              );
+                            }
+                            return null;
+                          })}
+                      </span>
+                    </span>
+                  </Table.Td>
+                  <Table.Td align="center">
                     <Pill
-                      className={`text-sm font-semibold ${
+                      // Fix me: colors
+                      ta="center"
+                      px="sm"
+                      radius="sm"
+                      fw="bold"
+                      c="white"
+                      fz="10px"
+                      bg={
                         partner.status === "active"
-                          ? "text-green-600"
+                          ? "#558D22"
                           : partner.status === "inactive"
-                            ? "text-red-600"
-                            : "text-yellow-600"
-                      }`}
+                            ? "#E2383F"
+                            : "#98A2B3"
+                      }
                     >
                       {partner.status.charAt(0).toUpperCase() +
                         partner.status.slice(1)}
                     </Pill>
                   </Table.Td>
-                  <Table.Td className="text-xs text-gray-500">
+                  <Table.Td className="text-sm text-gray-600">
                     {partner.coords ? (
                       joinCoords(partner.coords)
                     ) : (
@@ -223,27 +238,36 @@ function PartnerTable({
                       <span className="text-gray-400 italic">N/A</span>
                     )}
                   </Table.Td>
-                  <Table.Td>
-                    <span key={partner.id} className="text-sm text-gray-600">
-                      <span>
-                        {percentages
-                          .filter(
-                            (percentage) =>
-                              Number(percentage.partnerId) == partner.id,
-                          )
-                          .map((percentage, index, arr) => {
-                            if (percentage.percentage) {
-                              return (
-                                percentage.cityId +
-                                " (" +
-                                percentage.percentage * 100 +
-                                "%)" +
-                                (index != arr.length - 1 ? ", " : "")
-                              );
-                            }
-                          })}
-                      </span>
-                    </span>
+
+                  <Table.Td style={{ verticalAlign: "middle" }}>
+                    <Button
+                      variant="transparent"
+                      // size="14px"
+                      fz="14px"
+                      c="#14215A"
+                      onClick={() => {
+                        setPartner(partner);
+                        open();
+                      }}
+                      w="100px"
+                      rightSection={
+                        <Image
+                          src="/admin_view/pen.svg"
+                          alt="Edit"
+                          width={20}
+                          height={20}
+                        />
+                      }
+                    >
+                      Edit
+                    </Button>
+                    {/* <ActionIcon
+                      variant="light"
+                      onClick={() => {
+                        setPartner(partner);
+                        open();
+                      }}
+                      size="lg"></ActionIcon> */}
                   </Table.Td>
                 </Table.Tr>
               ))}
@@ -256,9 +280,9 @@ function PartnerTable({
         <Modal
           opened={opened}
           title={
-            <Text fw={700} size="32px">
+            <Text fw={700} fz={30} c="#101828" ml="xl">
               Edit{" "}
-              <Mark bg="none" c="blue">
+              <Mark bg="none" c="#053766">
                 {partner.name}
               </Mark>{" "}
               Partner Information
@@ -273,7 +297,7 @@ function PartnerTable({
             onClose={() => {
               close();
               setPartner(null);
-              refreshTable();
+              // refreshTable();
             }}
           />
         </Modal>

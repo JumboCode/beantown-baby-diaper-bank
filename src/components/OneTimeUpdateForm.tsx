@@ -2,9 +2,15 @@ import { useState } from "react";
 import { Paper, Stack, Group, Text } from "@mantine/core";
 import { RiCalendarEventLine } from "react-icons/ri";
 import { MonthPickerInput } from "@mantine/dates";
-import CityPercentagesForm from "./CityPercentagesForm";
+import CityPercentagesForm, { CityPercentage } from "./CityPercentagesForm";
 
-export default function OneTimeUpdateForm() {
+type OneTimeUpdateFormProps = {
+  initialCityPercentages?: CityPercentage[];
+};
+
+export default function OneTimeUpdateForm({
+  initialCityPercentages,
+}: OneTimeUpdateFormProps) {
   const [month, setMonth] = useState<string | null>(null);
 
   return (
@@ -34,7 +40,7 @@ export default function OneTimeUpdateForm() {
           />
         </Stack>
 
-        <CityPercentagesForm />
+        <CityPercentagesForm initialEntries={initialCityPercentages} />
       </Stack>
     </Paper>
   );
