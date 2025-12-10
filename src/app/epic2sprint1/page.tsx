@@ -1,14 +1,12 @@
 "use client";
-import TimelineSliderControls from "@/components/TimelineSliderControls";
 import { Box, Paper, Stack, Title } from "@mantine/core";
 
 import PartnerInfo from "./partnerInfo";
-import dynamic from "next/dynamic";
 
-const LeafletMap = dynamic(
-  () => import("@/components/map/Map").then((module) => module.default),
-  { ssr: false },
-);
+// const LeafletMap = dynamic(
+//   () => import("@/components/map/Map").then((module) => module.default),
+//   { ssr: false },
+// );
 
 export default function Page() {
   return (

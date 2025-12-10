@@ -1,9 +1,11 @@
-// Future implementation for city boundary API endpoint
-// TODO: Implement city boundary retrieval logic here
 import { NextResponse } from "next/server";
 import { FeatureCollection, Polygon } from "geojson";
 import { prisma } from "@/lib/prisma";
 import { City } from "@/generated/prisma/client";
+
+// Use static generation for this route and revalidate monthly.
+// set to
+export const revalidate = 2592000;
 
 type RawCityWithBoundaries = Omit<City, "boundary"> & {
   boundary: string;

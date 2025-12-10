@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Stack,
   Group,
@@ -31,10 +31,7 @@ const DEFAULT_CITY_OPTIONS: CityOption[] = [
   { value: "Quincy", label: "Quincy" },
 ];
 
-const DEFAULT_ENTRIES: CityPercentage[] = [
-  { id: "boston", city: "Boston", percent: 60 },
-  { id: "medford", city: "Medford", percent: 40 },
-];
+const DEFAULT_ENTRIES: CityPercentage[] = [];
 
 export default function CityPercentagesForm({
   cityOptions = DEFAULT_CITY_OPTIONS,
@@ -43,6 +40,10 @@ export default function CityPercentagesForm({
   const [city, setCity] = useState<string | null>(null);
   const [percentage, setPercentage] = useState<number | undefined>();
   const [entries, setEntries] = useState<CityPercentage[]>(initialEntries);
+
+  useEffect(() => {
+    setEntries(initialEntries || []);
+  }, [initialEntries]);
 
   const totalPercent = useMemo(
     () => entries.reduce((sum, entry) => sum + entry.percent, 0),

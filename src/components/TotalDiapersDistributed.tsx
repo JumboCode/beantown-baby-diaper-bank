@@ -1,10 +1,10 @@
 "use client";
-import { Paper, Stack, Text, Group } from "@mantine/core";
+import { Paper, Stack, Text, Group, Skeleton } from "@mantine/core";
 import Image from "next/image";
 // import ImpactModal from "./ImpactModal";
 
 interface TotalDiapersDistributedProps {
-  totalDiapers: number;
+  totalDiapers?: number;
 }
 
 export default function TotalDiapersDistributed({
@@ -13,20 +13,29 @@ export default function TotalDiapersDistributed({
   return (
     <Paper
       shadow="md"
-      p="lg"
+      p="md"
       radius="md"
-      style={{ backgroundColor: "#B8D4E8" }}
+      style={{ backgroundColor: "#FFFFFF", border: "1px solid #F2F4F7" }}
     >
       <Group justify="space-between" align="center">
         <Stack gap="xs">
-          <Text size="sm" c="dimmed" fw={500}>
+          <Text
+            // size="sm"
+            fz="16px"
+            fw={700}
+            c="#344054"
+          >
             Total Diapers Distributed
           </Text>
-          <Text size="xl" fw={700}>
-            {totalDiapers.toLocaleString()}
-          </Text>
+          {totalDiapers != null ? (
+            <Text fz={46} fw={700} c="#101828">
+              {totalDiapers.toLocaleString()}
+            </Text>
+          ) : (
+            <Skeleton height={72} width={240} radius="sm" />
+          )}
         </Stack>
-        <Image src="/diaper.svg" alt="Diaper icon" width={60} height={60} />
+        <Image src="/diaper.svg" alt="Diaper icon" width={98} height={78.4} />
       </Group>
     </Paper>
   );

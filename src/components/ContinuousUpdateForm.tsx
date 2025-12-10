@@ -1,12 +1,18 @@
 import { useState } from "react";
 import { Paper, Stack, Group, Text, RadioGroup, Radio } from "@mantine/core";
 import { RiLineChartLine } from "react-icons/ri";
-import { Month, MonthPicker, MonthPickerInput } from "@mantine/dates";
-import CityPercentagesForm from "./CityPercentagesForm";
+import { Month, MonthPickerInput } from "@mantine/dates";
+import CityPercentagesForm, { CityPercentage } from "./CityPercentagesForm";
 
 type Month = string; // e.g., "2024-06"
 
-export default function ContinuousUpdateForm() {
+type ContinuousUpdateFormProps = {
+  initialCityPercentages?: CityPercentage[];
+};
+
+export default function ContinuousUpdateForm({
+  initialCityPercentages,
+}: ContinuousUpdateFormProps) {
   const [monthRange, setMonthRange] = useState<[Month | null, Month | null]>([
     null,
     null,
@@ -74,7 +80,7 @@ export default function ContinuousUpdateForm() {
             </Stack>
           </RadioGroup>
         </Stack>
-        <CityPercentagesForm />
+        <CityPercentagesForm initialEntries={initialCityPercentages} />
       </Stack>
     </Paper>
   );

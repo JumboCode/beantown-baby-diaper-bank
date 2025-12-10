@@ -39,7 +39,6 @@ export default function DotPopUps() {
           key={index}
           cityName={dot.cityName}
           numDiapers={dot.numDiapers}
-          partnerOrgs={dot.partnerOrgs}
         />
       ))}
     </div>
@@ -49,7 +48,6 @@ export default function DotPopUps() {
 type InfoDisplayerProps = {
   cityName: string | null | undefined;
   numDiapers: number | null;
-  partnerOrgs: string[] | undefined;
   childrenHelped?: number | null;
 };
 
@@ -57,14 +55,13 @@ export const InfoDisplayer = ({
   cityName,
   numDiapers,
   childrenHelped,
-  partnerOrgs,
 }: InfoDisplayerProps) => {
   return (
     <div>
       <p style={{ fontSize: "20px", fontWeight: "bold" }}> City: {cityName}</p>
       <p> Diapers Distributed: {numDiapers?.toString()} </p>
       <p> Children helped: {childrenHelped} </p>
-      <PartnerInfo name={partnerOrgs} fromMarker={true} />
+      <PartnerInfo name={"test"} fromMarker={true} />
     </div>
   );
 };
@@ -72,7 +69,6 @@ export const InfoDisplayer = ({
 export const SinglePopUp = ({
   cityName,
   numDiapers,
-  partnerOrgs,
   childrenHelped,
 }: InfoDisplayerProps) => {
   const [opened, { close, open }] = useDisclosure(false);
@@ -90,7 +86,6 @@ export const SinglePopUp = ({
         <InfoDisplayer
           cityName={cityName}
           numDiapers={numDiapers}
-          partnerOrgs={partnerOrgs}
           childrenHelped={childrenHelped}
         />
       </Popover.Dropdown>

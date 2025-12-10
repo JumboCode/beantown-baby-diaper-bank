@@ -1,9 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Table, Text, ActionIcon } from "@mantine/core";
-import Image from "next/image";
-
+import { Table, Text } from "@mantine/core";
 interface Distribution {
   id: string;
   createdAt: string;
@@ -47,46 +45,38 @@ export default function DistributionsTable() {
 
   if (error) return <Text c="red">Error: {error}</Text>;
 
-  // Group by organization
-  const grouped = distributions.reduce(
-    (acc, dist) => {
-      const orgName = dist.partner.name;
-      if (!acc[orgName]) {
-        acc[orgName] = [];
-      }
-      acc[orgName].push(dist);
-      return acc;
-    },
-    {} as Record<string, Distribution[]>,
-  );
+  // // Group by organization
+  // const grouped = distributions.reduce(
+  //   (acc, dist) => {
+  //     const orgName = dist.partner.name;
+  //     if (!acc[orgName]) {
+  //       acc[orgName] = [];
+  //     }
+  //     acc[orgName].push(dist);
+  //     return acc;
+  //   },
+  //   {} as Record<string, Distribution[]>
+  // );
 
-  const rows: React.ReactNode[] = [];
-
-  //group by org
-  Object.entries(grouped).forEach(([orgName, dists]) => {
-    dists.forEach((dist, idx) =>
-      rows.push(
-        <Table.Tr key={`${orgName}-${dist.id}`}>
-          {idx === 0 && (
-            <Table.Td
-              fz={"lg"}
-              rowSpan={dists.length}
-              p={"xl"}
-              style={{ verticalAlign: "middle", fontWeight: "bold" }}
-            >
-              {orgName}
-            </Table.Td>
-          )}
-          <Table.Td>{dist.city.name}</Table.Td>
-          <Table.Td>{dist.numberDiapers}</Table.Td>
-          <Table.Td>{dist.numberChildren}</Table.Td>
-          <Table.Td>{dist.month}</Table.Td>
-          <Table.Td>{dist.year}</Table.Td>
-          <Table.Td>{(dist.percentage * 100).toFixed(2)}%</Table.Td>
-        </Table.Tr>,
-      ),
-    );
-  });
+  const rows: React.ReactNode[] = distributions.map((dist) => (
+    <Table.Tr key={`${dist.id}`}>
+      <Table.Td fz={16} fw={600} c="#101828" className="text-sm text-gray-600">
+        {dist.partner.name}
+      </Table.Td>
+      <Table.Td className="text-sm text-gray-600">{dist.city.name}</Table.Td>
+      <Table.Td className="text-sm text-gray-600">
+        {dist.numberDiapers}
+      </Table.Td>
+      <Table.Td className="text-sm text-gray-600">
+        {dist.numberChildren}
+      </Table.Td>
+      <Table.Td className="text-sm text-gray-600">{dist.month}</Table.Td>
+      <Table.Td className="text-sm text-gray-600">{dist.year}</Table.Td>
+      <Table.Td className="text-sm text-gray-600">
+        {(dist.percentage * 100).toFixed(2)}%
+      </Table.Td>
+    </Table.Tr>
+  ));
 
   return (
     <div className="bg-white rounded-xl shadow-lg overflow-hidden flex flex-col">
@@ -99,13 +89,27 @@ export default function DistributionsTable() {
         >
           <Table.Thead style={{ backgroundColor: "#F9FAFB" }}>
             <Table.Tr>
-              <Table.Th>Organization Name</Table.Th>
-              <Table.Th>City</Table.Th>
-              <Table.Th>Number of Diapers Distributed</Table.Th>
-              <Table.Th>Number of Children Helped</Table.Th>
-              <Table.Th>Month</Table.Th>
-              <Table.Th>Year</Table.Th>
-              <Table.Th>Percentage</Table.Th>
+              <Table.Th fw="normal" fz="14px">
+                Partner Name
+              </Table.Th>
+              <Table.Th fw="normal" fz="14px">
+                City
+              </Table.Th>
+              <Table.Th fw="normal" fz="14px">
+                Number of Diapers Distributed
+              </Table.Th>
+              <Table.Th fw="normal" fz="14px">
+                Number of Children Helped
+              </Table.Th>
+              <Table.Th fw="normal" fz="14px">
+                Month
+              </Table.Th>
+              <Table.Th fw="normal" fz="14px">
+                Year
+              </Table.Th>
+              <Table.Th fw="normal" fz="14px">
+                Percentage
+              </Table.Th>
             </Table.Tr>
           </Table.Thead>
           <Table.Tbody>{rows}</Table.Tbody>
