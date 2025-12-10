@@ -181,32 +181,13 @@ export async function PUT(request: Request) {
 
 export async function POST(request: Request) {
   const body = await request.json();
-  // Need to fix for new partner
-
-  let partnerStatus: status; 
-  let waitlisted: boolean;
-
-  if(body.waitlisted) {
-    partnerStatus = "waitlisted";
-    waitlisted = true; 
-  } else if (body.active) {
-    partnerStatus = "active";
-    waitlisted = false;
-  } else if (body.inactive) {
-    partnerStatus = "inactive";
-    waitlisted = false;
-  } else {
-    partnerStatus = body.status as status; 
-    waitlisted = body.waitlisted ?? false;
-  }
-
   const updatePartnerRequest = {
     where: { id: body.id },
     data: {
       name: body.name,
       description: body.description,
       startPartner: new Date(body.start_partner).toISOString(),
-      status: partnerStatus,
+      status: body.status as status,
       coords: body.coordinates,
       address: body.address,
       logoUrl: body.logo,
