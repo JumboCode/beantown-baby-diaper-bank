@@ -1,7 +1,9 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
-export async function GET(request: Request) {
+export const revalidate = 2592000;
+
+export async function GET() {
   try {
     const results = await prisma.yearlyData.aggregate({
       _sum: { numDiapers: true },
@@ -9,8 +11,6 @@ export async function GET(request: Request) {
 
     const totalDiapers =
       results._sum.numDiapers == null ? 0 : Number(results._sum.numDiapers);
-
-    console.log("this is the number of diapers:", totalDiapers);
 
     return NextResponse.json({ totalDiapers });
   } catch (error) {

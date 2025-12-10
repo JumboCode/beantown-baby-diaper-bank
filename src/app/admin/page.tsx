@@ -6,6 +6,10 @@ import { useState } from "react";
 import Image from "next/image";
 import { Poppins } from "next/font/google";
 import DistributionsTable from "@/components/DistributionsTable";
+import { useDisclosure } from "@mantine/hooks";
+import UploadNewData from "./UploadNewData";
+import AddPartnerForm from "@/components/AddPartnerForm";
+import classes from "./AdminPage.module.css";
 
 const poppins = Poppins({
   subsets: ["latin"],
@@ -14,36 +18,50 @@ const poppins = Poppins({
 
 export default function Page() {
   const [activeTab, setActiveTab] = useState<string | null>("Partners");
+  const [
+    openedUploadDataForm,
+    { open: openUploadDataForm, close: closeUploadDataForm },
+  ] = useDisclosure(false);
+
+  const [
+    openedPartnerForm,
+    { open: openPartnerForm, close: closePartnerForm },
+  ] = useDisclosure(false);
 
   return (
-    <Stack
-      gap="lg"
-      className={poppins.className}>
-      <Card>
-        <Group
-          justify="space-between"
-          align="flex-start">
+    <Stack mx="72px" my="44px" gap="lg" className={poppins.className}>
+      <Card p={0}>
+        <Group justify="space-between" align="flex-start">
           <Stack gap={4}>
             <Title order={2}>Hello, Rachel 👋</Title>
-            <Group
-              gap="xl"
-              wrap="wrap">
-              <Text
-                size="sm"
-                c="dimmed">
+            <Group gap="xl" wrap="wrap">
+              <Text size="sm" c="dimmed">
                 Last data uploaded: Monday, 30 Aug, 2025
               </Text>
-              <Text
-                size="sm"
-                c="dimmed">
+              <Text size="sm" c="dimmed">
                 Last updated: Friday, 2 Sep, 2025
               </Text>
             </Group>
           </Stack>
-
+          <UploadNewData
+            opened={openedUploadDataForm}
+            onClose={closeUploadDataForm}
+          />
+          <AddPartnerForm
+            opened={openedPartnerForm}
+            onClose={closePartnerForm}
+          />
           <Button
+            onClick={() => {
+              if (activeTab === "Diapers") {
+                openUploadDataForm();
+              } else {
+                openPartnerForm();
+              }
+            }}
             variant="default"
             radius="md"
+            c="#053766"
             rightSection={
               <Image
                 src="/admin_view/add_icon.svg"
@@ -51,21 +69,24 @@ export default function Page() {
                 width={16}
                 height={16}
               />
-            }>
+            }
+          >
             {activeTab === "Partners" ? "Add A New Partner" : "Upload New Data"}
           </Button>
         </Group>
       </Card>
 
       <Tabs
+        classNames={classes}
         defaultValue={activeTab}
         onChange={setActiveTab}
         styles={{
           list: {
             "--tabs-border-color": "transparent",
           },
-        }}>
-        <Tabs.List>
+        }}
+      >
+        <Tabs.List mb="16px">
           <Tabs.Tab
             value="Partners"
             leftSection={
@@ -84,7 +105,8 @@ export default function Page() {
                   width={16}
                 />
               )
-            }>
+            }
+          >
             Partners
           </Tabs.Tab>
           <Tabs.Tab
@@ -99,13 +121,14 @@ export default function Page() {
                 />
               ) : (
                 <Image
-                  src="/admin_view/Diapers_tab_gray.svg"
+                  src="/admin_view/diapers_tab_gray.svg"
                   alt="partners inactive icon"
                   height={16}
                   width={16}
                 />
               )
-            }>
+            }
+          >
             Diapers
           </Tabs.Tab>
           <Button
@@ -113,6 +136,7 @@ export default function Page() {
             variant="default"
             radius={5}
             style={{ alignSelf: "center", marginRight: 4, marginBottom: 4 }}
+            c="#053766"
             rightSection={
               <Image
                 src="/admin_view/filter.svg"
@@ -120,7 +144,8 @@ export default function Page() {
                 width={16}
                 height={16}
               />
-            }>
+            }
+          >
             Filter
           </Button>
         </Tabs.List>

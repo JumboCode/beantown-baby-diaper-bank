@@ -221,18 +221,11 @@ const diaperLegendBuckets: LegendBucket[] = [
   { min: 40000, max: Infinity, color: "#023E8A", label: "40k+ diapers" },
 ];
 
-const impactAssumptions = {
-  diaperCost: 0.27, // average cost per diaper in USD
-  distributionEfficiency: 0.92, // % of donation that goes directly to supplies & delivery
-  diapersPerChildPerWeek: 50, // typical usage per child
-};
-
 export default function ColinMadelineAryaaHotmap() {
-  const [showRegions, setShowRegions] = useState(true);
-  const [regionFilter, setRegionFilter] = useState<string>("all");
+  const [showRegions] = useState(true);
+  const [regionFilter] = useState<string>("all");
   const [hoveredRegionId, setHoveredRegionId] = useState<string | undefined>();
   const [selectedRegionId, setSelectedRegionId] = useState<string | null>(null);
-  const [donationAmount, setDonationAmount] = useState<number>(250);
   const [modalRegionId, setModalRegionId] = useState<string | null>(null);
 
   const filteredRegions = useMemo<RegionsGeoJSON>(() => {
@@ -246,7 +239,7 @@ export default function ColinMadelineAryaaHotmap() {
     return {
       ...baseRegions,
       features: baseRegions.features.filter(
-        (feature) => feature.properties?.id === regionFilter
+        (feature) => feature.properties?.id === regionFilter,
       ),
     };
   }, [regionFilter, showRegions]);
@@ -262,29 +255,13 @@ export default function ColinMadelineAryaaHotmap() {
         acc[regionId] = value;
         return acc;
       },
-      {} as Record<string, number>
+      {} as Record<string, number>,
     );
   }, []);
 
-  const regionOptions = useMemo(
-    () => [
-      { value: "all", label: "All regions" },
-      ...baseRegions.features.map((feature) => ({
-        value: feature.properties?.id ?? "",
-        label: feature.properties?.name ?? "Unnamed region",
-      })),
-    ],
-    []
-  );
-
   const hoveredRegionName =
     baseRegions.features.find(
-      (feature) => feature.properties?.id === hoveredRegionId
-    )?.properties?.name ?? "None";
-
-  const selectedRegionName =
-    baseRegions.features.find(
-      (feature) => feature.properties?.id === selectedRegionId
+      (feature) => feature.properties?.id === hoveredRegionId,
     )?.properties?.name ?? "None";
 
   const activeRegionId = selectedRegionId ?? hoveredRegionId ?? null;
@@ -294,7 +271,7 @@ export default function ColinMadelineAryaaHotmap() {
 
   const activeRegionLabel =
     baseRegions.features.find(
-      (feature) => feature.properties?.id === activeRegionId
+      (feature) => feature.properties?.id === activeRegionId,
     )?.properties?.name ?? "Select a region";
 
   const modalRegionStats = modalRegionId
@@ -305,38 +282,9 @@ export default function ColinMadelineAryaaHotmap() {
     : null;
   const modalRegionLabel =
     baseRegions.features.find(
-      (feature) => feature.properties?.id === modalRegionId
+      (feature) => feature.properties?.id === modalRegionId,
     )?.properties?.name ?? "Region detail";
   const isModalOpen = modalRegionId != null;
-
-  const impactPercent = Math.min(
-    100,
-    Math.round((distributionSummary.delivered / distributionSummary.goal) * 100)
-  );
-
-  const donationImpact = useMemo(() => {
-    const amount = Math.max(0, donationAmount);
-    const effectiveBudget = amount * impactAssumptions.distributionEfficiency;
-    const diapersFunded = Math.floor(
-      effectiveBudget / impactAssumptions.diaperCost
-    );
-    const coverageWeeks = Math.floor(
-      diapersFunded / impactAssumptions.diapersPerChildPerWeek
-    );
-    const coverageMonths = coverageWeeks / 4;
-    const ChildrenPerMonth = Math.max(
-      0,
-      Math.floor(diapersFunded / (impactAssumptions.diapersPerChildPerWeek * 4))
-    );
-
-    return {
-      amount,
-      diapersFunded,
-      coverageWeeks,
-      coverageMonths,
-      ChildrenPerMonth,
-    };
-  }, [donationAmount]);
 
   const handleOpenRegionModal = () => {
     if (activeRegionId) {
@@ -347,30 +295,6 @@ export default function ColinMadelineAryaaHotmap() {
   const handleModalClose = () => {
     setModalRegionId(null);
   };
-
-  const handleDonationSliderChange = (value: number) => {
-    setDonationAmount(value);
-  };
-
-  const handleDonationInputChange = (value: number | string) => {
-    if (value === "" || value == null) {
-      setDonationAmount(0);
-      return;
-    }
-
-    const parsed = typeof value === "number" ? value : Number(value);
-    if (!Number.isNaN(parsed)) {
-      const clamped = Math.max(0, Math.min(5000, parsed));
-      setDonationAmount(clamped);
-    }
-  };
-
-  const coverageMonthsDisplay =
-    donationImpact.coverageMonths >= 1
-      ? donationImpact.coverageMonths.toFixed(1)
-      : donationImpact.coverageMonths > 0
-        ? donationImpact.coverageMonths.toFixed(2)
-        : "0";
 
   // --- Leaderboard logic START ---
   const regionLeaderboard = useMemo(() => {
@@ -422,21 +346,16 @@ export default function ColinMadelineAryaaHotmap() {
         style={{
           cursor: activeRegionStats ? "pointer" : "default",
           outline: "none",
-        }}>
+        }}
+      >
         <Stack gap="sm">
           <Title order={4}>Region spotlight</Title>
           {activeRegionStats ? (
             <Stack gap="xs">
-              <Group
-                justify="space-between"
-                align="center">
+              <Group justify="space-between" align="center">
                 <Text fw={600}>{activeRegionLabel}</Text>
-                <Group
-                  gap="xs"
-                  align="center">
-                  <Badge
-                    variant="light"
-                    color="teal">
+                <Group gap="xs" align="center">
+                  <Badge variant="light" color="teal">
                     Active
                   </Badge>
                   <ThemeIcon
@@ -444,39 +363,32 @@ export default function ColinMadelineAryaaHotmap() {
                     color="teal"
                     radius="xl"
                     size={26}
-                    aria-hidden>
+                    aria-hidden
+                  >
                     <ExternalLink size={16} />
                   </ThemeIcon>
                 </Group>
               </Group>
               <Text size="sm">
-                <Text
-                  component="span"
-                  fw={600}>
+                <Text component="span" fw={600}>
                   {activeRegionStats.ChildrenServed.toLocaleString()}
                 </Text>{" "}
                 Children supported
               </Text>
               <Text size="sm">
-                <Text
-                  component="span"
-                  fw={600}>
+                <Text component="span" fw={600}>
                   {activeRegionStats.diapersDelivered.toLocaleString()}
                 </Text>{" "}
                 diapers delivered YTD
               </Text>
               <Text size="sm">
                 Partner sites:{" "}
-                <Text
-                  component="span"
-                  fw={600}>
+                <Text component="span" fw={600}>
                   {activeRegionStats.partnerSites}
                 </Text>
               </Text>
               <Stack gap={4}>
-                <Text
-                  size="xs"
-                  c="dimmed">
+                <Text size="xs" c="dimmed">
                   Fulfillment rate
                 </Text>
                 <Progress
@@ -491,9 +403,7 @@ export default function ColinMadelineAryaaHotmap() {
               </Stack>
             </Stack>
           ) : (
-            <Text
-              size="sm"
-              c="dimmed">
+            <Text size="sm" c="dimmed">
               Hover or click a region to see local distribution metrics.
             </Text>
           )}
@@ -501,27 +411,16 @@ export default function ColinMadelineAryaaHotmap() {
       </Paper>
 
       {/* start of the hover region impact story */}
-      <Paper
-        radius="lg"
-        shadow="xl"
-        withBorder
-        p="md">
+      <Paper radius="lg" shadow="xl" withBorder p="md">
         <Stack gap={4}>
-          <Title
-            order={4}
-            textWrap="wrap">
+          <Title order={4} textWrap="wrap">
             {" "}
             {hoveredRegionName && hoveredRegionName !== "None"
               ? `Hear From The Voices In ${hoveredRegionName}`
               : "Pick a region to hear about the people that have been impacted there"}
           </Title>
-          <Stack
-            gap={0}
-            mt="sm">
-            <Text
-              size="md"
-              c="dimmed"
-              mt={4}>
+          <Stack gap={0} mt="sm">
+            <Text size="md" c="dimmed" mt={4}>
               {hoveredRegionStory}
             </Text>
           </Stack>
@@ -533,44 +432,30 @@ export default function ColinMadelineAryaaHotmap() {
 
   const rightOverlay = (
     <Stack gap="md">
-      <Paper
-        radius="lg"
-        shadow="xl"
-        withBorder
-        p="md">
+      <Paper radius="lg" shadow="xl" withBorder p="md">
         <Stack gap="sm">
           <Group justify="space-between">
             <Title order={4}>Impact at a glance</Title>
-            <Badge
-              color="teal"
-              variant="dot">
+            <Badge color="teal" variant="dot">
               +{distributionSummary.yoyGrowth}% YoY
             </Badge>
           </Group>
-          <Group
-            align="center"
-            gap="md">
+          <Group align="center" gap="md">
             <Stack gap={4}>
               <Text size="sm">
-                <Text
-                  component="span"
-                  fw={700}>
+                <Text component="span" fw={700}>
                   {distributionSummary.delivered.toLocaleString()}
                 </Text>{" "}
                 diapers delivered
               </Text>
               <Text size="sm">
-                <Text
-                  component="span"
-                  fw={700}>
+                <Text component="span" fw={700}>
                   {distributionSummary.ChildrenServed.toLocaleString()}
                 </Text>{" "}
                 Children served
               </Text>
               <Text size="sm">
-                <Text
-                  component="span"
-                  fw={700}>
+                <Text component="span" fw={700}>
                   {distributionSummary.partnerCount}
                 </Text>{" "}
                 partner sites
@@ -581,23 +466,15 @@ export default function ColinMadelineAryaaHotmap() {
       </Paper>
 
       {/* --- Leaderboard panel START --- */}
-      <Paper
-        radius="lg"
-        shadow="xl"
-        withBorder
-        p="md">
+      <Paper radius="lg" shadow="xl" withBorder p="md">
         <Stack gap="sm">
           <Title order={4}>Region Leaderboard</Title>
           {regionLeaderboard.map((region, idx) => (
-            <Group
-              key={region.regionId}
-              justify="space-between">
+            <Group key={region.regionId} justify="space-between">
               <Text fw={600}>
                 #{idx + 1} {region.regionName}
               </Text>
-              <Badge
-                color="teal"
-                variant="light">
+              <Badge color="teal" variant="light">
                 {region.ChildrenServed.toLocaleString()} children
               </Badge>
             </Group>
@@ -606,19 +483,12 @@ export default function ColinMadelineAryaaHotmap() {
       </Paper>
       {/* --- Leaderboard panel END --- */}
 
-      <Paper
-        radius="lg"
-        shadow="xl"
-        withBorder
-        p="md">
+      <Paper radius="lg" shadow="xl" withBorder p="md">
         <Stack gap="sm">
           <Title order={4}>Distribution legend</Title>
           <Stack gap="xs">
             {diaperLegendBuckets.map((bucket) => (
-              <Group
-                key={bucket.label}
-                justify="space-between"
-                align="center">
+              <Group key={bucket.label} justify="space-between" align="center">
                 <Group gap="sm">
                   <Box
                     style={{
@@ -630,9 +500,7 @@ export default function ColinMadelineAryaaHotmap() {
                   />
                   <Text size="sm">{bucket.label}</Text>
                 </Group>
-                <Text
-                  size="xs"
-                  c="dimmed">
+                <Text size="xs" c="dimmed">
                   {bucket.max === Infinity
                     ? `${bucket.min.toLocaleString()}+`
                     : `${bucket.min.toLocaleString()}–${bucket.max.toLocaleString()}`}
@@ -653,24 +521,18 @@ export default function ColinMadelineAryaaHotmap() {
         onClose={handleModalClose}
         size="lg"
         title={`${modalRegionLabel} impact`}
-        centered>
+        centered
+      >
         {modalRegionDetails && modalRegionStats ? (
           <Stack gap="md">
-            <Text
-              size="sm"
-              c="dimmed">
+            <Text size="sm" c="dimmed">
               {modalRegionDetails.narrative}
             </Text>
-            <Divider
-              label="Snapshot"
-              labelPosition="center"
-            />
+            <Divider label="Snapshot" labelPosition="center" />
             <Grid gutter="md">
               <Grid.Col span={{ base: 12, sm: 4 }}>
                 <Stack gap={2}>
-                  <Text
-                    size="xs"
-                    c="dimmed">
+                  <Text size="xs" c="dimmed">
                     Latest delivery
                   </Text>
                   <Text fw={700}>
@@ -681,9 +543,7 @@ export default function ColinMadelineAryaaHotmap() {
               </Grid.Col>
               <Grid.Col span={{ base: 12, sm: 4 }}>
                 <Stack gap={2}>
-                  <Text
-                    size="xs"
-                    c="dimmed">
+                  <Text size="xs" c="dimmed">
                     Children helped
                   </Text>
                   <Text fw={700}>
@@ -693,9 +553,7 @@ export default function ColinMadelineAryaaHotmap() {
               </Grid.Col>
               <Grid.Col span={{ base: 12, sm: 4 }}>
                 <Stack gap={2}>
-                  <Text
-                    size="xs"
-                    c="dimmed">
+                  <Text size="xs" c="dimmed">
                     Volunteer hours
                   </Text>
                   <Text fw={700}>
@@ -704,44 +562,27 @@ export default function ColinMadelineAryaaHotmap() {
                 </Stack>
               </Grid.Col>
             </Grid>
-            <Divider
-              label="Top needs"
-              labelPosition="center"
-            />
-            <List
-              spacing="xs"
-              size="sm">
+            <Divider label="Top needs" labelPosition="center" />
+            <List spacing="xs" size="sm">
               {modalRegionDetails.topNeeds.map((need) => (
                 <List.Item key={need}>{need}</List.Item>
               ))}
             </List>
-            <Divider
-              label="Key partners"
-              labelPosition="center"
-            />
-            <List
-              spacing="xs"
-              size="sm">
+            <Divider label="Key partners" labelPosition="center" />
+            <List spacing="xs" size="sm">
               {modalRegionDetails.partners.map((partner) => (
                 <List.Item key={partner}>{partner}</List.Item>
               ))}
             </List>
-            <Divider
-              label="Upcoming engagements"
-              labelPosition="center"
-            />
-            <List
-              spacing="xs"
-              size="sm">
+            <Divider label="Upcoming engagements" labelPosition="center" />
+            <List spacing="xs" size="sm">
               {modalRegionDetails.upcomingEvents.map((event) => (
                 <List.Item key={event}>{event}</List.Item>
               ))}
             </List>
           </Stack>
         ) : (
-          <Text
-            size="sm"
-            c="dimmed">
+          <Text size="sm" c="dimmed">
             Select a region to explore detailed impact metrics.
           </Text>
         )}

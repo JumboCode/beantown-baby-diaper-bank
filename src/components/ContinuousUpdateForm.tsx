@@ -1,12 +1,18 @@
 import { useState } from "react";
 import { Paper, Stack, Group, Text, RadioGroup, Radio } from "@mantine/core";
 import { RiLineChartLine } from "react-icons/ri";
-import { Month, MonthPicker, MonthPickerInput } from "@mantine/dates";
-import CityPercentagesForm from "./CityPercentagesForm";
+import { Month, MonthPickerInput } from "@mantine/dates";
+import CityPercentagesForm, { CityPercentage } from "./CityPercentagesForm";
 
 type Month = string; // e.g., "2024-06"
 
-export default function ContinuousUpdateForm() {
+type ContinuousUpdateFormProps = {
+  initialCityPercentages?: CityPercentage[];
+};
+
+export default function ContinuousUpdateForm({
+  initialCityPercentages,
+}: ContinuousUpdateFormProps) {
   const [monthRange, setMonthRange] = useState<[Month | null, Month | null]>([
     null,
     null,
@@ -14,32 +20,19 @@ export default function ContinuousUpdateForm() {
   const [fromMonth, setFromMonth] = useState<Month | null>(null);
 
   return (
-    <Paper
-      withBorder
-      radius="lg"
-      p="lg">
+    <Paper withBorder radius="lg" p="lg">
       <Stack gap="md">
         <Group gap="xs">
-          <RiLineChartLine
-            size={20}
-            color="#0B3A79"
-          />
-          <Text
-            fw={700}
-            size="lg"
-            c="#0B3A79">
+          <RiLineChartLine size={20} color="#0B3A79" />
+          <Text fw={700} size="lg" c="#0B3A79">
             Continuous Update
           </Text>
         </Group>
-        <Text
-          size="sm"
-          c="dimmed">
+        <Text size="sm" c="dimmed">
           This will update distributions for a continuous range of months
         </Text>
         <Stack gap={6}>
-          <Text
-            fw={600}
-            size="sm">
+          <Text fw={600} size="sm">
             Effective From
           </Text>
           <RadioGroup>
@@ -87,7 +80,7 @@ export default function ContinuousUpdateForm() {
             </Stack>
           </RadioGroup>
         </Stack>
-        <CityPercentagesForm />
+        <CityPercentagesForm initialEntries={initialCityPercentages} />
       </Stack>
     </Paper>
   );

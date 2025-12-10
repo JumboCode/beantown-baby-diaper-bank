@@ -1,5 +1,6 @@
 import { FileInput } from "@mantine/core";
 import { useState } from "react";
+import { Text } from "@mantine/core";
 
 export default function FileUpload() {
   const [fileInfo, setFileInfo] = useState<{
@@ -18,9 +19,10 @@ export default function FileUpload() {
     <div>
       <FileInput
         accept="csv"
-        label="Upload files"
+        label={<Text fw={700}>Files</Text>}
         onChange={handleFileChange}
-        placeholder="Upload files"
+        placeholder={<Text size="sm">Click to Upload</Text>}
+        description="Upload one or more dataset files"
       />
       <div>{fileInfo != null && <h1> File name: {fileInfo.name} </h1>}</div>
       <div>

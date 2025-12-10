@@ -1,0 +1,15 @@
+.tab {
+  color: #667085;
+
+  &[data-active] {
+    z-index: 1;
+
+    /* background-color: var(--mantine-color-blue-filled); */
+    border-color: #053766;
+    color: #053766;
+
+    /* @mixin hover {
+      background-color: var(--mantine-color-blue-filled-hover);
+    } */
+  }
+}

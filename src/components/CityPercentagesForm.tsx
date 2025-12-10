@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Stack,
   Group,
@@ -31,10 +31,7 @@ const DEFAULT_CITY_OPTIONS: CityOption[] = [
   { value: "Quincy", label: "Quincy" },
 ];
 
-const DEFAULT_ENTRIES: CityPercentage[] = [
-  { id: "boston", city: "Boston", percent: 60 },
-  { id: "medford", city: "Medford", percent: 40 },
-];
+const DEFAULT_ENTRIES: CityPercentage[] = [];
 
 export default function CityPercentagesForm({
   cityOptions = DEFAULT_CITY_OPTIONS,
@@ -44,9 +41,13 @@ export default function CityPercentagesForm({
   const [percentage, setPercentage] = useState<number | undefined>();
   const [entries, setEntries] = useState<CityPercentage[]>(initialEntries);
 
+  useEffect(() => {
+    setEntries(initialEntries || []);
+  }, [initialEntries]);
+
   const totalPercent = useMemo(
     () => entries.reduce((sum, entry) => sum + entry.percent, 0),
-    [entries]
+    [entries],
   );
 
   const addEntry = () => {
@@ -63,8 +64,8 @@ export default function CityPercentagesForm({
       prev.map((entry) =>
         entry.id === id
           ? { ...entry, percent: Number.isNaN(percentValue) ? 0 : percentValue }
-          : entry
-      )
+          : entry,
+      ),
     );
   };
 
@@ -75,14 +76,10 @@ export default function CityPercentagesForm({
   return (
     <Stack gap="sm">
       <Stack gap={6}>
-        <Text
-          fw={600}
-          size="sm">
+        <Text fw={600} size="sm">
           City Distribution Percentage
         </Text>
-        <Group
-          gap="sm"
-          wrap="nowrap">
+        <Group gap="sm" wrap="nowrap">
           <Select
             placeholder="Choose a city"
             data={cityOptions}
@@ -106,7 +103,8 @@ export default function CityPercentagesForm({
           <Button
             radius="md"
             onClick={addEntry}
-            disabled={!city || percentage === undefined}>
+            disabled={!city || percentage === undefined}
+          >
             Add
           </Button>
         </Group>
@@ -118,11 +116,10 @@ export default function CityPercentagesForm({
             key={entry.id}
             justify="space-between"
             align="center"
-            className="border border-gray-200 rounded-md px-3 py-2">
+            className="border border-gray-200 rounded-md px-3 py-2"
+          >
             <Text fw={600}>{entry.city}</Text>
-            <Group
-              gap="xs"
-              align="center">
+            <Group gap="xs" align="center">
               <NumberInput
                 value={entry.percent}
                 onChange={(val) => updatePercent(entry.id, val ?? 0)}
@@ -134,9 +131,7 @@ export default function CityPercentagesForm({
                 size="sm"
                 styles={{ input: { textAlign: "center" } }}
               />
-              <Text
-                c="dimmed"
-                size="sm">
+              <Text c="dimmed" size="sm">
                 %
               </Text>
               <Button
@@ -144,7 +139,8 @@ export default function CityPercentagesForm({
                 color="red"
                 size="compact-sm"
                 onClick={() => removeEntry(entry.id)}
-                leftSection={<RiCloseLine size={16} />}>
+                leftSection={<RiCloseLine size={16} />}
+              >
                 Remove
               </Button>
             </Group>
@@ -155,9 +151,7 @@ export default function CityPercentagesForm({
       <Divider />
 
       <Group justify="flex-end">
-        <Text
-          fw={600}
-          c="green">
+        <Text fw={600} c="green">
           Total: {totalPercent.toFixed(0)}%
         </Text>
       </Group>
