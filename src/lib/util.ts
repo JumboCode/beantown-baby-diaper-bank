@@ -1,3 +1,5 @@
+import { Roles } from '@/types/global'
+import { auth } from '@clerk/nextjs/server'
 /**
  * Stringifies a value to JSON, converting any BigInt values to strings to avoid serialization errors.  Use this function whenever you need to serialize data that may contain BigInt fields, such as Prisma query results.
  * @param value - The value to stringify, which can be of any type. This can be an object, array, primitive, etc. Most commonly used for objects containing BigInt fields, like the Prisma query results.
@@ -7,4 +9,10 @@ export function stringifyWithBigInt(value: unknown) {
   return JSON.stringify(value, (_key, jsonValue) =>
     typeof jsonValue === "bigint" ? jsonValue.toString() : jsonValue,
   );
+}
+
+
+export const checkRole = async (role: Roles) => {
+  const { sessionClaims } = await auth()
+  return sessionClaims?.metadata.role === role
 }

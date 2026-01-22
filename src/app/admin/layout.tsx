@@ -1,3 +1,5 @@
+import Profile from "@/components/admin/Profile";
+
 import {
   AppShell,
   AppShellHeader,
@@ -14,9 +16,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           <Text fw={700} c="blue.9">
             Beantown Baby Admin
           </Text>
-          <Text size="sm" c="dimmed">
-            Rachel
-          </Text>
+          <Profile />
         </Group>
       </AppShellHeader>
       <AppShellMain>{children}</AppShellMain>

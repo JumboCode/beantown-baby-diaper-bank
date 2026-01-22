@@ -33,7 +33,6 @@ export default function Page() {
       <Card p={0}>
         <Group justify="space-between" align="flex-start">
           <Stack gap={4}>
-            <Title order={2}>Hello, Rachel 👋</Title>
             <Group gap="xl" wrap="wrap">
               <Text size="sm" c="dimmed">
                 Last data uploaded: Monday, 30 Aug, 2025
