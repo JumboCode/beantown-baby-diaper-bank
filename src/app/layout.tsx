@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { MantineProvider, createTheme } from "@mantine/core";
+import { MantineProvider } from "@mantine/core";
 import "@mantine/core/styles.css";
 import "./globals.css";
 import "leaflet/dist/leaflet.css";
@@ -9,10 +9,6 @@ export const metadata: Metadata = {
   description: "Providing diapers to families in need.",
 };
 
-const theme = createTheme({
-  primaryColor: "teal",
-});
-
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -21,7 +17,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
-        <MantineProvider theme={theme}>{children}</MantineProvider>
+        <MantineProvider>{children}</MantineProvider>
       </body>
     </html>
   );

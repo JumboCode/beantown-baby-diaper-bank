@@ -1,59 +1,61 @@
-// TODO: Implement city API endpoint
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { Prisma as PrismaTypes } from "@/generated/prisma/client";
+import { unstable_cache } from "next/cache";
 
-export async function GET(request: Request) {
-  const { searchParams } = new URL(request.url);
-  const cityName = searchParams.get("name");
-  const month = searchParams.get("month");
-  const year = searchParams.get("year");
+export const dynamic = "force-dynamic";
+// need to revalidate only monthly
+export const revalidate = 2592000;
 
-  if (month && !year) {
-    return NextResponse.json(
-      { error: "Year must be provided if month is provided." },
-      { status: 400 }
-    );
-  }
+const getCities = unstable_cache(
+  async (
+    cityName: string | null,
+    month: string | null,
+    year: string | null,
+  ) => {
+    if (month && !year) {
+      return NextResponse.json(
+        { error: "Year must be provided if month is provided." },
+        { status: 400 },
+      );
+    }
 
-  const distributionWhere: PrismaTypes.DistributionWhereInput = {};
-  if (month) {
-    distributionWhere.month = month;
-  }
-  if (year) {
-    distributionWhere.year = year;
-  }
+    const distributionWhere: PrismaTypes.DistributionWhereInput = {};
+    if (month) {
+      distributionWhere.month = month;
+    }
+    if (year) {
+      distributionWhere.year = year;
+    }
 
-  const cityWithRelationArgs = {
-    include: {
-      distributions: {
-        where: distributionWhere,
-        include: {
-          partner: true,
+    const cityWithRelationArgs = {
+      include: {
+        distributions: {
+          where: distributionWhere,
+          include: {
+            partner: true,
+          },
+        },
+        partnerRegions: {
+          include: {
+            partner: true,
+          },
         },
       },
-      partnerRegions: {
-        include: {
-          partner: true,
-        },
-      },
-    },
-  } satisfies PrismaTypes.CityFindManyArgs;
+    } satisfies PrismaTypes.CityFindManyArgs;
 
-  type CityWithRelations = PrismaTypes.CityGetPayload<
-    typeof cityWithRelationArgs
-  >;
+    type CityWithRelations = PrismaTypes.CityGetPayload<
+      typeof cityWithRelationArgs
+    >;
 
-  /* build filters based on city name */
-  const where: PrismaTypes.CityWhereInput = {};
-  if (cityName) {
-    where.name = {
-      contains: cityName,
-      mode: "insensitive",
-    };
-  }
-
-  try {
+    /* build filters based on city name */
+    const where: PrismaTypes.CityWhereInput = {};
+    if (cityName) {
+      where.name = {
+        contains: cityName,
+        mode: "insensitive",
+      };
+    }
     const cities: CityWithRelations[] = await prisma.city.findMany({
       where,
       orderBy: { name: "asc" },
@@ -82,13 +84,27 @@ export async function GET(request: Request) {
       })),
     }));
 
-    return NextResponse.json({ data: dataToReturn });
-  } catch (error) {
-    const message =
-      error instanceof Error
-        ? error.message
-        : `Unable to retrieve from the database.`;
+    // build filters and run prisma.city.findMany(...) as you already do
+    return dataToReturn; // your mapped result
+  },
+  ["cities"], // base cache key; args are added automatically
+  { revalidate, tags: ["cities"] },
+);
+export async function GET(request: Request) {
+  const { searchParams } = new URL(request.url);
+  const cityName = searchParams.get("name");
+  const month = searchParams.get("month");
+  const year = searchParams.get("year");
 
-    return NextResponse.json({ error: message }, { status: 500 });
-  }
+  const dataToReturn = await getCities(cityName, month, year);
+
+  return NextResponse.json(
+    { data: dataToReturn },
+    {
+      headers: {
+        "Cache-Control":
+          "public, s-maxage=2592000, stale-while-revalidate=604800",
+      },
+    },
+  );
 }

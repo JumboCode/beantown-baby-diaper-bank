@@ -5,6 +5,17 @@ import { parse } from "csv-parse";
 import { prisma } from "../src/lib/prisma";
 import { YearlyDataCreateManyInput } from "@/generated/prisma/models";
 import { randomUUID } from "node:crypto";
+import { promises as fs } from "node:fs";
+import { status as PartnerStatus } from "@/generated/prisma/client";
+
+const parseStatus = (value: string | undefined): PartnerStatus | undefined => {
+  if (!value) return undefined;
+  const normalized = value.trim().toLowerCase();
+  if (normalized === "active") return "active";
+  if (normalized === "inactive") return "inactive";
+  if (normalized === "waitlisted") return "waitlisted";
+  return undefined; // unknown values are ignored
+};
 
 // generic CSV loader -> array of plain objects
 async function loadCsv<T extends Record<string, string | undefined>>(
@@ -27,6 +38,23 @@ const toDate = (value: string | undefined) =>
   value && value.length > 0 ? new Date(value) : undefined;
 const toStringOrNull = (value: string | undefined) =>
   value && value.length > 0 ? value : null;
+
+async function loadBoundaryGeometry(cityName?: string) {
+  if (!cityName) return null;
+  const slug = cityName.toLowerCase().replace(/\s+/g, "-");
+  const file = path.join(__dirname, "data/geojson", `${slug}.geojson`);
+  try {
+    const raw = await fs.readFile(file, "utf8");
+    const json = JSON.parse(raw);
+    const feature =
+      json.type === "FeatureCollection" ? json.features?.[0] : json;
+    if (!feature?.geometry) return null;
+    return JSON.stringify(feature.geometry);
+  } catch (err) {
+    console.warn(`No boundary file for ${cityName}:`, err);
+    return null;
+  }
+}
 
 async function seedCities() {
   type Row = {
@@ -54,6 +82,15 @@ async function seedCities() {
     WHERE id = ${toBigInt(row.id)}
   `;
   }
+  for (const row of rows) {
+    const boundary = await loadBoundaryGeometry(row.name);
+    if (!boundary) continue;
+    await prisma.$executeRaw`
+  UPDATE "Cities"
+  SET "boundary" = ST_SetSRID(ST_GeomFromGeoJSON(${boundary}), 4326)::geography
+  WHERE id = ${toBigInt(row.id)}
+`;
+  }
 }
 
 async function seedPartners() {
@@ -67,6 +104,7 @@ async function seedPartners() {
     address?: string;
     coords?: string;
     logo_url?: string;
+    status?: string;
   };
 
   const rows = await loadCsv<Row>(path.join(__dirname, "data/partners.csv"));
@@ -81,6 +119,7 @@ async function seedPartners() {
       address: toStringOrNull(row.address),
       coords: row.coords ? JSON.parse(row.coords) : undefined,
       logoUrl: toStringOrNull(row.logo_url),
+      status: parseStatus(row.status), // NEW
     })),
     skipDuplicates: true,
   });
@@ -117,17 +156,20 @@ async function seedDistributions() {
     skipDuplicates: true,
   });
 }
-
 async function seedPartnerRegions() {
   type Row = {
     partner_id: string;
     city_id: string;
+    percentage?: string;
   };
 
   const rows = await loadCsv<Row>(
     path.join(__dirname, "data/partner_regions.csv"),
   );
-  let data: { partnerId: bigint; cityId: bigint }[] = [];
+
+  let data: { partnerId: bigint; cityId: bigint; percentage: number | null }[] =
+    [];
+
   try {
     data = rows.map((row) => {
       const partnerId = toBigInt(row.partner_id);
@@ -137,7 +179,14 @@ async function seedPartnerRegions() {
           `Invalid partnerId or cityId in row: ${JSON.stringify(row)}`,
         );
       }
-      return { partnerId, cityId };
+
+      const raw = toNumber(row.percentage);
+      const percentage =
+        raw !== undefined && raw !== null
+          ? Math.round(raw * 10_000) / 10_000 // 4 decimal places
+          : null;
+
+      return { partnerId, cityId, percentage };
     });
   } catch (error) {
     console.error("Error parsing partner regions:", error);
@@ -189,12 +238,12 @@ async function seedYearlyData() {
 }
 
 async function main() {
-  // await prisma.$transaction([
-  //   prisma.partnerRegion.deleteMany(),
-  //   prisma.distribution.deleteMany(),
-  //   prisma.partner.deleteMany(),
-  //   prisma.city.deleteMany(),
-  // ]);
+  await prisma.$transaction([
+    prisma.partnerRegion.deleteMany(),
+    prisma.distribution.deleteMany(),
+    prisma.partner.deleteMany(),
+    prisma.city.deleteMany(),
+  ]);
   await seedCities();
   await seedPartners();
   await seedDistributions();
