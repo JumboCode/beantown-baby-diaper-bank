@@ -7,7 +7,7 @@ import Papa from "papaparse";
 
 export function stringifyWithBigInt(value: unknown) {
   return JSON.stringify(value, (_key, jsonValue) =>
-    typeof jsonValue === "bigint" ? jsonValue.toString() : jsonValue
+    typeof jsonValue === "bigint" ? jsonValue.toString() : jsonValue,
   );
 }
 
@@ -85,7 +85,5 @@ export function parseDistributionData(csv: string) {
     row = data.data[i] as string[];
   }
 
-  // console.log(result);
   return result;
 }
-

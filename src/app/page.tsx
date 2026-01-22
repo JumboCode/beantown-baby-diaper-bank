@@ -15,7 +15,6 @@ import {
   ThemeIcon,
 } from "@mantine/core";
 import { FaGithub } from "react-icons/fa";
-import PartnerForm from "../components/PartnerForm";
 import RakshiValentinaTicket from "../components/sprint4/RakshiValentinaTicket";
 
 export default function Home() {
@@ -216,24 +215,16 @@ export default function Home() {
           </Stack>
         </Card>
 
-        <Card
-          shadow="md"
-          radius="md"
-          withBorder>
+        <Card shadow="md" radius="md" withBorder>
           <Stack gap="xs">
             <Title order={2}>Sprint 4</Title>
-            <Divider />
-            <PartnerForm />
 
             <Divider />
             <RakshiValentinaTicket />
           </Stack>
         </Card>
 
-        <Card
-          shadow="sm"
-          radius="md"
-          withBorder>
+        <Card shadow="sm" radius="md" withBorder>
           <Stack gap="xs">
             <Group>
               <ThemeIcon c="teal" size="lg" radius="md">
