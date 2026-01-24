@@ -46,73 +46,74 @@ function joinCoords(coords: { lat: number; lng: number }) {
   return `${roundCoords(coords).lat}, ${roundCoords(coords).lng}`;
 }
 
-export default function PartnerInfo() {
-  const [data, setData] = useState<Partner[]>([]);
-  const [percentages, setPercentages] = useState<PartnerRegion[]>([]);
-  const [loading, setLoading] = useState(true);
-  // Retrieve data from API, store each partner as Partner type
-  useEffect(() => {
-    setLoading(true);
-    const fetchAndStoreData = async () => {
-      try {
-        const response = await fetch("/api/partners");
-        const result = await response.json();
-        console.log("Fetched partner data:", result.data);
-        setData(result.data);
-      } catch (err) {
-        console.error("Error fetching data:", err);
-      } finally {
-        setLoading(false);
-      }
-    };
+// export default function PartnerInfo() {
+//   const [data, setData] = useState<Partner[]>([]);
+//   const [percentages, setPercentages] = useState<PartnerRegion[]>([]);
+//   const [loading, setLoading] = useState(true);
+  
+//   // Retrieve data from API, store each partner as Partner type
+//   useEffect(() => {
+//     setLoading(true);
+//     const fetchAndStoreData = async () => {
+//       try {
+//         const response = await fetch("/api/partners");
+//         const result = await response.json();
+//         console.log("Fetched partner data:", result.data);
+//         setData(result.data);
+//       } catch (err) {
+//         console.error("Error fetching data:", err);
+//       } finally {
+//         setLoading(false);
+//       }
+//     };
 
-    fetchAndStoreData();
+//     fetchAndStoreData();
 
-    const getPercentagesWithCityId = async () => {
-      try {
-        const response = await fetch("/api/partners/percentages");
-        const result = await response.json();
-        setPercentages(result.data);
-      } catch (err) {
-        console.log("Error fetching percentages data", err);
-      }
-    };
+//     const getPercentagesWithCityId = async () => {
+//       try {
+//         const response = await fetch("/api/partners/percentages");
+//         const result = await response.json();
+//         setPercentages(result.data);
+//       } catch (err) {
+//         console.log("Error fetching percentages data", err);
+//       }
+//     };
 
-    getPercentagesWithCityId();
-  }, []);
+//     getPercentagesWithCityId();
+//   }, []);
 
-  const refreshTable = () => {
-    setLoading(true);
-    fetch("/api/partners")
-      .then((response) => response.json())
-      .then((result) => {
-        console.log("Refetched partner data:", result.data);
-        setData(result.data);
-      })
-      .catch((err) => {
-        console.error("Error refetching data:", err);
-      })
-      .finally(() => {
-        setLoading(false);
-      });
-  };
+//   const refreshTable = () => {
+//     setLoading(true);
+//     fetch("/api/partners")
+//       .then((response) => response.json())
+//       .then((result) => {
+//         console.log("Refetched partner data:", result.data);
+//         setData(result.data);
+//       })
+//       .catch((err) => {
+//         console.error("Error refetching data:", err);
+//       })
+//       .finally(() => {
+//         setLoading(false);
+//       });
+//   };
 
-  return loading ? (
-    <Center className="h-64">
-      <Loader type="bars" />
-    </Center>
-  ) : (
-    <>
-      <PartnerTable
-        partners={data}
-        refreshTable={refreshTable}
-        percentages={percentages}
-      />
-    </>
-  );
-}
+//   return loading ? (
+//     <Center className="h-64">
+//       <Loader type="bars" />
+//     </Center>
+//   ) : (
+//     <>
+//       <PartnerTable
+//         partners={data}
+//         refreshTable={refreshTable}
+//         percentages={percentages}
+//       />
+//     </>
+//   );
+// }
 
-function PartnerTable({
+export default function PartnerTable({
   partners,
   refreshTable,
   percentages,

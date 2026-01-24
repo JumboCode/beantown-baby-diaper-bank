@@ -26,13 +26,10 @@ export default function DistributionsTable(props: {
   distributionData: Distribution[];
 }) {
   const [distributions, setDistributions] = useState<Distribution[]>([]);
-  // const [error, setError] = useState<string>();
 
   useEffect(() => {
     setDistributions(props.distributionData);
   }, [props.distributionData]);
-
-  // if (error) return <Text c="red">Error: {error}</Text>;
 
   // Group by organization
   const grouped = distributions.reduce(

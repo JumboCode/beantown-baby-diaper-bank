@@ -20,6 +20,8 @@ import Image from "next/image";
 import { Poppins } from "next/font/google";
 import DistributionsTable from "@/components/DistributionsTable";
 import { useDisclosure } from "@mantine/hooks";
+import { status } from "@/generated/prisma/enums";
+import { PartnerRegion } from "@/generated/prisma/client";
 
 const poppins = Poppins({
   subsets: ["latin"],
@@ -44,6 +46,18 @@ interface Distribution {
   };
 }
 
+type Partner = {
+  id: number;
+  created_at: string;
+  name: string;
+  description: string | null;
+  start_partner: string | null;
+  status: status;
+  address: string | null;
+  coords?: { lat: number; lng: number };
+  logo_url: string | null;
+};
+
 const monthMap: Record<string, string> = {
   January: "01",
   February: "02",
@@ -59,22 +73,40 @@ const monthMap: Record<string, string> = {
   December: "12",
 };
 
+const years: Array<string> = ["All", "2023", "2024", "2025"];
+
+const statuses = [
+  { label: "Ally", value: "ally" },
+  { label: "Active", value: "active" },
+  { label: "Inactive", value: "inactive" },
+  { label: "Waitlisted", value: "waitlisted" },
+] as const;
+
 export default function Page() {
   const [activeTab, setActiveTab] = useState<string | null>("Partners");
   const [opened, { open, close }] = useDisclosure(false);
   const [isOpened, setOpened] = useState(false);
 
-  const [distributions, setDistributions] = useState<Distribution[]>([]);
-  const [filteredDistributions, setFilteredDistributions] = useState<
-    Distribution[]
-  >([]);
   const [error, setError] = useState<string>();
 
+  // partner filtering
+  const [partnerYearSince, setPartnerYearSince] = useState<string | null>("All");
+  const [partnerStatus, setPartnerStatus] = useState<string[]>([]);
+
+  const [partners, setPartners] = useState<Partner[]>([]);
+  const [filteredPartners, setFilteredPartners] = useState<Partner[]>([]);
+  const [percentages, setPercentages] = useState<PartnerRegion[]>([]);
+
+  // diaper filtering
   const [valueFrom, setValueFrom] = useState<string | null>(null);
   const [valueTo, setValueTo] = useState<string | null>(null);
   const [orgName, setOrgName] = useState<string | null>(null);
   const [city, setCity] = useState<string | null>(null);
 
+  const [distributions, setDistributions] = useState<Distribution[]>([]);
+  const [filteredDistributions, setFilteredDistributions] = useState<
+    Distribution[]
+  >([]);
 
   useEffect(() => {
     const fetchDistributions = async () => {
@@ -96,6 +128,32 @@ export default function Page() {
     fetchDistributions();
   }, []);
 
+  useEffect(() => {
+    const fetchPartners = async () => {
+      try {
+        const response = await fetch("/api/partners");
+        const result = await response.json();
+        setPartners(result.data);
+        setFilteredPartners(result.data);
+      } catch (err) {
+        console.error("Error fetching data:", err);
+      }
+    };
+
+    const fetchPercentages = async () => {
+      try {
+        const response = await fetch("/api/partners/percentages");
+        const result = await response.json();
+        setPercentages(result.data);
+      } catch (err) {
+        console.log("Error fetching percentages data", err);
+      }
+    };
+
+    fetchPartners();
+    fetchPercentages();
+  }, []);
+
   const filterDistributions = () => {
     let filtered = [...distributions];
 
@@ -103,7 +161,7 @@ export default function Page() {
       filtered = filtered.filter((dist) => dist.partner.name === orgName);
     }
 
-      if (city) {
+    if (city) {
       filtered = filtered.filter((dist) => dist.city.name === city);
     }
 
@@ -133,6 +191,38 @@ export default function Page() {
     setFilteredDistributions(filtered);
     close();
   };
+
+  useEffect(() => {
+    let filtered = [...partners];
+
+    if (partnerYearSince && partnerYearSince !== "All") {
+      filtered = filtered.filter((p) => {
+        if (!p.start_partner) return false;
+        return (
+          new Date(p.start_partner).getFullYear().toString() ===
+          partnerYearSince
+        );
+      });
+    }
+
+    if (partnerStatus.length > 0) {
+      filtered = filtered.filter((p) => partnerStatus.includes(p.status));
+    }
+
+    setFilteredPartners(filtered);
+  }, [partners, partnerYearSince, partnerStatus]);
+
+    const refreshTable = () => {
+    fetch("/api/partners")
+      .then((response) => response.json())
+      .then((result) => {
+        console.log("Refetched partner data:", result.data);
+        setPartners(result.data);
+      })
+      .catch((err) => {
+        console.error("Error refetching data:", err);
+      })
+    };
 
   if (error) return <Text c="red">Error: {error}</Text>;
 
@@ -323,34 +413,69 @@ export default function Page() {
               </Button>
             </Popover.Target>
             <Popover.Dropdown>
-              {/* Your filter content here */}
-
-              <div>
+              <Stack gap="xs">
                 <h3>
                   <strong>Year Since</strong>
                 </h3>
-                <Group gap={7} mb="md">
-                  <Button size="compact-md">All</Button>
-                  <Button size="compact-md">2023</Button>
-                  <Button size="compact-md">2024</Button>
-                  <Button size="compact-md">2025</Button>
+                <Group gap={7} mb="xs">
+                  {years.map((year) =>
+                    partnerYearSince == year ? (
+                      <Button
+                        key={year}
+                        variant="filled"
+                        color="#053766"
+                        radius="md"
+                      >
+                        {year}
+                      </Button>
+                    ) : (
+                      <Button
+                        key={year}
+                        variant="outline"
+                        color="#053766"
+                        radius="md"
+                        onClick={() => {
+                          setPartnerYearSince(year);
+                        }}
+                      >
+                        {year}
+                      </Button>
+                    ),
+                  )}
                 </Group>
                 <h3>
                   <strong>Status</strong>
                 </h3>
                 <Stack>
-                  <Checkbox label="Ally"></Checkbox>
-                  <Checkbox label="Active"></Checkbox>
-                  <Checkbox label="Inactive"></Checkbox>
-                  <Checkbox label="Waitlisted"></Checkbox>
+                  {statuses.map((status) => (
+                    <Checkbox
+                      key={status.value}
+                      label={status.label}
+                      checked={partnerStatus.includes(status.value)}
+                      color="#053766"
+                      onChange={(e) => {
+                        const checked = e.currentTarget.checked;
+
+                        setPartnerStatus((prev) =>
+                          checked
+                            ? [...prev, status.value]
+                            : prev.filter((s) => s !== status.value),
+                        );
+                      }}
+                    />
+                  ))}{" "}
                 </Stack>
-              </div>
+              </Stack>
             </Popover.Dropdown>
           </Popover>
         </Tabs.List>
 
         <Tabs.Panel value="Partners">
-          <PartnerTable />
+          <PartnerTable
+            partners={filteredPartners}
+            refreshTable={refreshTable}
+            percentages={percentages}
+          />
         </Tabs.Panel>
         <Tabs.Panel value="Diapers">
           <DistributionsTable distributionData={filteredDistributions} />
