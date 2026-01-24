@@ -68,6 +68,7 @@ type PartnerInfoType = {
   id: number;
   name: string;
   logo_url?: string | null;
+  status: "active" | "inactive" | "waitlisted" | null;
 };
 
 type CityMapInfo = City & {
@@ -82,10 +83,10 @@ export default function Map({ mapData }: { mapData: MapData }) {
   const [hoveredId, setHoveredId] = useState<string | number | null>(null);
   const [activeId, setActiveId] = useState<string | number | null>(null);
 
-  const cities = mapData?.cities.data;
+  const cities = mapData?.cities.data ?? [];
 
   const boundaryPolygons = useMemo(() => {
-    if (!mapData?.boundaries) return [];
+    if (!mapData?.boundaries || cities.length === 0) return [];
 
     let maxDiapers = 0;
     const cityTotals: Record<string, number> = {};
@@ -214,6 +215,7 @@ function PopupContent({ city }: { city: CityMapInfo }) {
               name={partner.name}
               url={partner.logo_url || null}
               id={partner.id}
+              status={partner.status}
               fromMarker={false}
             />
           ))}

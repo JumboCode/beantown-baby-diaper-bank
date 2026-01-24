@@ -56,9 +56,13 @@ export async function GET(request: Request) {
     };
   }
 
-  // Filter by waitlist status if provided
+  // Filter by waitlist status if provided (use status, not legacy waitlisted flag)
   if (waitlisted === "true" || waitlisted === "false") {
-    where.waitlisted = waitlisted === "true";
+    if (waitlisted === "true") {
+      where.status = "waitlisted";
+    } else {
+      where.status = { not: "waitlisted" };
+    }
   }
 
   try {
@@ -82,7 +86,7 @@ export async function GET(request: Request) {
         ? partner.startPartner.toISOString()
         : null,
       status: partner.status,
-      waitlisted: partner.waitlisted,
+      waitlisted: partner.status === "waitlisted",
       address: partner.address,
       coords: partner.coords,
       logo_url: partner.logoUrl,

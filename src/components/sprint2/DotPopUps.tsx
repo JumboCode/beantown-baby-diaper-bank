@@ -61,7 +61,7 @@ export const InfoDisplayer = ({
       <p style={{ fontSize: "20px", fontWeight: "bold" }}> City: {cityName}</p>
       <p> Diapers Distributed: {numDiapers?.toString()} </p>
       <p> Children helped: {childrenHelped} </p>
-      <PartnerInfo name={"test"} fromMarker={true} />
+      <PartnerInfo name={"test"} status="active" fromMarker={true} />
     </div>
   );
 };
