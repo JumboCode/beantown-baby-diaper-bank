@@ -81,6 +81,7 @@ const getCities = unstable_cache(
         id: Number(partnerRegion.partnerId),
         name: partnerRegion.partner.name,
         logo_url: partnerRegion.partner.logoUrl,
+        status: partnerRegion.partner.status,
       })),
     }));
 
