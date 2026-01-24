@@ -21,6 +21,7 @@ type PartnerInfoType = {
   id: number;
   name: string;
   logo_url?: string | null;
+  status: "active" | "inactive" | "waitlisted" | null;
 };
 
 type CityMapInfo = City & {

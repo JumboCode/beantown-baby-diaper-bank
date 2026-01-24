@@ -151,7 +151,7 @@ export default function AddPartnerForm({
       name: values.organization,
       description: values.description,
       start_partner: values.time,
-      waitlisted: values.status,
+      status: values.status,
       coordinates: {
         lat: Number(values.latitude),
         lng: Number(values.longitude),
