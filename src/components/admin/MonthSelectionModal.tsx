@@ -40,6 +40,7 @@ export default function MonthSelectionModal() {
   const [opened, { open, close }] = useDisclosure(false);
   const [numMonths, setNumMonths] = useState('one_month');
   const [monthsRange, setMonthsRange] = useState<[string | null, string | null]>([null, null]);
+  // const [monthsRange, setMonthsRange] = useState<[Date | null, Date | null]>([null, null]);
   const [oneMonth, setOneMonth] = useState<string | null>(null);
   const [previewData, setPreviewData] = useState<any[]>([]);
   const [isPreviewMode, setIsPreviewMode] = useState(false);
@@ -48,16 +49,16 @@ export default function MonthSelectionModal() {
     const { mode, start, end } = selection;
     if (mode === "one_month") {
       console.log("in fetch: one month");
-      console.log(start.month);
+      console.log(start.month); //
 
-      const monthName = MONTH_NAMES[start.month];
-      console.log("month:", monthName, "year:", start.year);
-
+      const monthName = MONTH_NAMES[start.month + 1];
+      console.log("month:", monthName, "year:", start.year); // month: May year: 2025
       const preview = await fetch(`http://localhost:3000/api/distributions?month=${monthName}&year=${start.year}`);
       if (!preview.ok) {
         console.error("Error: could not fetch distributions for", monthName);
       } else {
         const preview_json = await preview.json()
+        console.log(preview_json)
         setPreviewData(preview_json);
         console.log("Preview one_month:",preview_json);
       }
@@ -94,17 +95,23 @@ export default function MonthSelectionModal() {
   }
 
   const handleClick = () => {
+    setPreviewData([]);
+    setIsPreviewMode(true);
+
     if (numMonths === "one_month") {
       if (!oneMonth) {
         return;
       }
       const date = new Date(oneMonth);
+      //
+      // console.log("BEFORE FETCH", { date.getMonth() });
       fetchPreviewMonthSelection({
         mode: "one_month",
         start: {
           month: date.getMonth(),
           year: date.getFullYear(),
         },
+        //
         end: null
       });
     } else {
@@ -129,8 +136,8 @@ export default function MonthSelectionModal() {
         }
       });
     }
-    setPreviewData([]);
-    setIsPreviewMode(true);
+    // setPreviewData([]);
+    // setIsPreviewMode(true);
     // onClose();
   }
 
@@ -189,7 +196,8 @@ export default function MonthSelectionModal() {
 
             <Table.Tbody>
               {previewData.map(dist => (
-                <Table.Tr key={dist.id}>
+                // <Table.Tr key={dist.id}>
+                <Table.Tr key={`${dist.id}-${dist.month}-${dist.year}-${dist.created_at}`}>
                   <Table.Td>{dist.id}</Table.Td>
                   <Table.Td>{dist.partner_id}</Table.Td>
                   <Table.Td>{dist.diapers}</Table.Td>

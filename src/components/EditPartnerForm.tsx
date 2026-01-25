@@ -11,14 +11,18 @@ import {
   Stack,
   LoadingOverlay,
   Box,
+  Tabs,
 } from "@mantine/core";
+import { RiCalendarEventLine, RiLineChartLine } from "react-icons/ri";
 import { useForm } from "@mantine/form";
 import { MonthPickerInput } from "@mantine/dates";
 import "@mantine/dates/styles.css";
 import { Partner } from "./admin/PartnerTable";
-import parser from "parse-address";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { status } from "@/generated/prisma/enums";
+import OneTimeUpdateForm from "./OneTimeUpdateForm";
+import ContinuousUpdateForm from "./ContinuousUpdateForm";
+import type { CityPercentage } from "./CityPercentagesForm";
 
 interface EditPartnerFormProps {
   partner: Partner;
@@ -26,6 +30,49 @@ interface EditPartnerFormProps {
 }
 
 const countries = ["United States", "Canada"];
+const DEFAULT_COUNTRY = "United States";
+
+type AddressFields = {
+  addressLine: string;
+  city: string;
+  state: string;
+  zipCode: string;
+  country: string;
+};
+
+const parseAddressFields = (address: string | null): AddressFields => {
+  const defaults: AddressFields = {
+    addressLine: "",
+    city: "",
+    state: "",
+    zipCode: "",
+    country: DEFAULT_COUNTRY,
+  };
+  if (!address) return defaults;
+
+  const parts = address
+    .split(",")
+    .map((p) => p.trim())
+    .filter(Boolean);
+  return {
+    addressLine: parts[0] || "",
+    city: parts[1] || "",
+    state: parts[2] || "",
+    zipCode: parts[3] || "",
+    country: parts[4] || DEFAULT_COUNTRY,
+  };
+};
+
+const buildAddressString = ({
+  addressLine,
+  city,
+  state,
+  zipCode,
+  country,
+}: AddressFields) =>
+  [addressLine, city, state, zipCode, country || DEFAULT_COUNTRY]
+    .filter((part) => Boolean(part))
+    .join(", ");
 
 // Checks if input is a number (can be decimal)
 const requiredNumber = (label: string) => (value: unknown) => {
@@ -40,59 +87,43 @@ const requiredInteger = (label: string) => (value: unknown) => {
   return /^\d+$/.test(v) ? null : `${label} must be a number`;
 };
 
-interface RequiredAddressComponents {
-  number: string;
-  street: string;
-  city: string;
-  state: string;
-  zip: string;
-}
-
-type AddressWithExtras = RequiredAddressComponents &
-  Partial<parser.ParsedLocation>;
-
-function parseAddress(fullAddress: string | null): AddressWithExtras {
-  const defaults = {
-    number: "",
-    street: "",
-    city: "",
-    state: "",
-    zip: "",
-  };
-
-  if (!fullAddress) return defaults;
-
-  try {
-    const parsed = parser.parseAddress(fullAddress) ?? {};
-    return { ...defaults, ...parsed };
-  } catch (error) {
-    console.error("Error parsing address:", error);
-    return defaults;
-  }
-}
-function formatAddress(address: AddressWithExtras) {
-  try {
-    const parts = [];
-    if (address.number) parts.push(address.number);
-    if (address.prefix) parts.push(address.prefix);
-    if (address.street) parts.push(address.street);
-    if (address.type) parts.push(address.type);
-    if (address.suffix) parts.push(address.suffix);
-    return parts.join(" ");
-  } catch (error) {
-    console.error("Error formatting address:", error);
-    return "";
-  }
-}
+type UpdatePercentagesOptions = "one-time" | "continuous";
 export default function EditPartnerForm({
   partner,
   onClose,
 }: EditPartnerFormProps) {
   const [loading, setLoading] = useState(false);
+  const [activePercentTab, setActivePercentTab] =
+    useState<UpdatePercentagesOptions>("one-time");
 
-  console.log("Editing partner:", partner);
+  const [cityPercentages, setCityPercentages] = useState<
+    {
+      city: { id: number; name: string };
+      percentage: number;
+    }[]
+  >([]);
 
-  const address = parseAddress(partner.address);
+  useEffect(() => {
+    fetch(`/api/partners/percentages?partnerId=${partner.id}`)
+      .then((res) => res.json())
+      .then((data) => {
+        setCityPercentages(data.data);
+      })
+      .catch((error) => {
+        console.error("Error fetching partner percentages:", error);
+      });
+  }, [partner.id]);
+
+  const initialCityPercentEntries: CityPercentage[] =
+    cityPercentages.length > 0
+      ? cityPercentages.map((entry, idx) => ({
+          id: `${entry.city.name}-${idx}`,
+          city: entry.city.name,
+          percent: Math.round((entry.percentage ?? 0) * 100),
+        }))
+      : [];
+
+  const addressFields = parseAddressFields(partner.address);
 
   const form = useForm({
     mode: "controlled",
@@ -105,13 +136,14 @@ export default function EditPartnerForm({
       status: partner.status,
       latitude: partner.coords ? partner.coords.lat : "",
       longitude: partner.coords ? partner.coords.lng : "",
-      addressLine: formatAddress(address),
-      city: address.city || "",
-      state: address.state || "",
-      zipCode: address.zip || "",
-      country: "United States",
+      addressLine: addressFields.addressLine,
+      city: addressFields.city,
+      state: addressFields.state,
+      zipCode: addressFields.zipCode,
+      country: addressFields.country,
       logoFile: null as File | null,
       logoUrl: partner.logo_url || "",
+      updatePercentagesType: "one-time" as UpdatePercentagesOptions,
     },
     validate: {
       organization: (value) =>
@@ -134,7 +166,6 @@ export default function EditPartnerForm({
 
   async function submitEditPartner(values: typeof form.values) {
     setLoading(true);
-    console.log("Submitting edited partner values:", values);
     const formData = {
       id: partner.id,
       name: values.organization,
@@ -145,15 +176,13 @@ export default function EditPartnerForm({
         lat: values.latitude,
         lng: values.longitude,
       },
-      address:
-        values.addressLine +
-        ", " +
-        values.city +
-        ", " +
-        values.state +
-        ", " +
-        " " +
-        values.zipCode,
+      address: buildAddressString({
+        addressLine: values.addressLine,
+        city: values.city,
+        state: values.state,
+        zipCode: values.zipCode,
+        country: values.country,
+      }),
       logo: values.logoUrl,
     };
 
@@ -182,20 +211,24 @@ export default function EditPartnerForm({
         zIndex={1000}
         overlayProps={{ radius: "sm", blur: 2 }}
       />
-      <h2 className="text-lg text-gray-500">Change your partner data</h2>
 
-      <div className="p-4 border border-gray-300 rounded-xl">
+      <div className="mx-8">
+        <h2 className="text-lg text-gray-500" style={{ marginBottom: "24px" }}>
+          Change your partner data
+        </h2>
         <form
           onSubmit={form.onSubmit((values) => {
             submitEditPartner(values);
+            if (typeof window !== "undefined") {
+              window.dispatchEvent(new Event("partners:refresh"));
+            }
           })}
-          className="flex flex-col gap-5">
+          className="flex flex-col gap-5"
+        >
           {/* Name of Organization */}
-          <Group
-            justify="space-between"
-            align="flex-start">
-            <Text fw={600}>
-              Name of Organzation <span className="text-red-600">*</span>
+          <Group justify="space-between" align="flex-start">
+            <Text fw={600} c="#344054">
+              Name of Organization <span className="text-red-600">*</span>
             </Text>
             <TextInput
               placeholder="Name"
@@ -209,10 +242,8 @@ export default function EditPartnerForm({
           </Group>
 
           {/* Description */}
-          <Group
-            justify="space-between"
-            align="flex-start">
-            <Text fw={600}>
+          <Group justify="space-between" align="flex-start">
+            <Text fw={600} c="#344054">
               Description <span className="text-red-600">*</span>
             </Text>
             <Textarea
@@ -221,15 +252,15 @@ export default function EditPartnerForm({
               size="md"
               className="min-w-170"
               radius="md"
+              autosize
+              maxRows={6}
               required
             />
           </Group>
 
           {/* Time Started*/}
-          <Group
-            justify="space-between"
-            align="flex-start">
-            <Text fw={600}>
+          <Group justify="space-between" align="flex-start">
+            <Text fw={600} c="#344054">
               Time it started <span className="text-red-600">*</span>
             </Text>
             <MonthPickerInput
@@ -241,19 +272,17 @@ export default function EditPartnerForm({
             />
           </Group>
 
-          <Group
-            justify="space-between"
-            align="flex-end"
-            w="100%">
-            {/* Label with fixed width */}
-            <Text
-              fw={600}
-              className="w-40">
+          <Group justify="space-between" align="flex-start" w="100%">
+            <Text fw={600} c="#344054" className="w-40">
               Status <span className="text-red-600">*</span>
             </Text>
 
-            <Group justify="flex-start">
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+            <Radio.Group
+              value={form.values.status}
+              onChange={(val) => form.setFieldValue("status", val as status)}
+              className="min-w-170 w-full max-w-[600px]"
+            >
+              <Group gap="md" grow>
                 {[
                   {
                     value: "active",
@@ -263,7 +292,7 @@ export default function EditPartnerForm({
                   {
                     value: "inactive",
                     title: "Inactive",
-                    description: "Partner is not currently active",
+                    description: "Partner no longer active",
                   },
                   {
                     value: "waitlisted",
@@ -273,46 +302,35 @@ export default function EditPartnerForm({
                 ].map((option) => (
                   <Radio.Card
                     key={form.key(`status-${option.value}`)}
+                    value={option.value}
                     radius="md"
                     p="md"
-                    className="w-52 border border-gray-200 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md data-[checked=true]:border-[#053766] data-[checked=true]:bg-blue-50"
-                    checked={form.values.status === option.value}
-                    onClick={() =>
-                      form.setFieldValue("status", option.value as status)
-                    }>
-                    <Group
-                      wrap="nowrap"
-                      align="flex-start"
-                      gap="sm">
+                    className="border border-gray-200 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md data-[checked=true]:border-[#053766] data-[checked=true]:bg-blue-50 h-full"
+                  >
+                    <Group wrap="nowrap" align="flex-start" gap="sm">
                       <Radio.Indicator />
                       <Stack gap={4}>
                         <Text fw={700}>{option.title}</Text>
-                        <Text
-                          size="xs"
-                          color="dimmed">
+                        <Text size="xs" c="dimmed">
                           {option.description}
                         </Text>
                       </Stack>
                     </Group>
                   </Radio.Card>
                 ))}
-              </div>
+              </Group>
 
               {form.errors.status && (
-                <Text
-                  color="red"
-                  size="sm">
+                <Text c="red" size="sm">
                   {form.errors.status}
                 </Text>
               )}
-            </Group>
+            </Radio.Group>
           </Group>
 
           {/* Latitude and Longitude */}
-          <Group
-            justify="space-between"
-            align="flex-start">
-            <Text fw={600}>
+          <Group justify="space-between" align="flex-start">
+            <Text fw={600} c="#344054">
               Coords <span className="text-red-600">*</span>
             </Text>
             <div className="gap-4 flex">
@@ -340,11 +358,8 @@ export default function EditPartnerForm({
           </Group>
 
           {/* Address */}
-          <Group
-            justify="space-between"
-            align="flex-start"
-            w="100%">
-            <Text fw={600}>
+          <Group justify="space-between" align="flex-start" w="100%">
+            <Text fw={600} c="#344054">
               Address <span className="text-red-600">*</span>
             </Text>
 
@@ -380,16 +395,18 @@ export default function EditPartnerForm({
               </div>
 
               <div className="flex gap-4 w-full">
-                <NumberInput
+                <TextInput
                   placeholder="Zip Code"
+                  {...form.getInputProps("zipCode")}
                   key={form.key("zipCode")}
                   value={form.values.zipCode}
-                  onChange={(val) => form.setFieldValue("zipCode", String(val))}
+                  onChange={(val) =>
+                    form.setFieldValue("zipCode", val.target.value)
+                  }
                   error={form.errors.zipCode}
                   size="md"
                   className="w-[120px]"
                   radius="md"
-                  hideControls
                 />
                 <Select
                   placeholder="Country"
@@ -409,10 +426,10 @@ export default function EditPartnerForm({
           </Group>
 
           {/* Logo File Upload */}
-          <Group
-            justify="space-between"
-            align="flex-start">
-            <Text fw={600}>Logo file or link</Text>
+          <Group justify="space-between" align="flex-start">
+            <Text c="#344054" fw={600}>
+              Logo file or link
+            </Text>
             <div className="gap-4 flex">
               <FileInput
                 accept="image/png,image/jpeg"
@@ -433,10 +450,99 @@ export default function EditPartnerForm({
             </div>
           </Group>
 
+          {/* Update Percentages */}
+          <Group justify="space-between" align="flex-start">
+            <Text fw={600} c="#344054">
+              City Distribution Percentages
+            </Text>
+
+            <Tabs
+              value={activePercentTab}
+              onChange={(val) => {
+                if (!val) return;
+                setActivePercentTab(val as UpdatePercentagesOptions);
+                form.setFieldValue(
+                  "updatePercentagesType",
+                  val as UpdatePercentagesOptions,
+                );
+              }}
+              className="min-w-170 w-full max-w-[600px]"
+            >
+              <Tabs.List grow mb="xl">
+                {[
+                  {
+                    value: "one-time",
+                    title: "One-Time Update",
+                    description: "Update a specific month only",
+                    icon: <RiCalendarEventLine size={22} />,
+                  },
+                  {
+                    value: "continuous",
+                    title: "Continuous Update",
+                    description: "Apply to all future distributions",
+                    icon: <RiLineChartLine size={22} />,
+                  },
+                ].map((option) => (
+                  <Tabs.Tab
+                    key={option.value}
+                    value={option.value}
+                    className="px-0"
+                  >
+                    {(() => {
+                      const isActive = activePercentTab === option.value;
+                      return (
+                        <div
+                          className={`rounded-xl shadow-sm transition hover:-translate-y-0.5 hover:shadow-md h-full border ${
+                            isActive
+                              ? "border-[#1D3A8A] bg-[#EEF2FF]"
+                              : "border-gray-300 bg-white"
+                          }`}
+                          style={{ borderWidth: isActive ? 2 : 1 }}
+                        >
+                          <Stack gap="xs" align="center" p="md">
+                            <div
+                              className={`${
+                                isActive ? "text-[#1D3A8A]" : "text-gray-500"
+                              } opacity-80`}
+                            >
+                              {option.icon}
+                            </div>
+                            <Text
+                              fw={700}
+                              size="md"
+                              className={isActive ? "text-[#1D3A8A]" : ""}
+                            >
+                              {option.title}
+                            </Text>
+                            <Text
+                              size="sm"
+                              c={isActive ? "gray.6" : "dimmed"}
+                              ta="center"
+                            >
+                              {option.description}
+                            </Text>
+                          </Stack>
+                        </div>
+                      );
+                    })()}
+                  </Tabs.Tab>
+                ))}
+              </Tabs.List>
+              <Tabs.Panel value="one-time">
+                <OneTimeUpdateForm
+                  initialCityPercentages={initialCityPercentEntries}
+                />
+              </Tabs.Panel>
+              <Tabs.Panel value="continuous">
+                <ContinuousUpdateForm
+                  initialCityPercentages={initialCityPercentEntries}
+                />
+              </Tabs.Panel>
+            </Tabs>
+          </Group>
+
           {/* Submit and Cancel Buttons */}
-          <Group
-            justify="flex-end"
-            mt="md">
+          <Group justify="flex-end" mt="md">
             <Button
               variant="outline"
               color="#053766"
@@ -444,14 +550,12 @@ export default function EditPartnerForm({
               type="button"
               onClick={() => {
                 form.reset();
-              }}>
+                onClose();
+              }}
+            >
               Cancel
             </Button>
-            <Button
-              variant="filled"
-              color="#053766"
-              radius="md"
-              type="submit">
+            <Button variant="filled" color="#053766" radius="md" type="submit">
               Submit
             </Button>
           </Group>

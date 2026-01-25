@@ -7,9 +7,10 @@ import Image from "next/image";
 import { Poppins } from "next/font/google";
 import DistributionsTable from "@/components/DistributionsTable";
 import MonthSelectionModal from "@/components/admin/MonthSelectionModal";
-import PreviewModal from "@/components/admin/PreviewModal";
 import { useDisclosure } from '@mantine/hooks';
-import type { MonthSelectionData } from "@/components/admin/MonthSelectionModal";
+import UploadNewData from "./UploadNewData";
+import AddPartnerForm from "@/components/AddPartnerForm";
+import classes from "./AdminPage.module.css";
 
 const poppins = Poppins({
   subsets: ["latin"],
@@ -34,88 +35,50 @@ const poppins = Poppins({
 export default function Page() {
   const [activeTab, setActiveTab] = useState<string | null>("Partners");
   const [monthModalOpen, { open: openMonthModal, close: closeMonthModal }] = useDisclosure(false);
-  // const [previewData, setPreviewData] = useState<any[]>([]);
+  const [
+    openedUploadDataForm,
+    { open: openUploadDataForm, close: closeUploadDataForm },
+  ] = useDisclosure(false);
 
-  // async function fetchPreviewMonthSelection(selection:MonthSelectionData) {
-  //   const { mode, start, end } = selection;
-  //   if (mode === "one_month") {
-  //     console.log("in fetch: one month");
-  //     console.log(start.month);
-
-  //     const monthName = MONTH_NAMES[start.month + 1];
-  //     console.log(monthName);
-
-  //     const preview = await fetch(`http://localhost:3000/api/distributions?month=${monthName}&year=${start.year}`);
-  //     if (!preview.ok) {
-  //       console.error("Error: could not fetch distributions for", monthName);
-  //     } else {
-  //       const preview_json = await preview.json()
-  //       setPreviewData(preview_json);
-  //       console.log(preview_json);
-  //     }
-  //   } else { // i think we can just make this else but idk  
-  //     console.log("in fetch: range");
-  //     let currMonth = start.month;
-  //     let currYear = start.year;
-
-  //     if (end === null) return;
-  //     const allResults = [];
-
-  //     // need to have the months increment even if at the end of the year
-  //     // year takes on 2 states, at the end, or less than the end?
-  //     while ((currMonth <= end.month) && (currYear < end.year || currYear == end.year)) {
-  //       const monthName = MONTH_NAMES[end.month + 1];
-  //       const curr_preview = await fetch(`http://localhost:3000/api/distributions?month=${monthName}&year=${currYear}`)
-  //       if (!curr_preview.ok) {
-  //         console.error("Error: could not fetch distributions for", monthName);
-  //       } else {
-  //         const json = await curr_preview.json();
-  //         allResults.push(...json); // ... spreads out the json items
-  //       }
-
-  //       currMonth++;
-  //       if (currMonth > 12) {
-  //         currMonth = 1;
-  //         currYear++;
-  //       }
-  //     }
-      
-  //     setPreviewData(allResults);
-  //   }
-
-  //   console.log(previewData);
-  // }
-
+  const [
+    openedPartnerForm,
+    { open: openPartnerForm, close: closePartnerForm },
+  ] = useDisclosure(false);
 
   return (
-    <Stack
-      gap="lg"
-      className={poppins.className}>
-      <Card>
-        <Group
-          justify="space-between"
-          align="flex-start">
+    <Stack mx="72px" my="44px" gap="lg" className={poppins.className}>
+      <Card p={0}>
+        <Group justify="space-between" align="flex-start">
           <Stack gap={4}>
             <Title order={2}>Hello, Rachel 👋</Title>
-            <Group
-              gap="xl"
-              wrap="wrap">
-              <Text
-                size="sm"
-                c="dimmed">
+            <Group gap="xl" wrap="wrap">
+              <Text size="sm" c="dimmed">
                 Last data uploaded: Monday, 30 Aug, 2025
               </Text>
-              <Text
-                size="sm"
-                c="dimmed">
+              <Text size="sm" c="dimmed">
                 Last updated: Friday, 2 Sep, 2025
               </Text>
             </Group>
           </Stack>
-
+          <UploadNewData
+            opened={openedUploadDataForm}
+            onClose={closeUploadDataForm}
+          />
+          <AddPartnerForm
+            opened={openedPartnerForm}
+            onClose={closePartnerForm}
+          />
           <Button
+            onClick={() => {
+              if (activeTab === "Diapers") {
+                openUploadDataForm();
+              } else {
+                openPartnerForm();
+              }
+            }}
             variant="default"
             radius="md"
+            c="#053766"
             rightSection={
               <Image
                 src="/admin_view/add_icon.svg"
@@ -123,21 +86,24 @@ export default function Page() {
                 width={16}
                 height={16}
               />
-            }>
+            }
+          >
             {activeTab === "Partners" ? "Add A New Partner" : "Upload New Data"}
           </Button>
         </Group>
       </Card>
 
       <Tabs
+        classNames={classes}
         defaultValue={activeTab}
         onChange={setActiveTab}
         styles={{
           list: {
             "--tabs-border-color": "transparent",
           },
-        }}>
-        <Tabs.List>
+        }}
+      >
+        <Tabs.List mb="16px">
           <Tabs.Tab
             value="Partners"
             leftSection={
@@ -156,7 +122,8 @@ export default function Page() {
                   width={16}
                 />
               )
-            }>
+            }
+          >
             Partners
           </Tabs.Tab>
           <Tabs.Tab
@@ -171,13 +138,14 @@ export default function Page() {
                 />
               ) : (
                 <Image
-                  src="/admin_view/Diapers_tab_gray.svg"
+                  src="/admin_view/diapers_tab_gray.svg"
                   alt="partners inactive icon"
                   height={16}
                   width={16}
                 />
               )
-            }>
+            }
+          >
             Diapers
           </Tabs.Tab>
 
@@ -217,6 +185,23 @@ export default function Page() {
               Filter
             </Button>
           </Flex>
+          <Button
+            ml="auto"
+            variant="default"
+            radius={5}
+            style={{ alignSelf: "center", marginRight: 4, marginBottom: 4 }}
+            c="#053766"
+            rightSection={
+              <Image
+                src="/admin_view/filter.svg"
+                alt="filter icon"
+                width={16}
+                height={16}
+              />
+            }
+          >
+            Filter
+          </Button>
         </Tabs.List>
 
         <Tabs.Panel value="Partners">
