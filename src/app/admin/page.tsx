@@ -13,6 +13,7 @@ import {
   Select,
   Popover,
   Checkbox,
+  TextInput,
 } from "@mantine/core";
 import { MonthPickerInput } from "@mantine/dates";
 import { useState, useEffect } from "react";
@@ -22,6 +23,7 @@ import DistributionsTable from "@/components/DistributionsTable";
 import { useDisclosure } from "@mantine/hooks";
 import { status } from "@/generated/prisma/enums";
 import { PartnerRegion } from "@/generated/prisma/client";
+import { Search } from "lucide-react";
 
 const poppins = Poppins({
   subsets: ["latin"],
@@ -90,12 +92,15 @@ export default function Page() {
   const [error, setError] = useState<string>();
 
   // partner filtering
-  const [partnerYearSince, setPartnerYearSince] = useState<string | null>("All");
+  const [partnerYearSince, setPartnerYearSince] = useState<string | null>(
+    "All",
+  );
   const [partnerStatus, setPartnerStatus] = useState<string[]>([]);
 
   const [partners, setPartners] = useState<Partner[]>([]);
   const [filteredPartners, setFilteredPartners] = useState<Partner[]>([]);
   const [percentages, setPercentages] = useState<PartnerRegion[]>([]);
+  const [partnerSearch, setPartnerSearch] = useState("");
 
   // diaper filtering
   const [valueFrom, setValueFrom] = useState<string | null>(null);
@@ -192,6 +197,19 @@ export default function Page() {
     close();
   };
 
+  const partnerCitiesMap = new Map<number, string[]>();
+
+  percentages.forEach((p) => {
+    const partnerId = Number(p.partnerId);
+    const cityId = String(p.cityId);
+
+    if (!partnerCitiesMap.has(partnerId)) {
+      partnerCitiesMap.set(partnerId, []);
+    }
+
+    partnerCitiesMap.get(partnerId)!.push(cityId);
+  });
+
   useEffect(() => {
     let filtered = [...partners];
 
@@ -209,10 +227,23 @@ export default function Page() {
       filtered = filtered.filter((p) => partnerStatus.includes(p.status));
     }
 
-    setFilteredPartners(filtered);
-  }, [partners, partnerYearSince, partnerStatus]);
+    if (partnerSearch.trim()) {
+      const q = partnerSearch.toLowerCase();
 
-    const refreshTable = () => {
+      filtered = filtered.filter((p) => {
+        const nameMatch = p.name.toLowerCase().includes(q);
+
+        const cities = partnerCitiesMap.get(p.id) ?? [];
+        const cityMatch = cities.some((c) => c.toLowerCase().includes(q));
+
+        return nameMatch || cityMatch;
+      });
+    }
+
+    setFilteredPartners(filtered);
+  }, [partners, partnerYearSince, partnerStatus, partnerSearch, percentages]);
+
+  const refreshTable = () => {
     fetch("/api/partners")
       .then((response) => response.json())
       .then((result) => {
@@ -221,8 +252,8 @@ export default function Page() {
       })
       .catch((err) => {
         console.error("Error refetching data:", err);
-      })
-    };
+      });
+  };
 
   if (error) return <Text c="red">Error: {error}</Text>;
 
@@ -260,7 +291,7 @@ export default function Page() {
       </Card>
 
       <Tabs
-        defaultValue={activeTab}
+        value={activeTab}
         onChange={setActiveTab}
         styles={{
           list: {
@@ -380,94 +411,107 @@ export default function Page() {
             </div>
           </Drawer>
 
-          <Popover
-            opened={isOpened && activeTab === "Partners"}
-            onChange={setOpened}
-            position="bottom-end"
-            width={300}
-            shadow="md"
-          >
-            <Popover.Target>
-              <Button
-                ml="auto"
-                variant="default"
-                radius={5}
-                style={{ alignSelf: "center", marginRight: 4, marginBottom: 4 }}
-                onClick={() => {
-                  if (activeTab === "Partners") {
-                    setOpened(!isOpened);
-                  } else {
-                    open();
-                  }
-                }}
-                rightSection={
-                  <Image
-                    src="/admin_view/filter.svg"
-                    alt="filter icon"
-                    width={16}
-                    height={16}
-                  />
+          <Group ml="auto" align="center" gap="sm">
+            {activeTab === "Partners" && (
+              <TextInput
+                placeholder="Search by name or cities..."
+                value={partnerSearch}
+                onChange={(e) => setPartnerSearch(e.currentTarget.value)}
+                radius="md"
+                w={240}
+                leftSection={
+                  <Search />
                 }
-              >
-                Filter
-              </Button>
-            </Popover.Target>
-            <Popover.Dropdown>
-              <Stack gap="xs">
-                <h3>
-                  <strong>Year Since</strong>
-                </h3>
-                <Group gap={7} mb="xs">
-                  {years.map((year) =>
-                    partnerYearSince == year ? (
-                      <Button
-                        key={year}
-                        variant="filled"
-                        color="#053766"
-                        radius="md"
-                      >
-                        {year}
-                      </Button>
-                    ) : (
-                      <Button
-                        key={year}
-                        variant="outline"
-                        color="#053766"
-                        radius="md"
-                        onClick={() => {
-                          setPartnerYearSince(year);
-                        }}
-                      >
-                        {year}
-                      </Button>
-                    ),
-                  )}
-                </Group>
-                <h3>
-                  <strong>Status</strong>
-                </h3>
-                <Stack>
-                  {statuses.map((status) => (
-                    <Checkbox
-                      key={status.value}
-                      label={status.label}
-                      checked={partnerStatus.includes(status.value)}
-                      color="#053766"
-                      onChange={(e) => {
-                        const checked = e.currentTarget.checked;
+              />
+            )}
 
-                        setPartnerStatus((prev) =>
-                          checked
-                            ? [...prev, status.value]
-                            : prev.filter((s) => s !== status.value),
-                        );
-                      }}
+            <Popover
+              opened={isOpened && activeTab === "Partners"}
+              onChange={setOpened}
+              position="bottom-end"
+              width={300}
+              shadow="md"
+            >
+              <Popover.Target>
+                <Button
+                  variant="default"
+                  radius={5}
+                  onClick={() => {
+                    if (activeTab === "Partners") {
+                      setOpened((o) => !o);
+                    } else {
+                      open();
+                    }
+                  }}
+                  rightSection={
+                    <Image
+                      src="/admin_view/filter.svg"
+                      alt="filter icon"
+                      width={16}
+                      height={16}
                     />
-                  ))}{" "}
+                  }
+                >
+                  Filter
+                </Button>
+              </Popover.Target>
+              <Popover.Dropdown>
+                <Stack gap="xs">
+                  <h3>
+                    <strong>Year Since</strong>
+                  </h3>
+                  <Group gap={7} mb="xs">
+                    {years.map((year) =>
+                      partnerYearSince == year ? (
+                        <Button
+                          key={year}
+                          variant="filled"
+                          color="#053766"
+                          radius="md"
+                        >
+                          {year}
+                        </Button>
+                      ) : (
+                        <Button
+                          key={year}
+                          variant="outline"
+                          color="#053766"
+                          radius="md"
+                          onClick={() => {
+                            setPartnerYearSince(year);
+                          }}
+                        >
+                          {year}
+                        </Button>
+                      ),
+                    )}
+                  </Group>
+                  <h3>
+                    <strong>Status</strong>
+                  </h3>
+                  <Stack>
+                    {statuses.map((status) => (
+                      <Checkbox
+                        key={status.value}
+                        label={status.label}
+                        checked={partnerStatus.includes(status.value)}
+                        color="#053766"
+                        onChange={(e) => {
+                          const checked = e.currentTarget.checked;
+
+                          setPartnerStatus((prev) =>
+                            checked
+                              ? [...prev, status.value]
+                              : prev.filter((s) => s !== status.value),
+                          );
+                        }}
+                      />
+                    ))}
+                  </Stack>
                 </Stack>
-              </Stack>
-            </Popover.Dropdown>
-          </Popover>
+              </Popover.Dropdown>
+            </Popover>
+          </Group>
         </Tabs.List>
 
         <Tabs.Panel value="Partners">
