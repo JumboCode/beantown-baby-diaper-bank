@@ -344,6 +344,7 @@ export default function Page() {
           >
             Diapers
           </Tabs.Tab>
+
           <Drawer opened={opened} onClose={close} position="right" size="sm">
             <h1 className="font-bold text-gray-900">Filter Data</h1>
             <p className="text-gray-500 mb-6">
@@ -420,8 +421,9 @@ export default function Page() {
                 radius="md"
                 w={240}
                 leftSection={
-                  <Search />
+                  <Search size={16} />
                 }
+                className="mb-2"
               />
             )}
 
@@ -451,6 +453,7 @@ export default function Page() {
                       height={16}
                     />
                   }
+                  className="mb-2"
                 >
                   Filter
                 </Button>
