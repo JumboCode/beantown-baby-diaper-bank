@@ -2,20 +2,55 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { Prisma as PrismaTypes } from "@/generated/prisma/client";
 
-export async function GET() {
+export async function GET(req:Request) {
+  const { searchParams } = new URL(req.url);
+
+  const month = searchParams.get("month"); // e.g. "May"
+  const yearParam = searchParams.get("year"); // e.g. "2026"
+  // const year = yearParam ? Number(yearParam) : null;
+
+  // CHAT:
+  const year = searchParams.get("year");        // "2025"  (keep as string)
+
+
+  // Build WHERE only when params exist
+  // const where: PrismaTypes.DistributionWhereInput = {
+  //   ...(month ? { month } : {}),
+  //   ...(year !== null && !Number.isNaN(year) ? { year } : {}),
+  // };
+  
+  // CHAT:
+    // Build WHERE only when params exist
+    const where: PrismaTypes.DistributionWhereInput = {
+      ...(month ? { month } : {}),  
+      ...(year ? { year } : {}),                  // year is string in DB
+  
+    };
+
+
+
+  // const distributionsQuery = {
+  //   include: {
+  //     partner: {
+  //       select: {
+  //         name: true,
+  //       },
+  //     },
+  //     city: {
+  //       select: {
+  //         name: true,
+  //       },
+  //     },
+  //   },
+  // } satisfies PrismaTypes.DistributionFindManyArgs;
+
   const distributionsQuery = {
+    where,
     include: {
-      partner: {
-        select: {
-          name: true,
-        },
-      },
-      city: {
-        select: {
-          name: true,
-        },
-      },
+    partner: { select: { name: true } },
+    city: { select: { name: true } },
     },
+    orderBy: { createdAt: "desc" as const },
   } satisfies PrismaTypes.DistributionFindManyArgs;
 
   type prismaDistributionsReturnType = PrismaTypes.DistributionGetPayload<
@@ -45,7 +80,7 @@ export async function GET() {
     console.error("Error fetching distributions:", error);
     return NextResponse.json(
       { error: "Failed to fetch distributions" },
-      { status: 500 },
+      { status: 500 }
     );
   }
 }
