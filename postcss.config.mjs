@@ -1,10 +1,7 @@
-import postcssPresetMantine from 'postcss-preset-mantine';
+import postcssPresetMantine from "postcss-preset-mantine";
 
 const config = {
-  plugins: [
-    '@tailwindcss/postcss',
-    postcssPresetMantine,
-  ],
+  plugins: ["@tailwindcss/postcss", postcssPresetMantine],
 };
 
 export default config;

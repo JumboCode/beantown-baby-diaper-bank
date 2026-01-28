@@ -21,6 +21,10 @@ import Image from "next/image";
 import { Poppins } from "next/font/google";
 import DistributionsTable from "@/components/DistributionsTable";
 import { useDisclosure } from "@mantine/hooks";
+import UploadNewData from "./UploadNewData";
+import AddPartnerForm from "@/components/AddPartnerForm";
+import classes from "./AdminPage.module.css";
+import { useDisclosure } from "@mantine/hooks";
 import { status } from "@/generated/prisma/enums";
 import { PartnerRegion } from "@/generated/prisma/client";
 import { Search } from "lucide-react";
@@ -256,10 +260,19 @@ export default function Page() {
   };
 
   if (error) return <Text c="red">Error: {error}</Text>;
+  const [
+    openedUploadDataForm,
+    { open: openUploadDataForm, close: closeUploadDataForm },
+  ] = useDisclosure(false);
+
+  const [
+    openedPartnerForm,
+    { open: openPartnerForm, close: closePartnerForm },
+  ] = useDisclosure(false);
 
   return (
-    <Stack gap="lg" className={poppins.className}>
-      <Card>
+    <Stack mx="72px" my="44px" gap="lg" className={poppins.className}>
+      <Card p={0}>
         <Group justify="space-between" align="flex-start">
           <Stack gap={4}>
             <Title order={2}>Hello, Rachel 👋</Title>
@@ -272,10 +285,25 @@ export default function Page() {
               </Text>
             </Group>
           </Stack>
-
+          <UploadNewData
+            opened={openedUploadDataForm}
+            onClose={closeUploadDataForm}
+          />
+          <AddPartnerForm
+            opened={openedPartnerForm}
+            onClose={closePartnerForm}
+          />
           <Button
+            onClick={() => {
+              if (activeTab === "Diapers") {
+                openUploadDataForm();
+              } else {
+                openPartnerForm();
+              }
+            }}
             variant="default"
             radius="md"
+            c="#053766"
             rightSection={
               <Image
                 src="/admin_view/add_icon.svg"
@@ -291,7 +319,8 @@ export default function Page() {
       </Card>
 
       <Tabs
-        value={activeTab}
+        classNames={classes}
+        defaultValue={activeTab}
         onChange={setActiveTab}
         styles={{
           list: {
@@ -299,7 +328,7 @@ export default function Page() {
           },
         }}
       >
-        <Tabs.List>
+        <Tabs.List mb="16px">
           <Tabs.Tab
             value="Partners"
             leftSection={
@@ -334,7 +363,7 @@ export default function Page() {
                 />
               ) : (
                 <Image
-                  src="/admin_view/Diapers_tab_gray.svg"
+                  src="/admin_view/diapers_tab_gray.svg"
                   alt="partners inactive icon"
                   height={16}
                   width={16}

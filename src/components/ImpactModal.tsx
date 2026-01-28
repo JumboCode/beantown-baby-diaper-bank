@@ -5,22 +5,12 @@ export default function ImpactModal() {
   const [value, setValue] = useState<string | number>("");
 
   return (
-    <Card
-      shadow="sm"
-      padding="lg"
-      radius="md"
-      withBorder>
-      <Text
-        size="xl"
-        fw={600}
-        mb="xs">
+    <Card shadow="sm" padding="lg" radius="md" withBorder>
+      <Text size="xl" fw={600} mb="xs">
         Make an impact
       </Text>
 
-      <Text
-        size="sm"
-        c="dimmed"
-        mb="lg">
+      <Text size="sm" c="dimmed" mb="lg">
         Calculate how you can help!
       </Text>
 
@@ -47,14 +37,9 @@ export default function ImpactModal() {
         value !== null &&
         value !== "" &&
         Number(value) > 0 && (
-          <Text
-            size="sm"
-            mb="md">
+          <Text size="sm" mb="md">
             You could help{" "}
-            <Text
-              component="span"
-              fw={700}
-              c="#000000">
+            <Text component="span" fw={700} c="#000000">
               {Number(value) * 4}
             </Text>{" "}
             families!
@@ -77,7 +62,8 @@ export default function ImpactModal() {
               backgroundColor: "#163050",
             },
           },
-        }}>
+        }}
+      >
         Donate
       </Button>
     </Card>
