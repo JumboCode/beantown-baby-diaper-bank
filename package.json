@@ -28,6 +28,7 @@
     "leaflet": "^1.9.4",
     "lucide-react": "^0.545.0",
     "next": "^16.1.4",
+    "papaparse": "^5.5.3",
     "parse-address": "^1.1.2",
     "postcss-preset-mantine": "^1.18.0",
     "prettier": "^3.6.2",
