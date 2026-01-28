@@ -2,9 +2,11 @@ import { useState } from 'react';
 import { MonthPickerInput } from '@mantine/dates';
 import { useDisclosure } from '@mantine/hooks';
 import { Modal, Button, Text, Radio, RadioGroup, Group, Table } from '@mantine/core';
+import { ConfirmDeletion } from './ConfirmDeletionModal'; 
 // import { modals } from '@mantine/core';
 // import { ModalsProvider } from '@mantine/modals';
   // const [previewData, setPreviewData] = useState<any[]>([]);
+import { ModalsProvider } from '@mantine/modals'; // possibly delete
 
 import PartnerTable from "@/components/admin/PartnerTable"; 
 
@@ -13,12 +15,6 @@ export interface MonthSelectionData {
   start: { month: number; year: number };
   end: { month: number; year: number } | null;
 }
-
-// interface MonthSelectionModalProps {
-//   opened: boolean;
-//   onClose: () => void;
-//   onSubmit: (data: MonthSelectionData) => void;
-// }
 
 const MONTH_NAMES = [
   "January",
@@ -73,7 +69,7 @@ export default function MonthSelectionModal() {
       // need to have the months increment even if at the end of the year
       // year takes on 2 states, at the end, or less than the end?
       while (currYear < end.year || (currYear === end.year && currMonth <= end.month)) {
-        const monthName = MONTH_NAMES[currMonth];
+        const monthName = MONTH_NAMES[currMonth + 1];
         const curr_preview = await fetch(`http://localhost:3000/api/distributions?month=${monthName}&year=${currYear}`)
         if (!curr_preview.ok) {
           console.error("Error: could not fetch distributions for", monthName);
@@ -180,33 +176,39 @@ export default function MonthSelectionModal() {
         {isPreviewMode && 
         (<>
           <Text fw={600} fz={22} mb="sm">
-            Preview Records to Delete
+            Preview: {previewData.length} records will be deleted
           </Text>
 
           <Table withTableBorder highlightOnHover mt="md">
             <Table.Thead>
               <Table.Tr>
-                <Table.Th>ID</Table.Th>
                 <Table.Th>Partner</Table.Th>
-                <Table.Th>Diapers</Table.Th>
-                <Table.Th>Date</Table.Th>
+                <Table.Th>City</Table.Th>
+                <Table.Th># Diapers distributed</Table.Th>
+                <Table.Th># Children helped</Table.Th>
                 <Table.Th>Month</Table.Th>
+                <Table.Th>Year</Table.Th>
               </Table.Tr>
             </Table.Thead>
 
             <Table.Tbody>
               {previewData.map(dist => (
-                // <Table.Tr key={dist.id}>
-                <Table.Tr key={`${dist.id}-${dist.month}-${dist.year}-${dist.created_at}`}>
-                  <Table.Td>{dist.id}</Table.Td>
-                  <Table.Td>{dist.partner_id}</Table.Td>
-                  <Table.Td>{dist.diapers}</Table.Td>
-                  <Table.Td>{new Date(dist.created_at).toLocaleDateString()}</Table.Td>
-                  <Table.Td>{dist.month} {dist.year}</Table.Td>
+                <Table.Tr key={`${dist.id}-${dist.month}-${dist.year}-${dist.createdAt}`}>
+                  <Table.Td>{dist.partner.name}</Table.Td>
+                  <Table.Td>{dist.city.name}</Table.Td>
+                  <Table.Td>{dist.numberDiapers}</Table.Td>
+                  <Table.Td>{dist.numberChildren}</Table.Td>
+                  <Table.Td>{dist.month}</Table.Td> 
+                  <Table.Td>{dist.year}</Table.Td> 
                 </Table.Tr>
               ))}
             </Table.Tbody>
           </Table>
+          <ConfirmDeletion 
+            count={previewData.length}
+            onConfirm={() => {
+              console.log('Deleting', previewData.length, 'records');
+            }}/>
         </>)}
       </Modal>
       <Button variant="default" radius={5} onClick={open}>

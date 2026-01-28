@@ -6,43 +6,13 @@ export async function GET(req:Request) {
   const { searchParams } = new URL(req.url);
 
   const month = searchParams.get("month"); // e.g. "May"
-  const yearParam = searchParams.get("year"); // e.g. "2026"
-  // const year = yearParam ? Number(yearParam) : null;
-
-  // CHAT:
-  const year = searchParams.get("year");        // "2025"  (keep as string)
-
-
+  const year = searchParams.get("year");  // e.g. "2026"
+    
   // Build WHERE only when params exist
-  // const where: PrismaTypes.DistributionWhereInput = {
-  //   ...(month ? { month } : {}),
-  //   ...(year !== null && !Number.isNaN(year) ? { year } : {}),
-  // };
-  
-  // CHAT:
-    // Build WHERE only when params exist
-    const where: PrismaTypes.DistributionWhereInput = {
-      ...(month ? { month } : {}),  
-      ...(year ? { year } : {}),                  // year is string in DB
-  
-    };
-
-
-
-  // const distributionsQuery = {
-  //   include: {
-  //     partner: {
-  //       select: {
-  //         name: true,
-  //       },
-  //     },
-  //     city: {
-  //       select: {
-  //         name: true,
-  //       },
-  //     },
-  //   },
-  // } satisfies PrismaTypes.DistributionFindManyArgs;
+  const where: PrismaTypes.DistributionWhereInput = {
+    ...(month ? { month } : {}),
+    ...(year ? { year } : {}),
+  };
 
   const distributionsQuery = {
     where,
@@ -82,5 +52,39 @@ export async function GET(req:Request) {
       { error: "Failed to fetch distributions" },
       { status: 500 }
     );
+  }
+}
+
+// partner copy-paste
+export async function POST(request: Request) {
+  const body = await request.json();
+  const updatePartnerRequest = {
+    where: { id: body.id },
+    data: {
+      name: body.name,
+      description: body.description,
+      startPartner: new Date(body.start_partner).toISOString(),
+      status: body.status as status,
+      coords: body.coordinates,
+      address: body.address,
+      logoUrl: body.logo,
+    },
+  } as PartnerUpdateArgs;
+
+  console.log("Received partner data:", body);
+
+  try {
+    const partner = await prisma.partner.update(updatePartnerRequest);
+
+    return NextResponse.json({
+      data: stringifyWithBigInt(partner),
+    });
+  } catch (error) {
+    const message =
+      error instanceof Error
+        ? error.message
+        : "Unable to insert partner into database.";
+
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }
