@@ -17,10 +17,20 @@ export function ConfirmDeletion({ count, onConfirm }: ConfirmDeletionProps) {
         </Text>
       ),
       labels: { confirm: 'Delete', cancel: "Cancel" },
-      confirmProps: { color: 'blue' },
+      confirmProps: { color: '#053766' },
       onCancel: () => console.log('Cancel'),
       onConfirm,
+      groupProps: {
+        justify: 'center',
+        grow: true,      // each button expands
+        align: 'stretch'
+      },
     });
 
-  return <Button onClick={openDeleteModal} color="#053766">Delete</Button>;
+  return (
+    <Button onClick={openDeleteModal} color="#053766" fullWidth 
+    style={{marginTop: "5px"}}>
+      Delete
+    </Button>
+  );
 }

@@ -55,36 +55,25 @@ export async function GET(req:Request) {
   }
 }
 
-// partner copy-paste
-export async function POST(request: Request) {
-  const body = await request.json();
-  const updatePartnerRequest = {
-    where: { id: body.id },
-    data: {
-      name: body.name,
-      description: body.description,
-      startPartner: new Date(body.start_partner).toISOString(),
-      status: body.status as status,
-      coords: body.coordinates,
-      address: body.address,
-      logoUrl: body.logo,
-    },
-  } as PartnerUpdateArgs;
-
-  console.log("Received partner data:", body);
-
+// For deleting distribution data of selection month and year 
+export async function POST(req: Request) {
   try {
-    const partner = await prisma.partner.update(updatePartnerRequest);
+    const body = await req.json();
+    const ids = (body?.ids ?? []) as string[];
 
-    return NextResponse.json({
-      data: stringifyWithBigInt(partner),
+    if (!Array.isArray(ids) || ids.length === 0) {
+      return NextResponse.json({ error: "No ids provided" }, { status: 400 });
+    }
+
+    const parsedIds = ids.map((id) => BigInt(id));
+
+    const result = await prisma.distribution.deleteMany({
+      where: { id: { in: parsedIds } },
     });
-  } catch (error) {
-    const message =
-      error instanceof Error
-        ? error.message
-        : "Unable to insert partner into database.";
 
-    return NextResponse.json({ error: message }, { status: 500 });
+    return NextResponse.json({ deletedCount: result.count });
+  } catch (error) {
+    console.error("Error deleting distributions:", error);
+    return NextResponse.json({ error: "Failed to delete distributions" }, { status: 500 });
   }
 }

@@ -2,13 +2,7 @@ import { useState } from 'react';
 import { MonthPickerInput } from '@mantine/dates';
 import { useDisclosure } from '@mantine/hooks';
 import { Modal, Button, Text, Radio, RadioGroup, Group, Table } from '@mantine/core';
-import { ConfirmDeletion } from './ConfirmDeletionModal'; 
-// import { modals } from '@mantine/core';
-// import { ModalsProvider } from '@mantine/modals';
-  // const [previewData, setPreviewData] = useState<any[]>([]);
-import { ModalsProvider } from '@mantine/modals'; // possibly delete
-
-import PartnerTable from "@/components/admin/PartnerTable"; 
+import { ConfirmDeletion } from './ConfirmDeletionModal';
 
 export interface MonthSelectionData {
   mode: "one_month" | "range";
@@ -44,30 +38,21 @@ export default function MonthSelectionModal() {
   async function fetchPreviewMonthSelection(selection:MonthSelectionData) {
     const { mode, start, end } = selection;
     if (mode === "one_month") {
-      console.log("in fetch: one month");
-      console.log(start.month); //
-
       const monthName = MONTH_NAMES[start.month + 1];
-      console.log("month:", monthName, "year:", start.year); // month: May year: 2025
       const preview = await fetch(`http://localhost:3000/api/distributions?month=${monthName}&year=${start.year}`);
       if (!preview.ok) {
         console.error("Error: could not fetch distributions for", monthName);
       } else {
         const preview_json = await preview.json()
-        console.log(preview_json)
         setPreviewData(preview_json);
-        console.log("Preview one_month:",preview_json);
       }
-    } else { // i think we can just make this else but idk  
-      console.log("in fetch: range");
+    } else { // i think we can just make this else but idk
       let currMonth = start.month;
       let currYear = start.year;
 
       if (end === null) return;
       const allResults = [];
 
-      // need to have the months increment even if at the end of the year
-      // year takes on 2 states, at the end, or less than the end?
       while (currYear < end.year || (currYear === end.year && currMonth <= end.month)) {
         const monthName = MONTH_NAMES[currMonth + 1];
         const curr_preview = await fetch(`http://localhost:3000/api/distributions?month=${monthName}&year=${currYear}`)
@@ -75,7 +60,7 @@ export default function MonthSelectionModal() {
           console.error("Error: could not fetch distributions for", monthName);
         } else {
           const json = await curr_preview.json();
-          allResults.push(...json); // ... spreads out the json items
+          allResults.push(...json);
         }
 
         currMonth++;
@@ -86,8 +71,31 @@ export default function MonthSelectionModal() {
       }
       
       setPreviewData(allResults);
-      console.log("preview_range:", previewData);
     }
+  }
+
+  async function deletePreviewedDistributions() {
+    const ids = previewData.map((d) => d.id);
+    if (ids.length === 0) return;
+
+    const res = await fetch(`http://localhost:3000/api/distributions`, {
+      method: "POST", // handles bulk-delete
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ids }),
+    });
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      console.error("Delete failed:", err);
+      return;
+    }
+
+    const data = await res.json();
+    console.log("Deleted:", data.deletedCount);
+
+    setPreviewData([]);
+    setIsPreviewMode(false);
+    close();
   }
 
   const handleClick = () => {
@@ -99,15 +107,12 @@ export default function MonthSelectionModal() {
         return;
       }
       const date = new Date(oneMonth);
-      //
-      // console.log("BEFORE FETCH", { date.getMonth() });
       fetchPreviewMonthSelection({
         mode: "one_month",
         start: {
           month: date.getMonth(),
           year: date.getFullYear(),
         },
-        //
         end: null
       });
     } else {
@@ -132,53 +137,57 @@ export default function MonthSelectionModal() {
         }
       });
     }
-    // setPreviewData([]);
-    // setIsPreviewMode(true);
-    // onClose();
   }
 
   return (
     <>
-      <Modal size="lg" opened={opened} onClose={close}   
+      <Modal 
+        size="lg" 
+        opened={opened} 
+        onClose={close}   
         title={<Text fw="bold" fz={28}>Delete Records</Text>} 
-        withCloseButton={true} centered>
-        {/* <Text size="xl">Delete Records</Text> */}
-        <Text c="dimmed">Select a date range to preview and delete records.</Text>
+        withCloseButton={true} centered
+      >
+
+        <Text c="dimmed" style={{marginBottom: '5px'}}>Select a date range to preview and delete records.</Text>
 
         <Radio.Group
-          label="Select your favorite framework/library"
-          description="This is anonymous"
           value={numMonths}
           onChange={setNumMonths}
+          style={{marginBottom: '5px'}}
           required
         >
-          <Radio value="one_month" label="One Month"/>
-          <Radio value="range" label="Range of Months"/>
+          <Group>
+            <Radio color='#053766' value="one_month" label="One Month"/>
+            <Radio color='#053766' value="range" label="Range of Months"/>
+          </Group>
         </Radio.Group>
         
         {numMonths === "one_month"?
           (<MonthPickerInput
           dropdownType="modal"
-          label="Pick date"
-          placeholder="Pick date"
+          label="Select Date:"
+          placeholder="Date"
           value={oneMonth}
           onChange={setOneMonth}
           />) : 
           (<MonthPickerInput
             type="range"
-            label="Pick dates range"
-            placeholder="Pick dates range"
+            label="Select Date Range:"
+            placeholder="Date Range"
             value={monthsRange}
             onChange={setMonthsRange}
           />)
         }
-        <Button onClick={handleClick}>Apply Selection</Button>
-        {isPreviewMode && 
+        <Button onClick={handleClick} style={{ marginTop: '5px ', width: '100%', backgroundColor: '#053766'}}> Apply Selection </Button>
+        {isPreviewMode &&
         (<>
-          <Text fw={600} fz={22} mb="sm">
+          <Text fw={600} fz={22} mb="sm" style={{marginTop: '10px'}}>
             Preview: {previewData.length} records will be deleted
           </Text>
 
+          { previewData.length != 0 &&
+          (<>
           <Table withTableBorder highlightOnHover mt="md">
             <Table.Thead>
               <Table.Tr>
@@ -206,9 +215,8 @@ export default function MonthSelectionModal() {
           </Table>
           <ConfirmDeletion 
             count={previewData.length}
-            onConfirm={() => {
-              console.log('Deleting', previewData.length, 'records');
-            }}/>
+            onConfirm={deletePreviewedDistributions}/>
+          </>)}
         </>)}
       </Modal>
       <Button variant="default" radius={5} onClick={open}>

@@ -150,30 +150,15 @@ export default function Page() {
           </Tabs.Tab>
 
           <Flex
-            style={{
-              position: "absolute",
-              right: 0,
-              top: "50%",
-              transform: "translateY(-50%)",
-              gap:10,
-            }}
+            ml="auto"
+            align="center"
+            gap={10}
           >
-            {/* <Button
-              variant="default"
-              radius={5}
-              onClick={openMonthModal}
-            >
-              Delete
-            </Button> */}
-
-            
             <MonthSelectionModal />
-            {/* <PreviewModal /> */}
             <Button
-              ml="auto"
               variant="default"
               radius={5}
-              // style={{ alignSelf: "center", marginRight: 4, marginBottom: 4 }}
+              c="#053766"
               rightSection={
                 <Image
                   src="/admin_view/filter.svg"
@@ -181,27 +166,11 @@ export default function Page() {
                   width={16}
                   height={16}
                 />
-              }>
+              }
+            >
               Filter
             </Button>
           </Flex>
-          <Button
-            ml="auto"
-            variant="default"
-            radius={5}
-            style={{ alignSelf: "center", marginRight: 4, marginBottom: 4 }}
-            c="#053766"
-            rightSection={
-              <Image
-                src="/admin_view/filter.svg"
-                alt="filter icon"
-                width={16}
-                height={16}
-              />
-            }
-          >
-            Filter
-          </Button>
         </Tabs.List>
 
         <Tabs.Panel value="Partners">
@@ -211,13 +180,6 @@ export default function Page() {
           <DistributionsTable />
         </Tabs.Panel>
       </Tabs>
-      
-      {/* <MonthSelectionModal 
-        opened={monthModalOpen}
-        onClose={closeMonthModal}
-        onSubmit={fetchPreviewMonthSelection}
-      /> */}
-
     </Stack>
   );
 }
