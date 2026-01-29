@@ -21,12 +21,14 @@ type PartnerInfoProps = {
   fromMarker?: boolean;
   name?: string | undefined;
   url?: string | null;
+  status?: Partner["status"];
 };
 
 export default function PartnerInfo({
   id,
   name,
   url,
+  status,
   fromMarker = false,
 }: PartnerInfoProps) {
   const [selectedPartner, setSelectedPartner] = useState<Partner | null>(null);
@@ -132,7 +134,7 @@ export default function PartnerInfo({
             url && <img src={url} style={{ height: 30 }} alt="Partner Logo" />
           }
           rightSection={
-            !url ? (
+            status === "waitlisted" ? (
               <Badge
                 color="#b42318"
                 variant="light"
