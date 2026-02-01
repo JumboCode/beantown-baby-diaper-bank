@@ -1,7 +1,7 @@
 "use client";
 
 import PartnerTable from "@/components/admin/PartnerTable";
-import { Card, Group, Stack, Text, Title, Tabs, Button, Box, Flex} from "@mantine/core";
+import { Card, Group, Stack, Text, Title, Tabs, Button, Flex } from "@mantine/core";
 import { useState } from "react";
 import Image from "next/image";
 import { Poppins } from "next/font/google";
