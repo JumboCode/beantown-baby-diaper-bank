@@ -1,13 +1,22 @@
 "use client";
 
 import PartnerTable from "@/components/admin/PartnerTable";
-import { Card, Group, Stack, Text, Title, Tabs, Button, Flex } from "@mantine/core";
+import {
+  Card,
+  Group,
+  Stack,
+  Text,
+  Title,
+  Tabs,
+  Button,
+  Flex,
+} from "@mantine/core";
 import { useState } from "react";
 import Image from "next/image";
 import { Poppins } from "next/font/google";
 import DistributionsTable from "@/components/DistributionsTable";
 import MonthSelectionModal from "@/components/admin/MonthSelectionModal";
-import { useDisclosure } from '@mantine/hooks';
+import { useDisclosure } from "@mantine/hooks";
 import UploadNewData from "./UploadNewData";
 import AddPartnerForm from "@/components/AddPartnerForm";
 import classes from "./AdminPage.module.css";
@@ -17,24 +26,8 @@ const poppins = Poppins({
   weight: ["400", "500", "600", "700"],
 });
 
-// const MONTH_NAMES = [
-//   "January",
-//   "February",
-//   "March",
-//   "April",
-//   "May",
-//   "June",
-//   "July",
-//   "August",
-//   "September",
-//   "October",
-//   "November",
-//   "December",
-// ];
-
 export default function Page() {
   const [activeTab, setActiveTab] = useState<string | null>("Partners");
-  const [monthModalOpen, { open: openMonthModal, close: closeMonthModal }] = useDisclosure(false);
   const [
     openedUploadDataForm,
     { open: openUploadDataForm, close: closeUploadDataForm },
@@ -149,11 +142,7 @@ export default function Page() {
             Diapers
           </Tabs.Tab>
 
-          <Flex
-            ml="auto"
-            align="center"
-            gap={10}
-          >
+          <Flex ml="auto" align="center" gap={10}>
             <MonthSelectionModal />
             <Button
               variant="default"

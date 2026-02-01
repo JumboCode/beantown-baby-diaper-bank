@@ -2,12 +2,12 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { Prisma as PrismaTypes } from "@/generated/prisma/client";
 
-export async function GET(req:Request) {
+export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
 
   const month = searchParams.get("month"); // e.g. "May"
-  const year = searchParams.get("year");  // e.g. "2026"
-    
+  const year = searchParams.get("year"); // e.g. "2026"
+
   // Build WHERE only when params exist
   const where: PrismaTypes.DistributionWhereInput = {
     ...(month ? { month } : {}),
@@ -17,8 +17,8 @@ export async function GET(req:Request) {
   const distributionsQuery = {
     where,
     include: {
-    partner: { select: { name: true } },
-    city: { select: { name: true } },
+      partner: { select: { name: true } },
+      city: { select: { name: true } },
     },
     orderBy: { createdAt: "desc" as const },
   } satisfies PrismaTypes.DistributionFindManyArgs;
@@ -50,12 +50,12 @@ export async function GET(req:Request) {
     console.error("Error fetching distributions:", error);
     return NextResponse.json(
       { error: "Failed to fetch distributions" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
 
-// For deleting distribution data of selection month and year 
+// For deleting distribution data of selection month and year
 export async function POST(req: Request) {
   try {
     const body = await req.json();
@@ -74,6 +74,9 @@ export async function POST(req: Request) {
     return NextResponse.json({ deletedCount: result.count });
   } catch (error) {
     console.error("Error deleting distributions:", error);
-    return NextResponse.json({ error: "Failed to delete distributions" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Failed to delete distributions" },
+      { status: 500 },
+    );
   }
 }

@@ -41,8 +41,6 @@ export async function GET(request: Request) {
 
   const search = searchParams.get("search");
   const waitlisted = searchParams.get("waitlisted");
-  const active = searchParams.get("active");
-  const inactive = searchParams.get("inactive");
 
   // Build the Prisma query filters based on provided params
   // WhereInput type helps ensure we build valid queries
