@@ -32,7 +32,7 @@ model Distribution {
   partnerId      BigInt?  @map("partner_id")
   cityId         BigInt?  @map("city_id")
   year           String?
-  month          String?
+  month          month?   @default(January)
   numberDiapers  BigInt?  @map("number_diapers")
   numberChildren BigInt?  @map("number_children")
   percentage     Float?
@@ -88,4 +88,19 @@ enum status {
   active
   waitlisted
   inactive
+}
+
+enum month {
+  January
+  February
+  March
+  April
+  May
+  June
+  July
+  August
+  September
+  October
+  November
+  December
 }
