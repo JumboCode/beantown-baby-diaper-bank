@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { Prisma as PrismaTypes } from "@/generated/prisma/client";
+import { month, Prisma as PrismaTypes } from "@/generated/prisma/client";
 import { unstable_cache } from "next/cache";
 
 export const dynamic = "force-dynamic";
@@ -22,7 +22,7 @@ const getCities = unstable_cache(
 
     const distributionWhere: PrismaTypes.DistributionWhereInput = {};
     if (month) {
-      distributionWhere.month = month;
+      distributionWhere.month = month as month;
     }
     if (year) {
       distributionWhere.year = year;

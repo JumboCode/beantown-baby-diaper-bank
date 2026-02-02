@@ -4,7 +4,7 @@ import dynamic from "next/dynamic";
 import { useLeafletMap } from "./useLeafletMap";
 import { useBaseTileLayer } from "./useBaseTileLayer";
 import { useMemo, useState } from "react";
-import type { City, Distribution } from "@/generated/prisma/client";
+import type { City, Distribution, status } from "@/generated/prisma/client";
 import {
   Popup,
   TileLayer,
@@ -16,15 +16,17 @@ import { LatLngExpression } from "leaflet";
 
 import "leaflet/dist/leaflet.css";
 import type { MapData } from "@/app/main/page";
-import { 
-  Title, 
-  Text, 
-  Stack, 
-  Group, 
-  Avatar, 
-  Tooltip as MantineTooltip, 
-  Divider 
+import {
+  Title,
+  Text,
+  Stack,
+  Group,
+  Avatar,
+  Tooltip as MantineTooltip,
+  Divider
 } from "@mantine/core";
+import PartnerIconDrawer from "../PartnerIconDrawer";
+import PartnerAvatar from "../PartnerAvatar";
 
 // --- 1. Helper Functions ---
 
@@ -93,6 +95,7 @@ export default function Map({ mapData }: { mapData: MapData }) {
   const { tileLayerProps } = useBaseTileLayer();
   const [hoveredId, setHoveredId] = useState<string | number | null>(null);
   const [activeId, setActiveId] = useState<string | number | null>(null);
+  const [selectedPartnerId, setSelectedPartnerId] = useState<number | null>(null);
 
   const cities = mapData?.cities.data ?? [];
 
@@ -154,23 +157,32 @@ export default function Map({ mapData }: { mapData: MapData }) {
             {boundary.name &&
               cities.map(
                 (city) => city.name === boundary.name && (
-                  <PopupContent key={city.id.toString()} city={city} />
+                  <PopupContent
+                    key={city.id.toString()}
+                    city={city}
+                    onPartnerSelect={setSelectedPartnerId}
+                  />
                 ),
               )}
           </Polygon>
         ))}
       </MapContainer>
+
+      <PartnerIconDrawer
+        partnerId={selectedPartnerId}
+        onClose={() => setSelectedPartnerId(null)}
+      />
     </div>
   );
 }
 
 // --- 4. Popup Content (Condensed Styling) ---
 
-function PopupContent({ city }: { city: CityMapInfo }) {
+function PopupContent({ city, onPartnerSelect }: { city: CityMapInfo; onPartnerSelect: (id: number) => void }) {
   // ROBUST FILTER: Detects waitlisted by string or boolean
-  const waitlistedPartners = city.partners.filter((p) => 
-    p.status === "waitlisted" || 
-    p.waitlisted === true || 
+  const waitlistedPartners = city.partners.filter((p) =>
+    p.status === "waitlisted" ||
+    p.waitlisted === true ||
     p.waitlisted === "true"
   );
 
@@ -188,7 +200,7 @@ function PopupContent({ city }: { city: CityMapInfo }) {
     <Popup minWidth={280}>
       <Stack gap="xs">
         <Title order={3} fz="18px" c="#101828">{city.name}</Title>
-        
+
         <Stack gap={0}>
           <Text fz="14px" c="#344054">Diapers Distributed: <b>{totalDiapers.toLocaleString()}</b></Text>
           <Text fz="14px" c="#344054">Children helped: <b>{totalChildren.toLocaleString()}</b></Text>
@@ -199,18 +211,15 @@ function PopupContent({ city }: { city: CityMapInfo }) {
         <Group gap="xs" wrap="wrap">
           {activePartners.length > 0 ? (
             activePartners.map((p) => (
-              <MantineTooltip key={p.id} label={p.name} withArrow>
-                <Avatar 
-                  src={p.logo_url || p.logoUrl} // Covers both naming conventions
-                  size="sm" 
-                  radius="xl" 
-                  color="blue" 
-                  variant="light"
-                  style={{ cursor: "pointer" }}
-                >
-                  {p.name.substring(0, 2).toUpperCase()}
-                </Avatar>
-              </MantineTooltip>
+              <PartnerAvatar
+                key={p.id}
+                id={p.id}
+                name={p.name}
+                url={p.logoUrl || p.logo_url}
+                status={p.status as status}
+                onClick={() => onPartnerSelect(p.id)}
+              />
+
             ))
           ) : (
             <Text fz="xs" c="dimmed" fs="italic">No active partners</Text>
@@ -223,12 +232,12 @@ function PopupContent({ city }: { city: CityMapInfo }) {
           {waitlistedPartners.length > 0 ? (
             waitlistedPartners.map((p) => (
               <MantineTooltip key={p.id} label={p.name} withArrow>
-                <Avatar 
-                  src={p.logo_url || p.logoUrl} 
-                  size="sm" 
-                  radius="xl" 
-                  color="gray" 
-                  variant="outline" 
+                <Avatar
+                  src={p.logo_url || p.logoUrl}
+                  size="sm"
+                  radius="xl"
+                  color="gray"
+                  variant="outline"
                   style={{ opacity: 0.8, cursor: "pointer" }}
                 >
                   {p.name.substring(0, 2).toUpperCase()}
