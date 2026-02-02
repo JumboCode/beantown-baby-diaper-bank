@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { Prisma as PrismaTypes } from "@/generated/prisma/client";
+import { month, Prisma as PrismaTypes } from "@/generated/prisma/client";
 
 const MONTH_NAMES = [
   "January",
@@ -20,12 +20,15 @@ const MONTH_NAMES = [
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
 
-  const month = searchParams.get("month");
-  const year = searchParams.get("year");
-  const startMonth = searchParams.get("startMonth");
-  const startYear = searchParams.get("startYear");
-  const endMonth = searchParams.get("endMonth");
-  const endYear = searchParams.get("endYear");
+  const month: month | null = searchParams.get("month") as month | null;
+  const year: string | null = searchParams.get("year");
+
+  const startYear: string | null = searchParams.get("startYear");
+  const endYear: string | null = searchParams.get("endYear");
+  
+  const startMonth: month | null = searchParams.get("startMonth") as month | null;
+  const endMonth: month | null = searchParams.get("endMonth") as month | null;
+
 
   let where: PrismaTypes.DistributionWhereInput = {};
 
@@ -36,14 +39,14 @@ export async function GET(req: Request) {
     const eMonthIdx = MONTH_NAMES.indexOf(endMonth);
 
     if (sYear === eYear) {
-      const monthsInRange = MONTH_NAMES.slice(sMonthIdx, eMonthIdx + 1);
+      const monthsInRange: month[] = MONTH_NAMES.slice(sMonthIdx, eMonthIdx + 1) as month[];
       where = {
         year: startYear,
         month: { in: monthsInRange },
       };
     } else {
-      const startYearMonths = MONTH_NAMES.slice(sMonthIdx);
-      const endYearMonths = MONTH_NAMES.slice(0, eMonthIdx + 1);
+      const startYearMonths: month[] = MONTH_NAMES.slice(sMonthIdx) as month[];
+      const endYearMonths: month[] = MONTH_NAMES.slice(0, eMonthIdx + 1) as month[];
 
       where = {
         OR: [
