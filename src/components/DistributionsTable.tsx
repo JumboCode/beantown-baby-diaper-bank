@@ -5,33 +5,10 @@ import { Table, Text } from "@mantine/core";
 import { Distribution } from "@/lib/types";
 
 export default function DistributionsTable({
-  refreshTrigger,
+  distributionData,
 }: {
-  refreshTrigger?: number;
+  distributionData: Distribution[];
 }) {
-  const [distributions, setDistributions] = useState<Distribution[]>([]);
-  const [error, setError] = useState<string>();
-
-  useEffect(() => {
-    const fetchDistributions = async () => {
-      try {
-        const response = await fetch("/api/distributions");
-        if (!response.ok) throw new Error("Failed to fetch distributions");
-        const data = await response.json();
-        // Handle both array and object responses
-        const distributions = Array.isArray(data)
-          ? data
-          : data.distributions || [];
-        setDistributions(distributions);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "An error occurred");
-      }
-    };
-
-    fetchDistributions();
-  }, [refreshTrigger]);
-
-  if (error) return <Text c="red">Error: {error}</Text>;
 
   // // Group by organization
   // const grouped = distributions.reduce(
@@ -46,7 +23,7 @@ export default function DistributionsTable({
   //   {} as Record<string, Distribution[]>
   // );
 
-  const rows: React.ReactNode[] = distributions.map((dist) => (
+  const rows = distributionData.map((dist) => (
     <Table.Tr key={`${dist.id}`}>
       <Table.Td fz={16} fw={600} c="#101828" className="text-sm text-gray-600">
         {dist.partner?.name}
