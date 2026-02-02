@@ -9,16 +9,20 @@ type ConfirmDeletionProps = {
 export function ConfirmDeletion({ count, onConfirm }: ConfirmDeletionProps) {
   const openDeleteModal = () =>
     modals.openConfirmModal({
-      title: `Are you sure you want to delete ${count} records?`,
+      title: (
+        <Text fw={700} size="xl">
+          Confirm Deletion
+        </Text>
+      ),
       centered: true,
       children: (
         <Text size="sm">
-          This action cannot be undone. This will permanently delete {count}{" "}
-          records from the database.
+          Are you sure you want to delete {count} records? This action cannot be
+          undone. This will permanently delete these records from the database.
         </Text>
       ),
       labels: { confirm: "Delete", cancel: "Cancel" },
-      confirmProps: { color: "#053766" },
+      confirmProps: { color: "#163663" },
       onCancel: () => console.log("Cancel"),
       onConfirm,
       groupProps: {
@@ -31,9 +35,9 @@ export function ConfirmDeletion({ count, onConfirm }: ConfirmDeletionProps) {
   return (
     <Button
       onClick={openDeleteModal}
-      color="#053766"
+      color="#163663"
       fullWidth
-      style={{ marginTop: "5px" }}
+      mt="md"
     >
       Delete
     </Button>

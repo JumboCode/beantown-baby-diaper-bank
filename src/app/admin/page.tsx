@@ -28,6 +28,9 @@ const poppins = Poppins({
 
 export default function Page() {
   const [activeTab, setActiveTab] = useState<string | null>("Partners");
+  const [refreshCount, setRefreshCount] = useState(0);
+
+  const handleRefresh = () => setRefreshCount((prev) => prev + 1);
   const [
     openedUploadDataForm,
     { open: openUploadDataForm, close: closeUploadDataForm },
@@ -143,7 +146,7 @@ export default function Page() {
           </Tabs.Tab>
 
           <Flex ml="auto" align="center" gap={10}>
-            <MonthSelectionModal />
+            <MonthSelectionModal onSuccess={handleRefresh} />
             <Button
               variant="default"
               radius={5}
@@ -166,7 +169,7 @@ export default function Page() {
           <PartnerTable />
         </Tabs.Panel>
         <Tabs.Panel value="Diapers">
-          <DistributionsTable />
+          <DistributionsTable refreshTrigger={refreshCount} />
         </Tabs.Panel>
       </Tabs>
     </Stack>

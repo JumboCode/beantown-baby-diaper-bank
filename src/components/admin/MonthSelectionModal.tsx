@@ -1,7 +1,7 @@
-import { useState } from "react";
-import { MonthPickerInput } from "@mantine/dates";
+import { useState, useEffect } from "react";
+import { DateValue, MonthPickerInput } from "@mantine/dates";
 import { useDisclosure } from "@mantine/hooks";
-import { Modal, Button, Text, Radio, Group, Table } from "@mantine/core";
+import { Modal, Button, Text, Radio, Group, Table, Stack, Loader, Center, Title } from "@mantine/core";
 import { ConfirmDeletion } from "./ConfirmDeletionModal";
 import { Distribution } from "@/lib/types";
 
@@ -9,6 +9,10 @@ export interface MonthSelectionData {
   mode: "one_month" | "range";
   start: { month: number; year: number };
   end: { month: number; year: number } | null;
+}
+
+interface MonthSelectionModalProps {
+  onSuccess?: () => void;
 }
 
 const MONTH_NAMES = [
@@ -26,62 +30,79 @@ const MONTH_NAMES = [
   "December",
 ];
 
+interface TimelineSliderMonth {
+  Month: string;
+  Year: string;
+}
+
 // export default function MonthSelectionModal({opened, onClose, onSubmit} : MonthSelectionModalProps) {
-export default function MonthSelectionModal() {
+export default function MonthSelectionModal({
+  onSuccess,
+}: MonthSelectionModalProps) {
   const [opened, { open, close }] = useDisclosure(false);
-  const [numMonths, setNumMonths] = useState("one_month");
-  const [monthsRange, setMonthsRange] = useState<
-    [string | null, string | null]
-  >([null, null]);
-  // const [monthsRange, setMonthsRange] = useState<[Date | null, Date | null]>([null, null]);
-  const [oneMonth, setOneMonth] = useState<string | null>(null);
+  const [numMonths, setNumMonths] = useState<string | null>("one_month");
+  const [monthsRange, setMonthsRange] = useState<[DateValue | null, DateValue | null]>([
+    null,
+    null,
+  ]);
+  const [loadingDistributions, setLoadingDistributions] = useState(false);
+  const [oneMonth, setOneMonth] = useState<Date | null>(null);
   const [previewData, setPreviewData] = useState<Distribution[]>([]);
   const [isPreviewMode, setIsPreviewMode] = useState(false);
+  const [availableMonths, setAvailableMonths] = useState<
+    { month: string; year: number }[]
+  >([]);
+
+  useEffect(() => {
+    const fetchAvailableMonths = async () => {
+      try {
+        const response = await fetch("/api/timeline-slider");
+        if (response.ok) {
+          const data = await response.json();
+          // Map to lowercase month for easier matching
+          const months = data.months.map((m: TimelineSliderMonth) => ({
+            month: m.Month.toLowerCase(),
+            year: Number(m.Year),
+          }));
+          setAvailableMonths(months);
+        }
+      } catch (error) {
+        console.error("Error fetching available months:", error);
+      }
+    };
+    fetchAvailableMonths();
+  }, []);
 
   async function fetchPreviewMonthSelection(selection: MonthSelectionData) {
+    setLoadingDistributions(true);
     const { mode, start, end } = selection;
+    let url = "";
+
     if (mode === "one_month") {
-      const monthName = MONTH_NAMES[start.month + 1];
-      const preview = await fetch(
-        `/api/distributions?month=${monthName}&year=${start.year}`,
-      );
-      if (!preview.ok) {
-        console.error("Error: could not fetch distributions for", monthName);
-      } else {
-        const preview_json = await preview.json();
-        setPreviewData(preview_json);
-      }
+      const monthName = MONTH_NAMES[start.month];
+      url = `/api/distributions?month=${monthName}&year=${start.year}`;
     } else {
-      // i think we can just make this else but idk
-      let currMonth = start.month;
-      let currYear = start.year;
-
       if (end === null) return;
-      const allResults = [];
+      const startMonthName = MONTH_NAMES[start.month];
+      const endMonthName = MONTH_NAMES[end.month];
+      url = `/api/distributions?startMonth=${startMonthName}&startYear=${start.year}&endMonth=${endMonthName}&endYear=${end.year}`;
+    }
 
-      while (
-        currYear < end.year ||
-        (currYear === end.year && currMonth <= end.month)
-      ) {
-        const monthName = MONTH_NAMES[currMonth + 1];
-        const curr_preview = await fetch(
-          `/api/distributions?month=${monthName}&year=${currYear}`,
-        );
-        if (!curr_preview.ok) {
-          console.error("Error: could not fetch distributions for", monthName);
-        } else {
-          const json = await curr_preview.json();
-          allResults.push(...json);
-        }
-
-        currMonth++;
-        if (currMonth > 11) {
-          currMonth = 0;
-          currYear++;
-        }
+    try {
+      const response = await fetch(url);
+      if (!response.ok) {
+        console.error("Error fetching preview data");
+        setPreviewData([]);
+      } else {
+        const data = await response.json();
+        setPreviewData(data);
       }
-
-      setPreviewData(allResults);
+    } catch (error) {
+      console.error("Fetch error:", error);
+      setPreviewData([]);
+    }
+    finally {
+      setLoadingDistributions(false);
     }
   }
 
@@ -90,7 +111,7 @@ export default function MonthSelectionModal() {
     if (ids.length === 0) return;
 
     const res = await fetch(`/api/distributions`, {
-      method: "POST", // handles bulk-delete
+      method: "DELETE", // Changed from POST to DELETE
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ ids }),
     });
@@ -106,6 +127,7 @@ export default function MonthSelectionModal() {
 
     setPreviewData([]);
     setIsPreviewMode(false);
+    onSuccess?.(); // Trigger refresh on success
     close();
   }
 
@@ -117,12 +139,11 @@ export default function MonthSelectionModal() {
       if (!oneMonth) {
         return;
       }
-      const date = new Date(oneMonth);
       fetchPreviewMonthSelection({
         mode: "one_month",
         start: {
-          month: date.getMonth(),
-          year: date.getFullYear(),
+          month: oneMonth.getUTCMonth(),
+          year: oneMonth.getUTCFullYear(),
         },
         end: null,
       });
@@ -131,22 +152,23 @@ export default function MonthSelectionModal() {
         return;
       }
       const [start, end] = monthsRange;
+      console.log(start, end);
 
       if (!start || !end) return;
-      const start_date = new Date(start);
-      const end_date = new Date(end);
 
-      fetchPreviewMonthSelection({
-        mode: "range",
-        start: {
-          month: start_date.getMonth(),
-          year: start_date.getFullYear(),
-        },
-        end: {
-          month: end_date.getMonth(),
-          year: end_date.getFullYear(),
-        },
-      });
+      if (start instanceof Date && end instanceof Date) {
+        fetchPreviewMonthSelection({
+          mode: "range",
+          start: {
+            month: start.getUTCMonth(),
+            year: start.getUTCFullYear(),
+          },
+          end: {
+            month: end.getUTCMonth(),
+            year: end.getUTCFullYear(),
+          },
+        });
+      }
     }
   };
 
@@ -157,99 +179,158 @@ export default function MonthSelectionModal() {
         opened={opened}
         onClose={close}
         title={
-          <Text fw="bold" fz={28}>
+          <Text fw={700} size="xl">
             Delete Records
           </Text>
         }
         withCloseButton={true}
         centered
       >
-        <Text c="dimmed" style={{ marginBottom: "5px" }}>
-          Select a date range to preview and delete records.
-        </Text>
+        <Stack gap="sm">
+          <Text c="dimmed" size="sm">
+            Select a date range to preview and delete records.
+          </Text>
 
-        <Radio.Group
-          value={numMonths}
-          onChange={setNumMonths}
-          style={{ marginBottom: "5px" }}
-          required
-        >
-          <Group>
-            <Radio color="#053766" value="one_month" label="One Month" />
-            <Radio color="#053766" value="range" label="Range of Months" />
-          </Group>
-        </Radio.Group>
+          <Radio.Group
+            value={numMonths}
+            onChange={setNumMonths}
+            required
+            label="Selection Mode"
+            styles={{
+              label: {
+                fontWeight: 700,
+                fontSize: "1rem",
+                marginBottom: "4px",
+              },
+            }}
+          >
+            <Group mt="xs">
+              <Radio color="#163663" value="one_month" label="One Month" />
+              <Radio color="#163663" value="range" label="Range of Months" />
+            </Group>
+          </Radio.Group>
 
-        {numMonths === "one_month" ? (
-          <MonthPickerInput
-            label="Select Date:"
-            placeholder="Date"
-            value={oneMonth}
-            onChange={setOneMonth}
-          />
-        ) : (
-          <MonthPickerInput
-            type="range"
-            label="Select Date Range:"
-            placeholder="Date Range"
-            value={monthsRange}
-            onChange={setMonthsRange}
-          />
-        )}
-        <Button
-          onClick={handleClick}
-          style={{
-            marginTop: "5px ",
-            width: "100%",
-            backgroundColor: "#053766",
-          }}
-        >
-          {" "}
-          Apply Selection{" "}
-        </Button>
-        {isPreviewMode && (
-          <>
-            <Text fw={600} fz={22} mb="sm" style={{ marginTop: "10px" }}>
-              Preview: {previewData.length} records will be deleted
-            </Text>
-
-            {previewData.length != 0 && (
-              <>
-                <Table withTableBorder highlightOnHover mt="md">
-                  <Table.Thead>
-                    <Table.Tr>
-                      <Table.Th>Partner</Table.Th>
-                      <Table.Th>City</Table.Th>
-                      <Table.Th># Diapers distributed</Table.Th>
-                      <Table.Th># Children helped</Table.Th>
-                      <Table.Th>Month</Table.Th>
-                      <Table.Th>Year</Table.Th>
-                    </Table.Tr>
-                  </Table.Thead>
-
-                  <Table.Tbody>
-                    {previewData.map((dist) => (
-                      <Table.Tr
-                        key={`${dist.id}-${dist.month}-${dist.year}-${dist.createdAt}`}
-                      >
-                        <Table.Td>{dist.partner?.name}</Table.Td>
-                        <Table.Td>{dist.city?.name}</Table.Td>
-                        <Table.Td>{dist.numberDiapers}</Table.Td>
-                        <Table.Td>{dist.numberChildren}</Table.Td>
-                        <Table.Td>{dist.month}</Table.Td>
-                        <Table.Td>{dist.year}</Table.Td>
-                      </Table.Tr>
-                    ))}
-                  </Table.Tbody>
-                </Table>
-                <ConfirmDeletion
-                  count={previewData.length}
-                  onConfirm={deletePreviewedDistributions}
-                />
-              </>
+          <Group
+            grow
+            mt="md"
+            gap="md"
+            align="flex-end"
+          >
+            {numMonths === "one_month" ? (
+              <MonthPickerInput
+                label="Select Date"
+                placeholder="Date"
+                value={oneMonth}
+                onChange={setOneMonth}
+                getMonthControlProps={(date) => {
+                  const d = new Date(date);
+                  const monthName = MONTH_NAMES[d.getUTCMonth()].toLowerCase();
+                  const year = d.getUTCFullYear();
+                  const isAvailable = availableMonths.some(
+                    (m) => m.month === monthName && m.year === year,
+                  );
+                  return { disabled: !isAvailable };
+                }}
+                styles={{
+                  label: {
+                    fontWeight: 700,
+                    fontSize: "1rem",
+                  },
+                }}
+              />
+            ) : (
+              <MonthPickerInput
+                type="range"
+                label="Select Date Range"
+                placeholder="Date Range"
+                value={monthsRange}
+                onChange={setMonthsRange}
+                getMonthControlProps={(date) => {
+                  const d = new Date(date);
+                  const monthName = MONTH_NAMES[d.getUTCMonth()].toLowerCase();
+                  const year = d.getUTCFullYear();
+                  const isAvailable = availableMonths.some(
+                    (m) => m.month === monthName && m.year === year,
+                  );
+                  return { disabled: !isAvailable };
+                }}
+                styles={{
+                  label: {
+                    fontWeight: 700,
+                    fontSize: "1rem",
+                  },
+                }}
+              />
             )}
-          </>
-        )}
+
+            <Button
+              onClick={handleClick}
+              color="#163663"
+              mt="md"
+            >
+              Apply Selection
+            </Button>
+          </Group>
+          <Title order={5} mt="md">
+            Preview Distributions to Delete
+          </Title>
+
+
+          {isPreviewMode ? (
+            <Stack gap="xs" mt="md">
+
+
+              {loadingDistributions ? (
+                <Center>
+
+                  <Loader type="bars" />
+                </Center>
+              ) : (
+                <>
+                  <div style={{ maxHeight: "300px", overflowY: "auto" }}>
+                    <Table withTableBorder highlightOnHover
+                      stickyHeader
+                      striped>
+                      <Table.Thead>
+                        <Table.Tr>
+                          <Table.Th>Partner</Table.Th>
+                          <Table.Th>City</Table.Th>
+                          <Table.Th># Diapers</Table.Th>
+                          <Table.Th># Children</Table.Th>
+                          <Table.Th>Month</Table.Th>
+                          <Table.Th>Year</Table.Th>
+                        </Table.Tr>
+                      </Table.Thead>
+
+                      <Table.Tbody>
+                        {previewData.map((dist) => (
+                          <Table.Tr
+                            key={`${dist.id}-${dist.month}-${dist.year}-${dist.createdAt}`}
+                          >
+                            <Table.Td>{dist.partner?.name}</Table.Td>
+                            <Table.Td>{dist.city?.name}</Table.Td>
+                            <Table.Td>{dist.numberDiapers}</Table.Td>
+                            <Table.Td>{dist.numberChildren}</Table.Td>
+                            <Table.Td>{dist.month}</Table.Td>
+                            <Table.Td>{dist.year}</Table.Td>
+                          </Table.Tr>
+                        ))}
+                      </Table.Tbody>
+                    </Table>
+                  </div>
+                  <ConfirmDeletion
+                    count={previewData.length}
+                    onConfirm={deletePreviewedDistributions}
+                  />
+                </>
+              )}
+            </Stack>
+          ) : (
+            <Text c="dimmed" size="sm">
+              Select a date range to preview and delete records.
+            </Text>
+          )}
+        </Stack>
       </Modal>
       <Button variant="default" radius={5} onClick={open}>
         Delete

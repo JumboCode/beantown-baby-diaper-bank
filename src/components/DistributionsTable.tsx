@@ -4,7 +4,11 @@ import { useEffect, useState } from "react";
 import { Table, Text } from "@mantine/core";
 import { Distribution } from "@/lib/types";
 
-export default function DistributionsTable() {
+export default function DistributionsTable({
+  refreshTrigger,
+}: {
+  refreshTrigger?: number;
+}) {
   const [distributions, setDistributions] = useState<Distribution[]>([]);
   const [error, setError] = useState<string>();
 
@@ -25,7 +29,7 @@ export default function DistributionsTable() {
     };
 
     fetchDistributions();
-  }, []);
+  }, [refreshTrigger]);
 
   if (error) return <Text c="red">Error: {error}</Text>;
 

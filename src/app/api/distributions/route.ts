@@ -2,17 +2,75 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { Prisma as PrismaTypes } from "@/generated/prisma/client";
 
+const MONTH_NAMES = [
+  "January",
+  "February",
+  "March",
+  "April",
+  "May",
+  "June",
+  "July",
+  "August",
+  "September",
+  "October",
+  "November",
+  "December",
+];
+
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
 
-  const month = searchParams.get("month"); // e.g. "May"
-  const year = searchParams.get("year"); // e.g. "2026"
+  const month = searchParams.get("month");
+  const year = searchParams.get("year");
+  const startMonth = searchParams.get("startMonth");
+  const startYear = searchParams.get("startYear");
+  const endMonth = searchParams.get("endMonth");
+  const endYear = searchParams.get("endYear");
 
-  // Build WHERE only when params exist
-  const where: PrismaTypes.DistributionWhereInput = {
-    ...(month ? { month } : {}),
-    ...(year ? { year } : {}),
-  };
+  let where: PrismaTypes.DistributionWhereInput = {};
+
+  if (startMonth && startYear && endMonth && endYear) {
+    const sYear = parseInt(startYear);
+    const eYear = parseInt(endYear);
+    const sMonthIdx = MONTH_NAMES.indexOf(startMonth);
+    const eMonthIdx = MONTH_NAMES.indexOf(endMonth);
+
+    if (sYear === eYear) {
+      const monthsInRange = MONTH_NAMES.slice(sMonthIdx, eMonthIdx + 1);
+      where = {
+        year: startYear,
+        month: { in: monthsInRange },
+      };
+    } else {
+      const startYearMonths = MONTH_NAMES.slice(sMonthIdx);
+      const endYearMonths = MONTH_NAMES.slice(0, eMonthIdx + 1);
+
+      where = {
+        OR: [
+          {
+            year: startYear,
+            month: { in: startYearMonths },
+          },
+          {
+            year: endYear,
+            month: { in: endYearMonths },
+          },
+          {
+            AND: [
+              { year: { gt: startYear } },
+              { year: { lt: endYear } },
+            ],
+          },
+        ],
+      };
+    }
+  } else {
+    // Single month/year filter
+    where = {
+      ...(month ? { month } : {}),
+      ...(year ? { year } : {}),
+    };
+  }
 
   const distributionsQuery = {
     where,
@@ -23,15 +81,23 @@ export async function GET(req: Request) {
     orderBy: { createdAt: "desc" as const },
   } satisfies PrismaTypes.DistributionFindManyArgs;
 
-  type prismaDistributionsReturnType = PrismaTypes.DistributionGetPayload<
-    typeof distributionsQuery
-  >[];
-
   try {
-    const distributions: prismaDistributionsReturnType =
-      await prisma.distribution.findMany(distributionsQuery);
+    const distributionsArr = await prisma.distribution.findMany(distributionsQuery);
 
-    const formattedData = distributions.map((dist) => ({
+    const formattedData = distributionsArr.map(
+      (dist: {
+        id: bigint;
+        createdAt: Date;
+        partnerId: bigint | null;
+        cityId: bigint | null;
+        year: string | null;
+        month: string | null;
+        numberDiapers: bigint | null;
+        numberChildren: bigint | null;
+        percentage: number | null;
+        partner: { name: string | null } | null;
+        city: { name: string | null } | null;
+      }) => ({
       id: dist.id.toString(),
       createdAt: dist.createdAt.toISOString(),
       partnerId: dist.partnerId?.toString() || null,
@@ -56,7 +122,7 @@ export async function GET(req: Request) {
 }
 
 // For deleting distribution data of selection month and year
-export async function POST(req: Request) {
+export async function DELETE(req: Request) {
   try {
     const body = await req.json();
     const ids = (body?.ids ?? []) as string[];
