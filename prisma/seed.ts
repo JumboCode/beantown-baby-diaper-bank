@@ -6,7 +6,7 @@ import { prisma } from "../src/lib/prisma";
 import { YearlyDataCreateManyInput } from "@/generated/prisma/models";
 import { randomUUID } from "node:crypto";
 import { promises as fs } from "node:fs";
-import { status as PartnerStatus } from "@/generated/prisma/client";
+import { month, status as PartnerStatus } from "@/generated/prisma/client";
 
 const parseStatus = (value: string | undefined): PartnerStatus | undefined => {
   if (!value) return undefined;
@@ -148,7 +148,7 @@ async function seedDistributions() {
       partnerId: toBigInt(row.partner_id),
       cityId: toBigInt(row.city_id),
       year: toStringOrNull(row.year),
-      month: toStringOrNull(row.month),
+      month: toStringOrNull(row.month) as month,
       numberDiapers: toBigInt(row.number_diapers),
       numberChildren: toBigInt(row.number_children),
       percentage: toNumber(row.percentage),
