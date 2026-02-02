@@ -267,8 +267,7 @@ export default function Page() {
       filtered = filtered.filter((p) => {
         if (!p.start_partner) return false;
         return (
-          new Date(p.start_partner).getFullYear().toString() ===
-          partnerYearSince
+          new Date(p.start_partner).getFullYear() <= Number(partnerYearSince)
         );
       });
     }
