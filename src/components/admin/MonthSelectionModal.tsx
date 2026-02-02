@@ -221,7 +221,7 @@ export default function MonthSelectionModal({
                 label="Select Date"
                 placeholder="Date"
                 value={oneMonth}
-                onChange={setOneMonth}
+                onChange={(date) => setOneMonth(date as Date | null)}
                 getMonthControlProps={(date) => {
                   const d = new Date(date);
                   const monthName = MONTH_NAMES[d.getUTCMonth()].toLowerCase();
