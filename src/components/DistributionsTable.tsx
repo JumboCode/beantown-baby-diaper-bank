@@ -24,6 +24,7 @@ interface dateTotal {
   month: string;
   year: string;
   total: number;
+  distributions: Distribution[];
 }
 
 export default function DistributionsTable() {
@@ -75,11 +76,15 @@ export default function DistributionsTable() {
           const total = data.reduce(
             (accumulator: number, currentValue: Distribution) => {
               return accumulator + parseInt(currentValue.numberDiapers);
-            }, 0,
+            },
+            0,
           );
 
+          const distributions = Array.isArray(data)
+            ? data
+            : data.distributions || [];
 
-          return { month, year, total };
+          return { month, year, total, distributions };
         }),
       );
       setTotals(results);
@@ -92,29 +97,47 @@ export default function DistributionsTable() {
 
   if (error) return <Text c="red">Error: {error}</Text>;
 
-  const rows: React.ReactNode[] = totals.map((date) => (
-    <Table.Tr key={`${date.year}-${date.month}`}>
-      <Table.Td fz={16} fw={600} c="#101828" className="text-sm text-gray-600">
-        {date.month} {date.year}, {date.total} diapers
-      </Table.Td>
+  const rows: React.ReactNode[] = totals.flatMap((date) => {
+    const mainRow = (
+      <Table.Tr key={`${date.year}-${date.month}`}>
+        <Table.Td
+          fz={24}
+          fw={600}
+          c="#101828"
+          className="text-sm text-gray-600"
+        >
+          {date.month} {date.year}, {date.total} diapers
+        </Table.Td>
+      </Table.Tr>
+    );
 
-      {/* <Table.Td fz={16} fw={600} c="#101828" className="text-sm text-gray-600">
-        {dist.partner.name}
-      </Table.Td>
-      <Table.Td className="text-sm text-gray-600">{dist.city.name}</Table.Td>
-      <Table.Td className="text-sm text-gray-600">
-        {dist.numberDiapers}
-      </Table.Td>
-      <Table.Td className="text-sm text-gray-600">
-        {dist.numberChildren}
-      </Table.Td>
-      <Table.Td className="text-sm text-gray-600">{dist.month}</Table.Td>
-      <Table.Td className="text-sm text-gray-600">{dist.year}</Table.Td>
-      <Table.Td className="text-sm text-gray-600">
-        {(dist.percentage * 100).toFixed(2)}%
-      </Table.Td> */}
-    </Table.Tr>
-  ));
+    const distRows = date.distributions.map((dist) => (
+      <Table.Tr key={`${dist.id}`}>
+        <Table.Td
+          fz={16}
+          fw={600}
+          c="#101828"
+          className="text-sm text-gray-600"
+        >
+          {dist.partner.name}
+        </Table.Td>
+        <Table.Td className="text-sm text-gray-600">{dist.city.name}</Table.Td>
+        <Table.Td className="text-sm text-gray-600">
+          {dist.numberDiapers}
+        </Table.Td>
+        <Table.Td className="text-sm text-gray-600">
+          {dist.numberChildren}
+        </Table.Td>
+        <Table.Td className="text-sm text-gray-600">{dist.month}</Table.Td>
+        <Table.Td className="text-sm text-gray-600">{dist.year}</Table.Td>
+        <Table.Td className="text-sm text-gray-600">
+          {(dist.percentage * 100).toFixed(2)}%
+        </Table.Td>
+      </Table.Tr>
+    ));
+
+    return [mainRow, ...distRows];
+  });
 
   return (
     <div className="bg-white rounded-xl shadow-lg overflow-hidden flex flex-col">
