@@ -87,11 +87,26 @@ const requiredInteger = (label: string) => (value: unknown) => {
   return /^\d+$/.test(v) ? null : `${label} must be a number`;
 };
 
+//Checks if input is #VALID
+const requiredInput = (label: string) => (value: unknown) => {
+  const v = (value === 0 ? "0" : (value ?? "")).toString().trim();
+  if (v === "") return `${label} is required`;
+  return /.+/.test(v) ? null : `${label} must be filled out`;
+};
+
+const requiredState = (label: string) => (value: unknown) => {
+  const v = (value === 0 ? "0" : (value ?? "")).toString().trim();
+  if (v === "") return `${label} is required`;
+  return /.*\D.*/.test(v) ? null : `${label} must be filled out`;
+};
+
+
 type UpdatePercentagesOptions = "one-time" | "continuous";
 export default function EditPartnerForm({
   partner,
   onClose,
 }: EditPartnerFormProps) {
+  console.log("partner data:", partner);
   const [loading, setLoading] = useState(false);
   const [activePercentTab, setActivePercentTab] =
     useState<UpdatePercentagesOptions>("one-time");
@@ -132,7 +147,7 @@ export default function EditPartnerForm({
     initialValues: {
       organization: partner.name,
       description: partner.description || "",
-      time: partner.start_partner || "",
+      time: partner.start_partner ? new Date(partner.start_partner) : null, 
       status: partner.status,
       latitude: partner.coords ? partner.coords.lat : "",
       longitude: partner.coords ? partner.coords.lng : "",
@@ -146,16 +161,17 @@ export default function EditPartnerForm({
       updatePercentagesType: "one-time" as UpdatePercentagesOptions,
     },
     validate: {
-      organization: (value) =>
-        typeof value === "string" ? null : "Organization name must be a string",
+      organization: requiredInput("Name of Organization"),
       time: (value) => (value.length > 0 ? null : "Select a start time"),
       latitude: requiredNumber("Latitude"),
       longitude: requiredNumber("Longitude"),
-      state: (value) =>
-        typeof value === "string" ? null : "State name must be a string",
+      state: requiredState("State"),
+      city: requiredInput("City"),
+      addressLine: requiredInput("Address Line"),
       zipCode: requiredInteger("Zip Code"),
       country: (value) => (value ? null : "Select a country"),
       status: (value) => (value ? null : "Select a status"),
+      description: requiredInput("Description"),
 
       logoUrl: (value, values) => {
         if (!value.trim() && !values.logoFile) return; // logos are optional according to the figma?
@@ -170,7 +186,7 @@ export default function EditPartnerForm({
       id: partner.id,
       name: values.organization,
       description: values.description,
-      start_partner: new Date(values.time).toISOString(),
+      start_partner: new Date(values.time).toISOString().slice(0,7),
       status: values.status,
       coordinates: {
         lat: values.latitude,
@@ -185,6 +201,11 @@ export default function EditPartnerForm({
       }),
       logo: values.logoUrl,
     };
+
+    // console.log("HELLOOOOOO");
+    // console.log(formData.start_partner);
+    // console.log("VALUES");
+    // console.log(values);
 
     const response = await fetch("/api/partners", {
       method: "POST",
@@ -237,7 +258,6 @@ export default function EditPartnerForm({
               size="md"
               className="min-w-170"
               radius="md"
-              required
             />
           </Group>
 
@@ -254,7 +274,6 @@ export default function EditPartnerForm({
               radius="md"
               autosize
               maxRows={6}
-              required
             />
           </Group>
 
@@ -370,7 +389,6 @@ export default function EditPartnerForm({
                 {...form.getInputProps("addressLine")}
                 size="md"
                 radius="md"
-                required
               />
 
               <div className="flex gap-4 w-full">
@@ -381,7 +399,6 @@ export default function EditPartnerForm({
                   size="md"
                   className="flex-1"
                   radius="md"
-                  required
                 />
                 <TextInput
                   placeholder="State"
@@ -390,7 +407,6 @@ export default function EditPartnerForm({
                   size="md"
                   className="w-[120px]"
                   radius="md"
-                  required
                 />
               </div>
 

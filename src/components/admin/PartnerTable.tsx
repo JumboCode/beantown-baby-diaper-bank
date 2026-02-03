@@ -72,6 +72,7 @@ export default function PartnerInfo() {
       fetch("/api/partners/percentages").then((response) => response.json()),
     ])
       .then(([partnerResult, percentageResult]) => {
+        console.log("Partner data received:", partnerResult.data);
         setData(partnerResult.data);
         setPercentages(percentageResult.data);
       })
@@ -174,7 +175,8 @@ function PartnerTable({
                   </Table.Td>
                   <Table.Td className="text-sm text-gray-600">
                     {partner.start_partner ? (
-                      new Date(partner.start_partner).toLocaleDateString()
+                      // new Date(partner.start_partner).toLocaleDateString()
+                      partner.start_partner.slice(0,7)
                     ) : (
                       <span className="text-gray-400 italic">N/A</span>
                     )}

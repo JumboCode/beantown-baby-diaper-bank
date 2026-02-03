@@ -25,6 +25,14 @@ import "@mantine/dates/styles.css";
 const countries = ["United States", "Canada"];
 const DEFAULT_COUNTRY = "United States";
 
+const US_STATES = [
+  "AL", "AK", "AZ", "AR", "CA", "CO", "CT", "DE", "FL", "GA",
+  "HI", "ID", "IL", "IN", "IA", "KS", "KY", "LA", "ME", "MD",
+  "MA", "MI", "MN", "MS", "MO", "MT", "NE", "NV", "NH", "NJ",
+  "NM", "NY", "NC", "ND", "OH", "OK", "OR", "PA", "RI", "SC",
+  "SD", "TN", "TX", "UT", "VT", "VA", "WA", "WV", "WI", "WY",
+];
+
 type AddressFields = {
   addressLine: string;
   city: string;
@@ -122,7 +130,7 @@ export default function AddPartnerForm({
       latitude: requiredNumber("Latitude"),
       longitude: requiredNumber("Longitude"),
       state: (value) =>
-        typeof value === "string" ? null : "State name must be a string",
+        value ? null : "Select a state",
       zipCode: requiredInteger("Zip Code"),
       country: (value) => (value ? null : "Select a country"),
       status: (value) => (value ? null : "Select a status"),
@@ -424,10 +432,14 @@ export default function AddPartnerForm({
                   radius="md"
                   required
                 />
-                <TextInput
+                <Select
                   placeholder="State"
+                  data={US_STATES}
+                  searchable
                   key={form.key("state")}
-                  {...form.getInputProps("state")}
+                  value={form.values.state || null}
+                  onChange={(val) => form.setFieldValue("state", val || "")}
+                  error={form.errors.state}
                   size="md"
                   radius="md"
                   required
