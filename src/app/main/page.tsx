@@ -9,7 +9,7 @@ import { useState, useEffect, useCallback } from "react";
 import ImpactModal from "@/components/ImpactModal";
 import { FeatureCollection, Polygon } from "geojson";
 import { City, Distribution } from "@/generated/prisma/client";
-import { Grid } from "@mantine/core";
+import { Grid, SimpleGrid } from "@mantine/core";
 import YearlyMonthlySwitch from "@/components/sprint2/YearlyMonthlySwitch";
 
 // hex values: 1(#B2E5FF) 2(#7EC3E5) 3(#51A3CC) 4(#2C85B2) 5(#0F6B99)
@@ -120,10 +120,10 @@ export default function Page() {
       style={{
         backgroundColor: "#FFFFFF",
         minHeight: "100vh",
-        paddingRight: "72px",
-        paddingLeft: "72px",
-        paddingTop: "44px",
-        paddingBottom: "44px",
+        paddingRight: "8%",
+        paddingLeft: "8%",
+        paddingTop: "3%",
+        paddingBottom: "3%",
       }}
     >
       <Stack
@@ -153,9 +153,9 @@ export default function Page() {
         >
           Distribution Heat Map
         </Title>
-        <Grid>
+        <SimpleGrid cols={{ base: 1, sm: 3 }} spacing={{base: 0, sm: '3%'}} verticalSpacing={{base: '3%', sm: 0}}>
           {/* Left Column: Map */}
-          <Grid.Col span="auto">
+          <div style={{ gridColumn: 'span 2' }}>
             <Paper shadow="sm" p="md" radius="md" withBorder>
               <Box mb="md">
                 <YearlyMonthlySwitch
@@ -182,20 +182,19 @@ export default function Page() {
                 onTimelineChange={handleTimelineChange}
               />
             </Paper>
-          </Grid.Col>
+          </div>
 
           {/* Right Column: Impact Modal */}
-          <Grid.Col
-            span={3}
+          <div
             style={{
               display: "flex",
               flexDirection: "column",
-              justifyContent: "flex-start",
+              justifyContent: "flex-center",
             }}
           >
             <ImpactModal />
-          </Grid.Col>
-        </Grid>
+          </div>
+        </SimpleGrid>
       </Stack>
     </Box>
   );
