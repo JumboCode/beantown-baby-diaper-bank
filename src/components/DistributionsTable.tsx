@@ -43,23 +43,24 @@ export default function DistributionsTable() {
     fetchDistributions();
   }, []);
 
+  
+  const dates: Array<{month: string, year: string}> = distributions.map((dist) =>({
+    month: dist.month,
+    year: dist.year
+  })).filter(
+    (d, index, self) =>
+    index === self.findIndex(
+      x => x.month === d.month && x.year === d.year
+    )
+  );
+
+  console.log(dates)
+
   if (error) return <Text c="red">Error: {error}</Text>;
 
-  // // Group by organization
-  // const grouped = distributions.reduce(
-  //   (acc, dist) => {
-  //     const orgName = dist.partner.name;
-  //     if (!acc[orgName]) {
-  //       acc[orgName] = [];
-  //     }
-  //     acc[orgName].push(dist);
-  //     return acc;
-  //   },
-  //   {} as Record<string, Distribution[]>
-  // );
-
   const rows: React.ReactNode[] = distributions.map((dist) => (
-    <Table.Tr key={`${dist.id}`}>
+    <Table.Tr key={`${dist.id}`}> 
+
       <Table.Td fz={16} fw={600} c="#101828" className="text-sm text-gray-600">
         {dist.partner.name}
       </Table.Td>
