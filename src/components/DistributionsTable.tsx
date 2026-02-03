@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Table, Text } from "@mantine/core";
 interface Distribution {
   id: string;
@@ -20,8 +20,15 @@ interface Distribution {
   };
 }
 
+interface dateTotal {
+  month: string;
+  year: string;
+  total: number;
+}
+
 export default function DistributionsTable() {
   const [distributions, setDistributions] = useState<Distribution[]>([]);
+  const [totals, setTotals] = useState<dateTotal[]>([]);
   const [error, setError] = useState<string>();
 
   useEffect(() => {
@@ -43,25 +50,55 @@ export default function DistributionsTable() {
     fetchDistributions();
   }, []);
 
-  
-  const dates: Array<{month: string, year: string}> = distributions.map((dist) =>({
-    month: dist.month,
-    year: dist.year
-  })).filter(
-    (d, index, self) =>
-    index === self.findIndex(
-      x => x.month === d.month && x.year === d.year
-    )
-  );
+  const possibleDates: Array<{ month: string; year: string }> = useMemo(() => {
+    return distributions
+      .map((dist) => ({
+        month: dist.month,
+        year: dist.year,
+      }))
+      .filter(
+        (d, index, self) =>
+          index ===
+          self.findIndex((x) => x.month === d.month && x.year === d.year),
+      );
+  }, [distributions]);
 
-  console.log(dates)
+  useEffect(() => {
+    const fetchTotals = async () => {
+      const results = await Promise.all(
+        possibleDates.map(async ({ month, year }) => {
+          const response = await fetch(
+            `/api/distributions?month=${month}&year=${year}`,
+          );
+          if (!response.ok) throw new Error("Failed to fetch distributions");
+          const data = await response.json();
+          const total = data.reduce(
+            (accumulator: number, currentValue: Distribution) => {
+              return accumulator + parseInt(currentValue.numberDiapers);
+            }, 0,
+          );
+
+
+          return { month, year, total };
+        }),
+      );
+      setTotals(results);
+    };
+
+    fetchTotals();
+  }, [possibleDates]);
+
+  console.log(totals);
 
   if (error) return <Text c="red">Error: {error}</Text>;
 
-  const rows: React.ReactNode[] = distributions.map((dist) => (
-    <Table.Tr key={`${dist.id}`}> 
-
+  const rows: React.ReactNode[] = totals.map((date) => (
+    <Table.Tr key={`${date.year}-${date.month}`}>
       <Table.Td fz={16} fw={600} c="#101828" className="text-sm text-gray-600">
+        {date.month} {date.year}, {date.total} diapers
+      </Table.Td>
+
+      {/* <Table.Td fz={16} fw={600} c="#101828" className="text-sm text-gray-600">
         {dist.partner.name}
       </Table.Td>
       <Table.Td className="text-sm text-gray-600">{dist.city.name}</Table.Td>
@@ -75,7 +112,7 @@ export default function DistributionsTable() {
       <Table.Td className="text-sm text-gray-600">{dist.year}</Table.Td>
       <Table.Td className="text-sm text-gray-600">
         {(dist.percentage * 100).toFixed(2)}%
-      </Table.Td>
+      </Table.Td> */}
     </Table.Tr>
   ));
 
@@ -88,7 +125,7 @@ export default function DistributionsTable() {
           styles={{ th: { color: "#667085" } }}
           tabularNums
         >
-          <Table.Thead style={{ backgroundColor: "#F9FAFB" }}>
+          {/* <Table.Thead style={{ backgroundColor: "#F9FAFB" }}>
             <Table.Tr>
               <Table.Th fw="normal" fz="14px">
                 Partner Name
@@ -112,7 +149,7 @@ export default function DistributionsTable() {
                 Percentage
               </Table.Th>
             </Table.Tr>
-          </Table.Thead>
+          </Table.Thead> */}
           <Table.Tbody>{rows}</Table.Tbody>
         </Table>
       </div>
