@@ -6,7 +6,7 @@ export default function Page() {
   >
     <Text
     >
-      Your SignIn Component Here
+      <SignIn />
     </Text>
   </Center>
 }
