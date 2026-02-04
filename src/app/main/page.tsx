@@ -9,7 +9,7 @@ import { useState, useEffect, useCallback } from "react";
 import ImpactModal from "@/components/ImpactModal";
 import { FeatureCollection, Polygon } from "geojson";
 import { City, Distribution } from "@/generated/prisma/client";
-import { Grid, SimpleGrid } from "@mantine/core";
+import { SimpleGrid } from "@mantine/core";
 import YearlyMonthlySwitch from "@/components/sprint2/YearlyMonthlySwitch";
 
 // hex values: 1(#B2E5FF) 2(#7EC3E5) 3(#51A3CC) 4(#2C85B2) 5(#0F6B99)
