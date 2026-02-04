@@ -13,7 +13,11 @@ export default function TimelineSlider({
 }: TimelineSliderProps) {
   return (
     <div>
-      <div>{labels[value]}</div>
+      {/* This displays the selected month/year at the top-left of the slider */}
+      <div style={{ fontWeight: 600, marginBottom: '8px' }}>
+        {labels[value]}
+      </div>
+      
       <Slider
         restrictToMarks
         min={0}
@@ -21,12 +25,16 @@ export default function TimelineSlider({
         value={value}
         onChange={setValue}
         step={1}
-        marks={labels.map((label, idx) => ({
+        // Removed 'label' from the mark objects to stop them from appearing under the slider
+        marks={labels.map((_, idx) => ({
           value: idx,
-          label: typeof label === "number" ? label.toString() : label,
         }))}
+        // label={null} removes the floating tooltip (1, 2, 3...) that appears while dragging
+        label={null}
         styles={{
-          markLabel: { fontSize: 12 },
+          root: { width: '100%' },
+          // Ensuring the track looks clean without labels
+          mark: { display: 'block' }, 
         }}
       />
     </div>

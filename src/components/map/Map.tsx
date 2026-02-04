@@ -4,7 +4,7 @@ import dynamic from "next/dynamic";
 import { useLeafletMap } from "./useLeafletMap";
 import { useBaseTileLayer } from "./useBaseTileLayer";
 import { useMemo, useState } from "react";
-import type { City, Distribution } from "@/generated/prisma/client";
+import type { City, Distribution, status } from "@/generated/prisma/client";
 import {
   Popup,
   TileLayer,
@@ -16,15 +16,37 @@ import { LatLngExpression } from "leaflet";
 
 import "leaflet/dist/leaflet.css";
 import type { MapData } from "@/app/main/page";
-import PartnerInfo from "@/app/epic2sprint1/partnerInfo";
-import { Title, Text, Stack } from "@mantine/core";
+import {
+  Title,
+  Text,
+  Stack,
+  Group,
+  Avatar,
+  Tooltip as MantineTooltip,
+  Divider
+} from "@mantine/core";
+import PartnerIconDrawer from "../PartnerIconDrawer";
+import PartnerAvatar from "../PartnerAvatar";
 
-// Dynamically import react-leaflet components with SSR disabled
-// because they depend on the browser environment (e.g., window, document).
+// --- 1. Helper Functions ---
 
-// Lightest -> darkest for linear interpolation
 const LEVEL_COLORS = ["#E8F4FF", "#B2E5FF", "#51A3CC", "#2C85B2"];
-// Linearly interpolate between colors in LEVEL_COLORS based on value/max
+
+const hexToRgb = (hex: string): [number, number, number] => {
+  const parsed = hex.replace("#", "");
+  const bigint = parseInt(parsed, 16);
+  return [(bigint >> 16) & 255, (bigint >> 8) & 255, bigint & 255];
+};
+
+const componentToHex = (c: number) => {
+  const clamped = Math.max(0, Math.min(255, c));
+  const hex = clamped.toString(16);
+  return hex.length === 1 ? "0" + hex : hex;
+};
+
+const rgbToHex = (r: number, g: number, b: number) =>
+  `#${componentToHex(r)}${componentToHex(g)}${componentToHex(b)}`;
+
 const getColor = (value: number, max: number) => {
   if (value <= 0 || max <= 0) return LEVEL_COLORS[0];
   const ratio = Math.min(1, value / max);
@@ -44,20 +66,7 @@ const getColor = (value: number, max: number) => {
   return rgbToHex(r, g, b);
 };
 
-const hexToRgb = (hex: string): [number, number, number] => {
-  const parsed = hex.replace("#", "");
-  const bigint = parseInt(parsed, 16);
-  return [(bigint >> 16) & 255, (bigint >> 8) & 255, bigint & 255];
-};
-
-const componentToHex = (c: number) => {
-  const clamped = Math.max(0, Math.min(255, c));
-  const hex = clamped.toString(16);
-  return hex.length === 1 ? "0" + hex : hex;
-};
-
-const rgbToHex = (r: number, g: number, b: number) =>
-  `#${componentToHex(r)}${componentToHex(g)}${componentToHex(b)}`;
+// --- 2. Types and Dynamic Imports ---
 
 export const Marker = dynamic(
   () => import("react-leaflet").then((module) => module.Marker),
@@ -67,8 +76,10 @@ export const Marker = dynamic(
 type PartnerInfoType = {
   id: number;
   name: string;
-  logo_url?: string | null;
-  status: "active" | "inactive" | "waitlisted" | null;
+  logo_url?: string | null;  // Snake case used in Map.tsx
+  logoUrl?: string | null;   // Camel case used in route.ts API
+  status?: string | null;    // Can be "active", "waitlisted", etc.
+  waitlisted?: boolean | string; // Can be true/false from DB
 };
 
 type CityMapInfo = City & {
@@ -76,12 +87,15 @@ type CityMapInfo = City & {
   partners: PartnerInfoType[];
 };
 
+// --- 3. Main HeatMap Component ---
+
 export default function Map({ mapData }: { mapData: MapData }) {
   const { mapConfig } = useLeafletMap();
   const { style: mapStyle, ...mapOptions } = mapConfig;
   const { tileLayerProps } = useBaseTileLayer();
   const [hoveredId, setHoveredId] = useState<string | number | null>(null);
   const [activeId, setActiveId] = useState<string | number | null>(null);
+  const [selectedPartnerId, setSelectedPartnerId] = useState<number | null>(null);
 
   const cities = mapData?.cities.data ?? [];
 
@@ -102,13 +116,11 @@ export default function Map({ mapData }: { mapData: MapData }) {
 
     return mapData.boundaries.features.map((feature) => {
       const name = feature.properties?.name;
-      // Look up the total using the name, default to 0
       const total = name ? cityTotals[name] || 0 : 0;
 
       return {
         id: name || Math.random(),
-        positions: feature.geometry
-          .coordinates as unknown as LatLngExpression[][],
+        positions: feature.geometry.coordinates as unknown as LatLngExpression[][],
         name: name,
         fillColor: getColor(total, maxDiapers),
         totalDiapers: total,
@@ -117,110 +129,126 @@ export default function Map({ mapData }: { mapData: MapData }) {
   }, [mapData, cities]);
 
   return (
-    <div
-      style={{
-        position: "relative",
-        height: "100%",
-        width: "100%",
-        zIndex: 0,
-      }}
-    >
+    <div style={{ position: "relative", height: "100%", width: "100%", zIndex: 0 }}>
       <MapContainer {...mapOptions} style={mapStyle}>
         <TileLayer {...tileLayerProps} />
         {boundaryPolygons.map((boundary, index) => (
           <Polygon
             key={boundary.id || index}
             pathOptions={{
-              // stroke: false,
-              weight:
-                activeId === boundary.id || hoveredId === boundary.id
-                  ? 1.5
-                  : 0.5,
-              color:
-                activeId === boundary.id || hoveredId === boundary.id
-                  ? "#0F4F78"
-                  : "#5A7687",
+              weight: activeId === boundary.id || hoveredId === boundary.id ? 1.5 : 0.5,
+              color: activeId === boundary.id || hoveredId === boundary.id ? "#0F4F78" : "#5A7687",
               fillColor: boundary.fillColor,
-              fillOpacity:
-                activeId === boundary.id
-                  ? 0.65
-                  : hoveredId === boundary.id
-                    ? 0.5
-                    : 0.35,
+              fillOpacity: activeId === boundary.id ? 0.65 : hoveredId === boundary.id ? 0.5 : 0.35,
             }}
             positions={boundary.positions}
             eventHandlers={{
               mouseover: () => setHoveredId(boundary.id),
-              mouseout: () =>
-                setHoveredId((current) =>
-                  current === boundary.id ? null : current,
-                ),
+              mouseout: () => setHoveredId((current) => (current === boundary.id ? null : current)),
               click: () => setActiveId(boundary.id),
-              popupclose: () =>
-                setActiveId((current) =>
-                  current === boundary.id ? null : current,
-                ),
+              popupclose: () => setActiveId((current) => (current === boundary.id ? null : current)),
             }}
           >
             {boundary.name && (
               <Tooltip sticky direction="top" offset={[0, -4]}>
-                <Text fw={700} fz="sm" c="#0F4F78">
-                  {boundary.name}
-                </Text>
+                <Text fw={700} fz="sm" c="#0F4F78">{boundary.name}</Text>
               </Tooltip>
             )}
             {boundary.name &&
               cities.map(
-                (city) =>
-                  city.name === boundary.name && (
-                    <PopupContent key={city.id.toString()} city={city} />
-                  ),
+                (city) => city.name === boundary.name && (
+                  <PopupContent
+                    key={city.id.toString()}
+                    city={city}
+                    onPartnerSelect={setSelectedPartnerId}
+                  />
+                ),
               )}
           </Polygon>
         ))}
       </MapContainer>
+
+      <PartnerIconDrawer
+        partnerId={selectedPartnerId}
+        onClose={() => setSelectedPartnerId(null)}
+      />
     </div>
   );
 }
 
-function PopupContent({ city }: { city: CityMapInfo }) {
-  const partners = city.partners;
-  const totalDiapers =
-    city.distributions.reduce((sum, d) => sum + Number(d.numberDiapers), 0) ??
-    0;
-  const totalChildren =
-    city.distributions.reduce((sum, d) => sum + Number(d.numberChildren), 0) ??
-    0;
+// --- 4. Popup Content (Condensed Styling) ---
+
+function PopupContent({ city, onPartnerSelect }: { city: CityMapInfo; onPartnerSelect: (id: number) => void }) {
+  // ROBUST FILTER: Detects waitlisted by string or boolean
+  const waitlistedPartners = city.partners.filter((p) =>
+    p.status === "waitlisted" ||
+    p.waitlisted === true ||
+    p.waitlisted === "true"
+  );
+
+  // ACTIVE FILTER: Everyone who isn't waitlisted or inactive
+  const activePartners = city.partners.filter((p) => {
+    const isWaitlisted = p.status === "waitlisted" || p.waitlisted === true || p.waitlisted === "true";
+    const isInactive = p.status === "inactive";
+    return !isWaitlisted && !isInactive;
+  });
+
+  const totalDiapers = city.distributions.reduce((sum, d) => sum + Number(d.numberDiapers), 0) ?? 0;
+  const totalChildren = city.distributions.reduce((sum, d) => sum + Number(d.numberChildren), 0) ?? 0;
+
   return (
     <Popup minWidth={280}>
-      <div>
-        <Title order={3} fz="18px" c="#101828">
-          {city.name}
-        </Title>
-        <Text fz="16px" c="#344054">
-          {" "}
-          Diapers Distributed: {totalDiapers.toString()}{" "}
-        </Text>
-        <Text fz="16px" c="#344054">
-          {" "}
-          Children helped: {totalChildren.toString()}{" "}
-        </Text>
-        <Title order={4} fz="18px" style={{ marginTop: "10px" }}>
-          Partner Information
-        </Title>
-        <Stack gap="sm">
-          {partners.map((partner) => (
-            <PartnerInfo
-              key={partner.id.toString()}
-              name={partner.name}
-              url={partner.logo_url || null}
-              id={partner.id}
-              status={partner.status}
-              fromMarker={false}
-            />
-          ))}
+      <Stack gap="xs">
+        <Title order={3} fz="18px" c="#101828">{city.name}</Title>
+
+        <Stack gap={0}>
+          <Text fz="14px" c="#344054">Diapers Distributed: <b>{totalDiapers.toLocaleString()}</b></Text>
+          <Text fz="14px" c="#344054">Children helped: <b>{totalChildren.toLocaleString()}</b></Text>
         </Stack>
-      </div>
+
+        {/* --- Active Partners --- */}
+        <Divider my="xs" label="Active Partners" labelPosition="left" />
+        <Group gap="xs" wrap="wrap">
+          {activePartners.length > 0 ? (
+            activePartners.map((p) => (
+              <PartnerAvatar
+                key={p.id}
+                id={p.id}
+                name={p.name}
+                url={p.logoUrl || p.logo_url}
+                status={p.status as status}
+                onClick={() => onPartnerSelect(p.id)}
+              />
+
+            ))
+          ) : (
+            <Text fz="xs" c="dimmed" fs="italic">No active partners</Text>
+          )}
+        </Group>
+
+        {/* --- Waitlisted Partners --- */}
+        <Divider my="xs" label={`Waitlisted (${waitlistedPartners.length})`} labelPosition="left" />
+        <Group gap="xs" wrap="wrap">
+          {waitlistedPartners.length > 0 ? (
+            waitlistedPartners.map((p) => (
+              <MantineTooltip key={p.id} label={p.name} withArrow>
+                <Avatar
+                  src={p.logo_url || p.logoUrl}
+                  size="sm"
+                  radius="xl"
+                  color="gray"
+                  variant="outline"
+                  style={{ opacity: 0.8, cursor: "pointer" }}
+                >
+                  {p.name.substring(0, 2).toUpperCase()}
+                </Avatar>
+              </MantineTooltip>
+            ))
+          ) : (
+            <Text fz="xs" c="dimmed" fs="italic">No waitlisted partners found</Text>
+          )}
+        </Group>
+      </Stack>
     </Popup>
   );
 }

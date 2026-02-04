@@ -1,9 +1,7 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState } from "react";
 import {
-  Center,
-  Loader,
   Table,
   Modal,
   Pill,
@@ -60,57 +58,14 @@ type PartnerRegion = {
   };
 };
 
-export default function PartnerInfo() {
-  const [data, setData] = useState<Partner[]>([]);
-  const [percentages, setPercentages] = useState<PartnerRegion[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  const refreshTable = useCallback(() => {
-    setLoading(true);
-    Promise.all([
-      fetch("/api/partners").then((response) => response.json()),
-      fetch("/api/partners/percentages").then((response) => response.json()),
-    ])
-      .then(([partnerResult, percentageResult]) => {
-        console.log("Partner data received:", partnerResult.data);
-        setData(partnerResult.data);
-        setPercentages(percentageResult.data);
-      })
-      .catch((err) => {
-        console.error("Error refetching data:", err);
-      })
-      .finally(() => {
-        setLoading(false);
-      });
-  }, []);
-
-  useEffect(() => {
-    refreshTable();
-  }, [refreshTable]);
-
-  useEffect(() => {
-    const handler = () => refreshTable();
-    window.addEventListener("partners:refresh", handler);
-    return () => window.removeEventListener("partners:refresh", handler);
-  }, [refreshTable]);
-
-  return loading ? (
-    <Center className="h-64">
-      <Loader type="bars" />
-    </Center>
-  ) : (
-    <>
-      <PartnerTable partners={data} percentages={percentages} />
-    </>
-  );
-}
-
-function PartnerTable({
+export default function PartnerTable({
   partners,
   percentages,
+  refreshTable,
 }: {
   partners: Partner[];
   percentages: PartnerRegion[];
+  refreshTable?: () => void;
 }) {
   const [partner, setPartner] = useState<Partner | null>(null);
   const [opened, { open, close }] = useDisclosure(false);
@@ -299,7 +254,7 @@ function PartnerTable({
             onClose={() => {
               close();
               setPartner(null);
-              // refreshTable();
+              refreshTable?.();
             }}
           />
         </Modal>
