@@ -131,7 +131,7 @@ export default function PartnerTable({
                   <Table.Td className="text-sm text-gray-600">
                     {partner.start_partner ? (
                       // new Date(partner.start_partner).toLocaleDateString()
-                      partner.start_partner.slice(0,7)
+                      partner.start_partner.slice(0, 7)
                     ) : (
                       <span className="text-gray-400 italic">N/A</span>
                     )}

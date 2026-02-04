@@ -132,10 +132,10 @@ export default function EditPartnerForm({
   const initialCityPercentEntries: CityPercentage[] =
     cityPercentages.length > 0
       ? cityPercentages.map((entry, idx) => ({
-          id: `${entry.city.name}-${idx}`,
-          city: entry.city.name,
-          percent: Math.round((entry.percentage ?? 0) * 100),
-        }))
+        id: `${entry.city.name}-${idx}`,
+        city: entry.city.name,
+        percent: Math.round((entry.percentage ?? 0) * 100),
+      }))
       : [];
 
   const addressFields = parseAddressFields(partner.address);
@@ -147,7 +147,7 @@ export default function EditPartnerForm({
     initialValues: {
       organization: partner.name,
       description: partner.description || "",
-      time: partner.start_partner ? new Date(partner.start_partner) : null, 
+      time: partner.start_partner ? new Date(partner.start_partner) : null,
       status: partner.status,
       latitude: partner.coords ? partner.coords.lat : "",
       longitude: partner.coords ? partner.coords.lng : "",
@@ -162,7 +162,7 @@ export default function EditPartnerForm({
     },
     validate: {
       organization: requiredInput("Name of Organization"),
-      time: (value) => (value.length > 0 ? null : "Select a start time"),
+      time: (value) => (value ? null : "Select a start time"),
       latitude: requiredNumber("Latitude"),
       longitude: requiredNumber("Longitude"),
       state: requiredState("State"),
@@ -186,7 +186,7 @@ export default function EditPartnerForm({
       id: partner.id,
       name: values.organization,
       description: values.description,
-      start_partner: new Date(values.time).toISOString().slice(0,7),
+      start_partner: values.time ? new Date(values.time).toISOString().slice(0, 7) : null,
       status: values.status,
       coordinates: {
         lat: values.latitude,
@@ -202,10 +202,6 @@ export default function EditPartnerForm({
       logo: values.logoUrl,
     };
 
-    // console.log("HELLOOOOOO");
-    // console.log(formData.start_partner);
-    // console.log("VALUES");
-    // console.log(values);
 
     const response = await fetch("/api/partners", {
       method: "POST",
@@ -508,18 +504,16 @@ export default function EditPartnerForm({
                       const isActive = activePercentTab === option.value;
                       return (
                         <div
-                          className={`rounded-xl shadow-sm transition hover:-translate-y-0.5 hover:shadow-md h-full border ${
-                            isActive
-                              ? "border-[#1D3A8A] bg-[#EEF2FF]"
-                              : "border-gray-300 bg-white"
-                          }`}
+                          className={`rounded-xl shadow-sm transition hover:-translate-y-0.5 hover:shadow-md h-full border ${isActive
+                            ? "border-[#1D3A8A] bg-[#EEF2FF]"
+                            : "border-gray-300 bg-white"
+                            }`}
                           style={{ borderWidth: isActive ? 2 : 1 }}
                         >
                           <Stack gap="xs" align="center" p="md">
                             <div
-                              className={`${
-                                isActive ? "text-[#1D3A8A]" : "text-gray-500"
-                              } opacity-80`}
+                              className={`${isActive ? "text-[#1D3A8A]" : "text-gray-500"
+                                } opacity-80`}
                             >
                               {option.icon}
                             </div>
