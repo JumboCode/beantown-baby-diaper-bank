@@ -42,6 +42,20 @@ function joinCoords(coords: { lat: number; lng: number }) {
   return `${roundCoords(coords).lat}, ${roundCoords(coords).lng}`;
 }
 
+function formatDate(rawDate: string) {
+  const date = new Date(rawDate);
+
+  if (isNaN(date.getTime())) {
+    return "Invalid Date";
+  }
+
+  return new Intl.DateTimeFormat('en-US', {
+    month: 'long',
+    year: 'numeric',
+    timeZone: 'UTC',
+  }).format(date);
+}
+
 function formatPercentDisplay(value: number | null | undefined) {
   if (value == null) return null;
   const rounded = Number((value * 100).toFixed(4)); // round to 4 decimal places, drop trailing zeros
@@ -130,7 +144,7 @@ export default function PartnerTable({
                   </Table.Td>
                   <Table.Td className="text-sm text-gray-600">
                     {partner.start_partner ? (
-                      new Date(partner.start_partner).toLocaleDateString()
+                      formatDate(partner.start_partner)
                     ) : (
                       <span className="text-gray-400 italic">N/A</span>
                     )}
@@ -138,26 +152,15 @@ export default function PartnerTable({
                   <Table.Td>
                     <span key={partner.id} className="text-sm text-gray-600">
                       <span>
-                        {percentages
-                          .filter(
-                            (percentage) =>
-                              Number(percentage.partnerId) == partner.id,
-                          )
-                          .map((percentage, index, arr) => {
-                            const displayPct = formatPercentDisplay(
-                              percentage.percentage,
-                            );
-                            if (displayPct) {
-                              return (
-                                percentage.city.name +
-                                " (" +
-                                displayPct +
-                                ")" +
-                                (index != arr.length - 1 ? ", " : "")
-                              );
-                            }
-                            return null;
-                          })}
+                        {/* percentages for waitlisted orgs are optional and 
+                          won't be displayed for now */}
+                        { percentages
+                            .filter((percentage) => Number(percentage.partnerId) === partner.id)
+                            .map((p) => partner.status !== 'waitlisted' ? 
+                              `${p.city.name} (${formatPercentDisplay(p.percentage)})` 
+                              : p.city.name)
+                            .join(', ')
+                        }
                       </span>
                     </span>
                   </Table.Td>
