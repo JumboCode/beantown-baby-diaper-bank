@@ -1,7 +1,7 @@
 "use client";
 
 import PartnerTable from "@/components/admin/PartnerTable";
-import { Card, Group, Stack, Text, Title, Tabs, Button } from "@mantine/core";
+import { Group, Stack, Text, Title, Tabs, Button } from "@mantine/core"; // Added Stack to imports
 import { useState } from "react";
 import Image from "next/image";
 import { Poppins } from "next/font/google";
@@ -30,10 +30,14 @@ export default function Page() {
 
   return (
     <Stack mx="72px" my="44px" gap="lg" className={poppins.className}>
-      <Card p={0}>
-        <Group justify="space-between" align="flex-start">
-          <Stack gap={4}>
-            <Group gap="xl" wrap="wrap">
+      {/* Updated Header Section */}
+      <Stack gap={0}>
+        <Group justify="space-between" align="flex-end">
+          <Stack gap={0}>
+            <Title order={1} fw={700}>
+              Hello, Rachel 👋
+            </Title>
+            <Group gap="xl">
               <Text size="sm" c="dimmed">
                 Last data uploaded: Monday, 30 Aug, 2025
               </Text>
@@ -42,6 +46,7 @@ export default function Page() {
               </Text>
             </Group>
           </Stack>
+
           <UploadNewData
             opened={openedUploadDataForm}
             onClose={closeUploadDataForm}
@@ -50,6 +55,7 @@ export default function Page() {
             opened={openedPartnerForm}
             onClose={closePartnerForm}
           />
+          
           <Button
             onClick={() => {
               if (activeTab === "Diapers") {
@@ -58,7 +64,7 @@ export default function Page() {
                 openPartnerForm();
               }
             }}
-            variant="default"
+            variant="outline"
             radius="md"
             c="#053766"
             rightSection={
@@ -73,7 +79,7 @@ export default function Page() {
             {activeTab === "Partners" ? "Add A New Partner" : "Upload New Data"}
           </Button>
         </Group>
-      </Card>
+      </Stack>
 
       <Tabs
         classNames={classes}
