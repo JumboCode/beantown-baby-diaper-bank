@@ -355,13 +355,13 @@ export default function Page() {
             label="From"
             placeholder="Pick date"
             value={valueFrom}
-            onChange={setValueFrom}
+            onChange={(date) => setValueFrom(date as Date | null)}
           />
           <MonthPickerInput
             label="To"
             placeholder="Pick date"
             value={valueTo}
-            onChange={setValueTo}
+            onChange={(date) => setValueTo(date as Date | null)}
           />
 
           <Group justify="space-between" mt="xl">
