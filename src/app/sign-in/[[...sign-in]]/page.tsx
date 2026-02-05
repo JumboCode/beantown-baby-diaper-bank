@@ -4,13 +4,13 @@ import { useSignIn } from "@clerk/nextjs";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import { 
-  TextInput, 
-  PasswordInput, 
-  Button, 
-  Paper, 
-  Title, 
-  Container, 
+import {
+  TextInput,
+  PasswordInput,
+  Button,
+  Paper,
+  Title,
+  Container,
   Stack,
   Center,
   Text,
@@ -52,11 +52,11 @@ export default function SignInPage() {
     <Center style={{ height: '100vh', backgroundColor: '#f8f9fa' }}>
       <Container size={460} w="100%">
         <Stack align="center" mb="xl">
-          <Image 
-            // src="/beantown_logo.png" 
-            alt="Beantown Baby Diaper Bank" 
-            width={300} 
-            height={80} 
+          <Image
+            src="/beantown_logo.png"
+            alt="Beantown Baby Diaper Bank"
+            width={300}
+            height={80}
             style={{ objectFit: 'contain' }}
           />
         </Stack>
@@ -69,19 +69,19 @@ export default function SignInPage() {
 
           <form onSubmit={handleSubmit}>
             <Stack gap="md">
-              <TextInput 
-                label="Email address" 
-                placeholder="Email address" 
-                required 
+              <TextInput
+                label="Email address"
+                placeholder="Email address"
+                required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 radius="md"
                 size="md"
               />
-              <PasswordInput 
-                label="Password" 
-                placeholder="Password" 
-                required 
+              <PasswordInput
+                label="Password"
+                placeholder="Password"
+                required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 radius="md"
@@ -95,11 +95,11 @@ export default function SignInPage() {
                 </Anchor>
               </Group>
 
-              <Button 
-                type="submit" 
-                fullWidth 
-                loading={loading} 
-                color="blue.3" 
+              <Button
+                type="submit"
+                fullWidth
+                loading={loading}
+                color="blue.3"
                 radius="md"
                 size="md"
                 mt="md"
@@ -110,7 +110,7 @@ export default function SignInPage() {
           </form>
 
           <Text ta="center" mt="xl" size="sm">
-            Don't have an account?{' '}
+            Don&apos; t have an account?{' '}
             <Anchor href="#" fw={700} c="blue.9">
               Sign up here
             </Anchor>
