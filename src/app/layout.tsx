@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { MantineProvider } from "@mantine/core";
+import { ClerkProvider } from "@clerk/nextjs";
 import "@mantine/core/styles.css";
 import "./globals.css";
 import "leaflet/dist/leaflet.css";
@@ -15,10 +16,12 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body>
-        <MantineProvider>{children}</MantineProvider>
-      </body>
-    </html>
+    <ClerkProvider>
+      <html lang="en">
+        <body>
+          <MantineProvider>{children}</MantineProvider>
+        </body>
+      </html>
+    </ClerkProvider>
   );
 }
