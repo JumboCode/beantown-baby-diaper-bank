@@ -3,6 +3,7 @@
 import { useSignIn } from "@clerk/nextjs";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import { 
   TextInput, 
   PasswordInput, 
@@ -11,7 +12,11 @@ import {
   Title, 
   Container, 
   Stack,
-  Center
+  Center,
+  Text,
+  Checkbox,
+  Group,
+  Anchor
 } from "@mantine/core";
 
 export default function SignInPage() {
@@ -34,7 +39,7 @@ export default function SignInPage() {
 
       if (result.status === "complete") {
         await setActive({ session: result.createdSessionId });
-        router.push("/admin"); // Redirect to admin view on success
+        router.push("/admin");
       }
     } catch (err: any) {
       console.error("Sign-in error:", err.errors[0].message);
@@ -44,31 +49,72 @@ export default function SignInPage() {
   };
 
   return (
-    <Center style={{ height: '100vh' }}>
-      <Container size={420}>
-        <Title ta="center" fw={900}>Admin Sign In</Title>
-        <Paper withBorder shadow="md" p={30} mt={30} radius="md">
+    <Center style={{ height: '100vh', backgroundColor: '#f8f9fa' }}>
+      <Container size={460} w="100%">
+        <Stack align="center" mb="xl">
+          <Image 
+            // src="/beantown_logo.png" 
+            alt="Beantown Baby Diaper Bank" 
+            width={300} 
+            height={80} 
+            style={{ objectFit: 'contain' }}
+          />
+        </Stack>
+
+        <Paper withBorder shadow="sm" p={40} radius="lg">
+          <Stack align="center" gap={4} mb="xl">
+            <Title order={2} fw={700}>Welcome !</Title>
+            <Text c="dimmed" size="sm">Please enter your details.</Text>
+          </Stack>
+
           <form onSubmit={handleSubmit}>
-            <Stack>
+            <Stack gap="md">
               <TextInput 
-                label="Email" 
-                placeholder="you@example.com" 
+                label="Email address" 
+                placeholder="Email address" 
                 required 
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
+                radius="md"
+                size="md"
               />
               <PasswordInput 
                 label="Password" 
-                placeholder="Your password" 
+                placeholder="Password" 
                 required 
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                radius="md"
+                size="md"
               />
-              <Button type="submit" fullWidth loading={loading} color="blue.9">
+
+              <Group justify="space-between" mt="xs">
+                <Checkbox label="Remember me" size="sm" />
+                <Anchor href="#" size="sm" fw={600} c="blue.7">
+                  Forgot password?
+                </Anchor>
+              </Group>
+
+              <Button 
+                type="submit" 
+                fullWidth 
+                loading={loading} 
+                color="blue.3" 
+                radius="md"
+                size="md"
+                mt="md"
+              >
                 Sign In
               </Button>
             </Stack>
           </form>
+
+          <Text ta="center" mt="xl" size="sm">
+            Don't have an account?{' '}
+            <Anchor href="#" fw={700} c="blue.9">
+              Sign up here
+            </Anchor>
+          </Text>
         </Paper>
       </Container>
     </Center>
