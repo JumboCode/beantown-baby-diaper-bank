@@ -28,13 +28,11 @@ export async function GET(
       partner_id: Number(partner.id),
       name: partner.name,
       description: partner.description,
-      logo_url: partner.logoUrl,
+      logoUrl: partner.logoUrl,
       coordinates: partner.coords,
       address: partner.address,
       status: partner.status,
-      start_partner: partner.startPartner
-        ? partner.startPartner.toDateString()
-        : null,
+      startPartner: partner.startPartner,
       number_babies_helped: Number(aggregate._sum.numberChildren),
       number_diapers: Number(aggregate._sum.numberDiapers),
     };

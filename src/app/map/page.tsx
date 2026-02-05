@@ -8,10 +8,12 @@ import {
   Title,
   Mark,
   Divider,
-  Accordion,
+  Group,
+  Avatar,
+  Tooltip,
+  ScrollArea,
 } from "@mantine/core";
 import { baseRegions, regionImpact, regionDetails } from "@/data/map-data";
-// import TimelineSliderControls from "@/components/TimelineSliderControls";
 
 const findRegionFeature = (regionId: string | null | undefined) =>
   baseRegions.features.find((feature) => feature.properties?.id === regionId) ??
@@ -40,53 +42,64 @@ export default function MapPage() {
         opened={isModalOpen}
         onClose={handleModalClose}
         size="lg"
-        title={
-          <Text inherit fw={600} fz={30}>
-            Our impact in{" "}
-            <Mark fw={800} color="clear" c="red" variant="light">
-              {modalRegionLabel}
-            </Mark>
-          </Text>
-        }
+        padding="xl"
+        radius="md"
+        withCloseButton={true}
         centered
       >
         {modalRegionDetails && modalRegionStats ? (
-          <Stack gap="md">
-            <Text size="md">{modalRegionDetails.description}</Text>
-            <Divider />
-            <Title order={4}>Impact Metrics</Title>
-            <Text size="sm">
-              <Text component="span" fw={600}>
-                {modalRegionStats.ChildrenServed.toLocaleString()}
-              </Text>{" "}
-              Children supported YTD
-            </Text>
-            <Text size="sm">
-              <Text component="span" fw={600}>
-                {modalRegionStats.diapersDelivered.toLocaleString()}
-              </Text>{" "}
-              diapers delivered YTD
-            </Text>
-            <Divider />
-            <Title order={4}>
-              {modalRegionLabel}&apos;s Partner Organizations
+          <Stack gap="xs">
+            <Title order={2} fw={700}>
+              {modalRegionLabel}
             </Title>
-            <Accordion>
+
+            <Stack gap={4} mt="md">
+              <Text size="lg" c="dimmed">
+                Diapers Distributed:{" "}
+                <Text component="span" c="black" fw={500}>
+                  {modalRegionStats.diapersDelivered.toLocaleString()}
+                </Text>
+              </Text>
+              <Text size="lg" c="dimmed">
+                Children helped:{" "}
+                <Text component="span" c="black" fw={500}>
+                  {modalRegionStats.ChildrenServed.toLocaleString()}
+                </Text>
+              </Text>
+            </Stack>
+
+            <Title order={4} mt="xl" mb="xs">
+              Partners
+            </Title>
+            
+            {/* Horizontal list of small logos to match Figma */}
+            <Group gap="sm">
               {modalRegionDetails.partners.map((partner) => (
-                <Accordion.Item key={partner} value={partner}>
-                  <Accordion.Control>{partner}</Accordion.Control>
-                  <Accordion.Panel>
-                    <Text size="sm">
-                      Learn more about{" "}
-                      <Text component="span" fw={600}>
-                        {partner}
-                      </Text>
-                      &apos;s work in the community.
-                    </Text>
-                  </Accordion.Panel>
-                </Accordion.Item>
+                <Tooltip key={partner} label={partner} withArrow>
+                  <Avatar
+                    src={null} // Replace with partner.logoUrl when available
+                    alt={partner}
+                    radius="xl"
+                    size="md"
+                    color="red"
+                    variant="light"
+                  >
+                    {/* Placeholder text initials like the "AT" in your screenshot */}
+                    {partner.substring(0, 2).toUpperCase()}
+                  </Avatar>
+                </Tooltip>
               ))}
-            </Accordion>
+            </Group>
+
+            <Divider my="md" />
+
+            <Title order={4}>Waitlisted Partner Information</Title>
+            <Group gap="sm" mt="xs">
+              {/* This matches the styling of the active partners above */}
+              <Text size="sm" c="dimmed" fs="italic">
+                No waitlisted partners at this time.
+              </Text>
+            </Group>
           </Stack>
         ) : (
           <Text size="sm" c="dimmed">
@@ -94,16 +107,9 @@ export default function MapPage() {
           </Text>
         )}
       </Modal>
+
       <div className="w-full h-[100vh]">
-        {/* <LeafletMap
-        // view={timeline.view}
-        // index={timeline.index}
-        // labels={timeline.labels}
-        // regions={baseRegions}
-        // onRegionClick={setSelectedRegionId}
-        // leftControls={leftOverlay}
-        />
-        <TimelineSliderControls {...timeline} /> */}
+        {/* Map logic would go here */}
       </div>
     </div>
   );
