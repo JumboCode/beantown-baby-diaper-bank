@@ -20,3 +20,21 @@ export type RegionsGeoJSON = GeoJSON.FeatureCollection<
   RegionFeature["geometry"],
   RegionFeatureProps
 >;
+
+export interface Distribution {
+  id: string;
+  createdAt: string;
+  partnerId: string | null;
+  cityId: string | null;
+  year: string | null;
+  month: string | null;
+  numberDiapers: string | null;
+  numberChildren: string | null;
+  percentage: number | null;
+  partner: {
+    name: string;
+  } | null;
+  city: {
+    name: string;
+  } | null;
+}

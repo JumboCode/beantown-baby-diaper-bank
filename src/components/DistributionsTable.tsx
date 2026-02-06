@@ -1,23 +1,8 @@
 "use client";
 
-import { Table } from "@mantine/core";
-interface Distribution {
-  id: string;
-  createdAt: string;
-  partnerId: string;
-  cityId: string;
-  year: string;
-  month: string;
-  numberDiapers: string;
-  numberChildren: string;
-  percentage: number;
-  partner: {
-    name: string;
-  };
-  city: {
-    name: string;
-  };
-}
+import { useEffect, useState } from "react";
+import { Table, Text } from "@mantine/core";
+import { Distribution } from "@/lib/types";
 
 export default function DistributionsTable({
   distributionData,
@@ -41,9 +26,9 @@ export default function DistributionsTable({
   const rows = distributionData.map((dist) => (
     <Table.Tr key={`${dist.id}`}>
       <Table.Td fz={16} fw={600} c="#101828" className="text-sm text-gray-600">
-        {dist.partner.name}
+        {dist.partner?.name}
       </Table.Td>
-      <Table.Td className="text-sm text-gray-600">{dist.city.name}</Table.Td>
+      <Table.Td className="text-sm text-gray-600">{dist.city?.name}</Table.Td>
       <Table.Td className="text-sm text-gray-600">
         {dist.numberDiapers}
       </Table.Td>
@@ -53,7 +38,7 @@ export default function DistributionsTable({
       <Table.Td className="text-sm text-gray-600">{dist.month}</Table.Td>
       <Table.Td className="text-sm text-gray-600">{dist.year}</Table.Td>
       <Table.Td className="text-sm text-gray-600">
-        {(dist.percentage * 100).toFixed(2)}%
+        {dist.percentage ? (dist.percentage * 100).toFixed(2) : "0.00"}%
       </Table.Td>
     </Table.Tr>
   ));
