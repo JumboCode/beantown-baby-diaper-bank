@@ -9,7 +9,7 @@ import {
   Text,
   Button,
 } from "@mantine/core";
-import EditPartnerForm from "../EditPartnerForm";
+import EditPartnerForm from "./EditPartnerForm";
 import { useDisclosure } from "@mantine/hooks";
 import { status } from "@/generated/prisma/enums";
 import Image from "next/image";

@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { DateValue, MonthPickerInput } from "@mantine/dates";
 import { useDisclosure } from "@mantine/hooks";
 import { Modal, Button, Text, Radio, Group, Table, Stack, Loader, Center, Title } from "@mantine/core";
-import { ConfirmDeletion } from "./ConfirmDeletionModal";
+import { ConfirmDeletion } from "./ConfirmDeleteDistModal";
 import { Distribution } from "@/lib/types";
 
 export interface MonthSelectionData {

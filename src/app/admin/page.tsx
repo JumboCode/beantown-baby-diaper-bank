@@ -19,14 +19,14 @@ import { MonthPickerInput } from "@mantine/dates";
 import { useState, useEffect, useCallback, useMemo } from "react";
 import Image from "next/image";
 import { Poppins } from "next/font/google";
-import DistributionsTable from "@/components/DistributionsTable";
+import DistributionsTable from "@/components/admin/DistributionsTable";
 import { useDisclosure } from "@mantine/hooks";
-import UploadNewData from "./UploadNewData";
-import AddPartnerForm from "@/components/AddPartnerForm";
+import UploadNewData from "../../components/admin/UploadDistributionDataForm";
+import AddPartnerForm from "@/components/admin/AddPartnerForm";
 import classes from "./AdminPage.module.css";
 import { status } from "@/generated/prisma/enums";
 import { Search } from "lucide-react";
-import { ConfirmDeletion } from "@/components/admin/ConfirmDeletionModal";
+
 import DeleteDistributionDataButton from "@/components/admin/DeleteDistributionDataButton";
 
 const poppins = Poppins({

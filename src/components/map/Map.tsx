@@ -25,8 +25,8 @@ import {
   Tooltip as MantineTooltip,
   Divider
 } from "@mantine/core";
-import PartnerIconDrawer from "../PartnerIconDrawer";
-import PartnerAvatar from "../PartnerAvatar";
+import PartnerIconDrawer from "./PartnerIconDrawer";
+import PartnerAvatar from "./PartnerAvatar";
 
 // --- 1. Helper Functions ---
 

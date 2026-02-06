@@ -6,7 +6,7 @@ import {
   Group,
   Text,
 } from "@mantine/core";
-import SettingsButton from "@/components/admin/SettingsButton";
+import SettingsButton from "@/components/admin/AdminSettingsButton";
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   return (
@@ -19,7 +19,6 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
           <Group gap="xs">
             <Profile />
-            {/* New Settings Button with custom SVG */}
             <SettingsButton />
           </Group>
         </Group>

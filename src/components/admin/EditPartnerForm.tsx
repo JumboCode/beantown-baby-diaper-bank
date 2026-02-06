@@ -17,7 +17,7 @@ import { RiCalendarEventLine, RiLineChartLine } from "react-icons/ri";
 import { useForm } from "@mantine/form";
 import { MonthPickerInput } from "@mantine/dates";
 import "@mantine/dates/styles.css";
-import { Partner } from "./admin/PartnerTable";
+import { Partner } from "./PartnerTable";
 import { useEffect, useState } from "react";
 import { status } from "@/generated/prisma/enums";
 import OneTimeUpdateForm from "./OneTimeUpdateForm";
