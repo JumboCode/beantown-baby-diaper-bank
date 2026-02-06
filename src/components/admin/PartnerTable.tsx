@@ -154,12 +154,12 @@ export default function PartnerTable({
                       <span>
                         {/* percentages for waitlisted orgs are optional and 
                           won't be displayed for now */}
-                        { percentages
-                            .filter((percentage) => Number(percentage.partnerId) === partner.id)
-                            .map((p) => partner.status !== 'waitlisted' ? 
-                              `${p.city.name} (${formatPercentDisplay(p.percentage)})` 
-                              : p.city.name)
-                            .join(', ')
+                        {percentages
+                          .filter((percentage) => Number(percentage.partnerId) === partner.id)
+                          .map((p) => partner.status !== 'waitlisted' ?
+                            `${p.city.name} (${formatPercentDisplay(p.percentage)})`
+                            : p.city.name)
+                          .join(', ')
                         }
                       </span>
                     </span>

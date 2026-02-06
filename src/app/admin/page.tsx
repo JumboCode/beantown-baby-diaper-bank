@@ -26,6 +26,8 @@ import AddPartnerForm from "@/components/AddPartnerForm";
 import classes from "./AdminPage.module.css";
 import { status } from "@/generated/prisma/enums";
 import { Search } from "lucide-react";
+import { ConfirmDeletion } from "@/components/admin/ConfirmDeletionModal";
+import DeleteDistributionDataButton from "@/components/admin/DeleteDistributionDataButton";
 
 const poppins = Poppins({
   subsets: ["latin"],
@@ -503,7 +505,11 @@ export default function Page() {
                 </div>
               </Drawer>
 
-              <Group ml="auto" align="center" gap="sm">
+              <Group ml="auto" align="flex-start" gap="sm">
+                {!isPartnersTab && (
+                  <DeleteDistributionDataButton />
+                )
+                }
                 {isPartnersTab && (
                   <TextInput
                     placeholder="Search by name or cities..."
@@ -512,7 +518,6 @@ export default function Page() {
                     radius="md"
                     w={240}
                     leftSection={<Search size={16} />}
-                    className="mb-2"
                   />
                 )}
 

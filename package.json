@@ -16,6 +16,7 @@
     "@clerk/nextjs": "^6.31.0",
     "@mantine/dates": "^8.3.2",
     "@mantine/form": "^8.3.2",
+    "@mantine/modals": "^8.3.2",
     "@mantine/notifications": "^8.3.2",
     "@mantine/styles": "^6.0.22",
     "@prisma/adapter-pg": "^6.19.0",
@@ -68,6 +69,10 @@
     "tailwindcss": "^4",
     "ts-node": "^10.9.2",
     "tsx": "^4.20.6",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.54.0"
+  },
+  "prisma": {
+    "seed": "tsx prisma/seed.ts"
   }
 }
