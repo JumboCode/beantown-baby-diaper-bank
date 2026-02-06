@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { MantineProvider } from "@mantine/core";
+import { ClerkProvider } from "@clerk/nextjs";
 import { ModalsProvider } from "@mantine/modals";
 import "@mantine/core/styles.css";
 import "./globals.css";
@@ -16,12 +17,14 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body>
-        <MantineProvider>
-          <ModalsProvider>{children}</ModalsProvider>
-        </MantineProvider>
-      </body>
-    </html>
+    <ClerkProvider>
+      <html lang="en">
+        <body>
+          <MantineProvider>
+            <ModalsProvider>{children}</ModalsProvider>
+          </MantineProvider>
+        </body>
+      </html>
+    </ClerkProvider>
   );
 }

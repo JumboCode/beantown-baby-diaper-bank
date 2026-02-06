@@ -25,6 +25,14 @@ import "@mantine/dates/styles.css";
 const countries = ["United States", "Canada"];
 const DEFAULT_COUNTRY = "United States";
 
+const US_STATES = [
+  "AL", "AK", "AZ", "AR", "CA", "CO", "CT", "DE", "FL", "GA",
+  "HI", "ID", "IL", "IN", "IA", "KS", "KY", "LA", "ME", "MD",
+  "MA", "MI", "MN", "MS", "MO", "MT", "NE", "NV", "NH", "NJ",
+  "NM", "NY", "NC", "ND", "OH", "OK", "OR", "PA", "RI", "SC",
+  "SD", "TN", "TX", "UT", "VT", "VA", "WA", "WV", "WI", "WY",
+];
+
 type AddressFields = {
   addressLine: string;
   city: string;
@@ -74,7 +82,7 @@ export default function AddPartnerForm({
       setIsLoadingCities(true);
       try {
         const res = await fetch(
-          "http://api.geonames.org/searchJSON?q=&adminCode1=MA&country=US&featureClass=P&username=jumbocodebbdb",
+          "https://secure.geonames.org/searchJSON?q=&adminCode1=MA&country=US&featureClass=P&username=jumbocodebbdb",
         );
         const data = await res.json();
 
@@ -118,11 +126,24 @@ export default function AddPartnerForm({
       organization: (value) =>
         typeof value === "string" ? null : "Organization name must be a string",
       time: (value) => (value ? null : "Select a start time"),
-      cities: (value) => (value.length > 0 ? null : "Pick at least one city"),
+      cities: (value, values) => {
+        if (value.length === 0) return "Pick at least one city";
+        console.log(values.status);
+        if (values.status && values.status !== 'waitlisted') {
+          const total = value.reduce((sum, city) => {
+            return sum + (percentages[city] || 0);
+          }, 0);
+          const roundedTotal = Math.round(total * 100) / 100;
+          if (Math.abs(roundedTotal - 100) > 0.01) {
+            return `Percentages must add up to 100% (currently ${roundedTotal.toFixed(2)}%)`;
+          }
+        }
+        return null;        
+      },
       latitude: requiredNumber("Latitude"),
       longitude: requiredNumber("Longitude"),
       state: (value) =>
-        typeof value === "string" ? null : "State name must be a string",
+        value ? null : "Select a state",
       zipCode: requiredInteger("Zip Code"),
       country: (value) => (value ? null : "Select a country"),
       status: (value) => (value ? null : "Select a status"),
@@ -143,7 +164,8 @@ export default function AddPartnerForm({
     setIsSubmitting(true);
     const cityPercentages = values.cities.map((city) => {
       const raw = Number(percentages[city] ?? 0);
-      const normalized = Number.isFinite(raw) ? raw / 100 : 0;
+      // rounds percentages to avoid floating-point errors
+      const normalized = Number.isFinite(raw) ? Number((raw / 100).toFixed(4)) : 0;
       return { city, percentage: normalized };
     });
 
@@ -321,9 +343,18 @@ export default function AddPartnerForm({
                             suffix="%"
                             value={percentages[city] || ""}
                             onChange={(value) => {
+                              let res = 0;
+                              /* decimal percentages can have up to 2 decimal places */
+                              if (typeof value === "number") {
+                                res = value;
+                                const decimalPart = value.toString().split('.')[1];
+                                if (decimalPart && decimalPart.length > 2) {
+                                  res = Math.round(value * 100) / 100;
+                                }
+                              }
                               setPercentages((prev) => ({
                                 ...prev,
-                                [city]: typeof value === "number" ? value : 0,
+                                [city]: res,
                               }));
                             }}
                           />
@@ -424,14 +455,18 @@ export default function AddPartnerForm({
                   radius="md"
                   required
                 />
-                <TextInput
+                <Select
                   placeholder="State"
+                  data={US_STATES}
+                  searchable
                   key={form.key("state")}
-                  {...form.getInputProps("state")}
+                  value={form.values.state || null}
+                  onChange={(val) => form.setFieldValue("state", val || "")}
+                  error={form.errors.state}
                   size="md"
                   radius="md"
                   required
-                />
+                /> 
 
                 <TextInput
                   placeholder="Zip Code"
