@@ -1,4 +1,4 @@
-import { Button, Text } from "@mantine/core";
+import { Button, Mark, Text } from "@mantine/core";
 import { modals } from "@mantine/modals";
 
 type ConfirmDeletionProps = {
@@ -17,9 +17,9 @@ export function ConfirmDeletion({ count, onConfirm }: ConfirmDeletionProps) {
       centered: true,
       children: (
         <Text size="sm">
-          Are you sure you want to delete {count} records? This action cannot be
+          Are you sure you want to <Mark fw={700} bg="none" c="red"> delete {count} records</Mark>? This action cannot be
           undone. This will permanently delete these records from the database.
-        </Text>
+        </Text >
       ),
       labels: { confirm: "Delete", cancel: "Cancel" },
       confirmProps: { color: "#163663" },

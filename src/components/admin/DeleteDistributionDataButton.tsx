@@ -36,7 +36,7 @@ interface TimelineSliderMonth {
 }
 
 // export default function MonthSelectionModal({opened, onClose, onSubmit} : MonthSelectionModalProps) {
-export default function MonthSelectionModal({
+export default function DeleteDistributionDataButton({
   onSuccess,
 }: MonthSelectionModalProps) {
   const [opened, { open, close }] = useDisclosure(false);
@@ -134,6 +134,7 @@ export default function MonthSelectionModal({
   const handleClick = () => {
     setPreviewData([]);
     setIsPreviewMode(true);
+    console.log(numMonths);
 
     if (numMonths === "one_month") {
       if (!oneMonth) {
@@ -142,12 +143,13 @@ export default function MonthSelectionModal({
       fetchPreviewMonthSelection({
         mode: "one_month",
         start: {
-          month: oneMonth.getUTCMonth(),
-          year: oneMonth.getUTCFullYear(),
+          month: new Date(oneMonth).getUTCMonth(),
+          year: new Date(oneMonth).getUTCFullYear(),
         },
         end: null,
       });
-    } else {
+    }
+    else {
       if (!monthsRange) {
         return;
       }
@@ -156,21 +158,28 @@ export default function MonthSelectionModal({
 
       if (!start || !end) return;
 
-      if (start instanceof Date && end instanceof Date) {
-        fetchPreviewMonthSelection({
-          mode: "range",
-          start: {
-            month: start.getUTCMonth(),
-            year: start.getUTCFullYear(),
-          },
-          end: {
-            month: end.getUTCMonth(),
-            year: end.getUTCFullYear(),
-          },
-        });
-      }
+      // if (start instanceof Date && end instanceof Date) {
+      console.log("Fetching preview data for range");
+      fetchPreviewMonthSelection({
+        mode: "range",
+        start: {
+          month: new Date(start).getUTCMonth(),
+          year: new Date(start).getUTCFullYear(),
+        },
+        end: {
+          month: new Date(end).getUTCMonth(),
+          year: new Date(end).getUTCFullYear(),
+        },
+      });
     }
+    // }
   };
+
+  function handleRadioChange(value: string): void {
+    setNumMonths(value);
+    setPreviewData([]);
+    setIsPreviewMode(false);
+  }
 
   return (
     <>
@@ -193,7 +202,7 @@ export default function MonthSelectionModal({
 
           <Radio.Group
             value={numMonths}
-            onChange={setNumMonths}
+            onChange={handleRadioChange}
             required
             label="Selection Mode"
             styles={{
