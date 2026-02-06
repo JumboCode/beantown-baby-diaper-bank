@@ -56,6 +56,7 @@ model Partner {
   status         status          @default(inactive)
   distributions  Distribution[]
   partnerRegions PartnerRegion[]
+  MonthlyData    MonthlyData[]
 
   @@map("Partners")
 }
@@ -81,6 +82,18 @@ model YearlyData {
   Cities     City    @relation(fields: [cityId], references: [id], onDelete: Cascade)
 
   @@map("Yearly Data")
+}
+
+model MonthlyData {
+  partnerId  BigInt  @map("partner_id")
+  year       String
+  month      month
+  numDiapers BigInt? @map("num_diapers")
+  numBabies  BigInt? @map("num_babies")
+  id         String  @id @unique @db.Uuid
+  partner    Partner? @relation(fields: [partnerId], references: [id], onDelete: Cascade)
+
+  @@map("Monthly Data")
 }
 
 /// This enum is commented in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
