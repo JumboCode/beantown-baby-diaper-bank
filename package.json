@@ -73,8 +73,5 @@
     "tsx": "^4.20.6",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.54.0"
-  },
-  "prisma": {
-    "seed": "tsx prisma/seed.ts"
   }
 }
