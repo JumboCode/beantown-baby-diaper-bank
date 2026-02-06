@@ -14,10 +14,10 @@ export default function TimelineSlider({
   return (
     <div>
       {/* This displays the selected month/year at the top-left of the slider */}
-      <div style={{ fontWeight: 600, marginBottom: '8px' }}>
+      <div style={{ fontWeight: 600, marginBottom: "8px" }}>
         {labels[value]}
       </div>
-      
+
       <Slider
         restrictToMarks
         min={0}
@@ -32,9 +32,9 @@ export default function TimelineSlider({
         // label={null} removes the floating tooltip (1, 2, 3...) that appears while dragging
         label={null}
         styles={{
-          root: { width: '100%' },
+          root: { width: "100%" },
           // Ensuring the track looks clean without labels
-          mark: { display: 'block' }, 
+          mark: { display: "block" },
         }}
       />
     </div>

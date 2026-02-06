@@ -23,10 +23,10 @@ import {
   Group,
   Avatar,
   Tooltip as MantineTooltip,
-  Divider
+  Divider,
 } from "@mantine/core";
-import PartnerIconDrawer from "../PartnerIconDrawer";
-import PartnerAvatar from "../PartnerAvatar";
+import PartnerIconDrawer from "./PartnerIconDrawer";
+import PartnerAvatar from "./PartnerAvatar";
 
 // --- 1. Helper Functions ---
 
@@ -76,9 +76,9 @@ export const Marker = dynamic(
 type PartnerInfoType = {
   id: number;
   name: string;
-  logo_url?: string | null;  // Snake case used in Map.tsx
-  logoUrl?: string | null;   // Camel case used in route.ts API
-  status?: string | null;    // Can be "active", "waitlisted", etc.
+  logo_url?: string | null; // Snake case used in Map.tsx
+  logoUrl?: string | null; // Camel case used in route.ts API
+  status?: string | null; // Can be "active", "waitlisted", etc.
   waitlisted?: boolean | string; // Can be true/false from DB
 };
 
@@ -95,9 +95,11 @@ export default function Map({ mapData }: { mapData: MapData }) {
   const { tileLayerProps } = useBaseTileLayer();
   const [hoveredId, setHoveredId] = useState<string | number | null>(null);
   const [activeId, setActiveId] = useState<string | number | null>(null);
-  const [selectedPartnerId, setSelectedPartnerId] = useState<number | null>(null);
+  const [selectedPartnerId, setSelectedPartnerId] = useState<number | null>(
+    null,
+  );
 
-  const cities = mapData?.cities.data ?? [];
+  const cities = useMemo(() => mapData?.cities.data ?? [], [mapData]);
 
   const boundaryPolygons = useMemo(() => {
     if (!mapData?.boundaries || cities.length === 0) return [];
@@ -120,7 +122,8 @@ export default function Map({ mapData }: { mapData: MapData }) {
 
       return {
         id: name || Math.random(),
-        positions: feature.geometry.coordinates as unknown as LatLngExpression[][],
+        positions: feature.geometry
+          .coordinates as unknown as LatLngExpression[][],
         name: name,
         fillColor: getColor(total, maxDiapers),
         totalDiapers: total,
@@ -129,40 +132,62 @@ export default function Map({ mapData }: { mapData: MapData }) {
   }, [mapData, cities]);
 
   return (
-    <div style={{ position: "relative", height: "100%", width: "100%", zIndex: 0 }}>
+    <div
+      style={{ position: "relative", height: "100%", width: "100%", zIndex: 0 }}
+    >
       <MapContainer {...mapOptions} style={mapStyle}>
         <TileLayer {...tileLayerProps} />
         {boundaryPolygons.map((boundary, index) => (
           <Polygon
             key={boundary.id || index}
             pathOptions={{
-              weight: activeId === boundary.id || hoveredId === boundary.id ? 1.5 : 0.5,
-              color: activeId === boundary.id || hoveredId === boundary.id ? "#0F4F78" : "#5A7687",
+              weight:
+                activeId === boundary.id || hoveredId === boundary.id
+                  ? 1.5
+                  : 0.5,
+              color:
+                activeId === boundary.id || hoveredId === boundary.id
+                  ? "#0F4F78"
+                  : "#5A7687",
               fillColor: boundary.fillColor,
-              fillOpacity: activeId === boundary.id ? 0.65 : hoveredId === boundary.id ? 0.5 : 0.35,
+              fillOpacity:
+                activeId === boundary.id
+                  ? 0.65
+                  : hoveredId === boundary.id
+                    ? 0.5
+                    : 0.35,
             }}
             positions={boundary.positions}
             eventHandlers={{
               mouseover: () => setHoveredId(boundary.id),
-              mouseout: () => setHoveredId((current) => (current === boundary.id ? null : current)),
+              mouseout: () =>
+                setHoveredId((current) =>
+                  current === boundary.id ? null : current,
+                ),
               click: () => setActiveId(boundary.id),
-              popupclose: () => setActiveId((current) => (current === boundary.id ? null : current)),
+              popupclose: () =>
+                setActiveId((current) =>
+                  current === boundary.id ? null : current,
+                ),
             }}
           >
             {boundary.name && (
               <Tooltip sticky direction="top" offset={[0, -4]}>
-                <Text fw={700} fz="sm" c="#0F4F78">{boundary.name}</Text>
+                <Text fw={700} fz="sm" c="#0F4F78">
+                  {boundary.name}
+                </Text>
               </Tooltip>
             )}
             {boundary.name &&
               cities.map(
-                (city) => city.name === boundary.name && (
-                  <PopupContent
-                    key={city.id.toString()}
-                    city={city}
-                    onPartnerSelect={setSelectedPartnerId}
-                  />
-                ),
+                (city) =>
+                  city.name === boundary.name && (
+                    <PopupContent
+                      key={city.id.toString()}
+                      city={city}
+                      onPartnerSelect={setSelectedPartnerId}
+                    />
+                  ),
               )}
           </Polygon>
         ))}
@@ -178,32 +203,52 @@ export default function Map({ mapData }: { mapData: MapData }) {
 
 // --- 4. Popup Content (Condensed Styling) ---
 
-function PopupContent({ city, onPartnerSelect }: { city: CityMapInfo; onPartnerSelect: (id: number) => void }) {
+function PopupContent({
+  city,
+  onPartnerSelect,
+}: {
+  city: CityMapInfo;
+  onPartnerSelect: (id: number) => void;
+}) {
   // ROBUST FILTER: Detects waitlisted by string or boolean
-  const waitlistedPartners = city.partners.filter((p) =>
-    p.status === "waitlisted" ||
-    p.waitlisted === true ||
-    p.waitlisted === "true"
+  const waitlistedPartners = city.partners.filter(
+    (p) =>
+      p.status === "waitlisted" ||
+      p.waitlisted === true ||
+      p.waitlisted === "true",
   );
 
   // ACTIVE FILTER: Everyone who isn't waitlisted or inactive
   const activePartners = city.partners.filter((p) => {
-    const isWaitlisted = p.status === "waitlisted" || p.waitlisted === true || p.waitlisted === "true";
+    const isWaitlisted =
+      p.status === "waitlisted" ||
+      p.waitlisted === true ||
+      p.waitlisted === "true";
     const isInactive = p.status === "inactive";
     return !isWaitlisted && !isInactive;
   });
 
-  const totalDiapers = city.distributions.reduce((sum, d) => sum + Number(d.numberDiapers), 0) ?? 0;
-  const totalChildren = city.distributions.reduce((sum, d) => sum + Number(d.numberChildren), 0) ?? 0;
+  const totalDiapers =
+    city.distributions.reduce((sum, d) => sum + Number(d.numberDiapers), 0) ??
+    0;
+  const totalChildren =
+    city.distributions.reduce((sum, d) => sum + Number(d.numberChildren), 0) ??
+    0;
 
   return (
     <Popup minWidth={280}>
       <Stack gap="xs">
-        <Title order={3} fz="18px" c="#101828">{city.name}</Title>
+        <Title order={3} fz="18px" c="#101828">
+          {city.name}
+        </Title>
 
         <Stack gap={0}>
-          <Text fz="14px" c="#344054">Diapers Distributed: <b>{totalDiapers.toLocaleString()}</b></Text>
-          <Text fz="14px" c="#344054">Children helped: <b>{totalChildren.toLocaleString()}</b></Text>
+          <Text fz="14px" c="#344054">
+            Diapers Distributed: <b>{totalDiapers.toLocaleString()}</b>
+          </Text>
+          <Text fz="14px" c="#344054">
+            Children helped: <b>{totalChildren.toLocaleString()}</b>
+          </Text>
         </Stack>
 
         {/* --- Active Partners --- */}
@@ -219,15 +264,20 @@ function PopupContent({ city, onPartnerSelect }: { city: CityMapInfo; onPartnerS
                 status={p.status as status}
                 onClick={() => onPartnerSelect(p.id)}
               />
-
             ))
           ) : (
-            <Text fz="xs" c="dimmed" fs="italic">No active partners</Text>
+            <Text fz="xs" c="dimmed" fs="italic">
+              No active partners
+            </Text>
           )}
         </Group>
 
         {/* --- Waitlisted Partners --- */}
-        <Divider my="xs" label={`Waitlisted (${waitlistedPartners.length})`} labelPosition="left" />
+        <Divider
+          my="xs"
+          label={`Waitlisted (${waitlistedPartners.length})`}
+          labelPosition="left"
+        />
         <Group gap="xs" wrap="wrap">
           {waitlistedPartners.length > 0 ? (
             waitlistedPartners.map((p) => (
@@ -245,7 +295,9 @@ function PopupContent({ city, onPartnerSelect }: { city: CityMapInfo; onPartnerS
               </MantineTooltip>
             ))
           ) : (
-            <Text fz="xs" c="dimmed" fs="italic">No waitlisted partners found</Text>
+            <Text fz="xs" c="dimmed" fs="italic">
+              No waitlisted partners found
+            </Text>
           )}
         </Group>
       </Stack>

@@ -1,12 +1,12 @@
 "use client";
 
 import { Container, Title, Paper, Divider, Text } from "@mantine/core";
-import ImpactModal from "../../components/ImpactModal";
+import ImpactModal from "../../components/map/ImpactModal";
 import OurSlider from "../../components/sprint2/OurSlider";
 import DotPopUps from "@/components/sprint2/DotPopUps";
 import YearlyMonthlySwitch from "@/components/sprint2/YearlyMonthlySwitch";
 import FileUpload from "@/components/sprint2/FileUpload";
-import { useTimelinePeriod } from "@/components/useTimelinePeriod";
+import { useTimelinePeriod } from "@/components/map/useTimelinePeriod";
 
 export default function Sprint2Page() {
   const { view, toggleView } = useTimelinePeriod();
