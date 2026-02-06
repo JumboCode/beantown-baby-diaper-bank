@@ -10,7 +10,7 @@ datasource db {
   provider   = "postgresql"
   url        = env("DATABASE_URL")
   directUrl  = env("DIRECT_URL")
-  extensions = [postgis, uuid_ossp(map: "uuid-ossp", schema: "extensions")]
+  extensions = [postgis(schema: "extensions"), uuid_ossp(map: "uuid-ossp", schema: "extensions"), pgcrypto(schema: "extensions"), pg_graphql(schema: "graphql"), pg_stat_statements(schema: "extensions"), supabase_vault(schema: "vault")]
 }
 
 model City {
@@ -48,6 +48,7 @@ model Partner {
   name           String?
   description    String?
   startPartner   DateTime?       @map("start_partner") @db.Date
+  endPartner     DateTime?       @map("end_partner") @db.Date
   waitlisted     Boolean?
   address        String?
   coords         Json?           @db.Json
