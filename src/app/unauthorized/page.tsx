@@ -51,14 +51,7 @@ Thanks,`;
       px="lg"
       style={{ background: "linear-gradient(180deg, #F8FBFF 0%, #FFFFFF 70%)" }}
     >
-      <Card
-        padding="xl"
-        radius="lg"
-        withBorder
-        shadow="sm"
-        maw={520}
-        w="100%"
-      >
+      <Card padding="xl" radius="lg" withBorder shadow="sm" maw={520} w="100%">
         <Stack gap="md">
           <Group gap="sm" align="center">
             <ThemeIcon size={44} radius="xl" color="blue" variant="light">
@@ -78,7 +71,10 @@ Thanks,`;
                 Signed in as
               </Text>
               <Text fw={600}>
-                {primaryEmail} <Text span c="dimmed">({role})</Text>
+                {primaryEmail}{" "}
+                <Text span c="dimmed">
+                  ({role})
+                </Text>
               </Text>
             </Stack>
           )}

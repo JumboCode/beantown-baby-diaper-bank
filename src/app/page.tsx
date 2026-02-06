@@ -15,7 +15,6 @@ import {
   ThemeIcon,
 } from "@mantine/core";
 import { FaGithub } from "react-icons/fa";
-import RakshiValentinaTicket from "../components/sprint4/RakshiValentinaTicket";
 
 export default function Home() {
   return (
@@ -175,52 +174,13 @@ export default function Home() {
             </Anchor>
           </Stack>
         </Card>
-
         <Card shadow="sm" radius="md" withBorder>
           <Stack gap="xs">
-            <Title order={2}>Onboarding Ticket</Title>
+            <Title order={2}>API Documentation</Title>
             <Divider />
-            <Anchor href="/onboardingticket">
-              <Title order={2}>Click here for Onboarding Tickets</Title>
+            <Anchor href="/admin/api-docs">
+              <Title order={2}>Click here for API Documentation</Title>
             </Anchor>
-          </Stack>
-        </Card>
-        <Card shadow="sm" radius="md" withBorder>
-          <Stack gap="xs">
-            <Title order={2}>Sprint 2 Tickets</Title>
-            <Divider />
-            <Anchor href="/sprint2">
-              <Title order={2}>Click here for Sprint 2 Tickets</Title>
-            </Anchor>
-          </Stack>
-        </Card>
-
-        <Card shadow="sm" radius="md" withBorder>
-          <Stack gap="xs">
-            <Title order={2}>Sprint 3 (Creative Hot Map) Tickets</Title>
-            <Divider />
-            <Anchor href="/sprint3">
-              <Title order={2}>Click here for Sprint 3 Tickets</Title>
-            </Anchor>
-          </Stack>
-        </Card>
-
-        <Card shadow="md" radius="md" withBorder>
-          <Stack gap="xs">
-            <Title order={2}>Epic 2 Sprint 1 Tickets</Title>
-            <Divider />
-            <Anchor href="/epic2sprint1">
-              <Title order={2}>Click here for Epic 2 Sprint 1 Tickets</Title>
-            </Anchor>
-          </Stack>
-        </Card>
-
-        <Card shadow="md" radius="md" withBorder>
-          <Stack gap="xs">
-            <Title order={2}>Sprint 4</Title>
-
-            <Divider />
-            <RakshiValentinaTicket />
           </Stack>
         </Card>
 

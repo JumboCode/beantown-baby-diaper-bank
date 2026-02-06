@@ -17,7 +17,7 @@ import { RiCalendarEventLine, RiLineChartLine } from "react-icons/ri";
 import { useForm } from "@mantine/form";
 import { MonthPickerInput } from "@mantine/dates";
 import "@mantine/dates/styles.css";
-import { Partner } from "./admin/PartnerTable";
+import { Partner } from "./PartnerTable";
 import { useEffect, useState } from "react";
 import { status } from "@/generated/prisma/enums";
 import OneTimeUpdateForm from "./OneTimeUpdateForm";
@@ -100,7 +100,6 @@ const requiredState = (label: string) => (value: unknown) => {
   return /.*\D.*/.test(v) ? null : `${label} must be filled out`;
 };
 
-
 type UpdatePercentagesOptions = "one-time" | "continuous";
 export default function EditPartnerForm({
   partner,
@@ -132,10 +131,10 @@ export default function EditPartnerForm({
   const initialCityPercentEntries: CityPercentage[] =
     cityPercentages.length > 0
       ? cityPercentages.map((entry, idx) => ({
-        id: `${entry.city.name}-${idx}`,
-        city: entry.city.name,
-        percent: Math.round((entry.percentage ?? 0) * 100),
-      }))
+          id: `${entry.city.name}-${idx}`,
+          city: entry.city.name,
+          percent: Math.round((entry.percentage ?? 0) * 100),
+        }))
       : [];
 
   const addressFields = parseAddressFields(partner.address);
@@ -186,7 +185,9 @@ export default function EditPartnerForm({
       id: partner.id,
       name: values.organization,
       description: values.description,
-      start_partner: values.time ? new Date(values.time).toISOString().slice(0, 7) : null,
+      start_partner: values.time
+        ? new Date(values.time).toISOString().slice(0, 7)
+        : null,
       status: values.status,
       coordinates: {
         lat: values.latitude,
@@ -201,7 +202,6 @@ export default function EditPartnerForm({
       }),
       logo: values.logoUrl,
     };
-
 
     const response = await fetch("/api/partners", {
       method: "POST",
@@ -504,16 +504,18 @@ export default function EditPartnerForm({
                       const isActive = activePercentTab === option.value;
                       return (
                         <div
-                          className={`rounded-xl shadow-sm transition hover:-translate-y-0.5 hover:shadow-md h-full border ${isActive
-                            ? "border-[#1D3A8A] bg-[#EEF2FF]"
-                            : "border-gray-300 bg-white"
-                            }`}
+                          className={`rounded-xl shadow-sm transition hover:-translate-y-0.5 hover:shadow-md h-full border ${
+                            isActive
+                              ? "border-[#1D3A8A] bg-[#EEF2FF]"
+                              : "border-gray-300 bg-white"
+                          }`}
                           style={{ borderWidth: isActive ? 2 : 1 }}
                         >
                           <Stack gap="xs" align="center" p="md">
                             <div
-                              className={`${isActive ? "text-[#1D3A8A]" : "text-gray-500"
-                                } opacity-80`}
+                              className={`${
+                                isActive ? "text-[#1D3A8A]" : "text-gray-500"
+                              } opacity-80`}
                             >
                               {option.icon}
                             </div>

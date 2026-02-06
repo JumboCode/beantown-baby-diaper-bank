@@ -1,5 +1,8 @@
+-- CreateSchema
+CREATE SCHEMA IF NOT EXISTS "extensions";
+
 -- CreateExtension
-CREATE EXTENSION IF NOT EXISTS "postgis";
+CREATE EXTENSION IF NOT EXISTS "postgis" WITH SCHEMA "extensions";
 
 -- CreateTable
 CREATE TABLE "Cities" (

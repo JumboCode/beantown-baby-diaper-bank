@@ -11,8 +11,8 @@ import { renderToString } from "react-dom/server";
 
 // NEW: bring in Leaflet runtime for icons, and popup content + types
 // import * as L from "leaflet";
-import { DotPopupContent } from "@/components/DotPopupContent";
-import type { DotDatum } from "@/components/DotPopupContent";
+import { DotPopupContent } from "@/components/map/DotPopupContent";
+import type { DotDatum } from "@/components/map/DotPopupContent";
 import { useLeafletMap } from "../map/useLeafletMap";
 import { useBaseTileLayer } from "../map/useBaseTileLayer";
 // import { Tooltip } from "react-leaflet";

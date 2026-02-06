@@ -1,15 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import {
-  Table,
-  Modal,
-  Pill,
-  Mark,
-  Text,
-  Button,
-} from "@mantine/core";
-import EditPartnerForm from "../EditPartnerForm";
+import { Table, Modal, Pill, Mark, Text, Button } from "@mantine/core";
+import EditPartnerForm from "./EditPartnerForm";
 import { useDisclosure } from "@mantine/hooks";
 import { status } from "@/generated/prisma/enums";
 import Image from "next/image";
@@ -49,10 +42,10 @@ function formatDate(rawDate: string) {
     return "Invalid Date";
   }
 
-  return new Intl.DateTimeFormat('en-US', {
-    month: 'long',
-    year: 'numeric',
-    timeZone: 'UTC',
+  return new Intl.DateTimeFormat("en-US", {
+    month: "long",
+    year: "numeric",
+    timeZone: "UTC",
   }).format(date);
 }
 
@@ -155,12 +148,16 @@ export default function PartnerTable({
                         {/* percentages for waitlisted orgs are optional and 
                           won't be displayed for now */}
                         {percentages
-                          .filter((percentage) => Number(percentage.partnerId) === partner.id)
-                          .map((p) => partner.status !== 'waitlisted' ?
-                            `${p.city.name} (${formatPercentDisplay(p.percentage)})`
-                            : p.city.name)
-                          .join(', ')
-                        }
+                          .filter(
+                            (percentage) =>
+                              Number(percentage.partnerId) === partner.id,
+                          )
+                          .map((p) =>
+                            partner.status !== "waitlisted"
+                              ? `${p.city.name} (${formatPercentDisplay(p.percentage)})`
+                              : p.city.name,
+                          )
+                          .join(", ")}
                       </span>
                     </span>
                   </Table.Td>

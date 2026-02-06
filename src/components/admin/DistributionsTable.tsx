@@ -1,7 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { Table, Text } from "@mantine/core";
+import { Table } from "@mantine/core";
 import { Distribution } from "@/lib/types";
 
 export default function DistributionsTable({
@@ -9,20 +8,6 @@ export default function DistributionsTable({
 }: {
   distributionData: Distribution[];
 }) {
-
-  // // Group by organization
-  // const grouped = distributions.reduce(
-  //   (acc, dist) => {
-  //     const orgName = dist.partner.name;
-  //     if (!acc[orgName]) {
-  //       acc[orgName] = [];
-  //     }
-  //     acc[orgName].push(dist);
-  //     return acc;
-  //   },
-  //   {} as Record<string, Distribution[]>
-  // );
-
   const rows = distributionData.map((dist) => (
     <Table.Tr key={`${dist.id}`}>
       <Table.Td fz={16} fw={600} c="#101828" className="text-sm text-gray-600">
