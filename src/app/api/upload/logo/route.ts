@@ -1,18 +1,15 @@
-
 export async function POST(request: Request) {
-    // TODO: implement logo upload
+  // TODO: implement logo upload
 
-    // Use supabase client from lib/client.ts
+  // Use supabase client from lib/client.ts
 
-    // Upset logo in database
+  // Upset logo in database
 
-    // Create logo url using partner id
-    
+  // Create logo url using partner id
 
-    // Return the logo url
+  // Return the logo url
 
+  void request;
 
-
-
-    return new Response("Hello, world!", { status: 200 });
+  return new Response("Hello, world!", { status: 200 });
 }

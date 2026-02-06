@@ -1,15 +1,14 @@
 "use client";
 
-import { 
-  Table, 
-  Container, 
-  Title, 
-  Group, 
-  Button, 
-  Paper, 
+import {
+  Table,
+  Container,
+  Title,
+  Group,
+  Button,
+  Paper,
   ActionIcon,
   Stack,
-  Text
 } from "@mantine/core";
 import Image from "next/image";
 import { Poppins } from "next/font/google";
@@ -22,13 +21,25 @@ const poppins = Poppins({
 export default function AdminControlsPage() {
   // Hard-coded data as requested
   const adminData = [
-    { name: "Aoife DeClercq", email: "aoife.declercq@tufts.edu", level: "Super Admin" },
+    {
+      name: "Aoife DeClercq",
+      email: "aoife.declercq@tufts.edu",
+      level: "Super Admin",
+    },
     { name: "Maggie Soran", email: "margaret.soran@tufts.edu", level: "Admin" },
     { name: "Molly Sikma", email: "molly.sikma@tufts.edu", level: "Standard" },
     { name: "LCS Tutoring", email: "lcs.tutor@gmail.com", level: "Admin" },
-    { name: "Dilanur Bayraktar", email: "dilanur.bayraktar@tufts.edu", level: "Standard" },
+    {
+      name: "Dilanur Bayraktar",
+      email: "dilanur.bayraktar@tufts.edu",
+      level: "Standard",
+    },
     { name: "LCS Tutoring", email: "lcs.tutor@tufts.edu", level: "Admin" },
-    { name: "Brandon Dionisio", email: "brandon.dionisio@tufts.edu", level: "Super Admin" },
+    {
+      name: "Brandon Dionisio",
+      email: "brandon.dionisio@tufts.edu",
+      level: "Super Admin",
+    },
   ];
 
   const rows = adminData.map((element, index) => (
@@ -39,11 +50,11 @@ export default function AdminControlsPage() {
       <Table.Td>
         {/* Delete button with requested SVG */}
         <ActionIcon variant="subtle" color="red">
-          <Image 
-            src="/admin_view/delete.svg" 
-            alt="delete icon" 
-            width={20} 
-            height={20} 
+          <Image
+            src="/admin_view/delete.svg"
+            alt="delete icon"
+            width={20}
+            height={20}
           />
         </ActionIcon>
       </Table.Td>
@@ -54,7 +65,9 @@ export default function AdminControlsPage() {
     <Container size="xl" py="xl" className={poppins.className}>
       <Stack gap="lg">
         <Group justify="space-between">
-          <Title order={2} fw={700}>Manage Admin</Title>
+          <Title order={2} fw={700}>
+            Manage Admin
+          </Title>
           <Button variant="default" radius="md">
             Add New Admin
           </Button>

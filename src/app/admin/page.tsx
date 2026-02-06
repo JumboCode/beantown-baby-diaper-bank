@@ -292,7 +292,13 @@ export default function Page() {
     }
 
     setFilteredPartners(filtered);
-  }, [partners, partnerYearSince, partnerStatus, partnerSearch, partnerCitiesMap]);
+  }, [
+    partners,
+    partnerYearSince,
+    partnerStatus,
+    partnerSearch,
+    partnerCitiesMap,
+  ]);
 
   const refreshTable = useCallback(() => {
     fetch("/api/partners")
@@ -431,7 +437,10 @@ export default function Page() {
             }}
           >
             <Tabs.List mb="16px">
-              <Tabs.Tab value="Partners" leftSection={renderTabIcon("Partners")}>
+              <Tabs.Tab
+                value="Partners"
+                leftSection={renderTabIcon("Partners")}
+              >
                 Partners
               </Tabs.Tab>
               <Tabs.Tab value="Diapers" leftSection={renderTabIcon("Diapers")}>
@@ -506,10 +515,7 @@ export default function Page() {
               </Drawer>
 
               <Group ml="auto" align="flex-start" gap="sm">
-                {!isPartnersTab && (
-                  <DeleteDistributionDataButton />
-                )
-                }
+                {!isPartnersTab && <DeleteDistributionDataButton />}
                 {isPartnersTab && (
                   <TextInput
                     placeholder="Search by name or cities..."

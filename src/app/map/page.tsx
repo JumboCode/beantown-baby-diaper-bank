@@ -6,12 +6,10 @@ import {
   Stack,
   Text,
   Title,
-  Mark,
   Divider,
   Group,
   Avatar,
   Tooltip,
-  ScrollArea,
 } from "@mantine/core";
 import { baseRegions, regionImpact, regionDetails } from "@/data/map-data";
 
@@ -71,7 +69,7 @@ export default function MapPage() {
             <Title order={4} mt="xl" mb="xs">
               Partners
             </Title>
-            
+
             {/* Horizontal list of small logos to match Figma */}
             <Group gap="sm">
               {modalRegionDetails.partners.map((partner) => (
@@ -108,9 +106,7 @@ export default function MapPage() {
         )}
       </Modal>
 
-      <div className="w-full h-[100vh]">
-        {/* Map logic would go here */}
-      </div>
+      <div className="w-full h-[100vh]">{/* Map logic would go here */}</div>
     </div>
   );
 }

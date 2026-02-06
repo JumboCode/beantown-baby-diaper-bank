@@ -25,10 +25,11 @@ export async function GET(req: Request) {
 
   const startYear: string | null = searchParams.get("startYear");
   const endYear: string | null = searchParams.get("endYear");
-  
-  const startMonth: month | null = searchParams.get("startMonth") as month | null;
-  const endMonth: month | null = searchParams.get("endMonth") as month | null;
 
+  const startMonth: month | null = searchParams.get(
+    "startMonth",
+  ) as month | null;
+  const endMonth: month | null = searchParams.get("endMonth") as month | null;
 
   let where: PrismaTypes.DistributionWhereInput = {};
 
@@ -39,14 +40,20 @@ export async function GET(req: Request) {
     const eMonthIdx = MONTH_NAMES.indexOf(endMonth);
 
     if (sYear === eYear) {
-      const monthsInRange: month[] = MONTH_NAMES.slice(sMonthIdx, eMonthIdx + 1) as month[];
+      const monthsInRange: month[] = MONTH_NAMES.slice(
+        sMonthIdx,
+        eMonthIdx + 1,
+      ) as month[];
       where = {
         year: startYear,
         month: { in: monthsInRange },
       };
     } else {
       const startYearMonths: month[] = MONTH_NAMES.slice(sMonthIdx) as month[];
-      const endYearMonths: month[] = MONTH_NAMES.slice(0, eMonthIdx + 1) as month[];
+      const endYearMonths: month[] = MONTH_NAMES.slice(
+        0,
+        eMonthIdx + 1,
+      ) as month[];
 
       where = {
         OR: [
@@ -59,10 +66,7 @@ export async function GET(req: Request) {
             month: { in: endYearMonths },
           },
           {
-            AND: [
-              { year: { gt: startYear } },
-              { year: { lt: endYear } },
-            ],
+            AND: [{ year: { gt: startYear } }, { year: { lt: endYear } }],
           },
         ],
       };
@@ -85,7 +89,8 @@ export async function GET(req: Request) {
   } satisfies PrismaTypes.DistributionFindManyArgs;
 
   try {
-    const distributionsArr = await prisma.distribution.findMany(distributionsQuery);
+    const distributionsArr =
+      await prisma.distribution.findMany(distributionsQuery);
 
     const formattedData = distributionsArr.map(
       (dist: {
@@ -101,18 +106,19 @@ export async function GET(req: Request) {
         partner: { name: string | null } | null;
         city: { name: string | null } | null;
       }) => ({
-      id: dist.id.toString(),
-      createdAt: dist.createdAt.toISOString(),
-      partnerId: dist.partnerId?.toString() || null,
-      cityId: dist.cityId?.toString() || null,
-      year: dist.year,
-      month: dist.month,
-      numberDiapers: dist.numberDiapers?.toString() || null,
-      numberChildren: dist.numberChildren?.toString() || null,
-      percentage: dist.percentage,
-      partner: dist.partner,
-      city: dist.city,
-    }));
+        id: dist.id.toString(),
+        createdAt: dist.createdAt.toISOString(),
+        partnerId: dist.partnerId?.toString() || null,
+        cityId: dist.cityId?.toString() || null,
+        year: dist.year,
+        month: dist.month,
+        numberDiapers: dist.numberDiapers?.toString() || null,
+        numberChildren: dist.numberChildren?.toString() || null,
+        percentage: dist.percentage,
+        partner: dist.partner,
+        city: dist.city,
+      }),
+    );
 
     return NextResponse.json(formattedData);
   } catch (error) {

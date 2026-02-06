@@ -16,7 +16,7 @@ import {
   Text,
   Checkbox,
   Group,
-  Anchor
+  Anchor,
 } from "@mantine/core";
 
 export default function SignInPage() {
@@ -49,7 +49,7 @@ export default function SignInPage() {
   };
 
   return (
-    <Center style={{ height: '100vh', backgroundColor: '#f8f9fa' }}>
+    <Center style={{ height: "100vh", backgroundColor: "#f8f9fa" }}>
       <Container size={460} w="100%">
         <Stack align="center" mb="xl">
           <Image
@@ -57,14 +57,18 @@ export default function SignInPage() {
             alt="Beantown Baby Diaper Bank"
             width={300}
             height={80}
-            style={{ objectFit: 'contain' }}
+            style={{ objectFit: "contain" }}
           />
         </Stack>
 
         <Paper withBorder shadow="sm" p={40} radius="lg">
           <Stack align="center" gap={4} mb="xl">
-            <Title order={2} fw={700}>Welcome !</Title>
-            <Text c="dimmed" size="sm">Please enter your details.</Text>
+            <Title order={2} fw={700}>
+              Welcome !
+            </Title>
+            <Text c="dimmed" size="sm">
+              Please enter your details.
+            </Text>
           </Stack>
 
           <form onSubmit={handleSubmit}>
@@ -110,7 +114,7 @@ export default function SignInPage() {
           </form>
 
           <Text ta="center" mt="xl" size="sm">
-            Don&apos; t have an account?{' '}
+            Don&apos; t have an account?{" "}
             <Anchor href="#" fw={700} c="blue.9">
               Sign up here
             </Anchor>

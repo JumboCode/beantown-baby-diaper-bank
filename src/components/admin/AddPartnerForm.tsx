@@ -26,11 +26,56 @@ const countries = ["United States", "Canada"];
 const DEFAULT_COUNTRY = "United States";
 
 const US_STATES = [
-  "AL", "AK", "AZ", "AR", "CA", "CO", "CT", "DE", "FL", "GA",
-  "HI", "ID", "IL", "IN", "IA", "KS", "KY", "LA", "ME", "MD",
-  "MA", "MI", "MN", "MS", "MO", "MT", "NE", "NV", "NH", "NJ",
-  "NM", "NY", "NC", "ND", "OH", "OK", "OR", "PA", "RI", "SC",
-  "SD", "TN", "TX", "UT", "VT", "VA", "WA", "WV", "WI", "WY",
+  "AL",
+  "AK",
+  "AZ",
+  "AR",
+  "CA",
+  "CO",
+  "CT",
+  "DE",
+  "FL",
+  "GA",
+  "HI",
+  "ID",
+  "IL",
+  "IN",
+  "IA",
+  "KS",
+  "KY",
+  "LA",
+  "ME",
+  "MD",
+  "MA",
+  "MI",
+  "MN",
+  "MS",
+  "MO",
+  "MT",
+  "NE",
+  "NV",
+  "NH",
+  "NJ",
+  "NM",
+  "NY",
+  "NC",
+  "ND",
+  "OH",
+  "OK",
+  "OR",
+  "PA",
+  "RI",
+  "SC",
+  "SD",
+  "TN",
+  "TX",
+  "UT",
+  "VT",
+  "VA",
+  "WA",
+  "WV",
+  "WI",
+  "WY",
 ];
 
 type AddressFields = {
@@ -129,7 +174,7 @@ export default function AddPartnerForm({
       cities: (value, values) => {
         if (value.length === 0) return "Pick at least one city";
         console.log(values.status);
-        if (values.status && values.status !== 'waitlisted') {
+        if (values.status && values.status !== "waitlisted") {
           const total = value.reduce((sum, city) => {
             return sum + (percentages[city] || 0);
           }, 0);
@@ -138,12 +183,11 @@ export default function AddPartnerForm({
             return `Percentages must add up to 100% (currently ${roundedTotal.toFixed(2)}%)`;
           }
         }
-        return null;        
+        return null;
       },
       latitude: requiredNumber("Latitude"),
       longitude: requiredNumber("Longitude"),
-      state: (value) =>
-        value ? null : "Select a state",
+      state: (value) => (value ? null : "Select a state"),
       zipCode: requiredInteger("Zip Code"),
       country: (value) => (value ? null : "Select a country"),
       status: (value) => (value ? null : "Select a status"),
@@ -165,7 +209,9 @@ export default function AddPartnerForm({
     const cityPercentages = values.cities.map((city) => {
       const raw = Number(percentages[city] ?? 0);
       // rounds percentages to avoid floating-point errors
-      const normalized = Number.isFinite(raw) ? Number((raw / 100).toFixed(4)) : 0;
+      const normalized = Number.isFinite(raw)
+        ? Number((raw / 100).toFixed(4))
+        : 0;
       return { city, percentage: normalized };
     });
 
@@ -347,7 +393,9 @@ export default function AddPartnerForm({
                               /* decimal percentages can have up to 2 decimal places */
                               if (typeof value === "number") {
                                 res = value;
-                                const decimalPart = value.toString().split('.')[1];
+                                const decimalPart = value
+                                  .toString()
+                                  .split(".")[1];
                                 if (decimalPart && decimalPart.length > 2) {
                                   res = Math.round(value * 100) / 100;
                                 }
@@ -466,7 +514,7 @@ export default function AddPartnerForm({
                   size="md"
                   radius="md"
                   required
-                /> 
+                />
 
                 <TextInput
                   placeholder="Zip Code"

@@ -1,7 +1,18 @@
 import { useState, useEffect } from "react";
 import { DateValue, MonthPickerInput } from "@mantine/dates";
 import { useDisclosure } from "@mantine/hooks";
-import { Modal, Button, Text, Radio, Group, Table, Stack, Loader, Center, Title } from "@mantine/core";
+import {
+  Modal,
+  Button,
+  Text,
+  Radio,
+  Group,
+  Table,
+  Stack,
+  Loader,
+  Center,
+  Title,
+} from "@mantine/core";
 import { ConfirmDeletion } from "./ConfirmDeleteDistModal";
 import { Distribution } from "@/lib/types";
 
@@ -41,10 +52,9 @@ export default function DeleteDistributionDataButton({
 }: MonthSelectionModalProps) {
   const [opened, { open, close }] = useDisclosure(false);
   const [numMonths, setNumMonths] = useState<string | null>("one_month");
-  const [monthsRange, setMonthsRange] = useState<[DateValue | null, DateValue | null]>([
-    null,
-    null,
-  ]);
+  const [monthsRange, setMonthsRange] = useState<
+    [DateValue | null, DateValue | null]
+  >([null, null]);
   const [loadingDistributions, setLoadingDistributions] = useState(false);
   const [oneMonth, setOneMonth] = useState<Date | null>(null);
   const [previewData, setPreviewData] = useState<Distribution[]>([]);
@@ -100,8 +110,7 @@ export default function DeleteDistributionDataButton({
     } catch (error) {
       console.error("Fetch error:", error);
       setPreviewData([]);
-    }
-    finally {
+    } finally {
       setLoadingDistributions(false);
     }
   }
@@ -148,8 +157,7 @@ export default function DeleteDistributionDataButton({
         },
         end: null,
       });
-    }
-    else {
+    } else {
       if (!monthsRange) {
         return;
       }
@@ -219,12 +227,7 @@ export default function DeleteDistributionDataButton({
             </Group>
           </Radio.Group>
 
-          <Group
-            grow
-            mt="md"
-            gap="md"
-            align="flex-end"
-          >
+          <Group grow mt="md" gap="md" align="flex-end">
             {numMonths === "one_month" ? (
               <MonthPickerInput
                 label="Select Date"
@@ -272,11 +275,7 @@ export default function DeleteDistributionDataButton({
               />
             )}
 
-            <Button
-              onClick={handleClick}
-              color="#163663"
-              mt="md"
-            >
+            <Button onClick={handleClick} color="#163663" mt="md">
               Apply Selection
             </Button>
           </Group>
@@ -284,22 +283,21 @@ export default function DeleteDistributionDataButton({
             Preview Distributions to Delete
           </Title>
 
-
           {isPreviewMode ? (
             <Stack gap="xs" mt="md">
-
-
               {loadingDistributions ? (
                 <Center>
-
                   <Loader type="bars" />
                 </Center>
               ) : (
                 <>
                   <div style={{ maxHeight: "300px", overflowY: "auto" }}>
-                    <Table withTableBorder highlightOnHover
+                    <Table
+                      withTableBorder
+                      highlightOnHover
                       stickyHeader
-                      striped>
+                      striped
+                    >
                       <Table.Thead>
                         <Table.Tr>
                           <Table.Th>Partner</Table.Th>

@@ -74,8 +74,8 @@ export default function Page() {
         const boundariesPromise = cachedBoundaries
           ? Promise.resolve(cachedBoundaries)
           : fetch(`/api/cities/boundaries`)
-            .then((res) => res.json())
-            .then(flipBoundaries);
+              .then((res) => res.json())
+              .then(flipBoundaries);
 
         const [cities, boundaries] = await Promise.all([
           fetch(`/api/cities?${queryParams.toString()}`).then((res) =>
@@ -153,9 +153,13 @@ export default function Page() {
         >
           Distribution Heat Map
         </Title>
-        <SimpleGrid cols={{ base: 1, sm: 3 }} spacing={{ base: 0, sm: '3%' }} verticalSpacing={{ base: '3%', sm: 0 }}>
+        <SimpleGrid
+          cols={{ base: 1, sm: 3 }}
+          spacing={{ base: 0, sm: "3%" }}
+          verticalSpacing={{ base: "3%", sm: 0 }}
+        >
           {/* Left Column: Map */}
-          <div style={{ gridColumn: 'span 2' }}>
+          <div style={{ gridColumn: "span 2" }}>
             <Paper shadow="sm" p="md" radius="md" withBorder>
               <Box mb="md">
                 <YearlyMonthlySwitch

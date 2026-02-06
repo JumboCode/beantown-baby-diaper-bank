@@ -13,10 +13,8 @@ import {
   Stack,
   Group,
   ThemeIcon,
-  Accordion,
 } from "@mantine/core";
 import { FaGithub } from "react-icons/fa";
-import RakshiValentinaTicket from "../components/sprint4/RakshiValentinaTicket";
 
 export default function Home() {
   return (

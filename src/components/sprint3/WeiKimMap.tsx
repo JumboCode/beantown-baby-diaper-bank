@@ -173,13 +173,13 @@ export default function HanahCaitlynMap() {
 
       return impact && centroid
         ? {
-          cityId: id,
-          cityName: name ?? id,
-          lat: centroid[0],
-          lng: centroid[1],
-          numDiapers: impact.diapersDelivered,
-          partnerOrgs: [`${impact.partnerSites} partner sites`],
-        }
+            cityId: id,
+            cityName: name ?? id,
+            lat: centroid[0],
+            lng: centroid[1],
+            numDiapers: impact.diapersDelivered,
+            partnerOrgs: [`${impact.partnerSites} partner sites`],
+          }
         : null;
     })
     .filter(Boolean) as DotDatum[];
