@@ -6,7 +6,8 @@ import { prisma } from "../src/lib/prisma";
 import { YearlyDataCreateManyInput } from "@/generated/prisma/models";
 import { randomUUID } from "node:crypto";
 import { promises as fs } from "node:fs";
-import { status as PartnerStatus } from "@/generated/prisma/client";
+import { status as PartnerStatus, month } from "@/generated/prisma/client";
+
 
 const parseStatus = (value: string | undefined): PartnerStatus | undefined => {
   if (!value) return undefined;
