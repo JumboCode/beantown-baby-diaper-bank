@@ -49,11 +49,11 @@ model Partner {
   description    String?
   startPartner   DateTime?       @map("start_partner") @db.Date
   endPartner     DateTime?       @map("end_partner") @db.Date
-  waitlisted     Boolean?
+
   address        String?
   coords         Json?           @db.Json
   logoUrl        String?         @map("logo_url")
-  active         Boolean?
+
   status         status          @default(inactive)
   distributions  Distribution[]
   partnerRegions PartnerRegion[]
