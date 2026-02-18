@@ -20,16 +20,16 @@ const poppins = Poppins({
   weight: ["400", "500", "600", "700"],
 });
 
+interface Admin {
+  id: string;
+  name: string;
+  email: string;
+  level: string;
+  isAdmin: boolean;
+}
+
 export default function AdminControlsPage() {
-  const [adminData, setAdminData] = useState<
-    {
-      id: string;
-      name: string;
-      email: string;
-      level: string;
-      isAdmin: boolean;
-    }[]
-  >([]);
+  const [adminList, setAdminList] = useState<Admin[]>([]);
 
   const [error, setError] = useState<string | null>(null);
 
@@ -42,7 +42,7 @@ export default function AdminControlsPage() {
         throw new Error(data.message || "Failed to fetch admins");
       }
 
-      setAdminData(data.admins);
+      setAdminList(data.admins);
     } catch (err: any) {
       setError(err.message || "Unknown error");
     }
@@ -60,7 +60,7 @@ export default function AdminControlsPage() {
     );
   }
 
-  const rows = adminData.map((element, index) => (
+  const rows = adminList.map((element, index) => (
     <Table.Tr key={`${element.email}-${index}`}>
       <Table.Td>{element.name}</Table.Td>
       <Table.Td>{element.email}</Table.Td>
