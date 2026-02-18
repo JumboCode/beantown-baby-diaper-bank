@@ -5,7 +5,6 @@ import {
   Container,
   Title,
   Group,
-  Button,
   Paper,
   ActionIcon,
   Stack,
@@ -23,7 +22,13 @@ const poppins = Poppins({
 
 export default function AdminControlsPage() {
   const [adminData, setAdminData] = useState<
-    { id: string; name: string; email: string; level: string; isAdmin: boolean }[]
+    {
+      id: string;
+      name: string;
+      email: string;
+      level: string;
+      isAdmin: boolean;
+    }[]
   >([]);
 
   const [error, setError] = useState<string | null>(null);
