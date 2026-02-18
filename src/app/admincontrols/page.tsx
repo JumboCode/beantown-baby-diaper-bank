@@ -9,9 +9,12 @@ import {
   Paper,
   ActionIcon,
   Stack,
+  Alert,
 } from "@mantine/core";
 import Image from "next/image";
 import { Poppins } from "next/font/google";
+import AddNewAdminForm from "@/components/admin/AddNewAdminForm";
+import { useEffect, useState } from "react";
 
 const poppins = Poppins({
   subsets: ["latin"],
@@ -19,28 +22,38 @@ const poppins = Poppins({
 });
 
 export default function AdminControlsPage() {
-  // Hard-coded data as requested
-  const adminData = [
-    {
-      name: "Aoife DeClercq",
-      email: "aoife.declercq@tufts.edu",
-      level: "Super Admin",
-    },
-    { name: "Maggie Soran", email: "margaret.soran@tufts.edu", level: "Admin" },
-    { name: "Molly Sikma", email: "molly.sikma@tufts.edu", level: "Standard" },
-    { name: "LCS Tutoring", email: "lcs.tutor@gmail.com", level: "Admin" },
-    {
-      name: "Dilanur Bayraktar",
-      email: "dilanur.bayraktar@tufts.edu",
-      level: "Standard",
-    },
-    { name: "LCS Tutoring", email: "lcs.tutor@tufts.edu", level: "Admin" },
-    {
-      name: "Brandon Dionisio",
-      email: "brandon.dionisio@tufts.edu",
-      level: "Super Admin",
-    },
-  ];
+  const [adminData, setAdminData] = useState<
+    { id: string; name: string; email: string; level: string; isAdmin: boolean }[]
+  >([]);
+
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchAdmins = async () => {
+    try {
+      const response = await fetch("/api/admin/list");
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || "Failed to fetch admins");
+      }
+
+      setAdminData(data.admins);
+    } catch (err: any) {
+      setError(err.message || "Unknown error");
+    }
+  };
+
+  useEffect(() => {
+    fetchAdmins();
+  }, []);
+
+  if (error) {
+    return (
+      <Container size="xl" py="xl" className={poppins.className}>
+        <Alert color="red">{error}</Alert>
+      </Container>
+    );
+  }
 
   const rows = adminData.map((element, index) => (
     <Table.Tr key={`${element.email}-${index}`}>
@@ -68,9 +81,7 @@ export default function AdminControlsPage() {
           <Title order={2} fw={700}>
             Manage Admin
           </Title>
-          <Button variant="default" radius="md">
-            Add New Admin
-          </Button>
+          <AddNewAdminForm onAdminAdded={fetchAdmins} />
         </Group>
 
         <Paper withBorder radius="md" p="md">

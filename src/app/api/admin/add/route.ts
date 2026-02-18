@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 // This is a placeholder API route for adding an admin. In a real implementation, you would integrate with your authentication provider (like Clerk) to create a new admin user and assign them the appropriate permissions based on the provided level.
 export async function POST(request: Request) {
   const { firstName, lastName, email, level, password } = await request.json();
+  console.log("Received request to add admin with email:", email, "and level:", level);
 
   if (!firstName || !lastName || !email || !level) {
     return NextResponse.json(
@@ -12,8 +13,8 @@ export async function POST(request: Request) {
   }
 
   // Add admin to clerk
-
   const client = await clerkClient();
+  // const client = await clerkClient.users.createUser(...);
 
   console.log("Creating user with email:", email, "and level:", level);
   try {
@@ -30,15 +31,24 @@ export async function POST(request: Request) {
     });
 
     // Here you would also assign the appropriate role/permissions based on the "level" variable
+    console.log("User created with ID:", user.id, "and role:", user.publicMetadata.role);
     return NextResponse.json({ message: "User created", user });
-  } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : "Unknown error";
-    return new Response(
-      JSON.stringify({ message: "Error adding admin", error: message }),
-      {
-        status: 500,
-        headers: { "Content-Type": "application/json" },
-      },
+  } catch (err: any) {
+    const clerkErrors = err?.errors || err?.clerkError?.errors;
+
+    if (clerkErrors) {
+      return NextResponse.json(
+        {
+          message: "Clerk error creating user",
+          errors: clerkErrors,
+        },
+        { status: err?.status || 422 }
+      );
+    }
+
+    return NextResponse.json(
+      { message: "Error adding admin", error: err?.message || "Unknown error" },
+      { status: 500 }
     );
   }
 }
