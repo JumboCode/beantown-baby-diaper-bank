@@ -3,7 +3,7 @@
 import { useDisclosure } from '@mantine/hooks';
 import { Modal } from '@mantine/core';
 import { useForm } from '@mantine/form';
-import { Button, Checkbox, Group, TextInput, PasswordInput } from '@mantine/core';
+import { Button, Group, TextInput, PasswordInput } from '@mantine/core';
 import { useSignIn } from "@clerk/nextjs";
 import { useState } from "react";
 
