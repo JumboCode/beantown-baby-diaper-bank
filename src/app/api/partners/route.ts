@@ -1,215 +1,98 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { Prisma as PrismaTypes, status } from "@/generated/prisma/client";
-import type { City, Partner } from "@/generated/prisma/client";
 import { stringifyWithBigInt } from "@/lib/util";
-import { PartnerUpdateArgs } from "@/generated/prisma/models";
 
-/**
- * GET /api/partners
- *
- * Lists diaper bank partners from the Partners table. Supports optional
- * filtering by name search and waitlist status.
- *
- * Query params:
- *   - search: partial or case-insensitive match against the partner name.
- *   - waitlisted: "true" or "false" to filter by waitlist status.
- *
- * Example request:
- *  /api/partners?search=arlington&waitlisted=false
- *
- * Example response:
- * ```json{
- *   "data": [
- *    {
- *       "id": 1,
- *       "created_at": "2023-10-01T12:34:56.789Z",
- *       "name": "Arlington Eats",
- *       "description": "A description of Arlington Eats.",
- *       "start_partner": "2023-11-01T00:00:00.000Z",
- *       "waitlisted": false,
- *       "address": "123 Diaper St, Boston, MA",
- *       "coords": { "type": "Point", "coordinates": [-71.0589, 42.3601] },
- *       "logo_url": "https://example.com/logo.png"
- *    }
- *  ]
- * }```
- */
-export async function GET(request: Request) {
-  // Extract query parameters(checkout dev-example for reference)
-  const { searchParams } = new URL(request.url);
+// Helper to ensure dates are saved as the 1st of the month per sprint requirements
+const normalizeDate = (dateString: string | null) => {
+  if (!dateString) return null;
+  const date = new Date(dateString);
+  return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), 1));
+};
 
-  const search = searchParams.get("search");
-  const waitlisted = searchParams.get("waitlisted");
-
-  // Build the Prisma query filters based on provided params
-  // WhereInput type helps ensure we build valid queries
-  const where: PrismaTypes.PartnerWhereInput = {};
-
-  if (search) {
-    // Case-insensitive partial match on name
-    where.name = {
-      contains: search,
-      mode: "insensitive",
-    };
-  }
-
-  // Filter by waitlist status if provided (use status, not legacy waitlisted flag)
-  if (waitlisted === "true" || waitlisted === "false") {
-    if (waitlisted === "true") {
-      where.status = "waitlisted";
-    } else {
-      where.status = { not: "waitlisted" };
-    }
-  }
-
+export async function GET() {
   try {
-    // Query the database for partners matching the filters
-    // prisma handles reaching out to the DB and executing the query
-    const partners: Partner[] = await prisma.partner.findMany({
-      where,
-      orderBy: { name: "asc" },
-    });
-
-    // Format the partners for the response
-    // everything needs to be serializable to JSON
-    // Date objects are converted to ISO strings
-    // BigInt fields (like IDs) are converted to numbers or strings
-    const dataToReturn = partners.map((partner) => ({
-      id: Number(partner.id),
-      created_at: partner.createdAt.toISOString(),
-      name: partner.name,
-      description: partner.description,
-      start_partner: partner.startPartner
-        ? partner.startPartner.toISOString()
-        : null,
-      status: partner.status,
-      waitlisted: partner.status === "waitlisted",
-      address: partner.address,
-      coords: partner.coords,
-      logo_url: partner.logoUrl,
-    }));
-
-    //return the partners as a JSON response
-    return NextResponse.json({
-      data: dataToReturn,
-    });
+    const partners = await prisma.partner.findMany();
+    // Use JSON.parse to fix the "partners.map is not a function" error
+    return NextResponse.json({ data: JSON.parse(stringifyWithBigInt(partners)) });
   } catch (error) {
-    // Handle any errors that occur during the process
-    const message =
-      error instanceof Error
-        ? error.message
-        : "Unable to load partners from the database.";
-
-    return NextResponse.json({ error: message }, { status: 500 });
+    return NextResponse.json({ error: "Failed to fetch partners" }, { status: 500 });
   }
 }
-// Create put for new partner
+
+// Add New Partner logic
 export async function PUT(request: Request) {
   const body = await request.json();
-  // Need to fix for new partner
-  const cities = body.cities;
-  const cityNames = cities.map((city: { city: string }) => city.city);
+  const isWaitlisted = body.status === "waitlisted";
 
-  console.log("Body cities:", body);
-  console.log("Cities for partner regions:", cities);
-  const newPartnerRequest = {
-    data: {
-      name: body.name,
-      description: body.description,
-      startPartner: new Date(body.start_partner).toISOString(),
-      status: body.status as status,
-      coords: body.coordinates,
-      address: body.address,
-      logoUrl: body.logo,
-    },
-  } as PrismaTypes.PartnerCreateArgs;
-  let partner: Partner;
-  try {
-    partner = await prisma.partner.create(newPartnerRequest);
-  } catch (error) {
-    const message =
-      error instanceof Error
-        ? error.message
-        : "Unable to insert partner into database.";
-
-    return NextResponse.json({ error: message }, { status: 500 });
-  }
-
-  const partnerId = Number(partner.id);
-
-  type CityPercentage = {
-    city: string;
-    percentage: number;
+  const partnerData: any = {
+    name: body.name,
+    description: body.description,
+    status: body.status,
+    coords: body.coordinates,
+    address: body.address,
+    logoUrl: body.logo,
   };
 
-  const cityIds: City[] = await prisma.city.findMany({
-    where: {
-      name: {
-        in: cityNames,
-      },
-    },
-  });
+  if (!isWaitlisted && body.start_partner) {
+    partnerData.startPartner = normalizeDate(body.start_partner);
+  }
 
-  const newPartnerRegionsRequest = {
-    data: body.cities.map((city: CityPercentage) => ({
-      partnerId: partnerId,
-      cityId: cityIds.find((c) => c.name === city.city)?.id,
-      percentage: city.percentage,
-    })),
-  } satisfies PrismaTypes.PartnerRegionCreateManyArgs;
-
-  console.log("Received partner data:", body);
   try {
-    // update partner region table
-    const partnerRegion = await prisma.partnerRegion.createMany(
-      newPartnerRegionsRequest,
-    );
+    const partner = await prisma.partner.create({ data: partnerData });
+    const partnerId = Number(partner.id);
 
-    console.log("Created partner regions:", partnerRegion);
+    if (!isWaitlisted && body.cities && body.cities.length > 0) {
+      const cityNames = body.cities.map((city: any) => city.city);
+      const cityIds = await prisma.city.findMany({
+        where: { name: { in: cityNames } },
+      });
 
-    return NextResponse.json({
-      data: stringifyWithBigInt(partner),
-    });
+      await prisma.partnerRegion.createMany({
+        data: body.cities.map((city: any) => ({
+          partnerId: partnerId,
+          cityId: cityIds.find((c) => c.name === city.city)?.id,
+          percentage: city.percentage,
+        })),
+      });
+    }
+
+    return NextResponse.json({ data: JSON.parse(stringifyWithBigInt(partner)) });
   } catch (error) {
-    const message =
-      error instanceof Error
-        ? error.message
-        : "Unable to insert partner into database.";
-
-    return NextResponse.json({ error: message }, { status: 500 });
+    return NextResponse.json({ error: "Failed to create partner" }, { status: 500 });
   }
 }
 
+// Update Partner logic (General)
 export async function POST(request: Request) {
   const body = await request.json();
-  const updatePartnerRequest = {
-    where: { id: body.id },
-    data: {
-      name: body.name,
-      description: body.description,
-      startPartner: new Date(body.start_partner).toISOString(),
-      status: body.status as status,
-      coords: body.coordinates,
-      address: body.address,
-      logoUrl: body.logo,
-    },
-  } as PartnerUpdateArgs;
+  
+  const updateData: any = {
+    name: body.name,
+    description: body.description,
+    status: body.status,
+    coords: body.coordinates,
+    address: body.address,
+    logoUrl: body.logo,
+  };
 
-  console.log("Received partner data:", body);
+  if (body.status === "active") {
+    updateData.startPartner = normalizeDate(body.start_partner);
+    updateData.endPartner = null;
+  } else if (body.status === "inactive") {
+    updateData.endPartner = normalizeDate(body.end_partner);
+  } else if (body.status === "waitlisted") {
+    updateData.startPartner = null;
+    updateData.endPartner = null;
+  }
 
   try {
-    const partner = await prisma.partner.update(updatePartnerRequest);
-
-    return NextResponse.json({
-      data: stringifyWithBigInt(partner),
+    const partner = await prisma.partner.update({
+      where: { id: Number(body.id) },
+      data: updateData,
     });
-  } catch (error) {
-    const message =
-      error instanceof Error
-        ? error.message
-        : "Unable to insert partner into database.";
 
-    return NextResponse.json({ error: message }, { status: 500 });
+    return NextResponse.json({ data: JSON.parse(stringifyWithBigInt(partner)) });
+  } catch (error) {
+    return NextResponse.json({ error: "Update failed" }, { status: 500 });
   }
 }
