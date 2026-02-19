@@ -14,17 +14,10 @@ export type CollapsibleDropdownProps<T> = {
   method?: "GET" | "POST";
   body?: unknown; // for POST
   headers?: Record<string, string>;
-
-  /**
-   * Called to render the fetched data.
-   */
-  render: (data: T) => React.ReactNode;
-
-  /**
-   * Optional: transform raw json into T (e.g., unwrap {items: ...}).
-   */
+  /* Called to render the fetched data.*/
+  render: (data: T) => React.ReactNode; // this is the actual fetched data
+  /* Optional: transform raw json into T (e.g., unwrap {items: ...}).*/
   select?: (raw: unknown) => T;
-
   /**
    * Behavior:
    * - "onOpen" (default): fetch first time it opens
@@ -32,14 +25,10 @@ export type CollapsibleDropdownProps<T> = {
    * - "never": you will call refetch manually (still supported)
    */
   fetchPolicy?: "onOpen" | "always" | "never";
-
-  /**
-   * Optional: show a right-side summary (e.g. totals)
-   */
+  /* Optional: show a right-side summary, HOPE TO USE FOR EDIT BUTTON */
   right?: React.ReactNode;
-
-  className?: string;
-  defaultOpen?: boolean;
+  className?: string; // for styling
+  defaultOpen?: boolean; 
 };
 
 export function CollapsibleDropdown<T>({
@@ -53,7 +42,7 @@ export function CollapsibleDropdown<T>({
   fetchPolicy = "onOpen",
   right,
   className = "",
-  defaultOpen = false,
+  defaultOpen = false, // false means the initial state of the dropdown is closed
 }: CollapsibleDropdownProps<T>) {
   const [open, setOpen] = useState(defaultOpen);
   const [state, setState] = useState<FetchState<T>>({
@@ -62,6 +51,7 @@ export function CollapsibleDropdown<T>({
     error: null,
   });
 
+  //////////////////////////////////////////////////////////////////////////////
   const hasFetchedOnceRef = useRef(false);
 
   const fetchData = async () => {
@@ -73,7 +63,7 @@ export function CollapsibleDropdown<T>({
           "Content-Type": "application/json",
           ...(headers ?? {}),
         },
-        body: method === "POST" ? JSON.stringify(body ?? {}) : undefined,
+        body: method === "POST" ? JSON.stringify(body ?? {}) : undefined, // sending to server
       });
 
       if (!res.ok) {
@@ -81,7 +71,7 @@ export function CollapsibleDropdown<T>({
         throw new Error(text || `Request failed (${res.status})`);
       }
 
-      const raw = (await res.json()) as unknown;
+      const raw = (await res.json()) as unknown; // reading from server response
       const data = (select ? select(raw) : (raw as T)) as T;
 
       setState({ status: "success", data, error: null });
@@ -91,6 +81,8 @@ export function CollapsibleDropdown<T>({
       setState({ status: "error", data: null, error: message });
     }
   };
+////////////////////////////////////////////////////////////////////////////////
+
 
   useEffect(() => {
     if (!open) return;
@@ -107,6 +99,7 @@ export function CollapsibleDropdown<T>({
       void fetchData();
     }
   }, [open, fetchPolicy]); // intentionally not depending on endpoint/method/body to avoid accidental refetch loops
+////////////////////////////////////////////////////////////////////////////////
 
   return (
     <div className={`w-full rounded-xl border border-gray-200 bg-white ${className}`}>
@@ -133,6 +126,7 @@ export function CollapsibleDropdown<T>({
         </div>
       </button>
 
+      {/*  */}
       {open ? (
         <div className="border-t border-gray-100 p-4">
           {state.status === "idle" ? null : null}
@@ -154,6 +148,7 @@ export function CollapsibleDropdown<T>({
             </div>
           ) : null}
 
+          {/*  */}
           {state.status === "success" ? (
             <div className="space-y-3">
               {render(state.data)}

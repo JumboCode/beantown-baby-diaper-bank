@@ -93,19 +93,20 @@ const totals: dateTotal[] = useMemo(() => {
           c="#101828"
           className="text-sm text-gray-600"
         >
-        
-        {/* 1:17 2/19/26 CHANGED */}
+          {date.month} {date.year}, {date.total} diapers
+
+          {/* 1:17 2/19/26 CHANGED */}
           <CollapsibleDropdown
           title={`${date.month} ${date.year}, ${date.total} diapers`}
-          endpoint={`/api/distributions?month=${date.month}&year=${date.year}`}
+          // TODO: CHANGE ENDPOINT 
+          endpoint={`/api/distributions?month=${date.month}&year=${date.year}`} 
           render={(data) => (
             <div className="space-y-2">
               {/* TODO: render your rows from `data` here */}
-              <pre className="text-xs">{JSON.stringify(data, null, 2)}</pre>
+              <pre className="text-xs">{JSON.stringify(data, null, 2)}</pre> {/* TODO: CHANGE (curr just prints)*/}
             </div>
           )}
         />
-          {date.month} {date.year}, {date.total} diapers
         </Table.Td>
       </Table.Tr>
     );
