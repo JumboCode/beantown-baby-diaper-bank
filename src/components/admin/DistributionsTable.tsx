@@ -1,12 +1,12 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo } from "react";
 import { Table, Text } from "@mantine/core";
 import { Distribution } from "@/lib/types";
 import { CollapsibleDropdown } from "./Dropdown";
 
 
-interface dateTotal {
+interface DateTotal {
   month: string;
   year: string;
   total: number;
@@ -18,75 +18,53 @@ export default function DistributionsTable({
 }: {
   distributionData: Distribution[];
 }) {
-  const [error, setError] = useState<string>();
+  const error: string | undefined = undefined;
 
-  const possibleDates: Array<{ month: string | null; year: string | null }> =
-    useMemo(() => {
-      return distributionData
-        .map((dist) => ({
-          month: dist.month,
-          year: dist.year,
-        }))
-        .filter(
-          (d, index, self) =>
-            index ===
-            self.findIndex((x) => x.month === d.month && x.year === d.year),
-        );
-    }, [distributionData]);
+  const totals: DateTotal[] = useMemo(() => {
+    const grouped = distributionData.reduce<Record<string, DateTotal>>(
+      (acc, dist) => {
+        if (!dist.month || !dist.year) return acc;
 
-const totals: dateTotal[] = useMemo(() => {
-  const grouped = distributionData.reduce<Record<string, dateTotal>>(
-    (acc, dist) => {
-      if (!dist.month || !dist.year) return acc;
+        const key = `${dist.year}-${dist.month}`;
 
-      const key = `${dist.year}-${dist.month}`;
+        if (!acc[key]) {
+          acc[key] = {
+            month: dist.month,
+            year: dist.year,
+            total: 0,
+            distributions: [],
+          };
+        }
 
-      if (!acc[key]) {
-        acc[key] = {
-          month: dist.month,
-          year: dist.year,
-          total: 0,
-          distributions: [],
-        };
-      }
+        const diapers = dist.numberDiapers ? parseInt(dist.numberDiapers, 10) : 0;
+        acc[key].total += diapers;
+        acc[key].distributions.push(dist);
 
-      const diapers = dist.numberDiapers
-        ? parseInt(dist.numberDiapers)
-        : 0;
+        return acc;
+      },
+      {},
+    );
 
-      acc[key].total += diapers;
-      acc[key].distributions.push(dist);
+    const groupedArray = Object.values(grouped).map((group) => ({
+      ...group,
+      distributions: group.distributions.sort((a, b) => {
+        const nameA = a.partner?.name ?? "";
+        const nameB = b.partner?.name ?? "";
+        return nameA.localeCompare(nameB);
+      }),
+    }));
 
-      return acc;
-    },
-    {}
-  );
-
-  const groupedArray = Object.values(grouped).map((group) => ({
-    ...group,
-    distributions: group.distributions.sort((a, b) => {
-      const nameA = a.partner?.name ?? "";
-      const nameB = b.partner?.name ?? "";
-      return nameA.localeCompare(nameB);
-    }),
-  }));
-
-  return groupedArray.sort((a, b) => {
-    if (a.year !== b.year) return Number(b.year) - Number(a.year);
-    return a.month.localeCompare(b.month);
-  });
-}, [distributionData]);
-
-
-  console.log(totals);
+    return groupedArray.sort((a, b) => {
+      if (a.year !== b.year) return Number(b.year) - Number(a.year);
+      return a.month.localeCompare(b.month);
+    });
+  }, [distributionData]);
 
   if (error) return <Text c="red">Error: {error}</Text>;
 
- 
-
-  const rows: React.ReactNode[] = totals.flatMap((date) => {
+  const rows: React.ReactNode[] = totals.map((date) => {
     const mainRow = (
-        <Table.Tr key={`${date.year}-${date.month}`}>
+      <Table.Tr key={`${date.year}-${date.month}`}>
         <Table.Td
           fz={24}
           fw={600}
@@ -95,55 +73,55 @@ const totals: dateTotal[] = useMemo(() => {
         >
           {date.month} {date.year}, {date.total} diapers
 
-          {/* 1:17 2/19/26 CHANGED */}
-          <CollapsibleDropdown
-          title={`${date.month} ${date.year}, ${date.total} diapers`}
-          // TODO: CHANGE ENDPOINT 
-          endpoint={`/api/distributions?month=${date.month}&year=${date.year}`} 
-          render={(data) => (
-            <div className="space-y-2">
-              {/* TODO: render your rows from `data` here */}
-              <pre className="text-xs">{JSON.stringify(data, null, 2)}</pre> {/* TODO: CHANGE (curr just prints)*/}
-            </div>
-          )}
-        />
+          <CollapsibleDropdown<Distribution[]>
+            title={`${date.month} ${date.year}, ${date.total} diapers`}
+            endpoint={`/api/distributions?month=${date.month}&year=${date.year}`}
+            render={(data) => {
+              const rowsForMonth = data
+                .filter((dist) => dist.month === date.month && dist.year === date.year)
+                .sort((a, b) => {
+                  const partnerA = a.partner?.name ?? "";
+                  const partnerB = b.partner?.name ?? "";
+                  if (partnerA !== partnerB) return partnerA.localeCompare(partnerB);
+                  return (a.city?.name ?? "").localeCompare(b.city?.name ?? "");
+                });
+
+              if (rowsForMonth.length === 0) {
+                return <div className="text-sm text-gray-600">No distributions found.</div>;
+              }
+
+              return (
+                <div className="overflow-x-auto rounded-lg border border-gray-200">
+                  <div className="grid grid-cols-6 gap-4 border-b border-gray-200 bg-gray-50 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-gray-600">
+                    <div>Partner</div>
+                    <div>City</div>
+                    <div>Diapers</div>
+                    <div>Children</div>
+                    <div>Month</div>
+                    <div>Year</div>
+                  </div>
+                  {rowsForMonth.map((dist) => (
+                    <div
+                      key={dist.id}
+                      className="grid grid-cols-6 gap-4 border-b border-gray-100 px-4 py-3 text-sm text-gray-700 last:border-b-0"
+                    >
+                      <div className="font-semibold text-gray-900">{dist.partner?.name ?? "Unknown Partner"}</div>
+                      <div>{dist.city?.name ?? "-"}</div>
+                      <div>{dist.numberDiapers ?? "0"}</div>
+                      <div>{dist.numberChildren ?? "0"}</div>
+                      <div>{dist.month ?? "-"}</div>
+                      <div>{dist.year ?? "-"}</div>
+                    </div>
+                  ))}
+                </div>
+              );
+            }}
+          />
         </Table.Td>
       </Table.Tr>
     );
 
-    const distRows = date.distributions
-      .filter(
-        ( d,
-        ): d is Distribution & {
-          partner: NonNullable<Distribution["partner"]>;
-          city: NonNullable<Distribution["city"]>;
-        } => d.partner !== null && d.city !== null,
-      )
-      .map((dist) => (
-        <Table.Tr key={`${dist.id}`}>
-          <Table.Td
-            fz={16}
-            fw={600}
-            c="#101828"
-            className="text-sm text-gray-600"
-          >
-            {dist.partner.name}
-          </Table.Td> 
-          <Table.Td className="text-sm text-gray-600">
-            {dist.city?.name}
-          </Table.Td>
-          <Table.Td className="text-sm text-gray-600">
-            {dist.numberDiapers}
-          </Table.Td>
-          <Table.Td className="text-sm text-gray-600">
-            {dist.numberChildren}
-          </Table.Td>
-          <Table.Td className="text-sm text-gray-600">{dist.month}</Table.Td>
-          <Table.Td className="text-sm text-gray-600">{dist.year}</Table.Td>
-        </Table.Tr>
-      ));
-
-    return [mainRow, ...distRows];
+    return mainRow;
   });
 
   return (
