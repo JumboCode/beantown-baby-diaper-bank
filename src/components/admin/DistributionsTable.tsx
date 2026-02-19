@@ -62,66 +62,93 @@ export default function DistributionsTable({
 
   if (error) return <Text c="red">Error: {error}</Text>;
 
+
   const rows: React.ReactNode[] = totals.map((date) => {
-    const mainRow = (
+    const partnerGroups = date.distributions.reduce<
+      Record<string, { partnerName: string; totalDiapers: number }>
+    >((acc, dist) => {
+      const partnerName = dist.partner?.name?.trim() || "Unknown Partner";
+      const diapers = dist.numberDiapers ? parseInt(dist.numberDiapers, 10) : 0;
+
+      if (!acc[partnerName]) {
+        acc[partnerName] = {
+          partnerName,
+          totalDiapers: 0,
+        };
+      }
+
+      acc[partnerName].totalDiapers += diapers;
+      return acc;
+    }, {});
+
+    const partnerEntries = Object.values(partnerGroups).sort((a, b) =>
+      a.partnerName.localeCompare(b.partnerName),
+    );
+
+    return (
       <Table.Tr key={`${date.year}-${date.month}`}>
-        <Table.Td
-          fz={24}
-          fw={600}
-          c="#101828"
-          className="text-sm text-gray-600"
-        >
-          {date.month} {date.year}, {date.total} diapers
+        <Table.Td fz={24} fw={600} c="#101828" className="text-sm text-gray-600">
+          <div className="mb-3">
+            {date.month} {date.year}, {date.total} diapers
+          </div>
 
-          <CollapsibleDropdown<Distribution[]>
-            title={`${date.month} ${date.year}, ${date.total} diapers`}
-            endpoint={`/api/distributions?month=${date.month}&year=${date.year}`}
-            render={(data) => {
-              const rowsForMonth = data
-                .filter((dist) => dist.month === date.month && dist.year === date.year)
-                .sort((a, b) => {
-                  const partnerA = a.partner?.name ?? "";
-                  const partnerB = b.partner?.name ?? "";
-                  if (partnerA !== partnerB) return partnerA.localeCompare(partnerB);
-                  return (a.city?.name ?? "").localeCompare(b.city?.name ?? "");
-                });
+          <div className="space-y-2">
+            {partnerEntries.map((partner) => (
+              <CollapsibleDropdown<Distribution[]>
+                key={`${date.year}-${date.month}-${partner.partnerName}`}
+                title={`${partner.partnerName} ${partner.totalDiapers}`}
+                endpoint={`/api/distributions?month=${date.month}&year=${date.year}`}
+                render={(data) => {
+                  const rowsForPartner = data
+                    .filter(
+                      (dist) =>
+                        dist.month === date.month &&
+                        dist.year === date.year &&
+                        (dist.partner?.name?.trim() || "Unknown Partner") ===
+                          partner.partnerName,
+                    )
+                    .sort((a, b) =>
+                      (a.city?.name ?? "").localeCompare(b.city?.name ?? ""),
+                    );
 
-              if (rowsForMonth.length === 0) {
-                return <div className="text-sm text-gray-600">No distributions found.</div>;
-              }
+                  if (rowsForPartner.length === 0) {
+                    return <div className="text-sm text-gray-600">No distributions found.</div>;
+                  }
 
-              return (
-                <div className="overflow-x-auto rounded-lg border border-gray-200">
-                  <div className="grid grid-cols-6 gap-4 border-b border-gray-200 bg-gray-50 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-gray-600">
-                    <div>Partner</div>
-                    <div>City</div>
-                    <div>Diapers</div>
-                    <div>Children</div>
-                    <div>Month</div>
-                    <div>Year</div>
-                  </div>
-                  {rowsForMonth.map((dist) => (
-                    <div
-                      key={dist.id}
-                      className="grid grid-cols-6 gap-4 border-b border-gray-100 px-4 py-3 text-sm text-gray-700 last:border-b-0"
-                    >
-                      <div className="font-semibold text-gray-900">{dist.partner?.name ?? "Unknown Partner"}</div>
-                      <div>{dist.city?.name ?? "-"}</div>
-                      <div>{dist.numberDiapers ?? "0"}</div>
-                      <div>{dist.numberChildren ?? "0"}</div>
-                      <div>{dist.month ?? "-"}</div>
-                      <div>{dist.year ?? "-"}</div>
+                  return (
+                    <div className="overflow-x-auto rounded-lg border border-gray-200">
+                      <div className="grid grid-cols-6 gap-4 border-b border-gray-200 bg-gray-50 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-gray-600">
+                        <div>Partner</div>
+                        <div>City</div>
+                        <div>Diapers</div>
+                        <div>Children</div>
+                        <div>Month</div>
+                        <div>Year</div>
+                      </div>
+                      {rowsForPartner.map((dist) => (
+                        <div
+                          key={dist.id}
+                          className="grid grid-cols-6 gap-4 border-b border-gray-100 px-4 py-3 text-sm text-gray-700 last:border-b-0"
+                        >
+                          <div className="font-semibold text-gray-900">
+                            {dist.partner?.name ?? "Unknown Partner"}
+                          </div>
+                          <div>{dist.city?.name ?? "-"}</div>
+                          <div>{dist.numberDiapers ?? "0"}</div>
+                          <div>{dist.numberChildren ?? "0"}</div>
+                          <div>{dist.month ?? "-"}</div>
+                          <div>{dist.year ?? "-"}</div>
+                        </div>
+                      ))}
                     </div>
-                  ))}
-                </div>
-              );
-            }}
-          />
+                  );
+                }}
+              />
+            ))}
+          </div>
         </Table.Td>
       </Table.Tr>
     );
-
-    return mainRow;
   });
 
   return (
