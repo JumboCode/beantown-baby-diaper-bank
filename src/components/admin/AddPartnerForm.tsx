@@ -1,3 +1,5 @@
+"use client"
+
 import {
   Button,
   Group,
@@ -102,7 +104,7 @@ const requiredNumber = (label: string) => (value: unknown) => {
   const v = (value === 0 ? "0" : (value ?? "")).toString().trim();
   if (v === "") return `${label} is required`;
   return /^-?\d+(\.\d+)?$/.test(v) ? null : `${label} must be a number`;
-};
+}
 // Checks if input is an integer
 const requiredInteger = (label: string) => (value: unknown) => {
   const v = (value === 0 ? "0" : (value ?? "")).toString().trim();
@@ -121,6 +123,7 @@ export default function AddPartnerForm({
   const [citiesAPI, setCitiesAPI] = useState<string[]>([]);
   const [isLoadingCities, setIsLoadingCities] = useState<boolean>(false);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  const [isUploadingFile, setIsUploadingFile] = useState<boolean>(false);
 
   useEffect(() => {
     const fetchCities = async () => {
@@ -203,6 +206,38 @@ export default function AddPartnerForm({
       },
     },
   });
+
+  const handleFileChange = async (file: File | null) => { 
+    if (!file) {
+      form.setFieldValue("logoUrl", "");
+      return;
+    }
+    if (!["image/png", "image/jpeg"].includes(file.type)) {
+      form.setFieldError("logoFile", "Only PNG or JPEG types are accepted");
+      return;
+    }
+    
+    form.setFieldValue("logoFile", file);
+    setIsUploadingFile(true);
+    
+    const formData = new FormData();
+    formData.append("file", file);
+
+    const res = await fetch("/api/upload/logo", {
+      method: "POST",
+      body: formData,
+    });
+    const data = await res.json();
+    console.log('file URL:', data);
+    setIsUploadingFile(false);
+
+    if (!res.ok) {
+      form.setFieldError("logoFile", data.error);
+      return;
+    }
+
+    form.setFieldValue("logoUrl", data.url);
+  };
 
   async function submitPartner(values: typeof form.values) {
     setIsSubmitting(true);
@@ -557,7 +592,7 @@ export default function AddPartnerForm({
                 radius="md"
                 clearable
                 value={form.values.logoFile}
-                onChange={(file) => form.setFieldValue("logoFile", file)}
+                onChange={handleFileChange}
                 error={form.errors.logoFile || form.errors.logoUrl}
                 size="md"
               />
@@ -593,6 +628,7 @@ export default function AddPartnerForm({
               radius="md"
               type="submit"
               loading={isSubmitting}
+              disabled={isUploadingFile}
             >
               Submit
             </Button>

@@ -22,7 +22,7 @@
     "@prisma/adapter-pg": "^6.19.0",
     "@prisma/client": "^6.19.0",
     "@prisma/extension-accelerate": "^2.0.2",
-    "@supabase/supabase-js": "^2.95.1",
+    "@supabase/supabase-js": "^2.97.0",
     "@tabler/icons-react": "^3.36.1",
     "@types/geojson": "^7946.0.16",
     "@types/papaparse": "^5.5.1",
