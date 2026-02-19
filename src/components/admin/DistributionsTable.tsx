@@ -80,10 +80,12 @@ export default function DistributionsTable({
 
   const rows: React.ReactNode[] = totals.map((date) => {
     return (
+      // OUTER TABLE (MONTH, YEAR, TOTAL DIAPERS OF MONTH, YEAR)
       <Table.Tr key={`${date.year}-${date.month}`}>
         <Table.Td>
           <CollapsibleDropdown<Distribution[]>
             title={`${date.month} ${date.year}, ${date.total} diapers`}
+            titleClassName="text-[28px] font-bold"
             endpoint={`/api/distributions?month=${date.month}&year=${date.year}`}
             render={(monthData) => {
               const rowsForMonth = monthData
@@ -112,11 +114,24 @@ export default function DistributionsTable({
               );
 
               return (
+                // INNER TABLE (PARTNER NAME, DIAPERS OF MONTH, YEAR)
                 <div className="space-y-2">
                   {partnerEntries.map((partner) => (
                     <CollapsibleDropdown<Distribution[]>
                       key={`${date.year}-${date.month}-${partner.partnerName}`}
                       title={`${partner.partnerName} ${partner.totalDiapers}`}
+                      right={
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            console.log("Edit", partner.partnerName, date.month, date.year);
+                          }}
+                          className="rounded border border-gray-300 px-2 py-1 text-xs font-medium text-gray-700 hover:bg-gray-50"
+                        >
+                          Edit
+                        </button>
+                      }
                       endpoint={`/api/distributions?month=${date.month}&year=${date.year}`}
                       render={(data) => {
                         const rowsForPartner = data

@@ -12,23 +12,15 @@ export type CollapsibleDropdownProps<T> = {
   title: React.ReactNode;
   endpoint: string;
   method?: "GET" | "POST";
-  body?: unknown; // for POST
+  body?: unknown;
   headers?: Record<string, string>;
-  /* Called to render the fetched data.*/
-  render: (data: T) => React.ReactNode; // this is the actual fetched data
-  /* Optional: transform raw json into T (e.g., unwrap {items: ...}).*/
+  render: (data: T) => React.ReactNode;
   select?: (raw: unknown) => T;
-  /**
-   * Behavior:
-   * - "onOpen" (default): fetch first time it opens
-   * - "always": refetch on every open
-   * - "never": you will call refetch manually (still supported)
-   */
   fetchPolicy?: "onOpen" | "always" | "never";
-  /* Optional: show a right-side summary, HOPE TO USE FOR EDIT BUTTON */
   right?: React.ReactNode;
-  className?: string; // for styling
-  defaultOpen?: boolean; 
+  titleClassName?: string;
+  className?: string;
+  defaultOpen?: boolean;
 };
 
 export function CollapsibleDropdown<T>({
@@ -41,8 +33,9 @@ export function CollapsibleDropdown<T>({
   select,
   fetchPolicy = "onOpen",
   right,
+  titleClassName = "text-[18px] font-semibold",
   className = "",
-  defaultOpen = false, // false means the initial state of the dropdown is closed
+  defaultOpen = false,
 }: CollapsibleDropdownProps<T>) {
   const [open, setOpen] = useState(defaultOpen);
   const [state, setState] = useState<FetchState<T>>({
@@ -51,7 +44,6 @@ export function CollapsibleDropdown<T>({
     error: null,
   });
 
-  //////////////////////////////////////////////////////////////////////////////
   const hasFetchedOnceRef = useRef(false);
 
   const fetchData = async () => {
@@ -63,7 +55,7 @@ export function CollapsibleDropdown<T>({
           "Content-Type": "application/json",
           ...(headers ?? {}),
         },
-        body: method === "POST" ? JSON.stringify(body ?? {}) : undefined, // sending to server
+        body: method === "POST" ? JSON.stringify(body ?? {}) : undefined,
       });
 
       if (!res.ok) {
@@ -71,7 +63,7 @@ export function CollapsibleDropdown<T>({
         throw new Error(text || `Request failed (${res.status})`);
       }
 
-      const raw = (await res.json()) as unknown; // reading from server response
+      const raw = (await res.json()) as unknown;
       const data = (select ? select(raw) : (raw as T)) as T;
 
       setState({ status: "success", data, error: null });
@@ -81,12 +73,9 @@ export function CollapsibleDropdown<T>({
       setState({ status: "error", data: null, error: message });
     }
   };
-////////////////////////////////////////////////////////////////////////////////
-
 
   useEffect(() => {
     if (!open) return;
-
     if (fetchPolicy === "never") return;
 
     if (fetchPolicy === "always") {
@@ -94,45 +83,37 @@ export function CollapsibleDropdown<T>({
       return;
     }
 
-    // onOpen
     if (!hasFetchedOnceRef.current) {
       void fetchData();
     }
-  }, [open, fetchPolicy]); // intentionally not depending on endpoint/method/body to avoid accidental refetch loops
-////////////////////////////////////////////////////////////////////////////////
+  }, [open, fetchPolicy]);
 
   return (
     <div className={`w-full rounded-xl border border-gray-200 bg-white ${className}`}>
-      <button
-        type="button"
-        onClick={() => setOpen((v) => !v)}
-        className="w-full cursor-pointer select-none text-left"
-        aria-expanded={open}
-      >
-        <div className="flex items-center justify-between gap-3 p-4">
-          <div className="flex items-center gap-2">
-            <span
-              className={`inline-block transition-transform duration-150 ${
-                open ? "rotate-180" : "rotate-0"
-              }`}
-              aria-hidden
-            >
-              ▾
-            </span>
-            <div className="text-[18px] font-semibold text-gray-900">{title}</div>
-          </div>
+      <div className="flex items-center justify-between gap-3 p-4">
+        <button
+          type="button"
+          onClick={() => setOpen((v) => !v)}
+          className="flex flex-1 cursor-pointer select-none items-center gap-2 text-left"
+          aria-expanded={open}
+        >
+          <span
+            className={`inline-block transition-transform duration-150 ${
+              open ? "rotate-180" : "rotate-0"
+            }`}
+            aria-hidden
+          >
+            ▼
+          </span>
+          <div className={`${titleClassName} text-gray-900`}>{title}</div>
+        </button>
+        {right ? <div className="shrink-0">{right}</div> : null}
+      </div>
 
-          {right ? <div className="shrink-0">{right}</div> : null}
-        </div>
-      </button>
-
-      {/*  */}
       {open ? (
         <div className="border-t border-gray-100 p-4">
-          {state.status === "idle" ? null : null}
-
           {state.status === "loading" ? (
-            <div className="text-sm text-gray-600">Loading…</div>
+            <div className="text-sm text-gray-600">Loading...</div>
           ) : null}
 
           {state.status === "error" ? (
@@ -148,7 +129,6 @@ export function CollapsibleDropdown<T>({
             </div>
           ) : null}
 
-          {/*  */}
           {state.status === "success" ? (
             <div className="space-y-3">
               {render(state.data)}
