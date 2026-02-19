@@ -5,6 +5,21 @@ import { Table, Text } from "@mantine/core";
 import { Distribution } from "@/lib/types";
 import { CollapsibleDropdown } from "./Dropdown";
 
+const MONTH_ORDER: Record<string, number> = {
+  January: 1,
+  February: 2,
+  March: 3,
+  April: 4,
+  May: 5,
+  June: 6,
+  July: 7,
+  August: 8,
+  September: 9,
+  October: 10,
+  November: 11,
+  December: 12,
+};
+
 
 interface DateTotal {
   month: string;
@@ -56,7 +71,7 @@ export default function DistributionsTable({
 
     return groupedArray.sort((a, b) => {
       if (a.year !== b.year) return Number(b.year) - Number(a.year);
-      return a.month.localeCompare(b.month);
+      return (MONTH_ORDER[a.month] ?? 99) - (MONTH_ORDER[b.month] ?? 99);
     });
   }, [distributionData]);
 
