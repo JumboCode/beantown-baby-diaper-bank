@@ -1,3 +1,4 @@
+import Profile from "@/components/admin/Profile";
 import {
   AppShell,
   AppShellHeader,
@@ -5,6 +6,7 @@ import {
   Group,
   Text,
 } from "@mantine/core";
+import SettingsButton from "@/components/admin/AdminSettingsButton";
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   return (
@@ -14,9 +16,11 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           <Text fw={700} c="blue.9">
             Beantown Baby Admin
           </Text>
-          <Text size="sm" c="dimmed">
-            Rachel
-          </Text>
+
+          <Group gap="xs">
+            <Profile />
+            <SettingsButton />
+          </Group>
         </Group>
       </AppShellHeader>
       <AppShellMain>{children}</AppShellMain>

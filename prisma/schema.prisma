@@ -10,7 +10,7 @@ datasource db {
   provider   = "postgresql"
   url        = env("DATABASE_URL")
   directUrl  = env("DIRECT_URL")
-  extensions = [postgis, uuid_ossp(map: "uuid-ossp", schema: "extensions")]
+  extensions = [postgis(schema: "extensions"), uuid_ossp(map: "uuid-ossp", schema: "extensions"), pgcrypto(schema: "extensions"), pg_graphql(schema: "graphql"), pg_stat_statements(schema: "extensions"), supabase_vault(schema: "vault")]
 }
 
 model City {
@@ -32,7 +32,7 @@ model Distribution {
   partnerId      BigInt?  @map("partner_id")
   cityId         BigInt?  @map("city_id")
   year           String?
-  month          String?
+  month          month?   @default(January)
   numberDiapers  BigInt?  @map("number_diapers")
   numberChildren BigInt?  @map("number_children")
   percentage     Float?
@@ -48,14 +48,16 @@ model Partner {
   name           String?
   description    String?
   startPartner   DateTime?       @map("start_partner") @db.Date
-  waitlisted     Boolean?
+  endPartner     DateTime?       @map("end_partner") @db.Date
+
   address        String?
   coords         Json?           @db.Json
   logoUrl        String?         @map("logo_url")
-  active         Boolean?
+
   status         status          @default(inactive)
   distributions  Distribution[]
   partnerRegions PartnerRegion[]
+  MonthlyData    MonthlyData[]
 
   @@map("Partners")
 }
@@ -83,9 +85,36 @@ model YearlyData {
   @@map("Yearly Data")
 }
 
+model MonthlyData {
+  partnerId  BigInt  @map("partner_id")
+  year       String
+  month      month
+  numDiapers BigInt? @map("num_diapers")
+  numBabies  BigInt? @map("num_babies")
+  id         String  @id @unique @db.Uuid
+  partner    Partner? @relation(fields: [partnerId], references: [id], onDelete: Cascade)
+
+  @@map("Monthly Data")
+}
+
 /// This enum is commented in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
 enum status {
   active
   waitlisted
   inactive
+}
+
+enum month {
+  January
+  February
+  March
+  April
+  May
+  June
+  July
+  August
+  September
+  October
+  November
+  December
 }

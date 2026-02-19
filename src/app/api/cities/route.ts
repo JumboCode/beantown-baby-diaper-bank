@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { Prisma as PrismaTypes } from "@/generated/prisma/client";
+import { month, Prisma as PrismaTypes } from "@/generated/prisma/client";
 import { unstable_cache } from "next/cache";
 
 export const dynamic = "force-dynamic";
@@ -20,9 +20,57 @@ const getCities = unstable_cache(
       );
     }
 
+    /* build filters based on city name */
+    const where: PrismaTypes.CityWhereInput = {};
+    if (cityName) {
+      where.name = {
+        contains: cityName,
+        mode: "insensitive",
+      };
+    }
+
+    if (year && !month) {
+      const cities = await prisma.city.findMany({
+        where,
+        orderBy: { name: "asc" },
+        include: {
+          Yearly_Data: {
+            where: {
+              year: year,
+            },
+          },
+          partnerRegions: {
+            include: {
+              partner: true,
+            },
+          },
+        },
+      });
+
+      return cities.map((city) => ({
+        id: Number(city.id),
+        name: city.name,
+        distributions: city.Yearly_Data.map((yd) => ({
+          id: yd.id,
+          year: yd.year,
+          month: null, // Yearly data doesn't have month
+          numberDiapers: Number(yd.numDiapers),
+          numberChildren: Number(yd.numBabies),
+          percentage: null, // Yearly data doesn't have percentage
+          partner: null, // Yearly data doesn't have partner
+        })),
+        partners: city.partnerRegions.map((partnerRegion) => ({
+          id: Number(partnerRegion.partnerId),
+          name: partnerRegion.partner.name,
+          logo_url: partnerRegion.partner.logoUrl,
+          status: partnerRegion.partner.status,
+        })),
+      }));
+    }
+
     const distributionWhere: PrismaTypes.DistributionWhereInput = {};
     if (month) {
-      distributionWhere.month = month;
+      distributionWhere.month = month as month;
     }
     if (year) {
       distributionWhere.year = year;
@@ -48,14 +96,6 @@ const getCities = unstable_cache(
       typeof cityWithRelationArgs
     >;
 
-    /* build filters based on city name */
-    const where: PrismaTypes.CityWhereInput = {};
-    if (cityName) {
-      where.name = {
-        contains: cityName,
-        mode: "insensitive",
-      };
-    }
     const cities: CityWithRelations[] = await prisma.city.findMany({
       where,
       orderBy: { name: "asc" },
@@ -85,10 +125,9 @@ const getCities = unstable_cache(
       })),
     }));
 
-    // build filters and run prisma.city.findMany(...) as you already do
-    return dataToReturn; // your mapped result
+    return dataToReturn;
   },
-  ["cities"], // base cache key; args are added automatically
+  ["cities"],
   { revalidate, tags: ["cities"] },
 );
 export async function GET(request: Request) {
@@ -109,3 +148,4 @@ export async function GET(request: Request) {
     },
   );
 }
+//

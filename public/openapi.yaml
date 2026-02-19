@@ -1,0 +1,336 @@
+openapi: 3.0.0
+info:
+  title: Beantown Baby Diaper Bank API
+  version: 1.0.0
+  description: API documentation for the Beantown Baby Diaper Bank application.
+servers:
+  - url: /api
+    description: Internal API
+paths:
+  /partners:
+    get:
+      summary: List all partners
+      description: Lists diaper bank partners. Supports filtering by name and waitlist status.
+      parameters:
+        - name: search
+          in: query
+          schema:
+            type: string
+          description: Partial or case-insensitive match against the partner name.
+        - name: waitlisted
+          in: query
+          schema:
+            type: string
+            enum: ["true", "false"]
+          description: Filter by waitlist status.
+      responses:
+        '200':
+          description: A list of partners
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Partner'
+    post:
+      summary: Create a new partner
+      description: Creates a new partner record.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PartnerInput'
+      responses:
+        '200':
+          description: The created partner
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Partner'
+        '500':
+          description: Server error
+
+  /partners/{id}:
+    get:
+      summary: Get partner by ID
+      description: returns a single partner by ID, including aggregate distribution data.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: The partner ID
+      responses:
+        '200':
+          description: Partner data
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/PartnerDetail'
+        '404':
+          description: Partner not found
+
+  /distributions:
+    get:
+      summary: Get distributions
+      description: Fetch distribution records with optional filtering by month/year range.
+      parameters:
+        - name: month
+          in: query
+          schema:
+            type: string
+          description: Filter by specific month
+        - name: year
+          in: query
+          schema:
+            type: string
+          description: Filter by specific year
+        - name: startMonth
+          in: query
+          schema:
+            type: string
+        - name: startYear
+          in: query
+          schema:
+            type: string
+        - name: endMonth
+          in: query
+          schema:
+            type: string
+        - name: endYear
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of distributions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Distribution'
+
+    delete:
+      summary: Delete distributions
+      description: Delete multiple distribution records by ID.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                ids:
+                  type: array
+                  items:
+                    type: string
+      responses:
+        '200':
+          description: Deletion result
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  deletedCount:
+                    type: integer
+
+  /cities:
+    get:
+      summary: Get cities
+      description: List cities with their distributions and partner regions.
+      parameters:
+        - name: name
+          in: query
+          schema:
+            type: string
+          description: Filter by city name
+        - name: month
+          in: query
+          schema:
+            type: string
+        - name: year
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of cities
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/City'
+
+components:
+  schemas:
+    Partner:
+      type: object
+      properties:
+        id:
+          type: integer
+        created_at:
+          type: string
+          format: date-time
+        name:
+          type: string
+        description:
+          type: string
+          nullable: true
+        start_partner:
+          type: string
+          format: date-time
+          nullable: true
+        status:
+          type: string
+        waitlisted:
+          type: boolean
+        address:
+          type: string
+          nullable: true
+        logo_url:
+          type: string
+          nullable: true
+        coords:
+          type: object
+
+    PartnerInput:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        start_partner:
+          type: string
+        status:
+          type: string
+        address:
+          type: string
+        logo:
+          type: string
+        coordinates:
+          type: object
+        cities:
+          type: array
+          items:
+            type: object
+            properties:
+              city:
+                type: string
+              percentage:
+                type: number
+
+    PartnerDetail:
+      allOf:
+        - $ref: '#/components/schemas/Partner'
+        - type: object
+          properties:
+            number_babies_helped:
+              type: integer
+            number_diapers:
+              type: integer
+
+    Distribution:
+      type: object
+      properties:
+        id:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        partnerId:
+          type: string
+          nullable: true
+        cityId:
+          type: string
+          nullable: true
+        year:
+          type: string
+          nullable: true
+        month:
+          type: string
+          nullable: true
+        numberDiapers:
+          type: string
+          nullable: true
+        numberChildren:
+          type: string
+          nullable: true
+        percentage:
+          type: number
+          nullable: true
+        partner:
+          type: object
+          properties:
+            name:
+              type: string
+              nullable: true
+        city:
+          type: object
+          properties:
+            name:
+              type: string
+              nullable: true
+
+    City:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        distributions:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: integer
+              year:
+                type: string
+                nullable: true
+              month:
+                type: string
+                nullable: true
+              numberDiapers:
+                type: integer
+              numberChildren:
+                type: integer
+              partner:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                  name:
+                    type: string
+        partners:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: integer
+              name:
+                type: string
+              logo_url:
+                type: string
+                nullable: true
+              status:
+                type: string

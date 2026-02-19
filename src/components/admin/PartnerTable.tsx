@@ -1,17 +1,8 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
-import {
-  Center,
-  Loader,
-  Table,
-  Modal,
-  Pill,
-  Mark,
-  Text,
-  Button,
-} from "@mantine/core";
-import EditPartnerForm from "../EditPartnerForm";
+import { useState } from "react";
+import { Table, Modal, Pill, Mark, Text, Button } from "@mantine/core";
+import EditPartnerForm from "./EditPartnerForm";
 import { useDisclosure } from "@mantine/hooks";
 import { status } from "@/generated/prisma/enums";
 import Image from "next/image";
@@ -44,6 +35,20 @@ function joinCoords(coords: { lat: number; lng: number }) {
   return `${roundCoords(coords).lat}, ${roundCoords(coords).lng}`;
 }
 
+function formatDate(rawDate: string) {
+  const date = new Date(rawDate);
+
+  if (isNaN(date.getTime())) {
+    return "Invalid Date";
+  }
+
+  return new Intl.DateTimeFormat("en-US", {
+    month: "long",
+    year: "numeric",
+    timeZone: "UTC",
+  }).format(date);
+}
+
 function formatPercentDisplay(value: number | null | undefined) {
   if (value == null) return null;
   const rounded = Number((value * 100).toFixed(4)); // round to 4 decimal places, drop trailing zeros
@@ -60,56 +65,14 @@ type PartnerRegion = {
   };
 };
 
-export default function PartnerInfo() {
-  const [data, setData] = useState<Partner[]>([]);
-  const [percentages, setPercentages] = useState<PartnerRegion[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  const refreshTable = useCallback(() => {
-    setLoading(true);
-    Promise.all([
-      fetch("/api/partners").then((response) => response.json()),
-      fetch("/api/partners/percentages").then((response) => response.json()),
-    ])
-      .then(([partnerResult, percentageResult]) => {
-        setData(partnerResult.data);
-        setPercentages(percentageResult.data);
-      })
-      .catch((err) => {
-        console.error("Error refetching data:", err);
-      })
-      .finally(() => {
-        setLoading(false);
-      });
-  }, []);
-
-  useEffect(() => {
-    refreshTable();
-  }, [refreshTable]);
-
-  useEffect(() => {
-    const handler = () => refreshTable();
-    window.addEventListener("partners:refresh", handler);
-    return () => window.removeEventListener("partners:refresh", handler);
-  }, [refreshTable]);
-
-  return loading ? (
-    <Center className="h-64">
-      <Loader type="bars" />
-    </Center>
-  ) : (
-    <>
-      <PartnerTable partners={data} percentages={percentages} />
-    </>
-  );
-}
-
-function PartnerTable({
+export default function PartnerTable({
   partners,
   percentages,
+  refreshTable,
 }: {
   partners: Partner[];
   percentages: PartnerRegion[];
+  refreshTable?: () => void;
 }) {
   const [partner, setPartner] = useState<Partner | null>(null);
   const [opened, { open, close }] = useDisclosure(false);
@@ -174,7 +137,7 @@ function PartnerTable({
                   </Table.Td>
                   <Table.Td className="text-sm text-gray-600">
                     {partner.start_partner ? (
-                      new Date(partner.start_partner).toLocaleDateString()
+                      formatDate(partner.start_partner)
                     ) : (
                       <span className="text-gray-400 italic">N/A</span>
                     )}
@@ -182,26 +145,19 @@ function PartnerTable({
                   <Table.Td>
                     <span key={partner.id} className="text-sm text-gray-600">
                       <span>
+                        {/* percentages for waitlisted orgs are optional and 
+                          won't be displayed for now */}
                         {percentages
                           .filter(
                             (percentage) =>
-                              Number(percentage.partnerId) == partner.id,
+                              Number(percentage.partnerId) === partner.id,
                           )
-                          .map((percentage, index, arr) => {
-                            const displayPct = formatPercentDisplay(
-                              percentage.percentage,
-                            );
-                            if (displayPct) {
-                              return (
-                                percentage.city.name +
-                                " (" +
-                                displayPct +
-                                ")" +
-                                (index != arr.length - 1 ? ", " : "")
-                              );
-                            }
-                            return null;
-                          })}
+                          .map((p) =>
+                            partner.status !== "waitlisted"
+                              ? `${p.city.name} (${formatPercentDisplay(p.percentage)})`
+                              : p.city.name,
+                          )
+                          .join(", ")}
                       </span>
                     </span>
                   </Table.Td>
@@ -297,7 +253,7 @@ function PartnerTable({
             onClose={() => {
               close();
               setPartner(null);
-              // refreshTable();
+              refreshTable?.();
             }}
           />
         </Modal>

@@ -26,7 +26,7 @@ import LeafletMap from "./WeiKimLeafletMap";
 import type { ChoroplethBucket } from "./useRegionsLayerWeiKim";
 import type { RegionsGeoJSON } from "@/lib/types";
 import baseRegions from "./baseRegionsWeiKim";
-import type { DotDatum } from "@/components/DotPopupContent";
+import type { DotDatum } from "@/components/map/DotPopupContent";
 
 const emptyRegions: RegionsGeoJSON = {
   type: "FeatureCollection",

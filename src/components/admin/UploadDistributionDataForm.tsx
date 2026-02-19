@@ -1,5 +1,5 @@
 import { Modal, Button, Group, Text, Stack } from "@mantine/core";
-import FileUpload from "../../components/sprint2/FileUpload";
+import FileUpload from "../sprint2/FileUpload";
 import { MonthPickerInput } from "@mantine/dates";
 import { useState } from "react";
 
