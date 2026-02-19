@@ -152,8 +152,7 @@ export default function DistributionsTable({
 
                         return (
                           <div className="overflow-x-auto rounded-lg border border-gray-200">
-                            <div className="grid grid-cols-6 gap-4 border-b border-gray-200 bg-gray-50 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-gray-600">
-                              <div>Partner</div>
+                            <div className="grid grid-cols-5 gap-4 border-b border-gray-200 bg-gray-50 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-gray-600">
                               <div>City</div>
                               <div>Diapers</div>
                               <div>Children</div>
@@ -163,11 +162,8 @@ export default function DistributionsTable({
                             {rowsForPartner.map((dist) => (
                               <div
                                 key={dist.id}
-                                className="grid grid-cols-6 gap-4 border-b border-gray-100 px-4 py-3 text-sm text-gray-700 last:border-b-0"
+                                className="grid grid-cols-5 gap-4 border-b border-gray-100 px-4 py-3 text-sm text-gray-700 last:border-b-0"
                               >
-                                <div className="font-semibold text-gray-900">
-                                  {dist.partner?.name ?? "Unknown Partner"}
-                                </div>
                                 <div>{dist.city?.name ?? "-"}</div>
                                 <div>{dist.numberDiapers ?? "0"}</div>
                                 <div>{dist.numberChildren ?? "0"}</div>
