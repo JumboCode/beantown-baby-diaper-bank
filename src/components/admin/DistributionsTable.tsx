@@ -2,23 +2,9 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { Table, Text } from "@mantine/core";
-interface Distribution {
-  id: string;
-  createdAt: string;
-  partnerId: string;
-  cityId: string;
-  year: string;
-  month: string;
-  numberDiapers: string;
-  numberChildren: string;
-  percentage: number;
-  partner: {
-    name: string;
-  };
-  city: {
-    name: string;
-  };
-}
+import { Distribution } from "@/lib/types";
+import { CollapsibleDropdown } from "./Dropdown";
+
 
 interface dateTotal {
   month: string;
@@ -27,114 +13,134 @@ interface dateTotal {
   distributions: Distribution[];
 }
 
-export default function DistributionsTable() {
-  const [distributions, setDistributions] = useState<Distribution[]>([]);
-  const [totals, setTotals] = useState<dateTotal[]>([]);
+export default function DistributionsTable({
+  distributionData,
+}: {
+  distributionData: Distribution[];
+}) {
   const [error, setError] = useState<string>();
 
-  useEffect(() => {
-    const fetchDistributions = async () => {
-      try {
-        const response = await fetch("/api/distributions");
-        if (!response.ok) throw new Error("Failed to fetch distributions");
-        const data = await response.json();
-        // Handle both array and object responses
-        const distributions = Array.isArray(data)
-          ? data
-          : data.distributions || [];
-        setDistributions(distributions);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "An error occurred");
+  const possibleDates: Array<{ month: string | null; year: string | null }> =
+    useMemo(() => {
+      return distributionData
+        .map((dist) => ({
+          month: dist.month,
+          year: dist.year,
+        }))
+        .filter(
+          (d, index, self) =>
+            index ===
+            self.findIndex((x) => x.month === d.month && x.year === d.year),
+        );
+    }, [distributionData]);
+
+const totals: dateTotal[] = useMemo(() => {
+  const grouped = distributionData.reduce<Record<string, dateTotal>>(
+    (acc, dist) => {
+      if (!dist.month || !dist.year) return acc;
+
+      const key = `${dist.year}-${dist.month}`;
+
+      if (!acc[key]) {
+        acc[key] = {
+          month: dist.month,
+          year: dist.year,
+          total: 0,
+          distributions: [],
+        };
       }
-    };
 
-    fetchDistributions();
-  }, []);
+      const diapers = dist.numberDiapers
+        ? parseInt(dist.numberDiapers)
+        : 0;
 
-  const possibleDates: Array<{ month: string; year: string }> = useMemo(() => {
-    return distributions
-      .map((dist) => ({
-        month: dist.month,
-        year: dist.year,
-      }))
-      .filter(
-        (d, index, self) =>
-          index ===
-          self.findIndex((x) => x.month === d.month && x.year === d.year),
-      );
-  }, [distributions]);
+      acc[key].total += diapers;
+      acc[key].distributions.push(dist);
 
-  useEffect(() => {
-    const fetchTotals = async () => {
-      const results = await Promise.all(
-        possibleDates.map(async ({ month, year }) => {
-          const response = await fetch(
-            `/api/distributions?month=${month}&year=${year}`,
-          );
-          if (!response.ok) throw new Error("Failed to fetch distributions");
-          const data = await response.json();
-          const total = data.reduce(
-            (accumulator: number, currentValue: Distribution) => {
-              return accumulator + parseInt(currentValue.numberDiapers);
-            },
-            0,
-          );
+      return acc;
+    },
+    {}
+  );
 
-          const distributions = Array.isArray(data)
-            ? data
-            : data.distributions || [];
+  const groupedArray = Object.values(grouped).map((group) => ({
+    ...group,
+    distributions: group.distributions.sort((a, b) => {
+      const nameA = a.partner?.name ?? "";
+      const nameB = b.partner?.name ?? "";
+      return nameA.localeCompare(nameB);
+    }),
+  }));
 
-          return { month, year, total, distributions };
-        }),
-      );
-      setTotals(results);
-    };
+  return groupedArray.sort((a, b) => {
+    if (a.year !== b.year) return Number(b.year) - Number(a.year);
+    return a.month.localeCompare(b.month);
+  });
+}, [distributionData]);
 
-    fetchTotals();
-  }, [possibleDates]);
 
   console.log(totals);
 
   if (error) return <Text c="red">Error: {error}</Text>;
 
+ 
+
   const rows: React.ReactNode[] = totals.flatMap((date) => {
     const mainRow = (
-      <Table.Tr key={`${date.year}-${date.month}`}>
+        <Table.Tr key={`${date.year}-${date.month}`}>
         <Table.Td
           fz={24}
           fw={600}
           c="#101828"
           className="text-sm text-gray-600"
         >
+        
+        {/* 1:17 2/19/26 CHANGED */}
+          <CollapsibleDropdown
+          title={`${date.month} ${date.year}, ${date.total} diapers`}
+          endpoint={`/api/distributions?month=${date.month}&year=${date.year}`}
+          render={(data) => (
+            <div className="space-y-2">
+              {/* TODO: render your rows from `data` here */}
+              <pre className="text-xs">{JSON.stringify(data, null, 2)}</pre>
+            </div>
+          )}
+        />
           {date.month} {date.year}, {date.total} diapers
         </Table.Td>
       </Table.Tr>
     );
 
-    const distRows = date.distributions.map((dist) => (
-      <Table.Tr key={`${dist.id}`}>
-        <Table.Td
-          fz={16}
-          fw={600}
-          c="#101828"
-          className="text-sm text-gray-600"
-        >
-          {dist.partner.name}
-        </Table.Td>
-        <Table.Td className="text-sm text-gray-600">{dist.city.name}</Table.Td>
-        <Table.Td className="text-sm text-gray-600">
-          {dist.numberDiapers}
-        </Table.Td>
-        <Table.Td className="text-sm text-gray-600">
-          {dist.numberChildren}
-        </Table.Td>
-        <Table.Td className="text-sm text-gray-600">{dist.month}</Table.Td>
-        <Table.Td className="text-sm text-gray-600">{dist.year}</Table.Td>
-        <Table.Td className="text-sm text-gray-600">
-          {(dist.percentage * 100).toFixed(2)}%
-        </Table.Td>
-      </Table.Tr>
-    ));
+    const distRows = date.distributions
+      .filter(
+        ( d,
+        ): d is Distribution & {
+          partner: NonNullable<Distribution["partner"]>;
+          city: NonNullable<Distribution["city"]>;
+        } => d.partner !== null && d.city !== null,
+      )
+      .map((dist) => (
+        <Table.Tr key={`${dist.id}`}>
+          <Table.Td
+            fz={16}
+            fw={600}
+            c="#101828"
+            className="text-sm text-gray-600"
+          >
+            {dist.partner.name}
+          </Table.Td> 
+          <Table.Td className="text-sm text-gray-600">
+            {dist.city?.name}
+          </Table.Td>
+          <Table.Td className="text-sm text-gray-600">
+            {dist.numberDiapers}
+          </Table.Td>
+          <Table.Td className="text-sm text-gray-600">
+            {dist.numberChildren}
+          </Table.Td>
+          <Table.Td className="text-sm text-gray-600">{dist.month}</Table.Td>
+          <Table.Td className="text-sm text-gray-600">{dist.year}</Table.Td>
+        </Table.Tr>
+      ));
 
     return [mainRow, ...distRows];
   });
