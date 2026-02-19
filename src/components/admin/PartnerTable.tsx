@@ -12,6 +12,7 @@ export type Partner = {
   name: string;
   description: string | null;
   start_partner: string | null;
+  end_partner?: string;
   status: status;
   address: string | null;
   coords?: { lat: number; lng: number };

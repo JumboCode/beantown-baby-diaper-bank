@@ -13,7 +13,6 @@ import {
   Box,
   Tabs,
 } from "@mantine/core";
-import { RiCalendarEventLine, RiLineChartLine } from "react-icons/ri";
 import { useForm } from "@mantine/form";
 import { MonthPickerInput } from "@mantine/dates";
 import "@mantine/dates/styles.css";
