@@ -224,9 +224,14 @@ export default function EditPartnerForm({
       });
 
       if (!response.ok) {
-        const err = await response.text();
-        console.error("Failed to update partner data", err);
+        const err = await response.json();
+
+        form.setFieldError("logoFile", err.error);
+
         return;
+      }
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new Event("partners:refresh"));
       }
       onClose();
     } finally {
@@ -249,9 +254,6 @@ export default function EditPartnerForm({
         <form
           onSubmit={form.onSubmit((values) => {
             submitEditPartner(values);
-            if (typeof window !== "undefined") {
-              window.dispatchEvent(new Event("partners:refresh"));
-            }
           })}
           className="flex flex-col gap-5"
         >
@@ -463,6 +465,9 @@ export default function EditPartnerForm({
                 clearable
                 onChange={(file) => {
                   form.setFieldValue("logoFile", file);
+                  if (!file) {
+                    form.setFieldValue("logoUrl", "");
+                  }
                   if (!file) {
                     form.clearFieldError("logoFile");
                   }

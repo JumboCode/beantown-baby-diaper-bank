@@ -46,159 +46,6 @@ class PartnerRequestError extends Error {
   }
 }
 
-function normalizeStartPartner(value: string | null): string | null {
-  if (!value) return null;
-  const parsed = new Date(value);
-  if (Number.isNaN(parsed.getTime())) {
-    throw new PartnerRequestError("Invalid start_partner date", 400);
-  }
-  return parsed.toISOString();
-}
-
-function parseLogoAction(raw: FormDataEntryValue | null): LogoAction {
-  if (raw === null) return "keep";
-  if (typeof raw !== "string") {
-    throw new PartnerRequestError("Invalid logoAction field", 400);
-  }
-  if (raw !== "keep" && raw !== "replace" && raw !== "remove") {
-    throw new PartnerRequestError(
-      "logoAction must be keep, replace, or remove",
-      400,
-    );
-  }
-  return raw;
-}
-
-function assertCreatePayload(payload: unknown): asserts payload is CreatePartnerPayload {
-  if (!payload || typeof payload !== "object") {
-    throw new PartnerRequestError("Invalid partner payload", 400);
-  }
-  const candidate = payload as Partial<CreatePartnerPayload>;
-  if (
-    !candidate.name ||
-    !candidate.description ||
-    !candidate.status ||
-    !candidate.address ||
-    !Array.isArray(candidate.cities)
-  ) {
-    throw new PartnerRequestError("Missing required partner fields", 400);
-  }
-}
-
-async function parseCreatePartnerRequest(
-  request: Request,
-): Promise<{
-  payload: CreatePartnerPayload;
-  logoAction: LogoAction;
-  logoFile: File | null;
-}> {
-  const contentType = request.headers.get("content-type") ?? "";
-  if (contentType.includes("multipart/form-data")) {
-    const formData = await request.formData();
-    const partnerRaw = formData.get("partner");
-    if (typeof partnerRaw !== "string") {
-      throw new PartnerRequestError("partner form field is required", 400);
-    }
-
-    let parsed: unknown;
-    try {
-      parsed = JSON.parse(partnerRaw);
-    } catch {
-      throw new PartnerRequestError("partner must be valid JSON", 400);
-    }
-    assertCreatePayload(parsed);
-
-    const logoAction = parseLogoAction(formData.get("logoAction"));
-    if (logoAction === "remove") {
-      throw new PartnerRequestError("logoAction remove is invalid for create", 400);
-    }
-    const fileRaw = formData.get("file");
-    const logoFile = fileRaw instanceof File ? fileRaw : null;
-    if (logoAction === "replace" && !logoFile) {
-      throw new PartnerRequestError(
-        "File is required when logoAction is replace",
-        400,
-      );
-    }
-
-    return { payload: parsed, logoAction, logoFile };
-  }
-
-  const body = (await request.json()) as unknown;
-  assertCreatePayload(body);
-  return { payload: body, logoAction: "keep", logoFile: null };
-}
-
-function assertUpdatePayload(payload: unknown): asserts payload is UpdatePartnerPayload {
-  if (!payload || typeof payload !== "object") {
-    throw new PartnerRequestError("Invalid partner payload", 400);
-  }
-  const candidate = payload as Partial<UpdatePartnerPayload>;
-  if (
-    typeof candidate.id !== "number" ||
-    !candidate.name ||
-    !candidate.description ||
-    !candidate.status ||
-    !candidate.address
-  ) {
-    throw new PartnerRequestError("Missing required partner fields", 400);
-  }
-}
-
-async function parseUpdatePartnerRequest(
-  request: Request,
-): Promise<{
-  payload: UpdatePartnerPayload;
-  logoAction: LogoAction;
-  logoFile: File | null;
-}> {
-  const contentType = request.headers.get("content-type") ?? "";
-  if (contentType.includes("multipart/form-data")) {
-    const formData = await request.formData();
-    const partnerRaw = formData.get("partner");
-    if (typeof partnerRaw !== "string") {
-      throw new PartnerRequestError("partner form field is required", 400);
-    }
-
-    let parsed: unknown;
-    try {
-      parsed = JSON.parse(partnerRaw);
-    } catch {
-      throw new PartnerRequestError("partner must be valid JSON", 400);
-    }
-    assertUpdatePayload(parsed);
-
-    const logoAction = parseLogoAction(formData.get("logoAction"));
-    const fileRaw = formData.get("file");
-    const logoFile = fileRaw instanceof File ? fileRaw : null;
-    if (logoAction === "replace" && !logoFile) {
-      throw new PartnerRequestError(
-        "File is required when logoAction is replace",
-        400,
-      );
-    }
-    return { payload: parsed, logoAction, logoFile };
-  }
-
-  const body = (await request.json()) as unknown;
-  assertUpdatePayload(body);
-  return { payload: body, logoAction: "keep", logoFile: null };
-}
-
-async function cleanupPartnerCreate(partnerId: number, objectKey?: string): Promise<void> {
-  if (objectKey) {
-    await deleteLogoObject(objectKey).catch((error: unknown) => {
-      const message =
-        error instanceof Error ? error.message : "unknown storage cleanup error";
-      console.error("Failed to delete uploaded logo during rollback:", message);
-    });
-  }
-
-  await prisma.$transaction([
-    prisma.partnerRegion.deleteMany({ where: { partnerId } }),
-    prisma.partner.delete({ where: { id: partnerId } }),
-  ]);
-}
 
 /**
  * GET /api/partners
@@ -421,7 +268,6 @@ export async function PUT(request: Request) {
   }
 }
 
-// Upad
 export async function POST(request: Request) {
   let payload: UpdatePartnerPayload;
   let logoAction: LogoAction;
@@ -498,4 +344,160 @@ export async function POST(request: Request) {
         : 500;
     return NextResponse.json({ error: message }, { status: statusCode });
   }
+}
+
+
+
+function normalizeStartPartner(value: string | null): string | null {
+  if (!value) return null;
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) {
+    throw new PartnerRequestError("Invalid start_partner date", 400);
+  }
+  return parsed.toISOString();
+}
+
+function parseLogoAction(raw: FormDataEntryValue | null): LogoAction {
+  if (raw === null) return "keep";
+  if (typeof raw !== "string") {
+    throw new PartnerRequestError("Invalid logoAction field", 400);
+  }
+  if (raw !== "keep" && raw !== "replace" && raw !== "remove") {
+    throw new PartnerRequestError(
+      "logoAction must be keep, replace, or remove",
+      400,
+    );
+  }
+  return raw;
+}
+
+function assertCreatePayload(payload: unknown): asserts payload is CreatePartnerPayload {
+  if (!payload || typeof payload !== "object") {
+    throw new PartnerRequestError("Invalid partner payload", 400);
+  }
+  const candidate = payload as Partial<CreatePartnerPayload>;
+  if (
+    !candidate.name ||
+    !candidate.description ||
+    !candidate.status ||
+    !candidate.address ||
+    !Array.isArray(candidate.cities)
+  ) {
+    throw new PartnerRequestError("Missing required partner fields", 400);
+  }
+}
+
+async function parseCreatePartnerRequest(
+  request: Request,
+): Promise<{
+  payload: CreatePartnerPayload;
+  logoAction: LogoAction;
+  logoFile: File | null;
+}> {
+  const contentType = request.headers.get("content-type") ?? "";
+  if (contentType.includes("multipart/form-data")) {
+    const formData = await request.formData();
+    const partnerRaw = formData.get("partner");
+    if (typeof partnerRaw !== "string") {
+      throw new PartnerRequestError("partner form field is required", 400);
+    }
+
+    let parsed: unknown;
+    try {
+      parsed = JSON.parse(partnerRaw);
+    } catch {
+      throw new PartnerRequestError("partner must be valid JSON", 400);
+    }
+    assertCreatePayload(parsed);
+
+    const logoAction = parseLogoAction(formData.get("logoAction"));
+    if (logoAction === "remove") {
+      throw new PartnerRequestError("logoAction remove is invalid for create", 400);
+    }
+    const fileRaw = formData.get("file");
+    const logoFile = fileRaw instanceof File ? fileRaw : null;
+    if (logoAction === "replace" && !logoFile) {
+      throw new PartnerRequestError(
+        "File is required when logoAction is replace",
+        400,
+      );
+    }
+
+    return { payload: parsed, logoAction, logoFile };
+  }
+
+  const body = (await request.json()) as unknown;
+  assertCreatePayload(body);
+  return { payload: body, logoAction: "keep", logoFile: null };
+}
+
+function assertUpdatePayload(payload: unknown): asserts payload is UpdatePartnerPayload {
+  if (!payload || typeof payload !== "object") {
+    throw new PartnerRequestError("Invalid partner payload", 400);
+  }
+  const candidate = payload as Partial<UpdatePartnerPayload>;
+  if (
+    typeof candidate.id !== "number" ||
+    !candidate.name ||
+    !candidate.description ||
+    !candidate.status ||
+    !candidate.address
+  ) {
+    throw new PartnerRequestError("Missing required partner fields", 400);
+  }
+}
+
+async function parseUpdatePartnerRequest(
+  request: Request,
+): Promise<{
+  payload: UpdatePartnerPayload;
+  logoAction: LogoAction;
+  logoFile: File | null;
+}> {
+  const contentType = request.headers.get("content-type") ?? "";
+  if (contentType.includes("multipart/form-data")) {
+    const formData = await request.formData();
+    const partnerRaw = formData.get("partner");
+    if (typeof partnerRaw !== "string") {
+      throw new PartnerRequestError("partner form field is required", 400);
+    }
+
+    let parsed: unknown;
+    try {
+      parsed = JSON.parse(partnerRaw);
+    } catch {
+      throw new PartnerRequestError("partner must be valid JSON", 400);
+    }
+    assertUpdatePayload(parsed);
+
+    const logoAction = parseLogoAction(formData.get("logoAction"));
+    const fileRaw = formData.get("file");
+    const logoFile = fileRaw instanceof File ? fileRaw : null;
+    if (logoAction === "replace" && !logoFile) {
+      throw new PartnerRequestError(
+        "File is required when logoAction is replace",
+        400,
+      );
+    }
+    return { payload: parsed, logoAction, logoFile };
+  }
+
+  const body = (await request.json()) as unknown;
+  assertUpdatePayload(body);
+  return { payload: body, logoAction: "keep", logoFile: null };
+}
+
+async function cleanupPartnerCreate(partnerId: number, objectKey?: string): Promise<void> {
+  if (objectKey) {
+    await deleteLogoObject(objectKey).catch((error: unknown) => {
+      const message =
+        error instanceof Error ? error.message : "unknown storage cleanup error";
+      console.error("Failed to delete uploaded logo during rollback:", message);
+    });
+  }
+
+  await prisma.$transaction([
+    prisma.partnerRegion.deleteMany({ where: { partnerId } }),
+    prisma.partner.delete({ where: { id: partnerId } }),
+  ]);
 }
