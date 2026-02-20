@@ -1,3 +1,5 @@
+"use client";
+
 import {
   Button,
   Group,
@@ -204,6 +206,22 @@ export default function AddPartnerForm({
     },
   });
 
+  const handleFileChange = (file: File | null) => {
+    if (!file) {
+      form.setFieldValue("logoFile", null);
+      form.setFieldValue("logoUrl", "");
+      form.clearFieldError("logoFile");
+      return;
+    }
+    if (!["image/png", "image/jpeg"].includes(file.type)) {
+      form.setFieldError("logoFile", "Only PNG or JPEG types are accepted");
+      return;
+    }
+
+    form.setFieldValue("logoFile", file);
+    form.clearFieldError("logoFile");
+  };
+
   async function submitPartner(values: typeof form.values) {
     setIsSubmitting(true);
     const cityPercentages = values.cities.map((city) => {
@@ -215,7 +233,7 @@ export default function AddPartnerForm({
       return { city, percentage: normalized };
     });
 
-    const formData = {
+    const partnerPayload = {
       name: values.organization,
       description: values.description,
       start_partner: values.time,
@@ -236,17 +254,21 @@ export default function AddPartnerForm({
     };
 
     try {
+      const requestBody = new FormData();
+      requestBody.append("partner", JSON.stringify(partnerPayload));
+      requestBody.append("logoAction", values.logoFile ? "replace" : "keep");
+      if (values.logoFile) {
+        requestBody.append("file", values.logoFile);
+      }
+
       const response = await fetch("/api/partners", {
         method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(formData),
+        body: requestBody,
       });
 
       if (!response.ok) {
-        const err = await response.text();
-        console.error("Failed to create partner", err);
+        const err = await response.json();
+        form.setFieldError("logoFile", err.error);
         return;
       }
 
@@ -556,8 +578,7 @@ export default function AddPartnerForm({
                 placeholder="Upload image file"
                 radius="md"
                 clearable
-                value={form.values.logoFile}
-                onChange={(file) => form.setFieldValue("logoFile", file)}
+                onChange={(file) => handleFileChange(file)}
                 error={form.errors.logoFile || form.errors.logoUrl}
                 size="md"
               />
