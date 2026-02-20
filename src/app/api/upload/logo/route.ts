@@ -55,7 +55,7 @@ function validateFileUpload(formData: FormData): File {
   const fileTooLarge = raw.size > MAX_FILE_SIZE_BYTES;
 
   if (fileTooSmall || fileTooLarge) {
-    throw new UploadValidationError("File too large", 413);
+    throw new UploadValidationError("File too large (limit 5MB)", 413);
   }
 
   return raw;
