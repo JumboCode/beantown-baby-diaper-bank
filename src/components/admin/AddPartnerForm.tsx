@@ -1,4 +1,4 @@
-"use client"
+"use client";
 
 import {
   Button,
@@ -104,7 +104,7 @@ const requiredNumber = (label: string) => (value: unknown) => {
   const v = (value === 0 ? "0" : (value ?? "")).toString().trim();
   if (v === "") return `${label} is required`;
   return /^-?\d+(\.\d+)?$/.test(v) ? null : `${label} must be a number`;
-}
+};
 // Checks if input is an integer
 const requiredInteger = (label: string) => (value: unknown) => {
   const v = (value === 0 ? "0" : (value ?? "")).toString().trim();
@@ -217,7 +217,7 @@ export default function AddPartnerForm({
       form.setFieldError("logoFile", "Only PNG or JPEG types are accepted");
       return;
     }
-    
+
     form.setFieldValue("logoFile", file);
     form.clearFieldError("logoFile");
   };
@@ -249,17 +249,14 @@ export default function AddPartnerForm({
         zipCode: values.zipCode,
         country: values.country,
       }),
-      logo: values.logoUrl || "", 
+      logo: values.logoUrl || "",
       cities: cityPercentages,
     };
 
     try {
       const requestBody = new FormData();
       requestBody.append("partner", JSON.stringify(partnerPayload));
-      requestBody.append(
-        "logoAction",
-        values.logoFile ? "replace" : "keep",
-      );
+      requestBody.append("logoAction", values.logoFile ? "replace" : "keep");
       if (values.logoFile) {
         requestBody.append("file", values.logoFile);
       }
@@ -271,7 +268,7 @@ export default function AddPartnerForm({
 
       if (!response.ok) {
         const err = await response.json();
-        form.setFieldError("logoFile", err.error)
+        form.setFieldError("logoFile", err.error);
         return;
       }
 

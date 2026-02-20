@@ -71,16 +71,18 @@ export async function uploadLogoObject(
   const { error } = await supabaseAdmin.storage
     .from(LOGO_BUCKET)
     .upload(objectKey, file, {
-    cacheControl: "3600",
-    upsert,
-    contentType: file.type,
-  });
+      cacheControl: "3600",
+      upsert,
+      contentType: file.type,
+    });
 
   if (error) {
     throw new Error(error.message);
   }
 
-  const { data } = supabaseAdmin.storage.from(LOGO_BUCKET).getPublicUrl(objectKey);
+  const { data } = supabaseAdmin.storage
+    .from(LOGO_BUCKET)
+    .getPublicUrl(objectKey);
   return data.publicUrl;
 }
 

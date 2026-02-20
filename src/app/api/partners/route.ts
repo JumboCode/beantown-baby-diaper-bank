@@ -46,7 +46,6 @@ class PartnerRequestError extends Error {
   }
 }
 
-
 /**
  * GET /api/partners
  *
@@ -159,9 +158,15 @@ export async function PUT(request: Request) {
     logoFile = parsed.logoFile;
   } catch (error) {
     if (error instanceof PartnerRequestError) {
-      return NextResponse.json({ error: error.message }, { status: error.status });
+      return NextResponse.json(
+        { error: error.message },
+        { status: error.status },
+      );
     }
-    return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
+    return NextResponse.json(
+      { error: "Invalid request body" },
+      { status: 400 },
+    );
   }
 
   const cities = payload.cities;
@@ -178,7 +183,6 @@ export async function PUT(request: Request) {
       logoUrl: logoAction === "replace" ? "" : (payload.logo ?? ""),
     },
   } as PrismaTypes.PartnerCreateArgs;
-
 
   let partner: Partner;
   try {
@@ -222,9 +226,11 @@ export async function PUT(request: Request) {
   let uploadedObjectKey: string | undefined;
   try {
     // update partner region table
-    const partnerRegion = await prisma.partnerRegion.createMany(newPartnerRegionsRequest);
-    console.log("created partner regions")
-    console.log(logoAction)
+    const partnerRegion = await prisma.partnerRegion.createMany(
+      newPartnerRegionsRequest,
+    );
+    console.log("created partner regions");
+    console.log(logoAction);
 
     let partnerToReturn = partner;
 
@@ -256,10 +262,14 @@ export async function PUT(request: Request) {
     try {
       await cleanupPartnerCreate(partnerId, uploadedObjectKey);
     } catch (cleanupError) {
-      console.error("Failed to clean up create partner operation:", cleanupError);
+      console.error(
+        "Failed to clean up create partner operation:",
+        cleanupError,
+      );
     }
 
-    const message = error instanceof Error ? error.message : "Unable to create partner.";
+    const message =
+      error instanceof Error ? error.message : "Unable to create partner.";
     const statusCode =
       error instanceof PartnerRequestError || error instanceof FileUploadError
         ? error.status
@@ -280,9 +290,15 @@ export async function POST(request: Request) {
     logoFile = parsed.logoFile;
   } catch (error) {
     if (error instanceof PartnerRequestError) {
-      return NextResponse.json({ error: error.message }, { status: error.status });
+      return NextResponse.json(
+        { error: error.message },
+        { status: error.status },
+      );
     }
-    return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
+    return NextResponse.json(
+      { error: "Invalid request body" },
+      { status: 400 },
+    );
   }
 
   console.log("Received partner data:", payload);
@@ -323,7 +339,9 @@ export async function POST(request: Request) {
     });
 
     if (logoAction === "remove") {
-      await deleteLogoObject(getLogoObjectKey(partnerId)).catch(() => undefined);
+      await deleteLogoObject(getLogoObjectKey(partnerId)).catch(
+        () => undefined,
+      );
     }
 
     return NextResponse.json({
@@ -331,7 +349,9 @@ export async function POST(request: Request) {
     });
   } catch (error) {
     if (logoAction === "replace") {
-      await deleteLogoObject(getLogoObjectKey(Number(payload.id))).catch(() => undefined);
+      await deleteLogoObject(getLogoObjectKey(Number(payload.id))).catch(
+        () => undefined,
+      );
     }
 
     const message =
@@ -345,8 +365,6 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: message }, { status: statusCode });
   }
 }
-
-
 
 function normalizeStartPartner(value: string | null): string | null {
   if (!value) return null;
@@ -371,7 +389,9 @@ function parseLogoAction(raw: FormDataEntryValue | null): LogoAction {
   return raw;
 }
 
-function assertCreatePayload(payload: unknown): asserts payload is CreatePartnerPayload {
+function assertCreatePayload(
+  payload: unknown,
+): asserts payload is CreatePartnerPayload {
   if (!payload || typeof payload !== "object") {
     throw new PartnerRequestError("Invalid partner payload", 400);
   }
@@ -387,9 +407,7 @@ function assertCreatePayload(payload: unknown): asserts payload is CreatePartner
   }
 }
 
-async function parseCreatePartnerRequest(
-  request: Request,
-): Promise<{
+async function parseCreatePartnerRequest(request: Request): Promise<{
   payload: CreatePartnerPayload;
   logoAction: LogoAction;
   logoFile: File | null;
@@ -412,7 +430,10 @@ async function parseCreatePartnerRequest(
 
     const logoAction = parseLogoAction(formData.get("logoAction"));
     if (logoAction === "remove") {
-      throw new PartnerRequestError("logoAction remove is invalid for create", 400);
+      throw new PartnerRequestError(
+        "logoAction remove is invalid for create",
+        400,
+      );
     }
     const fileRaw = formData.get("file");
     const logoFile = fileRaw instanceof File ? fileRaw : null;
@@ -431,7 +452,9 @@ async function parseCreatePartnerRequest(
   return { payload: body, logoAction: "keep", logoFile: null };
 }
 
-function assertUpdatePayload(payload: unknown): asserts payload is UpdatePartnerPayload {
+function assertUpdatePayload(
+  payload: unknown,
+): asserts payload is UpdatePartnerPayload {
   if (!payload || typeof payload !== "object") {
     throw new PartnerRequestError("Invalid partner payload", 400);
   }
@@ -447,9 +470,7 @@ function assertUpdatePayload(payload: unknown): asserts payload is UpdatePartner
   }
 }
 
-async function parseUpdatePartnerRequest(
-  request: Request,
-): Promise<{
+async function parseUpdatePartnerRequest(request: Request): Promise<{
   payload: UpdatePartnerPayload;
   logoAction: LogoAction;
   logoFile: File | null;
@@ -487,11 +508,16 @@ async function parseUpdatePartnerRequest(
   return { payload: body, logoAction: "keep", logoFile: null };
 }
 
-async function cleanupPartnerCreate(partnerId: number, objectKey?: string): Promise<void> {
+async function cleanupPartnerCreate(
+  partnerId: number,
+  objectKey?: string,
+): Promise<void> {
   if (objectKey) {
     await deleteLogoObject(objectKey).catch((error: unknown) => {
       const message =
-        error instanceof Error ? error.message : "unknown storage cleanup error";
+        error instanceof Error
+          ? error.message
+          : "unknown storage cleanup error";
       console.error("Failed to delete uploaded logo during rollback:", message);
     });
   }

@@ -203,12 +203,11 @@ export default function EditPartnerForm({
       }),
       logo: values.logoUrl,
     };
-    const logoAction =
-      values.logoFile
-        ? "replace"
-        : initialLogoUrl && values.logoUrl.trim() === ""
-          ? "remove"
-          : "keep";
+    const logoAction = values.logoFile
+      ? "replace"
+      : initialLogoUrl && values.logoUrl.trim() === ""
+        ? "remove"
+        : "keep";
 
     try {
       const requestBody = new FormData();
