@@ -209,6 +209,7 @@ export default function AddPartnerForm({
 
   const handleFileChange = async (file: File | null) => { 
     if (!file) {
+      form.setFieldValue("logoFile", null);
       form.setFieldValue("logoUrl", "");
       return;
     }
