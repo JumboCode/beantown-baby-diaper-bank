@@ -123,7 +123,6 @@ export default function AddPartnerForm({
   const [citiesAPI, setCitiesAPI] = useState<string[]>([]);
   const [isLoadingCities, setIsLoadingCities] = useState<boolean>(false);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
-  const [isUploadingFile, setIsUploadingFile] = useState<boolean>(false);
 
   useEffect(() => {
     const fetchCities = async () => {
@@ -207,10 +206,11 @@ export default function AddPartnerForm({
     },
   });
 
-  const handleFileChange = async (file: File | null) => { 
+  const handleFileChange = (file: File | null) => {
     if (!file) {
       form.setFieldValue("logoFile", null);
       form.setFieldValue("logoUrl", "");
+      form.clearFieldError("logoFile");
       return;
     }
     if (!["image/png", "image/jpeg"].includes(file.type)) {
@@ -219,38 +219,7 @@ export default function AddPartnerForm({
     }
     
     form.setFieldValue("logoFile", file);
-    setIsUploadingFile(true);
-    
-    const formData = new FormData();
-    formData.append("file", file);
-
-    try {
-      
-      const res = await fetch("/api/upload/logo", {
-        method: "POST",
-        body: formData,
-      });
-      if (!res.ok) {
-        return;
-      }
-
-      const data = await res.json();
-      console.log('file URL:', data);
-      setIsUploadingFile(false);
-      form.setFieldValue("logoUrl", data.url);
-    }
-    catch (error: unknown) {
-      if (error instanceof Error) {
-        console.error(error);
-        form.setFieldError("logoFile", error?.message);
-      }
-      else {
-        console.error("An unknown error occurred");
-      }
-    }
-    finally {
-      setIsUploadingFile(false);
-    }
+    form.clearFieldError("logoFile");
   };
 
   async function submitPartner(values: typeof form.values) {
@@ -264,7 +233,7 @@ export default function AddPartnerForm({
       return { city, percentage: normalized };
     });
 
-    const formData = {
+    const partnerPayload = {
       name: values.organization,
       description: values.description,
       start_partner: values.time,
@@ -280,22 +249,29 @@ export default function AddPartnerForm({
         zipCode: values.zipCode,
         country: values.country,
       }),
-      logo: values.logoUrl || "",
+      logo: values.logoUrl || "", 
       cities: cityPercentages,
     };
 
     try {
+      const requestBody = new FormData();
+      requestBody.append("partner", JSON.stringify(partnerPayload));
+      requestBody.append(
+        "logoAction",
+        values.logoFile ? "replace" : "keep",
+      );
+      if (values.logoFile) {
+        requestBody.append("file", values.logoFile);
+      }
+
       const response = await fetch("/api/partners", {
         method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(formData),
+        body: requestBody,
       });
 
       if (!response.ok) {
-        const err = await response.text();
-        console.error("Failed to create partner", err);
+        const err = await response.json();
+        form.setFieldError("logoFile", err.error)
         return;
       }
 
@@ -605,8 +581,7 @@ export default function AddPartnerForm({
                 placeholder="Upload image file"
                 radius="md"
                 clearable
-                value={form.values.logoFile}
-                onChange={handleFileChange}
+                onChange={(file) => handleFileChange(file)}
                 error={form.errors.logoFile || form.errors.logoUrl}
                 size="md"
               />
@@ -642,7 +617,6 @@ export default function AddPartnerForm({
               radius="md"
               type="submit"
               loading={isSubmitting}
-              disabled={isUploadingFile}
             >
               Submit
             </Button>

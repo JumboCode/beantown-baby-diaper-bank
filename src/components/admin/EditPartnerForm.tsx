@@ -107,6 +107,7 @@ export default function EditPartnerForm({
 }: EditPartnerFormProps) {
   console.log("partner data:", partner);
   const [loading, setLoading] = useState(false);
+  const [initialLogoUrl] = useState<string>(partner.logo_url || "");
   const [activePercentTab, setActivePercentTab] =
     useState<UpdatePercentagesOptions>("one-time");
 
@@ -181,7 +182,7 @@ export default function EditPartnerForm({
 
   async function submitEditPartner(values: typeof form.values) {
     setLoading(true);
-    const formData = {
+    const partnerPayload = {
       id: partner.id,
       name: values.organization,
       description: values.description,
@@ -202,23 +203,35 @@ export default function EditPartnerForm({
       }),
       logo: values.logoUrl,
     };
+    const logoAction =
+      values.logoFile
+        ? "replace"
+        : initialLogoUrl && values.logoUrl.trim() === ""
+          ? "remove"
+          : "keep";
 
-    const response = await fetch("/api/partners", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(formData),
-    });
+    try {
+      const requestBody = new FormData();
+      requestBody.append("partner", JSON.stringify(partnerPayload));
+      requestBody.append("logoAction", logoAction);
+      if (values.logoFile) {
+        requestBody.append("file", values.logoFile);
+      }
 
-    if (!response.ok) {
-      const err = await response.text();
-      console.error("Failed to update partner data", err);
+      const response = await fetch("/api/partners", {
+        method: "POST",
+        body: requestBody,
+      });
+
+      if (!response.ok) {
+        const err = await response.text();
+        console.error("Failed to update partner data", err);
+        return;
+      }
+      onClose();
+    } finally {
       setLoading(false);
-      return;
     }
-    setLoading(false);
-    onClose();
   }
 
   return (
@@ -448,7 +461,12 @@ export default function EditPartnerForm({
                 placeholder="Upload image file"
                 radius="md"
                 clearable
-                onChange={(file) => form.setFieldValue("logoFile", file)}
+                onChange={(file) => {
+                  form.setFieldValue("logoFile", file);
+                  if (!file) {
+                    form.clearFieldError("logoFile");
+                  }
+                }}
                 error={form.errors.logoFile || form.errors.logoUrl}
                 className="min-w-83"
               />

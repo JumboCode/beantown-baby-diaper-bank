@@ -3,7 +3,202 @@ import { prisma } from "@/lib/prisma";
 import { Prisma as PrismaTypes, status } from "@/generated/prisma/client";
 import type { City, Partner } from "@/generated/prisma/client";
 import { stringifyWithBigInt } from "@/lib/util";
-import { PartnerUpdateArgs } from "@/generated/prisma/models";
+import {
+  deleteLogoObject,
+  FileUploadError,
+  getLogoObjectKey,
+  uploadLogoForPartner,
+  validateImageSignature,
+  validateLogoFile,
+} from "@/lib/server/logoUpload";
+
+type LogoAction = "keep" | "replace" | "remove";
+type CityPercentage = {
+  city: string;
+  percentage: number;
+};
+type CreatePartnerPayload = {
+  name: string;
+  description: string;
+  start_partner: string | null;
+  status: status;
+  coordinates: PrismaTypes.InputJsonValue;
+  address: string;
+  logo?: string;
+  cities: CityPercentage[];
+};
+type UpdatePartnerPayload = {
+  id: number;
+  name: string;
+  description: string;
+  start_partner: string | null;
+  status: status;
+  coordinates: PrismaTypes.InputJsonValue;
+  address: string;
+  logo?: string;
+};
+
+class PartnerRequestError extends Error {
+  status: number;
+  constructor(message: string, status = 400) {
+    super(message);
+    this.status = status;
+  }
+}
+
+function normalizeStartPartner(value: string | null): string | null {
+  if (!value) return null;
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) {
+    throw new PartnerRequestError("Invalid start_partner date", 400);
+  }
+  return parsed.toISOString();
+}
+
+function parseLogoAction(raw: FormDataEntryValue | null): LogoAction {
+  if (raw === null) return "keep";
+  if (typeof raw !== "string") {
+    throw new PartnerRequestError("Invalid logoAction field", 400);
+  }
+  if (raw !== "keep" && raw !== "replace" && raw !== "remove") {
+    throw new PartnerRequestError(
+      "logoAction must be keep, replace, or remove",
+      400,
+    );
+  }
+  return raw;
+}
+
+function assertCreatePayload(payload: unknown): asserts payload is CreatePartnerPayload {
+  if (!payload || typeof payload !== "object") {
+    throw new PartnerRequestError("Invalid partner payload", 400);
+  }
+  const candidate = payload as Partial<CreatePartnerPayload>;
+  if (
+    !candidate.name ||
+    !candidate.description ||
+    !candidate.status ||
+    !candidate.address ||
+    !Array.isArray(candidate.cities)
+  ) {
+    throw new PartnerRequestError("Missing required partner fields", 400);
+  }
+}
+
+async function parseCreatePartnerRequest(
+  request: Request,
+): Promise<{
+  payload: CreatePartnerPayload;
+  logoAction: LogoAction;
+  logoFile: File | null;
+}> {
+  const contentType = request.headers.get("content-type") ?? "";
+  if (contentType.includes("multipart/form-data")) {
+    const formData = await request.formData();
+    const partnerRaw = formData.get("partner");
+    if (typeof partnerRaw !== "string") {
+      throw new PartnerRequestError("partner form field is required", 400);
+    }
+
+    let parsed: unknown;
+    try {
+      parsed = JSON.parse(partnerRaw);
+    } catch {
+      throw new PartnerRequestError("partner must be valid JSON", 400);
+    }
+    assertCreatePayload(parsed);
+
+    const logoAction = parseLogoAction(formData.get("logoAction"));
+    if (logoAction === "remove") {
+      throw new PartnerRequestError("logoAction remove is invalid for create", 400);
+    }
+    const fileRaw = formData.get("file");
+    const logoFile = fileRaw instanceof File ? fileRaw : null;
+    if (logoAction === "replace" && !logoFile) {
+      throw new PartnerRequestError(
+        "File is required when logoAction is replace",
+        400,
+      );
+    }
+
+    return { payload: parsed, logoAction, logoFile };
+  }
+
+  const body = (await request.json()) as unknown;
+  assertCreatePayload(body);
+  return { payload: body, logoAction: "keep", logoFile: null };
+}
+
+function assertUpdatePayload(payload: unknown): asserts payload is UpdatePartnerPayload {
+  if (!payload || typeof payload !== "object") {
+    throw new PartnerRequestError("Invalid partner payload", 400);
+  }
+  const candidate = payload as Partial<UpdatePartnerPayload>;
+  if (
+    typeof candidate.id !== "number" ||
+    !candidate.name ||
+    !candidate.description ||
+    !candidate.status ||
+    !candidate.address
+  ) {
+    throw new PartnerRequestError("Missing required partner fields", 400);
+  }
+}
+
+async function parseUpdatePartnerRequest(
+  request: Request,
+): Promise<{
+  payload: UpdatePartnerPayload;
+  logoAction: LogoAction;
+  logoFile: File | null;
+}> {
+  const contentType = request.headers.get("content-type") ?? "";
+  if (contentType.includes("multipart/form-data")) {
+    const formData = await request.formData();
+    const partnerRaw = formData.get("partner");
+    if (typeof partnerRaw !== "string") {
+      throw new PartnerRequestError("partner form field is required", 400);
+    }
+
+    let parsed: unknown;
+    try {
+      parsed = JSON.parse(partnerRaw);
+    } catch {
+      throw new PartnerRequestError("partner must be valid JSON", 400);
+    }
+    assertUpdatePayload(parsed);
+
+    const logoAction = parseLogoAction(formData.get("logoAction"));
+    const fileRaw = formData.get("file");
+    const logoFile = fileRaw instanceof File ? fileRaw : null;
+    if (logoAction === "replace" && !logoFile) {
+      throw new PartnerRequestError(
+        "File is required when logoAction is replace",
+        400,
+      );
+    }
+    return { payload: parsed, logoAction, logoFile };
+  }
+
+  const body = (await request.json()) as unknown;
+  assertUpdatePayload(body);
+  return { payload: body, logoAction: "keep", logoFile: null };
+}
+
+async function cleanupPartnerCreate(partnerId: number, objectKey?: string): Promise<void> {
+  if (objectKey) {
+    await deleteLogoObject(objectKey).catch((error: unknown) => {
+      const message =
+        error instanceof Error ? error.message : "unknown storage cleanup error";
+      console.error("Failed to delete uploaded logo during rollback:", message);
+    });
+  }
+
+  await prisma.$transaction([
+    prisma.partnerRegion.deleteMany({ where: { partnerId } }),
+    prisma.partner.delete({ where: { id: partnerId } }),
+  ]);
+}
 
 /**
  * GET /api/partners
@@ -106,24 +301,38 @@ export async function GET(request: Request) {
 }
 // Create put for new partner
 export async function PUT(request: Request) {
-  const body = await request.json();
-  // Need to fix for new partner
-  const cities = body.cities;
+  let payload: CreatePartnerPayload;
+  let logoAction: LogoAction;
+  let logoFile: File | null;
+
+  try {
+    const parsed = await parseCreatePartnerRequest(request);
+    payload = parsed.payload;
+    logoAction = parsed.logoAction;
+    logoFile = parsed.logoFile;
+  } catch (error) {
+    if (error instanceof PartnerRequestError) {
+      return NextResponse.json({ error: error.message }, { status: error.status });
+    }
+    return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
+  }
+
+  const cities = payload.cities;
   const cityNames = cities.map((city: { city: string }) => city.city);
 
-  console.log("Body cities:", body);
-  console.log("Cities for partner regions:", cities);
   const newPartnerRequest = {
     data: {
-      name: body.name,
-      description: body.description,
-      startPartner: new Date(body.start_partner).toISOString(),
-      status: body.status as status,
-      coords: body.coordinates,
-      address: body.address,
-      logoUrl: body.logo,
+      name: payload.name,
+      description: payload.description,
+      startPartner: normalizeStartPartner(payload.start_partner),
+      status: payload.status as status,
+      coords: payload.coordinates,
+      address: payload.address,
+      logoUrl: logoAction === "replace" ? "" : (payload.logo ?? ""),
     },
   } as PrismaTypes.PartnerCreateArgs;
+
+
   let partner: Partner;
   try {
     partner = await prisma.partner.create(newPartnerRequest);
@@ -137,12 +346,6 @@ export async function PUT(request: Request) {
   }
 
   const partnerId = Number(partner.id);
-
-  type CityPercentage = {
-    city: string;
-    percentage: number;
-  };
-
   const cityIds: City[] = await prisma.city.findMany({
     where: {
       name: {
@@ -151,65 +354,148 @@ export async function PUT(request: Request) {
     },
   });
 
+  const cityIdByName = new Map(cityIds.map((city) => [city.name, city.id]));
+  const missingCities = cityNames.filter((name) => !cityIdByName.has(name));
+  if (missingCities.length > 0) {
+    return NextResponse.json(
+      { error: `Unknown cities: ${missingCities.join(", ")}` },
+      { status: 400 },
+    );
+  }
+
   const newPartnerRegionsRequest = {
-    data: body.cities.map((city: CityPercentage) => ({
+    data: payload.cities.map((city: CityPercentage) => ({
       partnerId: partnerId,
-      cityId: cityIds.find((c) => c.name === city.city)?.id,
+      cityId: cityIdByName.get(city.city)!,
       percentage: city.percentage,
     })),
   } satisfies PrismaTypes.PartnerRegionCreateManyArgs;
 
-  console.log("Received partner data:", body);
+  console.log("Received partner data:", payload);
+  let uploadedObjectKey: string | undefined;
   try {
     // update partner region table
-    const partnerRegion = await prisma.partnerRegion.createMany(
-      newPartnerRegionsRequest,
-    );
+    const partnerRegion = await prisma.partnerRegion.createMany(newPartnerRegionsRequest);
+    console.log("created partner regions")
+    console.log(logoAction)
+
+    let partnerToReturn = partner;
+
+    if (logoAction === "replace") {
+      if (!logoFile) {
+        throw new PartnerRequestError(
+          "File is required when logoAction is replace",
+          400,
+        );
+      }
+
+      validateLogoFile(logoFile);
+      await validateImageSignature(logoFile);
+      const uploadResult = await uploadLogoForPartner(partnerId, logoFile);
+      uploadedObjectKey = uploadResult.objectKey;
+
+      partnerToReturn = await prisma.partner.update({
+        where: { id: partnerId },
+        data: { logoUrl: uploadResult.publicUrl },
+      });
+    }
 
     console.log("Created partner regions:", partnerRegion);
 
     return NextResponse.json({
-      data: stringifyWithBigInt(partner),
+      data: stringifyWithBigInt(partnerToReturn),
     });
   } catch (error) {
-    const message =
-      error instanceof Error
-        ? error.message
-        : "Unable to insert partner into database.";
+    try {
+      await cleanupPartnerCreate(partnerId, uploadedObjectKey);
+    } catch (cleanupError) {
+      console.error("Failed to clean up create partner operation:", cleanupError);
+    }
 
-    return NextResponse.json({ error: message }, { status: 500 });
+    const message = error instanceof Error ? error.message : "Unable to create partner.";
+    const statusCode =
+      error instanceof PartnerRequestError || error instanceof FileUploadError
+        ? error.status
+        : 500;
+    return NextResponse.json({ error: message }, { status: statusCode });
   }
 }
 
+// Upad
 export async function POST(request: Request) {
-  const body = await request.json();
-  const updatePartnerRequest = {
-    where: { id: body.id },
-    data: {
-      name: body.name,
-      description: body.description,
-      startPartner: new Date(body.start_partner).toISOString(),
-      status: body.status as status,
-      coords: body.coordinates,
-      address: body.address,
-      logoUrl: body.logo,
-    },
-  } as PartnerUpdateArgs;
-
-  console.log("Received partner data:", body);
+  let payload: UpdatePartnerPayload;
+  let logoAction: LogoAction;
+  let logoFile: File | null;
 
   try {
-    const partner = await prisma.partner.update(updatePartnerRequest);
+    const parsed = await parseUpdatePartnerRequest(request);
+    payload = parsed.payload;
+    logoAction = parsed.logoAction;
+    logoFile = parsed.logoFile;
+  } catch (error) {
+    if (error instanceof PartnerRequestError) {
+      return NextResponse.json({ error: error.message }, { status: error.status });
+    }
+    return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
+  }
+
+  console.log("Received partner data:", payload);
+
+  try {
+    const partnerId = Number(payload.id);
+    let uploadedPublicUrl: string | undefined;
+
+    if (logoAction === "replace") {
+      if (!logoFile) {
+        throw new PartnerRequestError(
+          "File is required when logoAction is replace",
+          400,
+        );
+      }
+      validateLogoFile(logoFile);
+      await validateImageSignature(logoFile);
+      const uploadResult = await uploadLogoForPartner(partnerId, logoFile);
+      uploadedPublicUrl = uploadResult.publicUrl;
+    }
+
+    const partner = await prisma.partner.update({
+      where: { id: partnerId },
+      data: {
+        name: payload.name,
+        description: payload.description,
+        startPartner: normalizeStartPartner(payload.start_partner),
+        status: payload.status as status,
+        coords: payload.coordinates,
+        address: payload.address,
+        logoUrl:
+          logoAction === "replace"
+            ? uploadedPublicUrl!
+            : logoAction === "remove"
+              ? ""
+              : (payload.logo ?? ""),
+      },
+    });
+
+    if (logoAction === "remove") {
+      await deleteLogoObject(getLogoObjectKey(partnerId)).catch(() => undefined);
+    }
 
     return NextResponse.json({
       data: stringifyWithBigInt(partner),
     });
   } catch (error) {
+    if (logoAction === "replace") {
+      await deleteLogoObject(getLogoObjectKey(Number(payload.id))).catch(() => undefined);
+    }
+
     const message =
       error instanceof Error
         ? error.message
         : "Unable to insert partner into database.";
-
-    return NextResponse.json({ error: message }, { status: 500 });
+    const statusCode =
+      error instanceof PartnerRequestError || error instanceof FileUploadError
+        ? error.status
+        : 500;
+    return NextResponse.json({ error: message }, { status: statusCode });
   }
 }
