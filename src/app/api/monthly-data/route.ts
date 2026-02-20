@@ -31,11 +31,11 @@ export async function GET(req: Request) {
   };
 
   const distributionsQuery = {
-  where,
-  include: {
-    partner: { select: { name: true } },
-  },
-  orderBy: { createdAt: "desc" as const },
+    where,
+    include: {
+      partner: { select: { name: true } },
+    },
+    orderBy: { createdAt: "desc" as const },
   } satisfies PrismaTypes.DistributionFindManyArgs;
 
   try {

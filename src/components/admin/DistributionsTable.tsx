@@ -20,7 +20,6 @@ const MONTH_ORDER: Record<string, number> = {
   December: 12,
 };
 
-
 interface DateTotal {
   month: string;
   year: string;
@@ -51,7 +50,9 @@ export default function DistributionsTable({
           };
         }
 
-        const diapers = dist.numberDiapers ? parseInt(dist.numberDiapers, 10) : 0;
+        const diapers = dist.numberDiapers
+          ? parseInt(dist.numberDiapers, 10)
+          : 0;
         acc[key].total += diapers;
         acc[key].distributions.push(dist);
 
@@ -77,7 +78,6 @@ export default function DistributionsTable({
 
   if (error) return <Text c="red">Error: {error}</Text>;
 
-
   const rows: React.ReactNode[] = totals.map((date) => {
     return (
       // OUTER TABLE (MONTH, YEAR, TOTAL DIAPERS OF MONTH, YEAR)
@@ -90,14 +90,22 @@ export default function DistributionsTable({
             // Logic for finding the sum of diapers for a certain org for a certain month, year
             render={(monthData) => {
               const rowsForMonth = monthData
-                .filter((dist) => dist.month === date.month && dist.year === date.year)
-                .sort((a, b) => (a.partner?.name ?? "").localeCompare(b.partner?.name ?? ""));
+                .filter(
+                  (dist) =>
+                    dist.month === date.month && dist.year === date.year,
+                )
+                .sort((a, b) =>
+                  (a.partner?.name ?? "").localeCompare(b.partner?.name ?? ""),
+                );
 
               const partnerGroups = rowsForMonth.reduce<
                 Record<string, { partnerName: string; totalDiapers: number }>
               >((acc, dist) => {
-                const partnerName = dist.partner?.name?.trim() || "Unknown Partner";
-                const diapers = dist.numberDiapers ? parseInt(dist.numberDiapers, 10) : 0;
+                const partnerName =
+                  dist.partner?.name?.trim() || "Unknown Partner";
+                const diapers = dist.numberDiapers
+                  ? parseInt(dist.numberDiapers, 10)
+                  : 0;
 
                 if (!acc[partnerName]) {
                   acc[partnerName] = {
@@ -126,7 +134,12 @@ export default function DistributionsTable({
                           type="button"
                           onClick={(e) => {
                             e.stopPropagation();
-                            console.log("Edit", partner.partnerName, date.month, date.year);
+                            console.log(
+                              "Edit",
+                              partner.partnerName,
+                              date.month,
+                              date.year,
+                            );
                           }}
                           className="rounded border border-gray-300 px-2 py-1 text-xs font-medium text-gray-700 hover:bg-gray-50"
                         >
@@ -140,15 +153,21 @@ export default function DistributionsTable({
                             (dist) =>
                               dist.month === date.month &&
                               dist.year === date.year &&
-                              (dist.partner?.name?.trim() || "Unknown Partner") ===
-                                partner.partnerName,
+                              (dist.partner?.name?.trim() ||
+                                "Unknown Partner") === partner.partnerName,
                           )
                           .sort((a, b) =>
-                            (a.city?.name ?? "").localeCompare(b.city?.name ?? ""),
+                            (a.city?.name ?? "").localeCompare(
+                              b.city?.name ?? "",
+                            ),
                           );
 
                         if (rowsForPartner.length === 0) {
-                          return <div className="text-sm text-gray-600">No distributions found.</div>;
+                          return (
+                            <div className="text-sm text-gray-600">
+                              No distributions found.
+                            </div>
+                          );
                         }
 
                         return (

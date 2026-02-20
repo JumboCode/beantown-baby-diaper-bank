@@ -1,10 +1,9 @@
 import { clerkClient } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 
-
 export async function POST(request: Request) {
   const { firstName, lastName, email, level, password } = await request.json();
-  
+
   if (!firstName || !lastName || !email || !level) {
     return NextResponse.json(
       { message: "Missing required fields: firstName, lastName, email, level" },
