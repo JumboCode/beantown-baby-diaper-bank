@@ -16,13 +16,13 @@ import {
 import { RiCalendarEventLine, RiLineChartLine } from "react-icons/ri";
 import { useForm } from "@mantine/form";
 import { MonthPickerInput } from "@mantine/dates";
-import "@mantine/dates/styles.css";
 import { Partner } from "./PartnerTable";
 import { useEffect, useState } from "react";
 import { status } from "@/generated/prisma/enums";
 import OneTimeUpdateForm from "./OneTimeUpdateForm";
 import ContinuousUpdateForm from "./ContinuousUpdateForm";
 import type { CityPercentage } from "./CityPercentagesForm";
+import "@mantine/dates/styles.css";
 
 interface EditPartnerFormProps {
   partner: Partner;
