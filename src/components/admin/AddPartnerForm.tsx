@@ -224,20 +224,33 @@ export default function AddPartnerForm({
     const formData = new FormData();
     formData.append("file", file);
 
-    const res = await fetch("/api/upload/logo", {
-      method: "POST",
-      body: formData,
-    });
-    const data = await res.json();
-    console.log('file URL:', data);
-    setIsUploadingFile(false);
+    try {
+      
+      const res = await fetch("/api/upload/logo", {
+        method: "POST",
+        body: formData,
+      });
+      if (!res.ok) {
+        return;
+      }
 
-    if (!res.ok) {
-      form.setFieldError("logoFile", data.error);
-      return;
+      const data = await res.json();
+      console.log('file URL:', data);
+      setIsUploadingFile(false);
+      form.setFieldValue("logoUrl", data.url);
     }
-
-    form.setFieldValue("logoUrl", data.url);
+    catch (error: unknown) {
+      if (error instanceof Error) {
+        console.error(error);
+        form.setFieldError("logoFile", error?.message);
+      }
+      else {
+        console.error("An unknown error occurred");
+      }
+    }
+    finally {
+      setIsUploadingFile(false);
+    }
   };
 
   async function submitPartner(values: typeof form.values) {
