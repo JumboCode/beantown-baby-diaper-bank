@@ -24,18 +24,18 @@ export type CollapsibleDropdownProps<T> = {
 };
 
 export function CollapsibleDropdown<T>({
-  title,
-  endpoint,
+  title,  
+  endpoint,  // api
   method = "GET",
   body,
   headers,
-  render,
+  render,   // data underneath dropdown (see DistributionsTable.tsx)
   select,
   fetchPolicy = "onOpen",
-  right,
-  titleClassName = "text-[18px] font-semibold",
+  right,  //needed for "edit" button
+  titleClassName = "text-[18px] font-semibold", 
   className = "",
-  defaultOpen = false,
+  defaultOpen = false,  //
 }: CollapsibleDropdownProps<T>) {
   const [open, setOpen] = useState(defaultOpen);
   const [state, setState] = useState<FetchState<T>>({
@@ -44,8 +44,8 @@ export function CollapsibleDropdown<T>({
     error: null,
   });
 
+  // fetches data from api
   const hasFetchedOnceRef = useRef(false);
-
   const fetchData = async () => {
     setState({ status: "loading", data: null, error: null });
     try {
@@ -74,6 +74,7 @@ export function CollapsibleDropdown<T>({
     }
   };
 
+  // calls fetchData()
   useEffect(() => {
     if (!open) return;
     if (fetchPolicy === "never") return;
@@ -88,6 +89,7 @@ export function CollapsibleDropdown<T>({
     }
   }, [open, fetchPolicy]);
 
+  // styling of dropdown (open and closed)
   return (
     <div className={`w-full rounded-xl border border-gray-200 bg-white ${className}`}>
       <div className="flex items-center justify-between gap-3 p-4">

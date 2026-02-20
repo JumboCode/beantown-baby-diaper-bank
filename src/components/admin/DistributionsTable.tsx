@@ -87,6 +87,7 @@ export default function DistributionsTable({
             title={`${date.month} ${date.year}, ${date.total} diapers`}
             titleClassName="text-[28px] font-bold"
             endpoint={`/api/distributions?month=${date.month}&year=${date.year}`}
+            // Logic for finding the sum of diapers for a certain org for a certain month, year
             render={(monthData) => {
               const rowsForMonth = monthData
                 .filter((dist) => dist.month === date.month && dist.year === date.year)
@@ -194,31 +195,6 @@ export default function DistributionsTable({
           styles={{ th: { color: "#667085" } }}
           tabularNums
         >
-          {/* <Table.Thead style={{ backgroundColor: "#F9FAFB" }}>
-            <Table.Tr>
-              <Table.Th fw="normal" fz="14px">
-                Partner Name
-              </Table.Th>
-              <Table.Th fw="normal" fz="14px">
-                City
-              </Table.Th>
-              <Table.Th fw="normal" fz="14px">
-                Number of Diapers Distributed
-              </Table.Th>
-              <Table.Th fw="normal" fz="14px">
-                Number of Children Helped
-              </Table.Th>
-              <Table.Th fw="normal" fz="14px">
-                Month
-              </Table.Th>
-              <Table.Th fw="normal" fz="14px">
-                Year
-              </Table.Th>
-              <Table.Th fw="normal" fz="14px">
-                Percentage
-              </Table.Th>
-            </Table.Tr>
-          </Table.Thead> */}
           <Table.Tbody>{rows}</Table.Tbody>
         </Table>
       </div>
