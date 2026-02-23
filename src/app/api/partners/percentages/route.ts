@@ -7,6 +7,7 @@ import { PartnerRegionInclude } from "@/generated/prisma/models";
 export async function GET(request: Request) {
   const url = new URL(request.url);
   const partnerId = url.searchParams.get("partnerId");
+  const partnerName = url.searchParams.get("partnerName");
 
   try {
     const include = {
@@ -22,6 +23,16 @@ export async function GET(request: Request) {
 
     if (partnerId) {
       where.partnerId = BigInt(partnerId);
+    } else if (partnerName) {
+      await prisma.partner.findFirst({
+        where: { name: partnerName },
+        select: { id: true },
+      }).then((partner) => {
+        if (partner) {
+          where.partnerId = partner.id;
+          console.log(partner.id);
+        }
+      });
     }
 
     const query: Prisma.PartnerRegionFindManyArgs = {

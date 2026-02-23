@@ -1,7 +1,9 @@
 import { Modal, Button, Group, Text, Stack } from "@mantine/core";
-import FileUpload from "../sprint2/FileUpload";
+import FileUpload, { FileInfo } from "../sprint2/FileUpload";
 import { MonthPickerInput } from "@mantine/dates";
 import { useState } from "react";
+import { parseDistributionData } from "../../lib/util";
+import { MonthlyData } from "@/generated/prisma/client";
 
 interface UploadNewDataProps {
   opened: boolean;
@@ -10,6 +12,17 @@ interface UploadNewDataProps {
 
 export default function UploadNewData({ opened, onClose }: UploadNewDataProps) {
   const [datasetMonth, setDatasetMonth] = useState<string | null>(null);
+  const [fileInfo, setFileInfo] = useState<FileInfo | null>(null);
+
+const handleUpload = async () => {
+    if (!fileInfo) {
+      console.log("No file uploaded.");
+      return;
+    }
+    const result = await parseDistributionData(fileInfo.text);
+    console.log("Parsed distribution data:", result);
+    onClose();
+  };
 
   return (
     <>
@@ -43,14 +56,14 @@ export default function UploadNewData({ opened, onClose }: UploadNewDataProps) {
           </Group>
 
           <Group grow>
-            <FileUpload />
+            <FileUpload fileInfo={fileInfo} onFileChange={setFileInfo} />
           </Group>
 
           <Group justify="flex-end" gap="xs">
             <Button variant="default" color="#163663" onClick={onClose}>
               Cancel
             </Button>
-            <Button variant="filled" color="#163663" onClick={onClose}>
+            <Button variant="filled" color="#163663" onClick={handleUpload} disabled={!fileInfo}>
               Upload
             </Button>
           </Group>

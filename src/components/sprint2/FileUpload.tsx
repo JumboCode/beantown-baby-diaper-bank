@@ -1,18 +1,25 @@
 import { FileInput } from "@mantine/core";
-import { useState } from "react";
 import { Text } from "@mantine/core";
 
-export default function FileUpload() {
-  const [fileInfo, setFileInfo] = useState<{
-    name: string;
-    rows: number;
-  } | null>(null);
+export interface FileInfo {
+  name: string;
+  rows: number;
+  text: string;
+}
 
+interface FileUploadProps {
+  fileInfo: FileInfo | null;
+  onFileChange: (fileInfo: FileInfo | null) => void;
+}
+
+export default function FileUpload({ fileInfo, onFileChange }: FileUploadProps) {
   const handleFileChange = async (file: File | null) => {
     if (file) {
       const text = await file.text();
       const rows = text.split("\n").length;
-      setFileInfo({ name: file.name, rows });
+      onFileChange({ name: file.name, rows, text: text });
+    } else {
+      onFileChange(null);
     }
   };
   return (
@@ -27,6 +34,9 @@ export default function FileUpload() {
       <div>{fileInfo != null && <h1> File name: {fileInfo.name} </h1>}</div>
       <div>
         {fileInfo != null && <h1> Number of rows: {fileInfo.rows} </h1>}
+      </div>
+      <div>
+        {fileInfo != null && <h1> File content: {fileInfo.text} </h1>}
       </div>
     </div>
   );

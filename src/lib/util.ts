@@ -4,11 +4,26 @@
  * @returns The JSON string representation of the value, with BigInts converted to strings.
  */
 import Papa from "papaparse";
+// import { MonthlyData } from "@/generated/prisma/client";
 
 export function stringifyWithBigInt(value: unknown) {
   return JSON.stringify(value, (_key, jsonValue) =>
     typeof jsonValue === "bigint" ? jsonValue.toString() : jsonValue,
   );
+}
+
+export type PercentageData = {
+  data: PercentageDataElem[];
+}
+
+export type PercentageDataElem = {
+  city: {
+      id: BigInt;
+      name: string;
+    };
+    percentage: number;
+    cityId: BigInt;
+    partnerId: BigInt;
 }
 
 export type CityData = {
@@ -25,65 +40,62 @@ export type DistributionData = {
   cities: CityData[];
 };
 
-export function parseDistributionData(csv: string) {
+async function getCitiesAndPercentages(partnerName: string) {
+  fetch("/api/partners/percentages?partnerName=" + partnerName).then((response) => response.json()).then((data: PercentageData) =>
+  {
+    return data;
+  })
+
+  return undefined;
+}
+
+export async function parseDistributionData(csv: string): Promise<DistributionData[]> {
   const data = Papa.parse(csv);
   const result: DistributionData[] = [];
+  // const monthlyData: MonthlyData[] = [];
 
-  let i = 1;
-  while (i < data.data.length) {
+  /* 
+  (alias) type MonthlyData = {
+    partnerId: bigint;
+    year: string;
+    month: month;
+    numDiapers: bigint | null;
+    numBabies: bigint | null;
+    id: string;
+  } 
+  */
+
+  for (let i = 1; i < data.data.length; i++) {
     let row = data.data[i] as string[];
+    
+    if (row && row[0]) {
+      fetch("/api/partners/percentages?partnerName=" + row[0]).then((response) => response.json()).then((data: PercentageData) =>
+      {
+        if (row[2]) {
+          const totalDiapers = Number(row[2].replace(",", ""));
+          const totalChildren = Number(row[1].replace(",", ""));
 
-    let provider: DistributionData = {
-      partner_name: "",
-      diapers_distributed: 0,
-      children_helped: 0,
-      cities: [],
-    };
+          let cityData: CityData[] = [];
 
-    if (row[0] != "") {
-      // name exists
-      const total_diapers_distributed = Number(row[2].replace(",", ""));
-      const total_children_helped = Number(row[1].replace(",", ""));
+          for (let i in data.data) {
+            cityData.push({
+              city: data.data[i].city.name,
+              percentage: data.data[i].percentage,
+              diapers: Math.floor(data.data[i].percentage * Number(row[2].replace(",", ""))),
+              children_helped: Math.floor(data.data[i].percentage * Number(row[1].replace(",", ""))),
+            });
+          }
 
-      provider = {
-        partner_name: row[0],
-        diapers_distributed: Number(row[2].replace(",", "")),
-        children_helped: Number(row[1].replace(",", "")),
-        cities: [
-          {
-            city: row[3],
-            percentage: Number(row[4].replace("%", "")) / 100,
-            diapers:
-              (Number(row[4].replace("%", "")) / 100) *
-              total_diapers_distributed,
-            children_helped:
-              (Number(row[4].replace("%", "")) / 100) * total_children_helped,
-          },
-        ],
-      };
-
-      let j = i + 1;
-      row = data.data[j] as string[];
-      while (row[0] == "" && j < data.data.length - 1) {
-        provider.cities.push({
-          city: row[3],
-          percentage: Number(row[4].replace("%", "")) / 100,
-          diapers:
-            (Number(row[4].replace("%", "")) / 100) * total_diapers_distributed,
-          children_helped:
-            (Number(row[4].replace("%", "")) / 100) * total_children_helped,
-        });
-
-        j++;
-        row = data.data[j] as string[];
-      }
-
-      result.push(provider);
+          result.push({
+            partner_name: row[0],
+            diapers_distributed: totalDiapers,
+            children_helped: totalChildren,
+            cities: cityData
+          })
+        }
+      });
     }
-
-    i++;
-    row = data.data[i] as string[];
   }
-
+  
   return result;
 }
