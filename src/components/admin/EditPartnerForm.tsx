@@ -15,13 +15,13 @@ import {
 } from "@mantine/core";
 import { useForm } from "@mantine/form";
 import { MonthPickerInput } from "@mantine/dates";
-import "@mantine/dates/styles.css";
 import { Partner } from "./PartnerTable";
 import { useEffect, useState } from "react";
 import { status } from "@/generated/prisma/enums";
 import OneTimeUpdateForm from "./OneTimeUpdateForm";
 import ContinuousUpdateForm from "./ContinuousUpdateForm";
 import type { CityPercentage } from "./CityPercentagesForm";
+import "@mantine/dates/styles.css";
 
 interface EditPartnerFormProps {
   partner: Partner;
@@ -104,6 +104,7 @@ export default function EditPartnerForm({
   onClose,
 }: EditPartnerFormProps) {
   const [loading, setLoading] = useState(false);
+  const [initialLogoUrl] = useState<string>(partner.logo_url || "");
   const [activePercentTab, setActivePercentTab] =
     useState<UpdatePercentagesOptions>("one-time");
 
@@ -212,20 +213,39 @@ export default function EditPartnerForm({
       }),
       logo: values.logoUrl,
     };
+    const logoAction = values.logoFile
+      ? "replace"
+      : initialLogoUrl && values.logoUrl.trim() === ""
+        ? "remove"
+        : "keep";
 
-    const response = await fetch("/api/partners", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(formData),
-    });
+    try {
+      const requestBody = new FormData();
+      requestBody.append("partner", JSON.stringify(partnerPayload));
+      requestBody.append("logoAction", logoAction);
+      if (values.logoFile) {
+        requestBody.append("file", values.logoFile);
+      }
 
-    if (!response.ok) {
-      console.error("Failed to update partner data");
+      const response = await fetch("/api/partners", {
+        method: "POST",
+        body: requestBody,
+      });
+
+      if (!response.ok) {
+        const err = await response.json();
+
+        form.setFieldError("logoFile", err.error);
+
+        return;
+      }
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new Event("partners:refresh"));
+      }
+      onClose();
+    } finally {
       setLoading(false);
-      return;
     }
-    setLoading(false);
-    onClose();
   }
 
   return (
@@ -239,9 +259,6 @@ export default function EditPartnerForm({
         <form
           onSubmit={form.onSubmit((values) => {
             submitEditPartner(values);
-            if (typeof window !== "undefined") {
-              window.dispatchEvent(new Event("partners:refresh"));
-            }
           })}
           className="flex flex-col gap-5"
         >
@@ -385,8 +402,30 @@ export default function EditPartnerForm({
           <Group justify="space-between" align="flex-start">
             <Text c="#344054" fw={600}>Logo file or link</Text>
             <div className="gap-4 flex">
-              <FileInput accept="image/png,image/jpeg" placeholder="Upload file" radius="md" clearable onChange={(f) => form.setFieldValue("logoFile", f)} className="min-w-83" />
-              <TextInput placeholder="Logo URL" {...form.getInputProps("logoUrl")} radius="md" className="min-w-83" />
+              <FileInput
+                accept="image/png,image/jpeg"
+                placeholder="Upload image file"
+                radius="md"
+                clearable
+                onChange={(file) => {
+                  form.setFieldValue("logoFile", file);
+                  if (!file) {
+                    form.setFieldValue("logoUrl", "");
+                  }
+                  if (!file) {
+                    form.clearFieldError("logoFile");
+                  }
+                }}
+                error={form.errors.logoFile || form.errors.logoUrl}
+                className="min-w-83"
+              />
+              <TextInput
+                placeholder="Logo URL"
+                key={form.key("logoUrl")}
+                {...form.getInputProps("logoUrl")}
+                radius="md"
+                className="min-w-83"
+              />
             </div>
           </Group>
 
