@@ -21,6 +21,7 @@ type CreatePartnerPayload = {
   name: string;
   description: string;
   start_partner: string | null;
+  end_partner?: string | null;
   status: status;
   coordinates: PrismaTypes.InputJsonValue;
   address: string;
@@ -32,6 +33,7 @@ type UpdatePartnerPayload = {
   name: string;
   description: string;
   start_partner: string | null;
+  end_partner?: string | null;
   status: status;
   coordinates: PrismaTypes.InputJsonValue;
   address: string;
@@ -124,6 +126,7 @@ export async function GET(request: Request) {
       start_partner: partner.startPartner
         ? partner.startPartner.toISOString()
         : null,
+      end_partner: partner.endPartner ? partner.endPartner.toISOString() : null,
       status: partner.status,
       waitlisted: partner.status === "waitlisted",
       address: partner.address,
@@ -326,6 +329,7 @@ export async function POST(request: Request) {
         name: payload.name,
         description: payload.description,
         startPartner: normalizeStartPartner(payload.start_partner),
+        endPartner: normalizeMonthDate(payload.end_partner ?? null),
         status: payload.status as status,
         coords: payload.coordinates,
         address: payload.address,
@@ -367,12 +371,24 @@ export async function POST(request: Request) {
 }
 
 function normalizeStartPartner(value: string | null): string | null {
+  return normalizeMonthDate(value);
+}
+
+function normalizeMonthDate(value: string | null): string | null {
   if (!value) return null;
-  const parsed = new Date(value);
-  if (Number.isNaN(parsed.getTime())) {
-    throw new PartnerRequestError("Invalid start_partner date", 400);
+
+  const match = value.match(/^(\d{4})-(\d{2})(?:-(\d{2}))?/);
+  if (!match) {
+    throw new PartnerRequestError("Invalid date format", 400);
   }
-  return parsed.toISOString();
+
+  const year = Number(match[1]);
+  const month = Number(match[2]);
+  if (!Number.isInteger(year) || !Number.isInteger(month) || month < 1 || month > 12) {
+    throw new PartnerRequestError("Invalid date value", 400);
+  }
+
+  return new Date(Date.UTC(year, month - 1, 1)).toISOString();
 }
 
 function parseLogoAction(raw: FormDataEntryValue | null): LogoAction {
