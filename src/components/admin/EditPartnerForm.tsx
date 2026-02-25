@@ -22,6 +22,7 @@ import OneTimeUpdateForm from "./OneTimeUpdateForm";
 import ContinuousUpdateForm from "./ContinuousUpdateForm";
 import type { CityPercentage } from "./CityPercentagesForm";
 import "@mantine/dates/styles.css";
+import { RiCalendarEventLine, RiLineChartLine } from "react-icons/ri";
 
 interface EditPartnerFormProps {
   partner: Partner;
@@ -221,7 +222,7 @@ export default function EditPartnerForm({
 
     try {
       const requestBody = new FormData();
-      requestBody.append("partner", JSON.stringify(partnerPayload));
+      requestBody.append("partner", JSON.stringify(formData));
       requestBody.append("logoAction", logoAction);
       if (values.logoFile) {
         requestBody.append("file", values.logoFile);
@@ -433,18 +434,89 @@ export default function EditPartnerForm({
           {form.values.status !== "waitlisted" && (
             <Group justify="space-between" align="flex-start">
               <Text fw={600} c="#344054">City Distribution Percentages</Text>
-              <Tabs
-                value={activePercentTab}
-                onChange={(v) => { if (v) setActivePercentTab(v as UpdatePercentagesOptions); }}
-                className="min-w-170 w-full max-w-[600px]"
-              >
-                <Tabs.List grow mb="xl">
-                  <Tabs.Tab value="one-time">One-Time Update</Tabs.Tab>
-                  <Tabs.Tab value="continuous">Continuous Update</Tabs.Tab>
-                </Tabs.List>
-                <Tabs.Panel value="one-time"><OneTimeUpdateForm initialCityPercentages={initialCityPercentEntries} /></Tabs.Panel>
-                <Tabs.Panel value="continuous"><ContinuousUpdateForm initialCityPercentages={initialCityPercentEntries} /></Tabs.Panel>
-              </Tabs>
+                         <Tabs
+              value={activePercentTab}
+              onChange={(val) => {
+                if (!val) return;
+                setActivePercentTab(val as UpdatePercentagesOptions);
+                form.setFieldValue(
+                  "updatePercentagesType",
+                  val as UpdatePercentagesOptions,
+                );
+              }}
+              className="min-w-170 w-full max-w-[600px]"
+            >
+              <Tabs.List grow mb="xl">
+                {[
+                  {
+                    value: "one-time",
+                    title: "One-Time Update",
+                    description: "Update a specific month only",
+                    icon: <RiCalendarEventLine size={22} />,
+                  },
+                  {
+                    value: "continuous",
+                    title: "Continuous Update",
+                    description: "Apply to all future distributions",
+                    icon: <RiLineChartLine size={22} />,
+                  },
+                ].map((option) => (
+                  <Tabs.Tab
+                    key={option.value}
+                    value={option.value}
+                    className="px-0"
+                  >
+                    {(() => {
+                      const isActive = activePercentTab === option.value;
+                      return (
+                        <div
+                          className={`rounded-xl shadow-sm transition hover:-translate-y-0.5 hover:shadow-md h-full border ${
+                            isActive
+                              ? "border-[#1D3A8A] bg-[#EEF2FF]"
+                              : "border-gray-300 bg-white"
+                          }`}
+                          style={{ borderWidth: isActive ? 2 : 1 }}
+                        >
+                          <Stack gap="xs" align="center" p="md">
+                            <div
+                              className={`${
+                                isActive ? "text-[#1D3A8A]" : "text-gray-500"
+                              } opacity-80`}
+                            >
+                              {option.icon}
+                            </div>
+                            <Text
+                              fw={700}
+                              size="md"
+                              className={isActive ? "text-[#1D3A8A]" : ""}
+                            >
+                              {option.title}
+                            </Text>
+                            <Text
+                              size="sm"
+                              c={isActive ? "gray.6" : "dimmed"}
+                              ta="center"
+                            >
+                              {option.description}
+                            </Text>
+                          </Stack>
+                        </div>
+                      );
+                    })()}
+                  </Tabs.Tab>
+                ))}
+              </Tabs.List>
+              <Tabs.Panel value="one-time">
+                <OneTimeUpdateForm
+                  initialCityPercentages={initialCityPercentEntries}
+                />
+              </Tabs.Panel>
+              <Tabs.Panel value="continuous">
+                <ContinuousUpdateForm
+                  initialCityPercentages={initialCityPercentEntries}
+                />
+              </Tabs.Panel>
+            </Tabs>
             </Group>
           )}
 
