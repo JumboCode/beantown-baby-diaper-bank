@@ -193,7 +193,7 @@ export default function Page() {
   }, [fetchPartners, fetchPercentages]);
 
   const formatMonthKeyFromDate = (date: Date) =>
-    `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+    `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, "0")}`;
 
   const toMonthKey = (value: string | null) => {
     if (!value) return null;
@@ -269,7 +269,7 @@ export default function Page() {
       filtered = filtered.filter((p) => {
         if (!p.start_partner) return false;
         return (
-          new Date(p.start_partner).getFullYear() <= Number(partnerYearSince)
+          new Date(p.start_partner).getUTCFullYear() <= Number(partnerYearSince)
         );
       });
     }

@@ -100,6 +100,37 @@ const requiredState = (label: string) => (value: unknown) => {
 
 type UpdatePercentagesOptions = "one-time" | "continuous";
 
+const parseMonthDateForPicker = (rawDate: string | null | undefined): Date | null => {
+  if (!rawDate) return null;
+  const monthMatch = rawDate.match(/^(\d{4})-(\d{2})/);
+  if (!monthMatch) {
+    const parsed = new Date(rawDate);
+    return Number.isNaN(parsed.getTime()) ? null : parsed;
+  }
+
+  const year = Number(monthMatch[1]);
+  const monthIndex = Number(monthMatch[2]) - 1;
+  return new Date(Date.UTC(year, monthIndex, 1, 12));
+};
+
+const formatMonthDateForApi = (date: Date | string | null): string | null => {
+  if (!date) return null;
+
+  if (typeof date === "string") {
+    const monthMatch = date.match(/^(\d{4})-(\d{2})/);
+    if (monthMatch) {
+      return `${monthMatch[1]}-${monthMatch[2]}-01`;
+    }
+  }
+
+  const parsed = date instanceof Date ? date : new Date(date);
+  if (Number.isNaN(parsed.getTime())) return null;
+
+  const year = parsed.getUTCFullYear();
+  const month = String(parsed.getUTCMonth() + 1).padStart(2, "0");
+  return `${year}-${month}-01`;
+};
+
 export default function EditPartnerForm({
   partner,
   onClose,
@@ -145,8 +176,8 @@ export default function EditPartnerForm({
     initialValues: {
       organization: partner.name,
       description: partner.description || "",
-      time: partner.start_partner ? new Date(partner.start_partner) : null,
-      endTime: partner.end_partner ? new Date(partner.end_partner) : null,
+      time: parseMonthDateForPicker(partner.start_partner),
+      endTime: parseMonthDateForPicker(partner.end_partner),
       status: partner.status,
       latitude: partner.coords ? partner.coords.lat : "",
       longitude: partner.coords ? partner.coords.lng : "",
@@ -186,20 +217,16 @@ export default function EditPartnerForm({
   async function submitEditPartner(values: typeof form.values) {
     setLoading(true);
 
-    const formatDate = (date: Date | null) => {
-      if (!date) return null;
-      const d = new Date(date);
-      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-01`;
-    };
-
     const formData = {
       id: partner.id,
       name: values.organization,
       description: values.description,
       // Clear start date if waitlisted
-      start_partner: values.status !== "waitlisted" ? formatDate(values.time) : null,
+      start_partner:
+        values.status !== "waitlisted" ? formatMonthDateForApi(values.time) : null,
       // Include end date only for inactive status
-      end_partner: values.status === "inactive" ? formatDate(values.endTime) : null,
+      end_partner:
+        values.status === "inactive" ? formatMonthDateForApi(values.endTime) : null,
       status: values.status,
       coordinates: {
         lat: values.latitude,
