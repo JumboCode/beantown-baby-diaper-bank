@@ -192,6 +192,18 @@ export default function Page() {
     fetchPercentages();
   }, [fetchPartners, fetchPercentages]);
 
+  useEffect(() => {
+    const handlePartnersRefresh = () => {
+      fetchPartners();
+      fetchPercentages();
+    };
+
+    window.addEventListener("partners:refresh", handlePartnersRefresh);
+    return () => {
+      window.removeEventListener("partners:refresh", handlePartnersRefresh);
+    };
+  }, [fetchPartners, fetchPercentages]);
+
   const formatMonthKeyFromDate = (date: Date) =>
     `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, "0")}`;
 
