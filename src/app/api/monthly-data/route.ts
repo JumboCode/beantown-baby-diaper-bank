@@ -1,75 +1,59 @@
-import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { month, Prisma as PrismaTypes } from "@/generated/prisma/client";
+import { NextResponse } from "next/server";
+import { month, Prisma } from "@/generated/prisma/client";
 
-const MONTH_NAMES = [
-  "January",
-  "February",
-  "March",
-  "April",
-  "May",
-  "June",
-  "July",
-  "August",
-  "September",
-  "October",
-  "November",
-  "December",
-];
+export async function GET() {
+  return new Response(JSON.stringify({ message: "Hello World" }));
+}
 
-export async function GET(req: Request) {
-  const { searchParams } = new URL(req.url);
+type MonthlyDataPostInput = {
+  partnerId: string | number;
+  year: string;
+  month: month;
+  numDiapers?: string | number | null;
+  numBabies?: string | number | null;
+};
 
-  const month: month | null = searchParams.get("month") as month | null;
-  const year: string | null = searchParams.get("year");
-
-  let where: PrismaTypes.DistributionWhereInput = {};
-
-  where = {
-    ...(month ? { month } : {}),
-    ...(year ? { year } : {}),
-  };
-
-  const distributionsQuery = {
-    where,
-    include: {
-      partner: { select: { name: true } },
-    },
-    orderBy: { createdAt: "desc" as const },
-  } satisfies PrismaTypes.DistributionFindManyArgs;
-
+export async function POST(request: Request) {
   try {
-    const distributionsArr =
-      await prisma.distribution.findMany(distributionsQuery);
+    const newMonthlyData = (await request.json()) as MonthlyDataPostInput[];
 
-    const formattedData = distributionsArr.map(
-      (dist: {
-        id: bigint;
-        partnerId: bigint | null;
-        year: string | null;
-        month: string | null;
-        numberDiapers: bigint | null;
-        partner: { name: string | null } | null;
-      }) => ({
-        id: dist.id.toString(),
-        partnerId: dist.partnerId?.toString() || null,
-        year: dist.year,
-        month: dist.month,
-        numberDiapers: dist.numberDiapers?.toString() || null,
-        partner: dist.partner,
+    if (!Array.isArray(newMonthlyData)) {
+      return NextResponse.json(
+        { error: "Expected an array of Monthly Data values" },
+        { status: 400 },
+      );
+    }
+
+    const data: Prisma.MonthlyDataCreateManyInput[] = newMonthlyData.map(
+      (row) => ({
+        id: crypto.randomUUID(),
+        partnerId: BigInt(row.partnerId),
+        year: row.year,
+        month: row.month,
+        numDiapers:
+          row.numDiapers === null || row.numDiapers === undefined
+            ? null
+            : BigInt(row.numDiapers),
+        numBabies:
+          row.numBabies === null || row.numBabies === undefined
+            ? null
+            : BigInt(row.numBabies),
       }),
     );
 
-    return NextResponse.json(formattedData);
-  } catch (error) {
-    console.error("Error fetching distributions:", error);
+    await prisma.monthlyData.createMany({
+      data,
+    });
+
     return NextResponse.json(
-      { error: "Failed to fetch distributions" },
+      { message: "Monthly Data values created successfully" },
+      { status: 201 },
+    );
+  } catch {
+    return NextResponse.json(
+      { error: "An error occurred while creating Monthly Data values" },
       { status: 500 },
     );
   }
-}
-
-export async function POST() {
-  return new Response(JSON.stringify({ message: "Hello World" }));
 }

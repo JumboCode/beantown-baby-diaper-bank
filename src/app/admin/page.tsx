@@ -402,6 +402,7 @@ export default function Page() {
               <UploadNewData
                 opened={openedUploadDataForm}
                 onClose={closeUploadDataForm}
+                onUploaded={fetchDistributions}
               />
               <AddPartnerForm
                 opened={openedPartnerForm}
