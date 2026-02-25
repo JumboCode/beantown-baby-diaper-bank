@@ -13,7 +13,6 @@ import {
   Box,
   Tabs,
 } from "@mantine/core";
-import { RiCalendarEventLine, RiLineChartLine } from "react-icons/ri";
 import { useForm } from "@mantine/form";
 import { MonthPickerInput } from "@mantine/dates";
 import { Partner } from "./PartnerTable";
@@ -23,6 +22,7 @@ import OneTimeUpdateForm from "./OneTimeUpdateForm";
 import ContinuousUpdateForm from "./ContinuousUpdateForm";
 import type { CityPercentage } from "./CityPercentagesForm";
 import "@mantine/dates/styles.css";
+import { RiCalendarEventLine, RiLineChartLine } from "react-icons/ri";
 
 interface EditPartnerFormProps {
   partner: Partner;
@@ -74,20 +74,18 @@ const buildAddressString = ({
     .filter((part) => Boolean(part))
     .join(", ");
 
-// Checks if input is a number (can be decimal)
 const requiredNumber = (label: string) => (value: unknown) => {
   const v = (value === 0 ? "0" : (value ?? "")).toString().trim();
   if (v === "") return `${label} is required`;
   return /^-?\d+(\.\d+)?$/.test(v) ? null : `${label} must be a number`;
 };
-// Checks if input is an integer
+
 const requiredInteger = (label: string) => (value: unknown) => {
   const v = (value === 0 ? "0" : (value ?? "")).toString().trim();
   if (v === "") return `${label} is required`;
   return /^\d+$/.test(v) ? null : `${label} must be a number`;
 };
 
-//Checks if input is #VALID
 const requiredInput = (label: string) => (value: unknown) => {
   const v = (value === 0 ? "0" : (value ?? "")).toString().trim();
   if (v === "") return `${label} is required`;
@@ -101,11 +99,11 @@ const requiredState = (label: string) => (value: unknown) => {
 };
 
 type UpdatePercentagesOptions = "one-time" | "continuous";
+
 export default function EditPartnerForm({
   partner,
   onClose,
 }: EditPartnerFormProps) {
-  console.log("partner data:", partner);
   const [loading, setLoading] = useState(false);
   const [initialLogoUrl] = useState<string>(partner.logo_url || "");
   const [activePercentTab, setActivePercentTab] =
@@ -148,6 +146,7 @@ export default function EditPartnerForm({
       organization: partner.name,
       description: partner.description || "",
       time: partner.start_partner ? new Date(partner.start_partner) : null,
+      endTime: partner.end_partner ? new Date(partner.end_partner) : null,
       status: partner.status,
       latitude: partner.coords ? partner.coords.lat : "",
       longitude: partner.coords ? partner.coords.lng : "",
@@ -162,7 +161,12 @@ export default function EditPartnerForm({
     },
     validate: {
       organization: requiredInput("Name of Organization"),
-      time: (value) => (value ? null : "Select a start time"),
+      // Start date required unless waitlisted
+      time: (value, values) => 
+        (values.status === "waitlisted" || value ? null : "Select a start time"),
+      // End date required only if inactive
+      endTime: (value, values) => 
+        (values.status === "inactive" && !value ? "Select an end time" : null),
       latitude: requiredNumber("Latitude"),
       longitude: requiredNumber("Longitude"),
       state: requiredState("State"),
@@ -172,9 +176,8 @@ export default function EditPartnerForm({
       country: (value) => (value ? null : "Select a country"),
       status: (value) => (value ? null : "Select a status"),
       description: requiredInput("Description"),
-
       logoUrl: (value, values) => {
-        if (!value.trim() && !values.logoFile) return; // logos are optional according to the figma?
+        if (!value.trim() && !values.logoFile) return;
         return typeof value === "string" ? null : "Enter a valid URL";
       },
     },
@@ -182,13 +185,21 @@ export default function EditPartnerForm({
 
   async function submitEditPartner(values: typeof form.values) {
     setLoading(true);
-    const partnerPayload = {
+
+    const formatDate = (date: Date | null) => {
+      if (!date) return null;
+      const d = new Date(date);
+      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-01`;
+    };
+
+    const formData = {
       id: partner.id,
       name: values.organization,
       description: values.description,
-      start_partner: values.time
-        ? new Date(values.time).toISOString().slice(0, 7)
-        : null,
+      // Clear start date if waitlisted
+      start_partner: values.status !== "waitlisted" ? formatDate(values.time) : null,
+      // Include end date only for inactive status
+      end_partner: values.status === "inactive" ? formatDate(values.endTime) : null,
       status: values.status,
       coordinates: {
         lat: values.latitude,
@@ -211,7 +222,7 @@ export default function EditPartnerForm({
 
     try {
       const requestBody = new FormData();
-      requestBody.append("partner", JSON.stringify(partnerPayload));
+      requestBody.append("partner", JSON.stringify(formData));
       requestBody.append("logoAction", logoAction);
       if (values.logoFile) {
         requestBody.append("file", values.logoFile);
@@ -240,11 +251,7 @@ export default function EditPartnerForm({
 
   return (
     <Box pos="relative">
-      <LoadingOverlay
-        visible={loading}
-        zIndex={1000}
-        overlayProps={{ radius: "sm", blur: 2 }}
-      />
+      <LoadingOverlay visible={loading} zIndex={1000} overlayProps={{ radius: "sm", blur: 2 }} />
 
       <div className="mx-8">
         <h2 className="text-lg text-gray-500" style={{ marginBottom: "24px" }}>
@@ -263,7 +270,6 @@ export default function EditPartnerForm({
             </Text>
             <TextInput
               placeholder="Name"
-              key={form.key("organization")}
               {...form.getInputProps("organization")}
               size="md"
               className="min-w-170"
@@ -277,7 +283,6 @@ export default function EditPartnerForm({
               Description <span className="text-red-600">*</span>
             </Text>
             <Textarea
-              key={form.key("description")}
               {...form.getInputProps("description")}
               size="md"
               className="min-w-170"
@@ -287,20 +292,7 @@ export default function EditPartnerForm({
             />
           </Group>
 
-          {/* Time Started*/}
-          <Group justify="space-between" align="flex-start">
-            <Text fw={600} c="#344054">
-              Time it started <span className="text-red-600">*</span>
-            </Text>
-            <MonthPickerInput
-              placeholder="Pick date"
-              key={form.key("time")}
-              {...form.getInputProps("time")}
-              required
-              className="min-w-170"
-            />
-          </Group>
-
+          {/* Status Radio Group */}
           <Group justify="space-between" align="flex-start" w="100%">
             <Text fw={600} c="#344054" className="w-40">
               Status <span className="text-red-600">*</span>
@@ -313,24 +305,12 @@ export default function EditPartnerForm({
             >
               <Group gap="md" grow>
                 {[
-                  {
-                    value: "active",
-                    title: "Active",
-                    description: "Partner is currently active",
-                  },
-                  {
-                    value: "inactive",
-                    title: "Inactive",
-                    description: "Partner no longer active",
-                  },
-                  {
-                    value: "waitlisted",
-                    title: "Waitlisted",
-                    description: "Partner is on the waitlist",
-                  },
+                  { value: "active", title: "Active", description: "Currently active" },
+                  { value: "inactive", title: "Inactive", description: "No longer active" },
+                  { value: "waitlisted", title: "Waitlisted", description: "On the waitlist" },
                 ].map((option) => (
                   <Radio.Card
-                    key={form.key(`status-${option.value}`)}
+                    key={option.value}
                     value={option.value}
                     radius="md"
                     p="md"
@@ -340,34 +320,53 @@ export default function EditPartnerForm({
                       <Radio.Indicator />
                       <Stack gap={4}>
                         <Text fw={700}>{option.title}</Text>
-                        <Text size="xs" c="dimmed">
-                          {option.description}
-                        </Text>
+                        <Text size="xs" c="dimmed">{option.description}</Text>
                       </Stack>
                     </Group>
                   </Radio.Card>
                 ))}
               </Group>
-
-              {form.errors.status && (
-                <Text c="red" size="sm">
-                  {form.errors.status}
-                </Text>
-              )}
+              {form.errors.status && <Text c="red" size="sm" mt="xs">{form.errors.status}</Text>}
             </Radio.Group>
           </Group>
 
+          {/* Conditional Start Date: Hidden if waitlisted */}
+          {form.values.status !== "waitlisted" && (
+            <Group justify="space-between" align="flex-start">
+              <Text fw={600} c="#344054">
+                Time it started <span className="text-red-600">*</span>
+              </Text>
+              <MonthPickerInput
+                placeholder="Pick date"
+                {...form.getInputProps("time")}
+                required
+                className="min-w-170 w-full max-w-[600px]"
+              />
+            </Group>
+          )}
+
+          {/* Conditional End Date: Shown only if inactive */}
+          {form.values.status === "inactive" && (
+            <Group justify="space-between" align="flex-start">
+              <Text fw={600} c="#344054">
+                Time it ended <span className="text-red-600">*</span>
+              </Text>
+              <MonthPickerInput
+                placeholder="Pick end date"
+                {...form.getInputProps("endTime")}
+                required
+                className="min-w-170 w-full max-w-[600px]"
+              />
+            </Group>
+          )}
+
           {/* Latitude and Longitude */}
           <Group justify="space-between" align="flex-start">
-            <Text fw={600} c="#344054">
-              Coords <span className="text-red-600">*</span>
-            </Text>
+            <Text fw={600} c="#344054">Coords <span className="text-red-600">*</span></Text>
             <div className="gap-4 flex">
               <NumberInput
                 placeholder="Latitude"
-                key={form.key("latitude")}
                 {...form.getInputProps("latitude")}
-                error={form.errors.latitude}
                 size="md"
                 className="min-w-83"
                 radius="md"
@@ -375,9 +374,7 @@ export default function EditPartnerForm({
               />
               <NumberInput
                 placeholder="Longitude"
-                key={form.key("longitude")}
                 {...form.getInputProps("longitude")}
-                error={form.errors.longitude}
                 size="md"
                 className="min-w-83"
                 radius="md"
@@ -386,76 +383,25 @@ export default function EditPartnerForm({
             </div>
           </Group>
 
-          {/* Address */}
+          {/* Address Fields */}
           <Group justify="space-between" align="flex-start" w="100%">
-            <Text fw={600} c="#344054">
-              Address <span className="text-red-600">*</span>
-            </Text>
-
+            <Text fw={600} c="#344054">Address <span className="text-red-600">*</span></Text>
             <div className="flex flex-col gap-4 min-w-170 w-full max-w-[600px]">
-              <TextInput
-                placeholder="Address Line"
-                key={form.key("addressLine")}
-                {...form.getInputProps("addressLine")}
-                size="md"
-                radius="md"
-              />
-
+              <TextInput placeholder="Address Line" {...form.getInputProps("addressLine")} size="md" radius="md" />
               <div className="flex gap-4 w-full">
-                <TextInput
-                  placeholder="City"
-                  key={form.key("city")}
-                  {...form.getInputProps("city")}
-                  size="md"
-                  className="flex-1"
-                  radius="md"
-                />
-                <TextInput
-                  placeholder="State"
-                  key={form.key("state")}
-                  {...form.getInputProps("state")}
-                  size="md"
-                  className="w-[120px]"
-                  radius="md"
-                />
+                <TextInput placeholder="City" {...form.getInputProps("city")} size="md" className="flex-1" radius="md" />
+                <TextInput placeholder="State" {...form.getInputProps("state")} size="md" className="w-[120px]" radius="md" />
               </div>
-
               <div className="flex gap-4 w-full">
-                <TextInput
-                  placeholder="Zip Code"
-                  {...form.getInputProps("zipCode")}
-                  key={form.key("zipCode")}
-                  value={form.values.zipCode}
-                  onChange={(val) =>
-                    form.setFieldValue("zipCode", val.target.value)
-                  }
-                  error={form.errors.zipCode}
-                  size="md"
-                  className="w-[120px]"
-                  radius="md"
-                />
-                <Select
-                  placeholder="Country"
-                  data={countries}
-                  searchable
-                  nothingFoundMessage="Nothing found..."
-                  key={form.key("country")}
-                  value={form.values.country || null}
-                  onChange={(val) => form.setFieldValue("country", val || "")}
-                  error={form.errors.country}
-                  size="md"
-                  className="flex-1"
-                  radius="md"
-                />
+                <TextInput placeholder="Zip Code" {...form.getInputProps("zipCode")} size="md" className="w-[120px]" radius="md" />
+                <Select placeholder="Country" data={countries} {...form.getInputProps("country")} size="md" className="flex-1" radius="md" />
               </div>
             </div>
           </Group>
 
-          {/* Logo File Upload */}
+          {/* Logo Section */}
           <Group justify="space-between" align="flex-start">
-            <Text c="#344054" fw={600}>
-              Logo file or link
-            </Text>
+            <Text c="#344054" fw={600}>Logo file or link</Text>
             <div className="gap-4 flex">
               <FileInput
                 accept="image/png,image/jpeg"
@@ -484,13 +430,11 @@ export default function EditPartnerForm({
             </div>
           </Group>
 
-          {/* Update Percentages */}
-          <Group justify="space-between" align="flex-start">
-            <Text fw={600} c="#344054">
-              City Distribution Percentages
-            </Text>
-
-            <Tabs
+          {/* Percentages: Hidden if waitlisted */}
+          {form.values.status !== "waitlisted" && (
+            <Group justify="space-between" align="flex-start">
+              <Text fw={600} c="#344054">City Distribution Percentages</Text>
+                         <Tabs
               value={activePercentTab}
               onChange={(val) => {
                 if (!val) return;
@@ -573,25 +517,12 @@ export default function EditPartnerForm({
                 />
               </Tabs.Panel>
             </Tabs>
-          </Group>
+            </Group>
+          )}
 
-          {/* Submit and Cancel Buttons */}
           <Group justify="flex-end" mt="md">
-            <Button
-              variant="outline"
-              color="#053766"
-              radius="md"
-              type="button"
-              onClick={() => {
-                form.reset();
-                onClose();
-              }}
-            >
-              Cancel
-            </Button>
-            <Button variant="filled" color="#053766" radius="md" type="submit">
-              Submit
-            </Button>
+            <Button variant="outline" color="#053766" radius="md" onClick={onClose}>Cancel</Button>
+            <Button variant="filled" color="#053766" radius="md" type="submit">Submit</Button>
           </Group>
         </form>
       </div>

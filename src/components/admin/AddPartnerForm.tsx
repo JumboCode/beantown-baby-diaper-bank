@@ -17,6 +17,7 @@ import {
   Title,
   Stack,
   SimpleGrid,
+  Box,
   LoadingOverlay,
 } from "@mantine/core";
 import { useForm } from "@mantine/form";
@@ -104,7 +105,7 @@ const requiredNumber = (label: string) => (value: unknown) => {
   const v = (value === 0 ? "0" : (value ?? "")).toString().trim();
   if (v === "") return `${label} is required`;
   return /^-?\d+(\.\d+)?$/.test(v) ? null : `${label} must be a number`;
-};
+}
 // Checks if input is an integer
 const requiredInteger = (label: string) => (value: unknown) => {
   const v = (value === 0 ? "0" : (value ?? "")).toString().trim();
@@ -123,6 +124,7 @@ export default function AddPartnerForm({
   const [citiesAPI, setCitiesAPI] = useState<string[]>([]);
   const [isLoadingCities, setIsLoadingCities] = useState<boolean>(false);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  const [isUploadingFile, setIsUploadingFile] = useState<boolean>(false);
 
   useEffect(() => {
     const fetchCities = async () => {
@@ -172,7 +174,10 @@ export default function AddPartnerForm({
     validate: {
       organization: (value) =>
         typeof value === "string" ? null : "Organization name must be a string",
-      time: (value) => (value ? null : "Select a start time"),
+      time: (value, values) => {
+        if (values.status === "waitlisted") return null;
+        return value ? null : "Select a start time";
+      },
       cities: (value, values) => {
         if (value.length === 0) return "Pick at least one city";
         console.log(values.status);
@@ -311,6 +316,43 @@ export default function AddPartnerForm({
         })}
       >
         <Stack>
+          {/* Status */}
+          <Group justify="space-between" align="flex-start" w="100%">
+            <Text c="#344054" fz={16} fw={600}>
+              Status <span className="text-red-600">*</span>
+            </Text>
+
+            <Radio.Group
+              value={form.values.status}
+              onChange={(val) => form.setFieldValue("status", val)}
+              w={526}
+            >
+              <Group gap="md" grow>
+                {[
+                  { value: "active", title: "Active", description: "Currently active" },
+                  { value: "waitlisted", title: "Waitlisted", description: "On the waitlist" },
+                ].map((option) => (
+                  <Radio.Card
+                    key={option.value}
+                    value={option.value}
+                    radius="md"
+                    p="md"
+                    className="border border-gray-200 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md data-[checked=true]:border-[#053766] data-[checked=true]:bg-blue-50 h-full"
+                  >
+                    <Group wrap="nowrap" align="flex-start" gap="sm">
+                      <Radio.Indicator />
+                      <Stack gap={4}>
+                        <Text fw={700}>{option.title}</Text>
+                        <Text size="xs" c="dimmed">{option.description}</Text>
+                      </Stack>
+                    </Group>
+                  </Radio.Card>
+                ))}
+              </Group>
+              {form.errors.status && <Text c="red" size="sm" mt="xs">{form.errors.status}</Text>}
+            </Radio.Group>
+          </Group>
+
           {/* Name of Organization */}
           <Group justify="space-between" align="flex-start">
             <Text c="#344054" fz={16} fw={600}>
@@ -390,7 +432,7 @@ export default function AddPartnerForm({
           {/* Selected Cities Table with Percentages, sorry this looks digusting */}
           <Group w={526} ml="auto" justify="flex-end">
             {/* Selected Cities Table */}
-            {form.values.cities.length > 0 && (
+            {form.values.cities.length > 0 && form.values.status !== "waitlisted" && (
               <>
                 <Table w="100%" striped highlightOnHover withTableBorder>
                   <Table.Thead>
@@ -438,7 +480,8 @@ export default function AddPartnerForm({
           </Group>
 
           {/* Time Started*/}
-          <Group justify="space-between" align="flex-start">
+            {form.values.status !== "waitlisted" && (
+            <Group justify="space-between" align="flex-start">
             <Text c="#344054" fz={16} fw={600}>
               Time it started <span className="text-red-600">*</span>
             </Text>
@@ -451,25 +494,7 @@ export default function AddPartnerForm({
               w={526}
             />
           </Group>
-
-          {/* Status */}
-          <Radio.Group
-            key={form.key("status")}
-            {...form.getInputProps("status")}
-            error={form.errors.status}
-            required
-          >
-            <Group justify="space-between">
-              <Text c="#344054" fz={16} fw={600}>
-                Status <span className="text-red-600">*</span>
-              </Text>
-              <Group w={526} justify="space-between">
-                <Radio value="active" label="Active" />
-                <Radio value="inactive" label="Inactive" />
-                <Radio value="waitlisted" label="Waitlisted" />
-              </Group>
-            </Group>
-          </Radio.Group>
+          )}
 
           {/* Latitude and Longitude */}
           <Group justify="space-between" align="flex-start">
@@ -614,6 +639,7 @@ export default function AddPartnerForm({
               radius="md"
               type="submit"
               loading={isSubmitting}
+              disabled={isUploadingFile}
             >
               Submit
             </Button>
