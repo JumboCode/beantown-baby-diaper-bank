@@ -123,6 +123,7 @@ export default function Page() {
   const [filteredPartners, setFilteredPartners] = useState<Partner[]>([]);
   const [percentages, setPercentages] = useState<PartnerRegionWithCity[]>([]);
   const [partnerSearch, setPartnerSearch] = useState("");
+  const [isLoadingPartners, setIsLoadingPartners] = useState(false);
 
   // diaper filtering
   const [valueFrom, setValueFrom] = useState<string | null>(null);
@@ -152,13 +153,17 @@ export default function Page() {
   }, []);
 
   const fetchPartners = useCallback(async () => {
+    setIsLoadingPartners(true);
     try {
       const response = await fetch("/api/partners");
+      if (!response.ok) throw new Error("Failed to fetch partners");
       const result = await response.json();
       setPartners(result.data);
       setFilteredPartners(result.data);
     } catch (err) {
       console.error("Error fetching data:", err);
+    } finally {
+      setIsLoadingPartners(false);
     }
   }, []);
 
@@ -313,16 +318,8 @@ export default function Page() {
   ]);
 
   const refreshTable = useCallback(() => {
-    fetch("/api/partners")
-      .then((response) => response.json())
-      .then((result) => {
-        console.log("Refetched partner data:", result.data);
-        setPartners(result.data);
-      })
-      .catch((err) => {
-        console.error("Error refetching data:", err);
-      });
-  }, []);
+    fetchPartners();
+  }, [fetchPartners]);
 
   const organizationOptions = useMemo(
     () => [...new Set(distributions.map((d) => d.partner.name))],
@@ -620,6 +617,7 @@ export default function Page() {
                 partners={filteredPartners}
                 refreshTable={refreshTable}
                 percentages={percentages}
+                loading={isLoadingPartners}
               />
             </Tabs.Panel>
             <Tabs.Panel value="Diapers">
