@@ -2,26 +2,57 @@ import { Modal, Button, Group, Text, Stack } from "@mantine/core";
 import FileUpload, { FileInfo } from "../sprint2/FileUpload";
 import { MonthPickerInput } from "@mantine/dates";
 import { useState } from "react";
-import { parseDistributionData } from "../../lib/util";
-import { MonthlyData } from "@/generated/prisma/client";
 
 interface UploadNewDataProps {
   opened: boolean;
   onClose: () => void;
+  onUploaded?: () => void;
 }
 
-export default function UploadNewData({ opened, onClose }: UploadNewDataProps) {
+export default function UploadNewData({
+  opened,
+  onClose,
+  onUploaded,
+}: UploadNewDataProps) {
   const [datasetMonth, setDatasetMonth] = useState<string | null>(null);
   const [fileInfo, setFileInfo] = useState<FileInfo | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
 
-const handleUpload = async () => {
+  const handleUpload = async () => {
     if (!fileInfo) {
       console.log("No file uploaded.");
       return;
     }
-    const result = await parseDistributionData(fileInfo.text);
-    console.log("Parsed distribution data:", result);
-    onClose();
+
+    if (!datasetMonth) {
+      console.log("No month selected.");
+      return;
+    }
+
+    setIsUploading(true);
+    try {
+      const response = await fetch("/api/distributions/upload", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          csv: fileInfo.text,
+          selectedDate: new Date(datasetMonth).toISOString(),
+        }),
+      });
+
+      const result = await response.json();
+      if (!response.ok) {
+        throw new Error(result.error ?? "Upload failed.");
+      }
+
+      console.log("Upload processed:", result.data);
+      onUploaded?.();
+      onClose();
+    } catch (error) {
+      console.error("Failed to upload distribution data:", error);
+    } finally {
+      setIsUploading(false);
+    }
   };
 
   return (
@@ -63,7 +94,13 @@ const handleUpload = async () => {
             <Button variant="default" color="#163663" onClick={onClose}>
               Cancel
             </Button>
-            <Button variant="filled" color="#163663" onClick={handleUpload} disabled={!fileInfo}>
+            <Button
+              variant="filled"
+              color="#163663"
+              onClick={handleUpload}
+              disabled={!fileInfo || !datasetMonth || isUploading}
+              loading={isUploading}
+            >
               Upload
             </Button>
           </Group>

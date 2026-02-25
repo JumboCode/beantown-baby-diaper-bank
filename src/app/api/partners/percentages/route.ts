@@ -24,15 +24,16 @@ export async function GET(request: Request) {
     if (partnerId) {
       where.partnerId = BigInt(partnerId);
     } else if (partnerName) {
-      await prisma.partner.findFirst({
+      const partner = await prisma.partner.findFirst({
         where: { name: partnerName },
         select: { id: true },
-      }).then((partner) => {
-        if (partner) {
-          where.partnerId = partner.id;
-          console.log(partner.id);
-        }
       });
+
+      if (!partner) {
+        return NextResponse.json({ data: [] }, { status: 200 });
+      }
+
+      where.partnerId = partner.id;
     }
 
     const query: Prisma.PartnerRegionFindManyArgs = {
