@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Table, Modal, Pill, Mark, Text, Button } from "@mantine/core";
+import { Table, Modal, Pill, Mark, Text, Button, Loader, Center } from "@mantine/core";
 import EditPartnerForm from "./EditPartnerForm";
 import { useDisclosure } from "@mantine/hooks";
 import { status } from "@/generated/prisma/enums";
@@ -12,6 +12,7 @@ export type Partner = {
   name: string;
   description: string | null;
   start_partner: string | null;
+  end_partner?: string;
   status: status;
   address: string | null;
   coords?: { lat: number; lng: number };
@@ -69,10 +70,12 @@ export default function PartnerTable({
   partners,
   percentages,
   refreshTable,
+  loading = false,
 }: {
   partners: Partner[];
   percentages: PartnerRegion[];
   refreshTable?: () => void;
+  loading?: boolean;
 }) {
   const [partner, setPartner] = useState<Partner | null>(null);
   const [opened, { open, close }] = useDisclosure(false);
@@ -109,7 +112,16 @@ export default function PartnerTable({
               </Table.Tr>
             </Table.Thead>
             <Table.Tbody>
-              {partners.map((partner) => (
+              {loading ? (
+                <Table.Tr>
+                  <Table.Td colSpan={8}>
+                    <Center py="lg">
+                      <Loader type="bars" />
+                    </Center>
+                  </Table.Td>
+                </Table.Tr>
+              ) : (
+                partners.map((partner) => (
                 <Table.Tr key={partner.id}>
                   <Table.Td>
                     <div className="flex items-center gap-3">
@@ -226,7 +238,7 @@ export default function PartnerTable({
                       size="lg"></ActionIcon> */}
                   </Table.Td>
                 </Table.Tr>
-              ))}
+              )))}
             </Table.Tbody>
           </Table>
         </div>

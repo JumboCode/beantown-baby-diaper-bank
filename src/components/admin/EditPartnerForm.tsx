@@ -13,16 +13,16 @@ import {
   Box,
   Tabs,
 } from "@mantine/core";
-import { RiCalendarEventLine, RiLineChartLine } from "react-icons/ri";
 import { useForm } from "@mantine/form";
 import { MonthPickerInput } from "@mantine/dates";
-import "@mantine/dates/styles.css";
 import { Partner } from "./PartnerTable";
 import { useEffect, useState } from "react";
 import { status } from "@/generated/prisma/enums";
 import OneTimeUpdateForm from "./OneTimeUpdateForm";
 import ContinuousUpdateForm from "./ContinuousUpdateForm";
 import type { CityPercentage } from "./CityPercentagesForm";
+import "@mantine/dates/styles.css";
+import { RiCalendarEventLine, RiLineChartLine } from "react-icons/ri";
 
 interface EditPartnerFormProps {
   partner: Partner;
@@ -100,11 +100,46 @@ const requiredState = (label: string) => (value: unknown) => {
 
 type UpdatePercentagesOptions = "one-time" | "continuous";
 
+<<<<<<< HEAD
+=======
+const parseMonthDateForPicker = (rawDate: string | null | undefined): Date | null => {
+  if (!rawDate) return null;
+  const monthMatch = rawDate.match(/^(\d{4})-(\d{2})/);
+  if (!monthMatch) {
+    const parsed = new Date(rawDate);
+    return Number.isNaN(parsed.getTime()) ? null : parsed;
+  }
+
+  const year = Number(monthMatch[1]);
+  const monthIndex = Number(monthMatch[2]) - 1;
+  return new Date(Date.UTC(year, monthIndex, 1, 12));
+};
+
+const formatMonthDateForApi = (date: Date | string | null): string | null => {
+  if (!date) return null;
+
+  if (typeof date === "string") {
+    const monthMatch = date.match(/^(\d{4})-(\d{2})/);
+    if (monthMatch) {
+      return `${monthMatch[1]}-${monthMatch[2]}-01`;
+    }
+  }
+
+  const parsed = date instanceof Date ? date : new Date(date);
+  if (Number.isNaN(parsed.getTime())) return null;
+
+  const year = parsed.getUTCFullYear();
+  const month = String(parsed.getUTCMonth() + 1).padStart(2, "0");
+  return `${year}-${month}-01`;
+};
+
+>>>>>>> 64f60fec961c236a5a7b032abae5565eb4d78132
 export default function EditPartnerForm({
   partner,
   onClose,
 }: EditPartnerFormProps) {
   const [loading, setLoading] = useState(false);
+  const [initialLogoUrl] = useState<string>(partner.logo_url || "");
   const [activePercentTab, setActivePercentTab] =
     useState<UpdatePercentagesOptions>("one-time");
 
@@ -144,8 +179,13 @@ export default function EditPartnerForm({
     initialValues: {
       organization: partner.name,
       description: partner.description || "",
+<<<<<<< HEAD
       time: partner.start_partner ? new Date(partner.start_partner) : null,
       endTime: partner.end_partner ? new Date(partner.end_partner) : null,
+=======
+      time: parseMonthDateForPicker(partner.start_partner),
+      endTime: parseMonthDateForPicker(partner.end_partner),
+>>>>>>> 64f60fec961c236a5a7b032abae5565eb4d78132
       status: partner.status,
       latitude: partner.coords ? partner.coords.lat : "",
       longitude: partner.coords ? partner.coords.lng : "",
@@ -185,20 +225,31 @@ export default function EditPartnerForm({
   async function submitEditPartner(values: typeof form.values) {
     setLoading(true);
 
+<<<<<<< HEAD
     const formatDate = (date: Date | null) => {
       if (!date) return null;
       const d = new Date(date);
       return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-01`;
     };
 
+=======
+>>>>>>> 64f60fec961c236a5a7b032abae5565eb4d78132
     const formData = {
       id: partner.id,
       name: values.organization,
       description: values.description,
       // Clear start date if waitlisted
+<<<<<<< HEAD
       start_partner: values.status !== "waitlisted" ? formatDate(values.time) : null,
       // Include end date only for inactive status
       end_partner: values.status === "inactive" ? formatDate(values.endTime) : null,
+=======
+      start_partner:
+        values.status !== "waitlisted" ? formatMonthDateForApi(values.time) : null,
+      // Include end date only for inactive status
+      end_partner:
+        values.status === "inactive" ? formatMonthDateForApi(values.endTime) : null,
+>>>>>>> 64f60fec961c236a5a7b032abae5565eb4d78132
       status: values.status,
       coordinates: {
         lat: values.latitude,
@@ -213,7 +264,13 @@ export default function EditPartnerForm({
       }),
       logo: values.logoUrl,
     };
+    const logoAction = values.logoFile
+      ? "replace"
+      : initialLogoUrl && values.logoUrl.trim() === ""
+        ? "remove"
+        : "keep";
 
+<<<<<<< HEAD
     const response = await fetch("/api/partners", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -222,11 +279,35 @@ export default function EditPartnerForm({
 
     if (!response.ok) {
       console.error("Failed to update partner data");
+=======
+    try {
+      const requestBody = new FormData();
+      requestBody.append("partner", JSON.stringify(formData));
+      requestBody.append("logoAction", logoAction);
+      if (values.logoFile) {
+        requestBody.append("file", values.logoFile);
+      }
+
+      const response = await fetch("/api/partners", {
+        method: "POST",
+        body: requestBody,
+      });
+
+      if (!response.ok) {
+        const err = await response.json();
+
+        form.setFieldError("logoFile", err.error);
+
+        return;
+      }
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new Event("partners:refresh"));
+      }
+      onClose();
+    } finally {
+>>>>>>> 64f60fec961c236a5a7b032abae5565eb4d78132
       setLoading(false);
-      return;
     }
-    setLoading(false);
-    onClose();
   }
 
   return (
@@ -240,9 +321,6 @@ export default function EditPartnerForm({
         <form
           onSubmit={form.onSubmit((values) => {
             submitEditPartner(values);
-            if (typeof window !== "undefined") {
-              window.dispatchEvent(new Event("partners:refresh"));
-            }
           })}
           className="flex flex-col gap-5"
         >
@@ -386,8 +464,35 @@ export default function EditPartnerForm({
           <Group justify="space-between" align="flex-start">
             <Text c="#344054" fw={600}>Logo file or link</Text>
             <div className="gap-4 flex">
+<<<<<<< HEAD
               <FileInput accept="image/png,image/jpeg" placeholder="Upload file" radius="md" clearable onChange={(f) => form.setFieldValue("logoFile", f)} className="min-w-83" />
               <TextInput placeholder="Logo URL" {...form.getInputProps("logoUrl")} radius="md" className="min-w-83" />
+=======
+              <FileInput
+                accept="image/png,image/jpeg"
+                placeholder="Upload image file"
+                radius="md"
+                clearable
+                onChange={(file) => {
+                  form.setFieldValue("logoFile", file);
+                  if (!file) {
+                    form.setFieldValue("logoUrl", "");
+                  }
+                  if (!file) {
+                    form.clearFieldError("logoFile");
+                  }
+                }}
+                error={form.errors.logoFile || form.errors.logoUrl}
+                className="min-w-83"
+              />
+              <TextInput
+                placeholder="Logo URL"
+                key={form.key("logoUrl")}
+                {...form.getInputProps("logoUrl")}
+                radius="md"
+                className="min-w-83"
+              />
+>>>>>>> 64f60fec961c236a5a7b032abae5565eb4d78132
             </div>
           </Group>
 
@@ -395,6 +500,7 @@ export default function EditPartnerForm({
           {form.values.status !== "waitlisted" && (
             <Group justify="space-between" align="flex-start">
               <Text fw={600} c="#344054">City Distribution Percentages</Text>
+<<<<<<< HEAD
               <Tabs
                 value={activePercentTab}
                 onChange={(v) => { if (v) setActivePercentTab(v as UpdatePercentagesOptions); }}
@@ -407,6 +513,91 @@ export default function EditPartnerForm({
                 <Tabs.Panel value="one-time"><OneTimeUpdateForm initialCityPercentages={initialCityPercentEntries} /></Tabs.Panel>
                 <Tabs.Panel value="continuous"><ContinuousUpdateForm initialCityPercentages={initialCityPercentEntries} /></Tabs.Panel>
               </Tabs>
+=======
+                         <Tabs
+              value={activePercentTab}
+              onChange={(val) => {
+                if (!val) return;
+                setActivePercentTab(val as UpdatePercentagesOptions);
+                form.setFieldValue(
+                  "updatePercentagesType",
+                  val as UpdatePercentagesOptions,
+                );
+              }}
+              className="min-w-170 w-full max-w-[600px]"
+            >
+              <Tabs.List grow mb="xl">
+                {[
+                  {
+                    value: "one-time",
+                    title: "One-Time Update",
+                    description: "Update a specific month only",
+                    icon: <RiCalendarEventLine size={22} />,
+                  },
+                  {
+                    value: "continuous",
+                    title: "Continuous Update",
+                    description: "Apply to all future distributions",
+                    icon: <RiLineChartLine size={22} />,
+                  },
+                ].map((option) => (
+                  <Tabs.Tab
+                    key={option.value}
+                    value={option.value}
+                    className="px-0"
+                  >
+                    {(() => {
+                      const isActive = activePercentTab === option.value;
+                      return (
+                        <div
+                          className={`rounded-xl shadow-sm transition hover:-translate-y-0.5 hover:shadow-md h-full border ${
+                            isActive
+                              ? "border-[#1D3A8A] bg-[#EEF2FF]"
+                              : "border-gray-300 bg-white"
+                          }`}
+                          style={{ borderWidth: isActive ? 2 : 1 }}
+                        >
+                          <Stack gap="xs" align="center" p="md">
+                            <div
+                              className={`${
+                                isActive ? "text-[#1D3A8A]" : "text-gray-500"
+                              } opacity-80`}
+                            >
+                              {option.icon}
+                            </div>
+                            <Text
+                              fw={700}
+                              size="md"
+                              className={isActive ? "text-[#1D3A8A]" : ""}
+                            >
+                              {option.title}
+                            </Text>
+                            <Text
+                              size="sm"
+                              c={isActive ? "gray.6" : "dimmed"}
+                              ta="center"
+                            >
+                              {option.description}
+                            </Text>
+                          </Stack>
+                        </div>
+                      );
+                    })()}
+                  </Tabs.Tab>
+                ))}
+              </Tabs.List>
+              <Tabs.Panel value="one-time">
+                <OneTimeUpdateForm
+                  initialCityPercentages={initialCityPercentEntries}
+                />
+              </Tabs.Panel>
+              <Tabs.Panel value="continuous">
+                <ContinuousUpdateForm
+                  initialCityPercentages={initialCityPercentEntries}
+                />
+              </Tabs.Panel>
+            </Tabs>
+>>>>>>> 64f60fec961c236a5a7b032abae5565eb4d78132
             </Group>
           )}
 

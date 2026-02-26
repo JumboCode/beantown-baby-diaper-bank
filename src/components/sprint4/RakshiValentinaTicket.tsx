@@ -1,6 +1,5 @@
 import { FileInput } from "@mantine/core";
 import { useState } from "react";
-import { parseDistributionData } from "@/lib/util";
 
 export default function RakshiValentinaTicket() {
   const [fileInfo, setFileInfo] = useState<{
@@ -13,8 +12,9 @@ export default function RakshiValentinaTicket() {
       const text = await file.text();
       const rows = text.split("\n").length;
       setFileInfo({ name: file.name, rows });
-      const distributionData = parseDistributionData(text);
-      console.log(JSON.stringify(distributionData));
+      console.log(
+        `Loaded file with ${rows} rows and ${text.length} characters.`,
+      );
     }
   };
   return (
