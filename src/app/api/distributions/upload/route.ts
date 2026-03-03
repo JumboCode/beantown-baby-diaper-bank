@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { revalidateTag } from "next/cache";
 import { processDistributionUpload } from "@/lib/server/distribution-upload";
 
 type UploadRequestBody = {
@@ -21,6 +22,8 @@ export async function POST(request: Request) {
       csv: body.csv,
       selectedDate: body.selectedDate,
     });
+
+    revalidateTag("cities");
 
     return NextResponse.json({ data: result }, { status: 200 });
   } catch (error) {
