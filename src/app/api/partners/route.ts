@@ -22,7 +22,12 @@ type CityPercentage = {
 type CityGeoData = {
   centroidGeoJson: string;
   boundaryGeoJson: string;
+  addressType: string
 };
+
+function normalizeCityName(value: string): string {
+  return value.trim().toLowerCase();
+}
 type CreatePartnerPayload = {
   name: string;
   description: string;
@@ -78,10 +83,7 @@ async function fetchCityGeoDataFromNominatim(
   });
 
   if (!response.ok) {
-    throw new PartnerRequestError(
-      `Unable to retrieve geo data for ${cityName}`,
-      502,
-    );
+    throw new PartnerRequestError("Please check the entered cities.", 422);
   }
 
   // Parse search results and use the top match.
@@ -89,6 +91,7 @@ async function fetchCityGeoDataFromNominatim(
     lat?: string;
     lon?: string;
     geojson?: unknown;
+    addresstype?: string;
   }>;
 
   const first = result[0];
@@ -98,8 +101,11 @@ async function fetchCityGeoDataFromNominatim(
 
   const lat = first?.lat ? Number(first.lat) : NaN;
   const lon = first?.lon ? Number(first.lon) : NaN;
+  const addressType =
+  typeof first.addresstype === "string" ? first.addresstype : "";
 
-  if (!Number.isFinite(lat) || !Number.isFinite(lon) || !first.geojson) {
+
+  if (addressType != "town" || addressType != "city" || !Number.isFinite(lat) || !Number.isFinite(lon) || !first.geojson) {
     throw new PartnerRequestError(
       "Please check the entered cities.",
       422,
@@ -265,23 +271,36 @@ export async function PUT(request: Request) {
   let cityIdByName: Map<string, bigint>;
   try {
     console.log('inside city validation');
-    const existingCities: City[] = await prisma.city.findMany({
-      where: {
+    const cityWhere: PrismaTypes.CityWhereInput = {
+      OR: cityNames.map((name) => ({
         name: {
-          in: cityNames,
+          equals: name,
+          mode: "insensitive",
         },
-      },
+      })),
+    };
+
+    const existingCities: City[] = await prisma.city.findMany({
+      where: cityWhere,
     });
-    const existingCityNames = new Set(existingCities.map((city) => city.name));
+    const existingCityNames = new Set(
+      existingCities
+        .map((city) => city.name)
+        .filter((name): name is string => Boolean(name))
+        .map((name) => normalizeCityName(name)),
+    );
 
     // Find city names not already in DB.
-    const missingCityNames = cityNames.filter((name) => !existingCityNames.has(name));
+    const missingCityNames = cityNames.filter(
+      (name) => !existingCityNames.has(normalizeCityName(name)),
+    );
     const cityGeoByName = new Map<string, CityGeoData>();
 
-    // Fetch geo data before DB transaction (avoid HTTP calls inside transaction).
-    for (const cityName of missingCityNames) {
+    // Fetch geo data for every submitted city and block submission if any city
+    // cannot be geocoded.
+    for (const cityName of cityNames) {
       const geo = await fetchCityGeoDataFromNominatim(cityName);
-      cityGeoByName.set(cityName, geo);
+      cityGeoByName.set(normalizeCityName(cityName), geo);
     }
 
     cityIdByName = await prisma.$transaction(async (tx) => {
@@ -294,9 +313,12 @@ export async function PUT(request: Request) {
         // createMany does not return IDs, so re-query inserted rows.
         const insertedCities = await tx.city.findMany({
           where: {
-            name: {
-              in: missingCityNames,
-            },
+            OR: missingCityNames.map((name) => ({
+              name: {
+                equals: name,
+                mode: "insensitive",
+              },
+            })),
           },
           select: {
             id: true,
@@ -323,15 +345,31 @@ export async function PUT(request: Request) {
 
       // fetch all cities
       const allCities = await tx.city.findMany({
-        where: {
-          name: {
-            in: cityNames,
-          },
-        },
+        where: cityWhere,
       });
-      return new Map (allCities
-        .map((city) => [city.name, city.id])
-        .filter(([name]) => name !== null) as Array<[string, bigint]>
+
+      for (const city of allCities) {
+        const name = city.name;
+        if (!name) continue;
+        const geoData = cityGeoByName.get(normalizeCityName(name));
+        if (!geoData) {
+          throw new PartnerRequestError("Please check the entered cities.", 422);
+        }
+
+        // Keep city geodata in sync for all submitted cities.
+        await tx.$executeRaw`
+          UPDATE "Cities"
+          SET
+            "centroid" = ST_SetSRID(ST_GeomFromGeoJSON(${geoData.centroidGeoJson}), 4326),
+            "boundary" = ST_SetSRID(ST_GeomFromGeoJSON(${geoData.boundaryGeoJson}), 4326)::geography
+          WHERE id = ${city.id}
+        `;
+      }
+
+      return new Map(
+        allCities
+          .map((city) => [city.name ? normalizeCityName(city.name) : null, city.id])
+          .filter(([name]) => name !== null) as Array<[string, bigint]>,
       );
     });
     console.log(cityIdByName);
@@ -373,7 +411,7 @@ export async function PUT(request: Request) {
 
       // 3b. create new partner regions
       const partnerRegionRows = payload.cities.map((city: CityPercentage) => {
-        const normalizedCityName = city.city.trim();
+        const normalizedCityName = normalizeCityName(city.city);
         const cityId = cityIdByName.get(normalizedCityName);
         if (!cityId) {
           throw new PartnerRequestError("Please check the entered cities.", 422);
@@ -393,6 +431,12 @@ export async function PUT(request: Request) {
       return newPartner;
     })
   } catch (error) {
+    if (error instanceof PartnerRequestError) {
+      return NextResponse.json(
+        { error: error.message },
+        { status: error.status },
+      );
+    }
     const message = error instanceof Error ? 
       error.message : "Unable to create partner in database";
     return NextResponse.json({ error: message }, { status: 500 });

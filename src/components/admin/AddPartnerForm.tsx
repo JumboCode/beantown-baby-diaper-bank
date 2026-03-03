@@ -277,9 +277,11 @@ export default function AddPartnerForm({
       if (!response.ok) {
         const err = await response.json();
         const warning = typeof err?.error === "string" ? err.error : "Unable to submit partner.";
-        if (warning === "Please check the entered cities.") {
-          form.setFieldError("cities", warning);
-          setSubmitWarning(warning);
+        if (response.status === 422 || warning === "Please check the entered cities.") {
+          const cityWarning = "Please check the entered cities.";
+          console.error("City geodata validation failed:", err);
+          form.setFieldError("cities", cityWarning);
+          setSubmitWarning(cityWarning);
           return;
         }
         form.setFieldError("logoFile", warning);
@@ -434,6 +436,11 @@ export default function AddPartnerForm({
                 );
               }}
               error={form.errors.cities}
+              styles={{
+                input: form.errors.cities
+                  ? { borderColor: "var(--mantine-color-red-6)" }
+                  : undefined,
+              }}
               size="md"
               w={526}
               radius="md"
