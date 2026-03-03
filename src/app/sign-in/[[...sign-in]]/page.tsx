@@ -53,7 +53,7 @@ export default function SignInPage() {
       <Container size={460} w="100%">
         <Stack align="center" mb="xl">
           <Image
-            src="/beantown_logo.png"
+            src="/beantown-logo.svg"
             alt="Beantown Baby Diaper Bank"
             width={300}
             height={80}
