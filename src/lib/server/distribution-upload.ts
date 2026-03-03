@@ -47,7 +47,7 @@ function parseNumericCell(cell: string | undefined): number | null {
   return Number.isFinite(value) ? value : null;
 }
 
-function parsePartnerRows(csv: string): {
+export function parsePartnerRows(csv: string): {
   parsed: ParsedPartnerRow[];
   skipped: number;
 } {
