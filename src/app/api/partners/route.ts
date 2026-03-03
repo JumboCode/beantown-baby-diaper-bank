@@ -148,7 +148,9 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }
-// Create put for new partner
+
+// Create put for new partner: create a new partner 
+// (plus city-region links, plus optional logo upload).
 export async function PUT(request: Request) {
   let payload: CreatePartnerPayload;
   let logoAction: LogoAction;
@@ -156,7 +158,6 @@ export async function PUT(request: Request) {
 
   // 1. parse & validate request (payload, logoAction, logoFile), fail fast 
   // if input is erroneous
-
   try {
     const parsed = await parseCreatePartnerRequest(request);
     payload = parsed.payload;
@@ -309,17 +310,20 @@ export async function PUT(request: Request) {
     }
   }
 
+  
   console.log('Partner created successfully:', partner.id);
   return NextResponse.json({
     data: stringifyWithBigInt(partner)
   })
 }
 
+// update an existing partner (plus optional logo replace/remove).
 export async function POST(request: Request) {
   let payload: UpdatePartnerPayload;
   let logoAction: LogoAction;
   let logoFile: File | null;
 
+  // Validate partner request
   try {
     const parsed = await parseUpdatePartnerRequest(request);
     payload = parsed.payload;
@@ -340,6 +344,7 @@ export async function POST(request: Request) {
 
   console.log("Received partner data:", payload);
 
+  // Attempt to replace logo
   try {
     const partnerId = Number(payload.id);
     let uploadedPublicUrl: string | undefined;
@@ -357,6 +362,7 @@ export async function POST(request: Request) {
       uploadedPublicUrl = uploadResult.publicUrl;
     }
 
+    // Update partner fields
     const partner = await prisma.partner.update({
       where: { id: partnerId },
       data: {
@@ -376,6 +382,7 @@ export async function POST(request: Request) {
       },
     });
 
+    // Remove or replace logo in database
     if (logoAction === "remove") {
       await deleteLogoObject(getLogoObjectKey(partnerId)).catch(
         () => undefined,
@@ -425,6 +432,7 @@ function normalizeMonthDate(value: string | null): string | null {
   return new Date(Date.UTC(year, month - 1, 1)).toISOString();
 }
 
+// Limits what logoAction input can be (if invalid, keep is default)
 function parseLogoAction(raw: FormDataEntryValue | null): LogoAction {
   if (raw === null) return "keep";
   if (typeof raw !== "string") {
@@ -439,6 +447,7 @@ function parseLogoAction(raw: FormDataEntryValue | null): LogoAction {
   return raw;
 }
 
+// Enforce required partner fields
 function assertCreatePayload(
   payload: unknown,
 ): asserts payload is CreatePartnerPayload {
