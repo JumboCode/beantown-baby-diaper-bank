@@ -263,6 +263,7 @@ export default function AddPartnerForm({
     try {
       const requestBody = new FormData();
       requestBody.append("partner", JSON.stringify(partnerPayload));
+      /* replace = upload file to storage, keep = don't upload */
       requestBody.append("logoAction", values.logoFile ? "replace" : "keep");
       if (values.logoFile) {
         requestBody.append("file", values.logoFile);

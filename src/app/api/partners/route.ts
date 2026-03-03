@@ -154,13 +154,8 @@ export async function PUT(request: Request) {
   let logoAction: LogoAction;
   let logoFile: File | null;
 
-  // 1. parse & validate request (payload, logoAction, logoFile)
-  // 2. validate & insert new city into DB if needed
-  // 3. move insertions for partner & partnerRegion into a single transaction
-  // 4. upload logo file
-
   // 1. parse & validate request (payload, logoAction, logoFile), fail fast 
-  // in the case of erroneous input
+  // if input is erroneous
 
   try {
     const parsed = await parseCreatePartnerRequest(request);
@@ -177,6 +172,7 @@ export async function PUT(request: Request) {
     }
   } catch (error) {
     if (error instanceof PartnerRequestError) {
+      console.log('inside error instanceof PartnerRequestError');
       return NextResponse.json(
         { error: error.message },
         { status: error.status },
@@ -189,12 +185,14 @@ export async function PUT(request: Request) {
   }
 
   // 2. validate city & insert into DB if city doesn't exist yet
+
   const cityNames = payload.cities.map((city: { city: string }) => city.city);
-  let cityIdByName: Map<String, Number>;
+  let cityIdByName: Map<string, bigint>;
   try {
+    console.log('inside city validation');
     cityIdByName = await prisma.$transaction(async (tx) => {
       // find existing cities
-      const existingCities = await tx.city.findMany({
+      const existingCities: City[] = await tx.city.findMany({
         where: {
           name: {
             in: cityNames,
@@ -205,7 +203,7 @@ export async function PUT(request: Request) {
       // create missing cities, if there are any
       const missingCityNames = cityNames.filter((name) => !existingCityNames.has(name));
       if (missingCityNames.length > 0) {
-        await prisma.city.createMany({
+        await tx.city.createMany({
           data: missingCityNames.map((name) => ({ name })),
           skipDuplicates: true,
         });
@@ -218,152 +216,103 @@ export async function PUT(request: Request) {
           },
         },
       });
-      return new Map(allCities.map((city) => [city.name, city.id]));
+      return new Map (allCities
+        .map((city) => [city.name, city.id])
+        .filter(([name]) => name !== null) as Array<[string, bigint]>
+      );
     });
+    console.log(cityIdByName);
   } catch (error) {
     const message =
       error instanceof Error ? error.message : "Failed to prepare cities";
     return NextResponse.json({ error: message }, { status: 500 });
   }
-
-  // 3. upload partner logo
   
-
-  // 4. create new partner & partner regions
-
-  const newPartnerRequest = {
-    data: {
-      name: payload.name,
-      description: payload.description,
-      startPartner: normalizeStartPartner(payload.start_partner),
-      status: payload.status as status,
-      coords: payload.coordinates,
-      address: payload.address,
-      logoUrl: logoAction === "replace" ? "" : (payload.logo ?? ""),
-    },
-  } as PrismaTypes.PartnerCreateArgs;
-
+  // 3. create new partner & partner regions, rollback the entire partner adding
+  // if any step in the middle fails.
+  
   let partner: Partner;
   try {
-    partner = await prisma.partner.create(newPartnerRequest);
-  } catch (error) {
-    const message =
-      error instanceof Error
-        ? error.message
-        : "Unable to insert partner into database.";
+    console.log('inside P3 - partners');
+    partner = await prisma.$transaction(async (tx) => {
+      // 3a. create new partner
+      const newPartnerRequest = {
+        data: {
+          name: payload.name,
+          description: payload.description,
+          startPartner: normalizeStartPartner(payload.start_partner),
+          status: payload.status as status,
+          coords: payload.coordinates,
+          address: payload.address,
+          logoUrl: logoAction === "replace" ? "" : (payload.logo ?? ""),
+        },
+      } as PrismaTypes.PartnerCreateArgs;
+      const newPartner = await tx.partner.create(newPartnerRequest);
 
+      const partnerId = Number(newPartner.id);
+      console.log('created new partner, id:', partnerId);
+
+      // 3b. create new partner regions
+      await tx.partnerRegion.createMany({
+        data: payload.cities.map((city: CityPercentage) => ({
+          partnerId: partnerId,
+          cityId: cityIdByName.get(city.city)!,
+          percentage: city.percentage,
+        })),
+      });
+
+      console.log("Created partner regions for partner ID:", partnerId);
+      return newPartner;
+    })
+  } catch (error) {
+    const message = error instanceof Error ? 
+      error.message : "Unable to create partner in database";
     return NextResponse.json({ error: message }, { status: 500 });
   }
 
-  const partnerId = Number(partner.id);
-  // let cityIds: City[] = await prisma.city.findMany({
-  //   where: {
-  //     name: {
-  //       in: cityNames,
-  //     },
-  //   },
-  // });
-
-  // const cityIdByName = new Map(
-  //   cityIds
-  //     .filter((city) => typeof city.name === "string")
-  //     .map((city) => [city.name as string, city.id]),
-  // );
-  // const missingCities = cityNames.filter((name) => !cityIdByName.has(name));
-  // if (missingCities.length > 0) {
-  //   await prisma.city.createMany({
-  //     data: missingCities.map((name) => ({ name })),
-  //     skipDuplicates: true,
-  //   });
+  // upload logo to file storage, rollback the entire partner adding if 
+  //    a) logo upload failed
+  //    b) publicUrl does not get synced into the Partners table
   
-  //   cityIds = await prisma.city.findMany({
-  //     where: {
-  //       name: {
-  //         in: cityNames,
-  //       },
-  //     },
-  //   });
-  // }
-  
-  const refreshedCityIdByName = new Map(
-    cityIds
-      .filter((city) => typeof city.name === "string")
-      .map((city) => [city.name as string, city.id]),
-  );
-  const unresolvedCities = cityNames.filter(
-    (name) => !refreshedCityIdByName.has(name),
-  );
-  if (unresolvedCities.length > 0) {
-    return NextResponse.json(
-      { error: `Unable to resolve cities: ${unresolvedCities.join(", ")}` },
-      { status: 400 },
-    );
-  }
-  
-
-  // 304 - 365
-  const newPartnerRegionsRequest = {
-    data: payload.cities.map((city: CityPercentage) => ({
-      partnerId: partnerId,
-      cityId: refreshedCityIdByName.get(city.city)!,
-      percentage: city.percentage,
-    })),
-  } satisfies PrismaTypes.PartnerRegionCreateManyArgs;
-
-  console.log("Received partner data:", payload);
-  let uploadedObjectKey: string | undefined;
-  try {
-    // update partner region table
-    const partnerRegion = await prisma.partnerRegion.createMany(
-      newPartnerRegionsRequest,
-    );
-    console.log("created partner regions");
-    console.log(logoAction);
-
-    let partnerToReturn = partner;
-
-    if (logoAction === "replace") {
-      if (!logoFile) {
-        throw new PartnerRequestError(
-          "File is required when logoAction is replace",
-          400,
-        );
-      }
-
-      validateLogoFile(logoFile);
-      await validateImageSignature(logoFile);
-      const uploadResult = await uploadLogoForPartner(partnerId, logoFile);
-      uploadedObjectKey = uploadResult.objectKey;
-
-      partnerToReturn = await prisma.partner.update({
-        where: { id: partnerId },
+  if (logoAction === 'replace') {
+    console.log('inside logoAction === replace');
+    
+    let uploadedObjectKey: string | undefined;
+    let partnerId = Number(partner.id);
+    
+    try {
+      const uploadResult = await uploadLogoForPartner(partnerId, logoFile!);
+      console.log('Logo uploaded:', uploadResult.objectKey);
+      uploadedObjectKey = uploadResult?.objectKey;
+      
+      partner = await prisma.partner.update({
+        where: { id: partner.id },
         data: { logoUrl: uploadResult.publicUrl },
       });
+      
+      console.log('Updated logo file for partner');
+    } catch (error) {
+      // if logo upload failed for some reason, clean up the entire partner
+      try {
+        await cleanupPartnerCreate(partnerId, uploadedObjectKey);
+      } catch (cleanupError) {
+          console.error(
+          "Failed to clean up partner after logo upload failure:",
+          cleanupError
+        );
+      }
+      const message = error instanceof Error ? 
+        error.message : "Unable to create partner.";
+      const statusCode = error instanceof PartnerRequestError || error instanceof FileUploadError
+        ? error.status : 500;
+      return NextResponse.json({ error: message }, { status: statusCode });
     }
-
-    console.log("Created partner regions:", partnerRegion);
-
-    return NextResponse.json({
-      data: stringifyWithBigInt(partnerToReturn),
-    });
-  } catch (error) {
-    try {
-      await cleanupPartnerCreate(partnerId, uploadedObjectKey);
-    } catch (cleanupError) {
-      console.error(
-        "Failed to clean up create partner operation:",
-        cleanupError,
-      );
-    }
-
-    const message =
-      error instanceof Error ? error.message : "Unable to create partner.";
-    const statusCode =
-      error instanceof PartnerRequestError || error instanceof FileUploadError
-        ? error.status
-        : 500;
-    return NextResponse.json({ error: message }, { status: statusCode });
   }
+
+  console.log('Partner created successfully:', partner.id);
+  return NextResponse.json({
+    data: stringifyWithBigInt(partner)
+  })
 }
 
 export async function POST(request: Request) {
