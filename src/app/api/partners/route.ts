@@ -154,11 +154,27 @@ export async function PUT(request: Request) {
   let logoAction: LogoAction;
   let logoFile: File | null;
 
+  // 1. parse & validate request (payload, logoAction, logoFile)
+  // 2. validate & insert new city into DB if needed
+  // 3. move insertions for partner & partnerRegion into a single transaction
+  // 4. upload logo file
+
+  // 1. parse & validate request (payload, logoAction, logoFile), fail fast 
+  // in the case of erroneous input
+
   try {
     const parsed = await parseCreatePartnerRequest(request);
     payload = parsed.payload;
     logoAction = parsed.logoAction;
     logoFile = parsed.logoFile;
+
+    if (logoAction === 'replace') {
+      if (!logoFile) {
+        return NextResponse.json({ error: 'File required' }, { status: 400 });
+      }
+      validateLogoFile(logoFile);
+      await validateImageSignature(logoFile);
+    }
   } catch (error) {
     if (error instanceof PartnerRequestError) {
       return NextResponse.json(
@@ -172,8 +188,48 @@ export async function PUT(request: Request) {
     );
   }
 
-  const cities = payload.cities;
-  const cityNames = cities.map((city: { city: string }) => city.city);
+  // 2. validate city & insert into DB if city doesn't exist yet
+  const cityNames = payload.cities.map((city: { city: string }) => city.city);
+  let cityIdByName: Map<String, Number>;
+  try {
+    cityIdByName = await prisma.$transaction(async (tx) => {
+      // find existing cities
+      const existingCities = await tx.city.findMany({
+        where: {
+          name: {
+            in: cityNames,
+          },
+        },
+      });
+      const existingCityNames = new Set(existingCities.map((city) => city.name));
+      // create missing cities, if there are any
+      const missingCityNames = cityNames.filter((name) => !existingCityNames.has(name));
+      if (missingCityNames.length > 0) {
+        await prisma.city.createMany({
+          data: missingCityNames.map((name) => ({ name })),
+          skipDuplicates: true,
+        });
+      }
+      // fetch all cities
+      const allCities = await tx.city.findMany({
+        where: {
+          name: {
+            in: cityNames,
+          },
+        },
+      });
+      return new Map(allCities.map((city) => [city.name, city.id]));
+    });
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : "Failed to prepare cities";
+    return NextResponse.json({ error: message }, { status: 500 });
+  }
+
+  // 3. upload partner logo
+  
+
+  // 4. create new partner & partner regions
 
   const newPartnerRequest = {
     data: {
@@ -200,27 +256,56 @@ export async function PUT(request: Request) {
   }
 
   const partnerId = Number(partner.id);
-  const cityIds: City[] = await prisma.city.findMany({
-    where: {
-      name: {
-        in: cityNames,
-      },
-    },
-  });
+  // let cityIds: City[] = await prisma.city.findMany({
+  //   where: {
+  //     name: {
+  //       in: cityNames,
+  //     },
+  //   },
+  // });
 
-  const cityIdByName = new Map(cityIds.map((city) => [city.name, city.id]));
-  const missingCities = cityNames.filter((name) => !cityIdByName.has(name));
-  if (missingCities.length > 0) {
+  // const cityIdByName = new Map(
+  //   cityIds
+  //     .filter((city) => typeof city.name === "string")
+  //     .map((city) => [city.name as string, city.id]),
+  // );
+  // const missingCities = cityNames.filter((name) => !cityIdByName.has(name));
+  // if (missingCities.length > 0) {
+  //   await prisma.city.createMany({
+  //     data: missingCities.map((name) => ({ name })),
+  //     skipDuplicates: true,
+  //   });
+  
+  //   cityIds = await prisma.city.findMany({
+  //     where: {
+  //       name: {
+  //         in: cityNames,
+  //       },
+  //     },
+  //   });
+  // }
+  
+  const refreshedCityIdByName = new Map(
+    cityIds
+      .filter((city) => typeof city.name === "string")
+      .map((city) => [city.name as string, city.id]),
+  );
+  const unresolvedCities = cityNames.filter(
+    (name) => !refreshedCityIdByName.has(name),
+  );
+  if (unresolvedCities.length > 0) {
     return NextResponse.json(
-      { error: `Unknown cities: ${missingCities.join(", ")}` },
+      { error: `Unable to resolve cities: ${unresolvedCities.join(", ")}` },
       { status: 400 },
     );
   }
+  
 
+  // 304 - 365
   const newPartnerRegionsRequest = {
     data: payload.cities.map((city: CityPercentage) => ({
       partnerId: partnerId,
-      cityId: cityIdByName.get(city.city)!,
+      cityId: refreshedCityIdByName.get(city.city)!,
       percentage: city.percentage,
     })),
   } satisfies PrismaTypes.PartnerRegionCreateManyArgs;

@@ -125,6 +125,7 @@ export default function AddPartnerForm({
   const [isLoadingCities, setIsLoadingCities] = useState<boolean>(false);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [isUploadingFile, setIsUploadingFile] = useState<boolean>(false);
+  const [submitWarning, setSubmitWarning] = useState<string>("");
 
   useEffect(() => {
     const fetchCities = async () => {
@@ -229,6 +230,7 @@ export default function AddPartnerForm({
 
   async function submitPartner(values: typeof form.values) {
     setIsSubmitting(true);
+    setSubmitWarning("");
     const cityPercentages = values.cities.map((city) => {
       const raw = Number(percentages[city] ?? 0);
       // rounds percentages to avoid floating-point errors
@@ -273,12 +275,20 @@ export default function AddPartnerForm({
 
       if (!response.ok) {
         const err = await response.json();
-        form.setFieldError("logoFile", err.error);
+        const warning = typeof err?.error === "string" ? err.error : "Unable to submit partner.";
+        if (warning === "Please check the entered cities.") {
+          form.setFieldError("cities", warning);
+          setSubmitWarning(warning);
+          return;
+        }
+        form.setFieldError("logoFile", warning);
+        setSubmitWarning(warning);
         return;
       }
 
       form.reset();
       setPercentages({});
+      setSubmitWarning("");
       onClose();
 
       if (typeof window !== "undefined") {
@@ -618,6 +628,13 @@ export default function AddPartnerForm({
           </Group>
 
           {/* Submit and Cancel Buttons */}
+          {submitWarning ? (
+            <Group justify="flex-end" mt="xs">
+              <Text c="red" size="sm">
+                {submitWarning}
+              </Text>
+            </Group>
+          ) : null}
           <Group justify="flex-end" mt="md">
             <Button
               variant="outline"
