@@ -2,30 +2,27 @@ openapi: 3.0.0
 info:
   title: Beantown Baby Diaper Bank API
   version: 1.0.0
-  description: API documentation for the Beantown Baby Diaper Bank application.
+  description: OpenAPI docs aligned with implemented Next.js API routes.
 servers:
   - url: /api
     description: Internal API
 paths:
   /partners:
     get:
-      summary: List all partners
-      description: Lists diaper bank partners. Supports filtering by name and waitlist status.
+      summary: List partners
       parameters:
         - name: search
           in: query
           schema:
             type: string
-          description: Partial or case-insensitive match against the partner name.
         - name: waitlisted
           in: query
           schema:
             type: string
             enum: ["true", "false"]
-          description: Filter by waitlist status.
       responses:
         '200':
-          description: A list of partners
+          description: Partner list
           content:
             application/json:
               schema:
@@ -34,43 +31,102 @@ paths:
                   data:
                     type: array
                     items:
-                      $ref: '#/components/schemas/Partner'
-    post:
-      summary: Create a new partner
-      description: Creates a new partner record.
+                      $ref: '#/components/schemas/PartnerListItem'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    put:
+      summary: Create partner
+      description: |
+        Accepts JSON or multipart/form-data. For multipart, include a `partner`
+        JSON string field, optional `logoAction` (keep|replace), and `file` when replacing.
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/PartnerInput'
+              $ref: '#/components/schemas/CreatePartnerPayload'
+          multipart/form-data:
+            schema:
+              type: object
+              required: [partner]
+              properties:
+                partner:
+                  type: string
+                  description: JSON-serialized CreatePartnerPayload
+                logoAction:
+                  type: string
+                  enum: [keep, replace]
+                file:
+                  type: string
+                  format: binary
       responses:
         '200':
-          description: The created partner
+          description: Partner created
           content:
             application/json:
               schema:
                 type: object
                 properties:
                   data:
-                    $ref: '#/components/schemas/Partner'
+                    type: string
+                    description: JSON string of the created partner object (BigInt-safe serialization)
+        '400':
+          $ref: '#/components/responses/BadRequest'
         '500':
-          description: Server error
+          $ref: '#/components/responses/InternalServerError'
+    post:
+      summary: Update partner (body contains id)
+      description: |
+        Accepts JSON or multipart/form-data. For multipart, include a `partner`
+        JSON string field, optional `logoAction` (keep|replace|remove), and `file` when replacing.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdatePartnerPayload'
+          multipart/form-data:
+            schema:
+              type: object
+              required: [partner]
+              properties:
+                partner:
+                  type: string
+                  description: JSON-serialized UpdatePartnerPayload
+                logoAction:
+                  type: string
+                  enum: [keep, replace, remove]
+                file:
+                  type: string
+                  format: binary
+      responses:
+        '200':
+          description: Partner updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: string
+                    description: JSON string of the updated partner object (BigInt-safe serialization)
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
 
   /partners/{id}:
     get:
-      summary: Get partner by ID
-      description: returns a single partner by ID, including aggregate distribution data.
+      summary: Get partner details by ID
       parameters:
         - name: id
           in: path
           required: true
           schema:
             type: integer
-          description: The partner ID
       responses:
         '200':
-          description: Partner data
+          description: Partner details and aggregate distribution totals
           content:
             application/json:
               schema:
@@ -80,94 +136,56 @@ paths:
                     $ref: '#/components/schemas/PartnerDetail'
         '404':
           description: Partner not found
-
-  /distributions:
-    get:
-      summary: Get distributions
-      description: Fetch distribution records with optional filtering by month/year range.
-      parameters:
-        - name: month
-          in: query
-          schema:
-            type: string
-          description: Filter by specific month
-        - name: year
-          in: query
-          schema:
-            type: string
-          description: Filter by specific year
-        - name: startMonth
-          in: query
-          schema:
-            type: string
-        - name: startYear
-          in: query
-          schema:
-            type: string
-        - name: endMonth
-          in: query
-          schema:
-            type: string
-        - name: endYear
-          in: query
-          schema:
-            type: string
-      responses:
-        '200':
-          description: List of distributions
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Distribution'
-
-    delete:
-      summary: Delete distributions
-      description: Delete multiple distribution records by ID.
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    post:
+      summary: Update partner by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              type: object
-              properties:
-                ids:
-                  type: array
-                  items:
-                    type: string
+              $ref: '#/components/schemas/PartnerIdRouteUpdatePayload'
       responses:
         '200':
-          description: Deletion result
+          description: Updated partner
           content:
             application/json:
               schema:
                 type: object
                 properties:
-                  deletedCount:
-                    type: integer
+                  data:
+                    type: object
+                    additionalProperties: true
+        '500':
+          $ref: '#/components/responses/InternalServerError'
 
-  /cities:
+  /partners/percentages:
     get:
-      summary: Get cities
-      description: List cities with their distributions and partner regions.
+      summary: List partner-region percentages
       parameters:
-        - name: name
+        - name: partnerId
           in: query
           schema:
             type: string
-          description: Filter by city name
-        - name: month
-          in: query
-          schema:
-            type: string
-        - name: year
+          description: BigInt-compatible string partner id
+        - name: partnerName
           in: query
           schema:
             type: string
       responses:
         '200':
-          description: List of cities
+          description: Partner percentages
           content:
             application/json:
               schema:
@@ -176,11 +194,457 @@ paths:
                   data:
                     type: array
                     items:
-                      $ref: '#/components/schemas/City'
+                      $ref: '#/components/schemas/PartnerRegionItem'
+        '500':
+          description: Error response object with status only
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: integer
+    post:
+      summary: Update partner-region percentages
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/PartnerRegionUpdate'
+      responses:
+        '200':
+          description: Updated percentages
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/PartnerRegionUpdate'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          description: Error response object with status only
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: integer
+
+  /distributions:
+    get:
+      summary: Get distributions
+      parameters:
+        - name: month
+          in: query
+          schema:
+            $ref: '#/components/schemas/MonthEnum'
+        - name: year
+          in: query
+          schema:
+            type: string
+        - name: startMonth
+          in: query
+          schema:
+            $ref: '#/components/schemas/MonthEnum'
+        - name: startYear
+          in: query
+          schema:
+            type: string
+        - name: endMonth
+          in: query
+          schema:
+            $ref: '#/components/schemas/MonthEnum'
+        - name: endYear
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Distribution records
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/DistributionItem'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    delete:
+      summary: Delete distributions by IDs
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [ids]
+              properties:
+                ids:
+                  type: array
+                  items:
+                    type: string
+      responses:
+        '200':
+          description: Deletion count
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  deletedCount:
+                    type: integer
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /distributions/upload:
+    post:
+      summary: Upload distribution CSV data
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [csv, selectedDate]
+              properties:
+                csv:
+                  type: string
+                selectedDate:
+                  type: string
+      responses:
+        '200':
+          description: Upload processing result
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    additionalProperties: true
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /cities:
+    get:
+      summary: List cities with distributions and partner coverage
+      parameters:
+        - name: name
+          in: query
+          schema:
+            type: string
+        - name: month
+          in: query
+          schema:
+            $ref: '#/components/schemas/MonthEnum'
+        - name: year
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Cities data
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/CityItem'
+
+  /cities/centroids:
+    get:
+      summary: Get city centroids as GeoJSON FeatureCollection
+      responses:
+        '200':
+          description: GeoJSON FeatureCollection of city centroids
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GeoJsonFeatureCollectionPoint'
+        '404':
+          description: City not found
+          content:
+            text/plain:
+              schema:
+                type: string
+        '500':
+          description: Internal server error
+          content:
+            text/plain:
+              schema:
+                type: string
+
+  /cities/boundaries:
+    get:
+      summary: Get city boundaries as GeoJSON FeatureCollection
+      responses:
+        '200':
+          description: GeoJSON FeatureCollection of city boundaries, or a plain text message when none exist
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GeoJsonFeatureCollectionPolygon'
+            text/plain:
+              schema:
+                type: string
+        '500':
+          description: Internal server error
+          content:
+            text/plain:
+              schema:
+                type: string
+
+  /timeline-slider:
+    get:
+      summary: Get timeline years and months
+      responses:
+        '200':
+          description: Timeline data
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  years:
+                    type: array
+                    items:
+                      type: string
+                      nullable: true
+                  months:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        Month:
+                          type: string
+                          nullable: true
+                        Year:
+                          type: string
+                          nullable: true
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /total-diapers:
+    get:
+      summary: Get aggregate diaper total
+      responses:
+        '200':
+          description: Total diapers
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  totalDiapers:
+                    type: integer
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /monthly-data:
+    get:
+      summary: Placeholder endpoint
+      responses:
+        '200':
+          description: Static message
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Hello World
+    post:
+      summary: Create monthly data records
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/MonthlyDataCreateItem'
+      responses:
+        '201':
+          description: Monthly data created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /upload/logo:
+    post:
+      summary: Upload a partner logo to storage
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [file]
+              properties:
+                file:
+                  type: string
+                  format: binary
+      responses:
+        '200':
+          description: File uploaded
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  url:
+                    type: string
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /admin/list:
+    get:
+      summary: List admin users from Clerk
+      responses:
+        '200':
+          description: Admin users
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  admins:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/AdminUser'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /admin/add:
+    post:
+      summary: Create an admin user in Clerk
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [firstName, lastName, email, level]
+              properties:
+                firstName:
+                  type: string
+                lastName:
+                  type: string
+                email:
+                  type: string
+                  format: email
+                level:
+                  type: string
+                password:
+                  type: string
+      responses:
+        '200':
+          description: User created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  user:
+                    type: object
+                    additionalProperties: true
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '422':
+          description: Clerk validation error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  errors:
+                    type: array
+                    items:
+                      type: object
+                      additionalProperties: true
+        '500':
+          $ref: '#/components/responses/InternalServerError'
 
 components:
+  responses:
+    BadRequest:
+      description: Bad request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    InternalServerError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
   schemas:
-    Partner:
+    MonthEnum:
+      type: string
+      enum:
+        - January
+        - February
+        - March
+        - April
+        - May
+        - June
+        - July
+        - August
+        - September
+        - October
+        - November
+        - December
+
+    StatusEnum:
+      type: string
+      enum:
+        - active
+        - waitlisted
+        - inactive
+
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+        message:
+          type: string
+
+    PartnerListItem:
       type: object
       properties:
         id:
@@ -190,6 +654,7 @@ components:
           format: date-time
         name:
           type: string
+          nullable: true
         description:
           type: string
           nullable: true
@@ -197,21 +662,28 @@ components:
           type: string
           format: date-time
           nullable: true
-        status:
+        end_partner:
           type: string
+          format: date-time
+          nullable: true
+        status:
+          $ref: '#/components/schemas/StatusEnum'
         waitlisted:
           type: boolean
         address:
           type: string
           nullable: true
+        coords:
+          type: object
+          nullable: true
+          additionalProperties: true
         logo_url:
           type: string
           nullable: true
-        coords:
-          type: object
 
-    PartnerInput:
+    CreatePartnerPayload:
       type: object
+      required: [name, description, status, coordinates, address, cities]
       properties:
         name:
           type: string
@@ -219,35 +691,147 @@ components:
           type: string
         start_partner:
           type: string
-        status:
+          nullable: true
+        end_partner:
           type: string
+          nullable: true
+        status:
+          $ref: '#/components/schemas/StatusEnum'
+        coordinates:
+          type: object
+          additionalProperties: true
         address:
           type: string
         logo:
           type: string
-        coordinates:
-          type: object
         cities:
           type: array
           items:
             type: object
+            required: [city, percentage]
             properties:
               city:
                 type: string
               percentage:
                 type: number
 
-    PartnerDetail:
-      allOf:
-        - $ref: '#/components/schemas/Partner'
-        - type: object
-          properties:
-            number_babies_helped:
-              type: integer
-            number_diapers:
-              type: integer
+    UpdatePartnerPayload:
+      type: object
+      required: [id, name, description, status, coordinates, address]
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        description:
+          type: string
+        start_partner:
+          type: string
+          nullable: true
+        end_partner:
+          type: string
+          nullable: true
+        status:
+          $ref: '#/components/schemas/StatusEnum'
+        coordinates:
+          type: object
+          additionalProperties: true
+        address:
+          type: string
+        logo:
+          type: string
 
-    Distribution:
+    PartnerIdRouteUpdatePayload:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        status:
+          $ref: '#/components/schemas/StatusEnum'
+        address:
+          type: string
+        coordinates:
+          type: object
+          additionalProperties: true
+        logo:
+          type: string
+        start_partner:
+          type: string
+          nullable: true
+        end_partner:
+          type: string
+          nullable: true
+
+    PartnerDetail:
+      type: object
+      properties:
+        partner_id:
+          type: integer
+        name:
+          type: string
+          nullable: true
+        description:
+          type: string
+          nullable: true
+        logoUrl:
+          type: string
+          nullable: true
+        coordinates:
+          type: object
+          nullable: true
+          additionalProperties: true
+        address:
+          type: string
+          nullable: true
+        status:
+          $ref: '#/components/schemas/StatusEnum'
+        startPartner:
+          type: string
+          format: date-time
+          nullable: true
+        endPartner:
+          type: string
+          format: date-time
+          nullable: true
+        number_babies_helped:
+          type: integer
+        number_diapers:
+          type: integer
+
+    PartnerRegionItem:
+      type: object
+      properties:
+        partnerId:
+          type: string
+        cityId:
+          type: string
+        percentage:
+          type: number
+          nullable: true
+        city:
+          type: object
+          properties:
+            id:
+              type: string
+            name:
+              type: string
+              nullable: true
+
+    PartnerRegionUpdate:
+      type: object
+      required: [partnerId, cityId]
+      properties:
+        partnerId:
+          type: integer
+        cityId:
+          type: integer
+        percentage:
+          type: number
+          nullable: true
+
+    DistributionItem:
       type: object
       properties:
         id:
@@ -278,31 +862,34 @@ components:
           nullable: true
         partner:
           type: object
+          nullable: true
           properties:
             name:
               type: string
               nullable: true
         city:
           type: object
+          nullable: true
           properties:
             name:
               type: string
               nullable: true
 
-    City:
+    CityItem:
       type: object
       properties:
         id:
           type: integer
         name:
           type: string
+          nullable: true
         distributions:
           type: array
           items:
             type: object
             properties:
               id:
-                type: integer
+                type: string
               year:
                 type: string
                 nullable: true
@@ -311,15 +898,22 @@ components:
                 nullable: true
               numberDiapers:
                 type: integer
+                nullable: true
               numberChildren:
                 type: integer
+                nullable: true
+              percentage:
+                type: number
+                nullable: true
               partner:
                 type: object
+                nullable: true
                 properties:
                   id:
                     type: integer
                   name:
                     type: string
+                    nullable: true
         partners:
           type: array
           items:
@@ -329,8 +923,108 @@ components:
                 type: integer
               name:
                 type: string
+                nullable: true
               logo_url:
                 type: string
                 nullable: true
               status:
+                $ref: '#/components/schemas/StatusEnum'
+
+    MonthlyDataCreateItem:
+      type: object
+      required: [partnerId, year, month]
+      properties:
+        partnerId:
+          oneOf:
+            - type: string
+            - type: number
+        year:
+          type: string
+        month:
+          $ref: '#/components/schemas/MonthEnum'
+        numDiapers:
+          oneOf:
+            - type: string
+            - type: number
+          nullable: true
+        numBabies:
+          oneOf:
+            - type: string
+            - type: number
+          nullable: true
+
+    AdminUser:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        email:
+          type: string
+        level:
+          type: string
+        isAdmin:
+          type: boolean
+
+    GeoJsonFeatureCollectionPoint:
+      type: object
+      properties:
+        type:
+          type: string
+          enum: [FeatureCollection]
+        features:
+          type: array
+          items:
+            type: object
+            properties:
+              type:
                 type: string
+                enum: [Feature]
+              geometry:
+                type: object
+                properties:
+                  type:
+                    type: string
+                    enum: [Point]
+                  coordinates:
+                    type: array
+                    items:
+                      type: number
+              properties:
+                type: object
+                additionalProperties: true
+
+    GeoJsonFeatureCollectionPolygon:
+      type: object
+      properties:
+        type:
+          type: string
+          enum: [FeatureCollection]
+        features:
+          type: array
+          items:
+            type: object
+            properties:
+              type:
+                type: string
+                enum: [Feature]
+              id:
+                type: string
+              properties:
+                type: object
+                additionalProperties: true
+              geometry:
+                type: object
+                properties:
+                  type:
+                    type: string
+                    enum: [Polygon]
+                  coordinates:
+                    type: array
+                    items:
+                      type: array
+                      items:
+                        type: array
+                        items:
+                          type: number
