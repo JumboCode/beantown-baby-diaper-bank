@@ -121,8 +121,43 @@ export async function POST(request: Request) {
 
     const errors = new Set<string>();
 
-    for (const [normalizedName, displayName] of csvPartnerNamesByNormalized) {
+    const seen = new Set<string>();
+
+    for (const row of partnerRows) {
+      const name = row.partnerName?.trim();
+      const totalChildrenStr = String(row.totalChildren ?? "").replace(/,/g, "").trim();
+      const totalDiapersStr = String(row.totalDiapers ?? "").replace(/,/g, "").trim();
+
+      // Check for missing fields
+      if (!name || totalChildrenStr === "" || totalDiapersStr === "") {
+        errors.add("There are missing fields in the spreadsheet. Please fix and reupload.");
+        if (!name) continue;
+      }
+
+      // Check for invalid characters
+      const isInvalidChildren = totalChildrenStr !== "" && !/^\d+$/.test(totalChildrenStr);
+      const isInvalidDiapers = totalDiapersStr !== "" && !/^\d+$/.test(totalDiapersStr);
+
+      if (isInvalidChildren || isInvalidDiapers) {
+        errors.add("There are non-numeric or negative values for number of diapers in the spreadsheet. Please fix and reupload.");
+      }
+
+      const displayName = row.partnerName;
+      const normalizedName = normalizeName(displayName);
+
+      // Check for duplicates organizations
+      if (seen.has(normalizedName)) {
+        errors.add(
+          `Organization ${displayName} appears multiple times in the spreadsheet. Please fix duplicates.`,
+        );
+        continue;
+      }
+
+      seen.add(normalizedName);
+
+      // Check if partner does not exist
       const partner = partnerByNormalizedName.get(normalizedName);
+
       if (!partner) {
         errors.add(
           `Organization ${displayName} does not exist, consider adding them as a new Partner`,
@@ -130,6 +165,7 @@ export async function POST(request: Request) {
         continue;
       }
 
+      // Check status of partners
       if (partner.status === "inactive") {
         errors.add(
           `Organization ${displayName} is inactive. Consider editing its status.`,

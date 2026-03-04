@@ -15,7 +15,6 @@ export type UploadComputationResult = {
   monthlyRowsCreated: number;
   distributionRowsCreated: number;
   yearlyRowsUpdated: number;
-  skippedRows: number;
   missingPartners: string[];
 };
 
@@ -48,31 +47,21 @@ function parseNumericCell(cell: string | undefined): number | null {
 }
 
 export function parsePartnerRows(csv: string): {
-  parsed: ParsedPartnerRow[];
-  skipped: number;
+  parsed: any[];
 } {
   const { data } = Papa.parse<string[]>(csv, { skipEmptyLines: "greedy" });
 
-  const parsed: ParsedPartnerRow[] = [];
-  let skipped = 0;
+  const rows = data.slice(1); 
 
-  for (const rawRow of data) {
-    const row = rawRow ?? [];
-    const partnerName = row[0]?.trim();
-    if (!partnerName) continue;
+  const parsed = rows.map((row) => {
+    return {
+      partnerName: row[0]?.trim() || "",
+      totalChildren: row[1], // Pass raw value string ("abc", "", etc.)
+      totalDiapers: row[2],  // Pass raw value string
+    };
+  });
 
-    const totalChildren = parseNumericCell(row[1]);
-    const totalDiapers = parseNumericCell(row[2]);
-
-    if (totalChildren === null || totalDiapers === null) {
-      skipped += 1;
-      continue;
-    }
-
-    parsed.push({ partnerName, totalChildren, totalDiapers });
-  }
-
-  return { parsed, skipped };
+  return { parsed };
 }
 
 function monthFromDate(date: Date): month {
@@ -105,7 +94,7 @@ export async function processDistributionUpload(input: {
   const targetMonth = monthFromDate(parsedDate);
   const targetYear = String(parsedDate.getUTCFullYear());
 
-  const { parsed: partnerRows, skipped } = parsePartnerRows(csv);
+  const { parsed: partnerRows } = parsePartnerRows(csv);
   if (partnerRows.length === 0) {
     throw new Error("No valid partner rows were found in the uploaded CSV.");
   }
@@ -264,7 +253,6 @@ export async function processDistributionUpload(input: {
     monthlyRowsCreated: monthlyRows.length,
     distributionRowsCreated: distributionRows.length,
     yearlyRowsUpdated,
-    skippedRows: skipped,
     missingPartners: Array.from(missingPartners),
   };
 }
