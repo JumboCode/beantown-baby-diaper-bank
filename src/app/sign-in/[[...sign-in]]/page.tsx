@@ -112,13 +112,6 @@ export default function SignInPage() {
               </Button>
             </Stack>
           </form>
-
-          <Text ta="center" mt="xl" size="sm">
-            Don&apos; t have an account?{" "}
-            <Anchor href="#" fw={700} c="blue.9">
-              Sign up here
-            </Anchor>
-          </Text>
         </Paper>
       </Container>
     </Center>
