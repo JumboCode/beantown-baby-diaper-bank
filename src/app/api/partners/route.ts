@@ -38,6 +38,7 @@ type UpdatePartnerPayload = {
   coordinates: PrismaTypes.InputJsonValue;
   address: string;
   logo?: string;
+  cities?: CityPercentage[];
 };
 
 class PartnerRequestError extends Error {
