@@ -15,9 +15,14 @@ import {
 const NOMINATIM_BASE_URL = "https://nominatim.openstreetmap.org/search";
 
 type LogoAction = "keep" | "replace" | "remove";
+// EditPartnerForm.tsx currently has a state of type { city: { id, name }, percentage }
+// that stores the latest cities and their percentages.
+// The front-end can use Map() to reformat the data structure to be of type CityPercentage 
+// and attach it as part of the payload upon form submission
 type CityPercentage = {
   city: string;
   percentage: number;
+  id?: string,    
 };
 type CityGeoData = {
   centroidGeoJson: string;
@@ -49,7 +54,7 @@ type UpdatePartnerPayload = {
   coordinates: PrismaTypes.InputJsonValue;
   address: string;
   logo?: string;
-  cities?: CityPercentage[];
+  cities: CityPercentage[];
 };
 
 class PartnerRequestError extends Error {
@@ -106,7 +111,7 @@ async function fetchCityGeoDataFromNominatim(
   typeof first.addresstype === "string" ? first.addresstype : "";
 
 
-  if (addressType != "town" || addressType != "city" || !Number.isFinite(lat) || !Number.isFinite(lon) || !first.geojson) {
+  if ((addressType != "town" && addressType != "city" )|| !Number.isFinite(lat) || !Number.isFinite(lon) || !first.geojson) {
     throw new PartnerRequestError(
       "Please check the entered cities.",
       422,
@@ -119,6 +124,7 @@ async function fetchCityGeoDataFromNominatim(
       type: "Point",
       coordinates: [lon, lat],
     }),
+    addressType: addressType,
     boundaryGeoJson: JSON.stringify(first.geojson),
   };
 }
@@ -349,24 +355,6 @@ export async function PUT(request: Request) {
         where: cityWhere,
       });
 
-      for (const city of allCities) {
-        const name = city.name;
-        if (!name) continue;
-        const geoData = cityGeoByName.get(normalizeCityName(name));
-        if (!geoData) {
-          throw new PartnerRequestError("Please check the entered cities.", 422);
-        }
-
-        // Keep city geodata in sync for all submitted cities.
-        await tx.$executeRaw`
-          UPDATE "Cities"
-          SET
-            "centroid" = ST_SetSRID(ST_GeomFromGeoJSON(${geoData.centroidGeoJson}), 4326),
-            "boundary" = ST_SetSRID(ST_GeomFromGeoJSON(${geoData.boundaryGeoJson}), 4326)::geography
-          WHERE id = ${city.id}
-        `;
-      }
-
       return new Map(
         allCities
           .map((city) => [city.name ? normalizeCityName(city.name) : null, city.id])
@@ -451,7 +439,7 @@ export async function PUT(request: Request) {
     console.log('inside logoAction === replace');
     
     let uploadedObjectKey: string | undefined;
-    let partnerId = Number(partner.id);
+    const partnerId = Number(partner.id);
     
     try {
       const uploadResult = await uploadLogoForPartner(partnerId, logoFile!);
@@ -515,10 +503,134 @@ export async function POST(request: Request) {
   }
 
   console.log("Received partner data:", payload);
+  const partnerId = Number(payload.id);
 
-  // Attempt to replace logo
+  // the front-end currently does not have cities/percentages included in its
+  // form submission (see EditPartnerForm.tsx for more details)
+  const submittedCities = Array.isArray(payload.cities) ? payload.cities : [];
+  const shouldSyncPartnerRegions = submittedCities.length > 0;
+  let cityIdByName = new Map<string, bigint>();
+
+  if (shouldSyncPartnerRegions) {
+    const cityNames = Array.from(
+      new Set(
+        submittedCities
+          .map((city: { city: string }) => city.city.trim())
+          .filter((cityName): cityName is string => cityName.length > 0),
+      ),
+    );
+
+    if (cityNames.length === 0) {
+      return NextResponse.json(
+        { error: "Please check the entered cities." },
+        { status: 422 },
+      );
+    }
+
+    try {
+      const cityWhere: PrismaTypes.CityWhereInput = {
+        OR: cityNames.map((name) => ({
+          name: {
+            equals: name,
+            mode: "insensitive",
+          },
+        })),
+      };
+
+      const existingCities: City[] = await prisma.city.findMany({
+        where: cityWhere,
+      });
+      const existingCityNames = new Set(
+        existingCities
+          .map((city) => city.name)
+          .filter((name): name is string => Boolean(name))
+          .map((name) => normalizeCityName(name)),
+      );
+
+      // Find city names that are not yet in DB
+      const missingCityNames = cityNames.filter(
+        (name) => !existingCityNames.has(normalizeCityName(name)),
+      );
+      const cityGeoByName = new Map<string, CityGeoData>();
+
+      // Fetch geo data for every submitted city and block submission if any city
+      // cannot be geocoded.
+      for (const cityName of cityNames) {
+        const geo = await fetchCityGeoDataFromNominatim(cityName);
+        cityGeoByName.set(normalizeCityName(cityName), geo);
+      }
+
+      cityIdByName = await prisma.$transaction(async (tx) => {
+        if (missingCityNames.length > 0) {
+          await tx.city.createMany({
+            data: missingCityNames.map((name) => ({ name })),
+            skipDuplicates: true,
+          });
+
+          // createMany does not return IDs, so re-query inserted rows
+          const insertedCities = await tx.city.findMany({
+            where: {
+              OR: missingCityNames.map((name) => ({
+                name: {
+                  equals: name,
+                  mode: "insensitive",
+                },
+              })),
+            },
+            select: {
+              id: true,
+              name: true,
+            },
+          });
+
+          for (const city of insertedCities) {
+            const name = city.name;
+            if (!name) continue;
+            const geoData = cityGeoByName.get(normalizeCityName(name));
+            if (!geoData) continue;
+
+            // centroid/boundary are PostGIS columns, so write them through SQL
+            await tx.$executeRaw`
+              UPDATE "Cities"
+              SET
+                "centroid" = ST_SetSRID(ST_GeomFromGeoJSON(${geoData.centroidGeoJson}), 4326),
+                "boundary" = ST_SetSRID(ST_GeomFromGeoJSON(${geoData.boundaryGeoJson}), 4326)::geography
+              WHERE id = ${city.id}
+            `;
+          }
+        }
+
+        // fetch all cities
+        const allCities = await tx.city.findMany({
+          where: cityWhere,
+        });
+
+        return new Map(
+          allCities
+            .map((city) => [
+              city.name ? normalizeCityName(city.name) : null,
+              city.id,
+            ])
+            .filter(([name]) => name !== null) as Array<[string, bigint]>,
+        );
+      });
+    } catch (error) {
+      if (error instanceof PartnerRequestError) {
+        return NextResponse.json(
+          { error: error.message },
+          { status: error.status },
+        );
+      }
+
+      const message =
+        error instanceof Error ? error.message : "Failed to prepare cities";
+      return NextResponse.json({ error: message }, { status: 500 });
+    }
+  }
+
+  // partner logo update & sync into Partners & Partner Region
+  // rollback the entire update if any of the steps fails
   try {
-    const partnerId = Number(payload.id);
     let uploadedPublicUrl: string | undefined;
 
     if (logoAction === "replace") {
@@ -534,31 +646,90 @@ export async function POST(request: Request) {
       uploadedPublicUrl = uploadResult.publicUrl;
     }
 
-    // Update partner fields
-    const partner = await prisma.partner.update({
-      where: { id: partnerId },
-      data: {
-        name: payload.name,
-        description: payload.description,
-        startPartner: normalizeStartPartner(payload.start_partner),
-        endPartner: normalizeMonthDate(payload.end_partner ?? null),
-        status: payload.status as status,
-        coords: payload.coordinates,
-        address: payload.address,
-        logoUrl:
-          logoAction === "replace"
-            ? uploadedPublicUrl!
-            : logoAction === "remove"
-              ? ""
-              : (payload.logo ?? ""),
-      },
+    const partner = await prisma.$transaction(async (tx) => {
+      const updatedPartner = await tx.partner.update({
+        where: { id: partnerId },
+        data: {
+          name: payload.name,
+          description: payload.description,
+          startPartner: normalizeStartPartner(payload.start_partner),
+          endPartner: normalizeMonthDate(payload.end_partner ?? null),
+          status: payload.status as status,
+          coords: payload.coordinates,
+          address: payload.address,
+          logoUrl:
+            logoAction === "replace"
+              ? uploadedPublicUrl!
+              : logoAction === "remove"
+                ? ""
+                : (payload.logo ?? ""),
+        },
+      });
+
+      if (shouldSyncPartnerRegions) {
+        // Keep the latest value in case the same city appears multiple times
+        const percentageByCity = new Map<string, number>();
+        
+        for (const city of submittedCities) {
+          if (!city || typeof city.city !== "string") {
+            throw new PartnerRequestError("Please check the entered cities.", 422);
+          }
+          const normalizedCityName = normalizeCityName(city.city);
+          if (!normalizedCityName) {
+            throw new PartnerRequestError("Please check the entered cities.", 422);
+          }
+          percentageByCity.set(normalizedCityName, city.percentage);
+        }
+
+        const desiredRows = Array.from(percentageByCity.entries()).map(
+          ([normalizedCityName, percentage]) => {
+            const cityId = cityIdByName.get(normalizedCityName);
+            if (!cityId) {
+              throw new PartnerRequestError("Please check the entered cities.", 422);
+            }
+            return {
+              partnerId: BigInt(partnerId),
+              cityId,
+              percentage,
+            };
+          },
+        );
+
+        const desiredCityIds = desiredRows.map((row) => row.cityId);
+
+        // Remove cities that are no longer selected in the updated payload
+        await tx.partnerRegion.deleteMany({
+          where: {
+            partnerId: BigInt(partnerId),
+            cityId: {
+              notIn: desiredCityIds,
+            },
+          },
+        });
+
+        // upsert handles both existing rows (updated percentage) and new rows
+        // (new partnerId-cityId combo)
+        for (const row of desiredRows) {
+          await tx.partnerRegion.upsert({
+            where: {
+              partnerId_cityId: {
+                partnerId: row.partnerId,
+                cityId: row.cityId,
+              },
+            },
+            update: {
+              percentage: row.percentage,
+            },
+            create: row,
+          });
+        }
+      }
+
+      return updatedPartner;
     });
 
-    // Remove or replace logo in database
     if (logoAction === "remove") {
-      await deleteLogoObject(getLogoObjectKey(partnerId)).catch(
-        () => undefined,
-      );
+      await deleteLogoObject(getLogoObjectKey(partnerId)).catch(() => undefined);
     }
 
     return NextResponse.json({
@@ -566,7 +737,7 @@ export async function POST(request: Request) {
     });
   } catch (error) {
     if (logoAction === "replace") {
-      await deleteLogoObject(getLogoObjectKey(Number(payload.id))).catch(
+      await deleteLogoObject(getLogoObjectKey(partnerId)).catch(
         () => undefined,
       );
     }
@@ -574,7 +745,7 @@ export async function POST(request: Request) {
     const message =
       error instanceof Error
         ? error.message
-        : "Unable to insert partner into database.";
+        : "Unable to update partner in database.";
     const statusCode =
       error instanceof PartnerRequestError || error instanceof FileUploadError
         ? error.status
