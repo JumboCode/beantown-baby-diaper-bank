@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
-import { Text } from "@mantine/core";
+import { Table, Text } from "@mantine/core";
 import { Distribution } from "@/lib/types";
 import { CollapsibleDropdown } from "./Dropdown";
 

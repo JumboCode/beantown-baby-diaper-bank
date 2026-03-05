@@ -36,7 +36,7 @@ export default function SignInPage() {
         identifier: email,
         password,
       });
-      
+
       if (result.status === "complete") {
         await setActive({ session: result.createdSessionId });
         router.push("/admin");
@@ -112,13 +112,6 @@ export default function SignInPage() {
               </Button>
             </Stack>
           </form>
-
-          <Text ta="center" mt="xl" size="sm">
-            Don&apos; t have an account?{" "}
-            <Anchor href="#" fw={700} c="blue.9">
-              Sign up here
-            </Anchor>
-          </Text>
         </Paper>
       </Container>
     </Center>

@@ -100,7 +100,6 @@ async function seedPartners() {
     name?: string;
     description?: string;
     start_partner?: string;
-    waitlisted?: string;
     address?: string;
     coords?: string;
     logo_url?: string;
@@ -115,7 +114,6 @@ async function seedPartners() {
       name: toStringOrNull(row.name),
       description: toStringOrNull(row.description),
       startPartner: toDate(row.start_partner),
-      waitlisted: row.waitlisted ? row.waitlisted === "TRUE" : undefined,
       address: toStringOrNull(row.address),
       coords: row.coords ? JSON.parse(row.coords) : undefined,
       logoUrl: toStringOrNull(row.logo_url),
@@ -237,18 +235,78 @@ async function seedYearlyData() {
   });
 }
 
+async function seedMonthlyData() {
+  const grouped = await prisma.distribution.groupBy({
+    by: ["partnerId", "year", "month"],
+    where: {
+      partnerId: { not: null },
+      year: { not: null },
+      month: { not: null },
+    },
+    _sum: {
+      numberDiapers: true,
+      numberChildren: true,
+    },
+  });
+
+  const data = grouped
+    .filter((row) => row.partnerId && row.year && row.month)
+    .map((row) => ({
+      id: randomUUID(),
+      partnerId: row.partnerId as bigint,
+      year: row.year as string,
+      month: row.month as month,
+      numDiapers: row._sum.numberDiapers ?? BigInt(0),
+      numBabies: row._sum.numberChildren ?? BigInt(0),
+    }));
+
+  if (data.length === 0) return;
+
+  await prisma.monthlyData.createMany({
+    data,
+    skipDuplicates: true,
+  });
+}
+
+async function syncTableSequence(tableName: string, columnName: string) {
+  const safeTableName = tableName.replace(/"/g, `""`);
+  const safeColumnName = columnName.replace(/"/g, `""`);
+
+  await prisma.$executeRawUnsafe(`
+    WITH sequence_data AS (
+      SELECT
+        pg_get_serial_sequence('"${safeTableName}"', '${safeColumnName}') AS sequence_name,
+        COALESCE((SELECT MAX("${safeColumnName}") FROM "${safeTableName}"), 0) + 1 AS next_value
+    )
+    SELECT setval(sequence_name, next_value, false)
+    FROM sequence_data
+    WHERE sequence_name IS NOT NULL;
+  `);
+}
+
+async function syncAutoIncrementSequences() {
+  await syncTableSequence("Cities", "id");
+  await syncTableSequence("Partners", "id");
+  await syncTableSequence("Distributions", "id");
+  await syncTableSequence("Yearly Data", "city_id");
+}
+
 async function main() {
   await prisma.$transaction([
     prisma.partnerRegion.deleteMany(),
     prisma.distribution.deleteMany(),
+    prisma.monthlyData.deleteMany(),
+    prisma.yearlyData.deleteMany(),
     prisma.partner.deleteMany(),
     prisma.city.deleteMany(),
   ]);
   await seedCities();
   await seedPartners();
   await seedDistributions();
+  await seedMonthlyData();
   await seedPartnerRegions();
   await seedYearlyData();
+  await syncAutoIncrementSequences();
 }
 
 main()

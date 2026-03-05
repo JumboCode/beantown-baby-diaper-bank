@@ -100,7 +100,9 @@ const requiredState = (label: string) => (value: unknown) => {
 
 type UpdatePercentagesOptions = "one-time" | "continuous";
 
-const parseMonthDateForPicker = (rawDate: string | null | undefined): Date | null => {
+const parseMonthDateForPicker = (
+  rawDate: string | null | undefined,
+): Date | null => {
   if (!rawDate) return null;
   const monthMatch = rawDate.match(/^(\d{4})-(\d{2})/);
   if (!monthMatch) {
@@ -193,11 +195,11 @@ export default function EditPartnerForm({
     validate: {
       organization: requiredInput("Name of Organization"),
       // Start date required unless waitlisted
-      time: (value, values) => 
-        (values.status === "waitlisted" || value ? null : "Select a start time"),
+      time: (value, values) =>
+        values.status === "waitlisted" || value ? null : "Select a start time",
       // End date required only if inactive
-      endTime: (value, values) => 
-        (values.status === "inactive" && !value ? "Select an end time" : null),
+      endTime: (value, values) =>
+        values.status === "inactive" && !value ? "Select an end time" : null,
       latitude: requiredNumber("Latitude"),
       longitude: requiredNumber("Longitude"),
       state: requiredState("State"),
@@ -223,10 +225,14 @@ export default function EditPartnerForm({
       description: values.description,
       // Clear start date if waitlisted
       start_partner:
-        values.status !== "waitlisted" ? formatMonthDateForApi(values.time) : null,
+        values.status !== "waitlisted"
+          ? formatMonthDateForApi(values.time)
+          : null,
       // Include end date only for inactive status
       end_partner:
-        values.status === "inactive" ? formatMonthDateForApi(values.endTime) : null,
+        values.status === "inactive"
+          ? formatMonthDateForApi(values.endTime)
+          : null,
       status: values.status,
       coordinates: {
         lat: values.latitude,
@@ -278,7 +284,11 @@ export default function EditPartnerForm({
 
   return (
     <Box pos="relative">
-      <LoadingOverlay visible={loading} zIndex={1000} overlayProps={{ radius: "sm", blur: 2 }} />
+      <LoadingOverlay
+        visible={loading}
+        zIndex={1000}
+        overlayProps={{ radius: "sm", blur: 2 }}
+      />
 
       <div className="mx-8">
         <h2 className="text-lg text-gray-500" style={{ marginBottom: "24px" }}>
@@ -332,9 +342,21 @@ export default function EditPartnerForm({
             >
               <Group gap="md" grow>
                 {[
-                  { value: "active", title: "Active", description: "Currently active" },
-                  { value: "inactive", title: "Inactive", description: "No longer active" },
-                  { value: "waitlisted", title: "Waitlisted", description: "On the waitlist" },
+                  {
+                    value: "active",
+                    title: "Active",
+                    description: "Currently active",
+                  },
+                  {
+                    value: "inactive",
+                    title: "Inactive",
+                    description: "No longer active",
+                  },
+                  {
+                    value: "waitlisted",
+                    title: "Waitlisted",
+                    description: "On the waitlist",
+                  },
                 ].map((option) => (
                   <Radio.Card
                     key={option.value}
@@ -347,13 +369,19 @@ export default function EditPartnerForm({
                       <Radio.Indicator />
                       <Stack gap={4}>
                         <Text fw={700}>{option.title}</Text>
-                        <Text size="xs" c="dimmed">{option.description}</Text>
+                        <Text size="xs" c="dimmed">
+                          {option.description}
+                        </Text>
                       </Stack>
                     </Group>
                   </Radio.Card>
                 ))}
               </Group>
-              {form.errors.status && <Text c="red" size="sm" mt="xs">{form.errors.status}</Text>}
+              {form.errors.status && (
+                <Text c="red" size="sm" mt="xs">
+                  {form.errors.status}
+                </Text>
+              )}
             </Radio.Group>
           </Group>
 
@@ -389,7 +417,9 @@ export default function EditPartnerForm({
 
           {/* Latitude and Longitude */}
           <Group justify="space-between" align="flex-start">
-            <Text fw={600} c="#344054">Coords <span className="text-red-600">*</span></Text>
+            <Text fw={600} c="#344054">
+              Coords <span className="text-red-600">*</span>
+            </Text>
             <div className="gap-4 flex">
               <NumberInput
                 placeholder="Latitude"
@@ -412,23 +442,57 @@ export default function EditPartnerForm({
 
           {/* Address Fields */}
           <Group justify="space-between" align="flex-start" w="100%">
-            <Text fw={600} c="#344054">Address <span className="text-red-600">*</span></Text>
+            <Text fw={600} c="#344054">
+              Address <span className="text-red-600">*</span>
+            </Text>
             <div className="flex flex-col gap-4 min-w-170 w-full max-w-[600px]">
-              <TextInput placeholder="Address Line" {...form.getInputProps("addressLine")} size="md" radius="md" />
+              <TextInput
+                placeholder="Address Line"
+                {...form.getInputProps("addressLine")}
+                size="md"
+                radius="md"
+              />
               <div className="flex gap-4 w-full">
-                <TextInput placeholder="City" {...form.getInputProps("city")} size="md" className="flex-1" radius="md" />
-                <TextInput placeholder="State" {...form.getInputProps("state")} size="md" className="w-[120px]" radius="md" />
+                <TextInput
+                  placeholder="City"
+                  {...form.getInputProps("city")}
+                  size="md"
+                  className="flex-1"
+                  radius="md"
+                />
+                <TextInput
+                  placeholder="State"
+                  {...form.getInputProps("state")}
+                  size="md"
+                  className="w-[120px]"
+                  radius="md"
+                />
               </div>
               <div className="flex gap-4 w-full">
-                <TextInput placeholder="Zip Code" {...form.getInputProps("zipCode")} size="md" className="w-[120px]" radius="md" />
-                <Select placeholder="Country" data={countries} {...form.getInputProps("country")} size="md" className="flex-1" radius="md" />
+                <TextInput
+                  placeholder="Zip Code"
+                  {...form.getInputProps("zipCode")}
+                  size="md"
+                  className="w-[120px]"
+                  radius="md"
+                />
+                <Select
+                  placeholder="Country"
+                  data={countries}
+                  {...form.getInputProps("country")}
+                  size="md"
+                  className="flex-1"
+                  radius="md"
+                />
               </div>
             </div>
           </Group>
 
           {/* Logo Section */}
           <Group justify="space-between" align="flex-start">
-            <Text c="#344054" fw={600}>Logo file or link</Text>
+            <Text c="#344054" fw={600}>
+              Logo file or link
+            </Text>
             <div className="gap-4 flex">
               <FileInput
                 accept="image/png,image/jpeg"
@@ -460,96 +524,107 @@ export default function EditPartnerForm({
           {/* Percentages: Hidden if waitlisted */}
           {form.values.status !== "waitlisted" && (
             <Group justify="space-between" align="flex-start">
-              <Text fw={600} c="#344054">City Distribution Percentages</Text>
-                         <Tabs
-              value={activePercentTab}
-              onChange={(val) => {
-                if (!val) return;
-                setActivePercentTab(val as UpdatePercentagesOptions);
-                form.setFieldValue(
-                  "updatePercentagesType",
-                  val as UpdatePercentagesOptions,
-                );
-              }}
-              className="min-w-170 w-full max-w-[600px]"
-            >
-              <Tabs.List grow mb="xl">
-                {[
-                  {
-                    value: "one-time",
-                    title: "One-Time Update",
-                    description: "Update a specific month only",
-                    icon: <RiCalendarEventLine size={22} />,
-                  },
-                  {
-                    value: "continuous",
-                    title: "Continuous Update",
-                    description: "Apply to all future distributions",
-                    icon: <RiLineChartLine size={22} />,
-                  },
-                ].map((option) => (
-                  <Tabs.Tab
-                    key={option.value}
-                    value={option.value}
-                    className="px-0"
-                  >
-                    {(() => {
-                      const isActive = activePercentTab === option.value;
-                      return (
-                        <div
-                          className={`rounded-xl shadow-sm transition hover:-translate-y-0.5 hover:shadow-md h-full border ${
-                            isActive
-                              ? "border-[#1D3A8A] bg-[#EEF2FF]"
-                              : "border-gray-300 bg-white"
-                          }`}
-                          style={{ borderWidth: isActive ? 2 : 1 }}
-                        >
-                          <Stack gap="xs" align="center" p="md">
-                            <div
-                              className={`${
-                                isActive ? "text-[#1D3A8A]" : "text-gray-500"
-                              } opacity-80`}
-                            >
-                              {option.icon}
-                            </div>
-                            <Text
-                              fw={700}
-                              size="md"
-                              className={isActive ? "text-[#1D3A8A]" : ""}
-                            >
-                              {option.title}
-                            </Text>
-                            <Text
-                              size="sm"
-                              c={isActive ? "gray.6" : "dimmed"}
-                              ta="center"
-                            >
-                              {option.description}
-                            </Text>
-                          </Stack>
-                        </div>
-                      );
-                    })()}
-                  </Tabs.Tab>
-                ))}
-              </Tabs.List>
-              <Tabs.Panel value="one-time">
-                <OneTimeUpdateForm
-                  initialCityPercentages={initialCityPercentEntries}
-                />
-              </Tabs.Panel>
-              <Tabs.Panel value="continuous">
-                <ContinuousUpdateForm
-                  initialCityPercentages={initialCityPercentEntries}
-                />
-              </Tabs.Panel>
-            </Tabs>
+              <Text fw={600} c="#344054">
+                City Distribution Percentages
+              </Text>
+              <Tabs
+                value={activePercentTab}
+                onChange={(val) => {
+                  if (!val) return;
+                  setActivePercentTab(val as UpdatePercentagesOptions);
+                  form.setFieldValue(
+                    "updatePercentagesType",
+                    val as UpdatePercentagesOptions,
+                  );
+                }}
+                className="min-w-170 w-full max-w-[600px]"
+              >
+                <Tabs.List grow mb="xl">
+                  {[
+                    {
+                      value: "one-time",
+                      title: "One-Time Update",
+                      description: "Update a specific month only",
+                      icon: <RiCalendarEventLine size={22} />,
+                    },
+                    {
+                      value: "continuous",
+                      title: "Continuous Update",
+                      description: "Apply to all future distributions",
+                      icon: <RiLineChartLine size={22} />,
+                    },
+                  ].map((option) => (
+                    <Tabs.Tab
+                      key={option.value}
+                      value={option.value}
+                      className="px-0"
+                    >
+                      {(() => {
+                        const isActive = activePercentTab === option.value;
+                        return (
+                          <div
+                            className={`rounded-xl shadow-sm transition hover:-translate-y-0.5 hover:shadow-md h-full border ${
+                              isActive
+                                ? "border-[#1D3A8A] bg-[#EEF2FF]"
+                                : "border-gray-300 bg-white"
+                            }`}
+                            style={{ borderWidth: isActive ? 2 : 1 }}
+                          >
+                            <Stack gap="xs" align="center" p="md">
+                              <div
+                                className={`${
+                                  isActive ? "text-[#1D3A8A]" : "text-gray-500"
+                                } opacity-80`}
+                              >
+                                {option.icon}
+                              </div>
+                              <Text
+                                fw={700}
+                                size="md"
+                                className={isActive ? "text-[#1D3A8A]" : ""}
+                              >
+                                {option.title}
+                              </Text>
+                              <Text
+                                size="sm"
+                                c={isActive ? "gray.6" : "dimmed"}
+                                ta="center"
+                              >
+                                {option.description}
+                              </Text>
+                            </Stack>
+                          </div>
+                        );
+                      })()}
+                    </Tabs.Tab>
+                  ))}
+                </Tabs.List>
+                <Tabs.Panel value="one-time">
+                  <OneTimeUpdateForm
+                    initialCityPercentages={initialCityPercentEntries}
+                  />
+                </Tabs.Panel>
+                <Tabs.Panel value="continuous">
+                  <ContinuousUpdateForm
+                    initialCityPercentages={initialCityPercentEntries}
+                  />
+                </Tabs.Panel>
+              </Tabs>
             </Group>
           )}
 
           <Group justify="flex-end" mt="md">
-            <Button variant="outline" color="#053766" radius="md" onClick={onClose}>Cancel</Button>
-            <Button variant="filled" color="#053766" radius="md" type="submit">Submit</Button>
+            <Button
+              variant="outline"
+              color="#053766"
+              radius="md"
+              onClick={onClose}
+            >
+              Cancel
+            </Button>
+            <Button variant="filled" color="#053766" radius="md" type="submit">
+              Submit
+            </Button>
           </Group>
         </form>
       </div>
