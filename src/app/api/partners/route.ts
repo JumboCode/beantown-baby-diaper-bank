@@ -22,7 +22,7 @@ type LogoAction = "keep" | "replace" | "remove";
 type CityPercentage = {
   city: string;
   percentage: number;
-  id?: string,    
+  id?: string,
 };
 type CityGeoData = {
   centroidGeoJson: string;
@@ -305,7 +305,7 @@ export async function PUT(request: Request) {
 
     // Fetch geo data for every submitted city and block submission if any city
     // cannot be geocoded.
-    for (const cityName of cityNames) {
+    for (const cityName of missingCityNames) {
       const geo = await fetchCityGeoDataFromNominatim(cityName);
       cityGeoByName.set(normalizeCityName(cityName), geo);
     }
@@ -555,7 +555,7 @@ export async function POST(request: Request) {
 
       // Fetch geo data for every submitted city and block submission if any city
       // cannot be geocoded.
-      for (const cityName of cityNames) {
+      for (const cityName of missingCityNames) {
         const geo = await fetchCityGeoDataFromNominatim(cityName);
         cityGeoByName.set(normalizeCityName(cityName), geo);
       }
