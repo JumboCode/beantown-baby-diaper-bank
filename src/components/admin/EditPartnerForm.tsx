@@ -100,8 +100,6 @@ const requiredState = (label: string) => (value: unknown) => {
 
 type UpdatePercentagesOptions = "one-time" | "continuous";
 
-<<<<<<< HEAD
-=======
 const parseMonthDateForPicker = (rawDate: string | null | undefined): Date | null => {
   if (!rawDate) return null;
   const monthMatch = rawDate.match(/^(\d{4})-(\d{2})/);
@@ -133,7 +131,6 @@ const formatMonthDateForApi = (date: Date | string | null): string | null => {
   return `${year}-${month}-01`;
 };
 
->>>>>>> 64f60fec961c236a5a7b032abae5565eb4d78132
 export default function EditPartnerForm({
   partner,
   onClose,
@@ -179,13 +176,8 @@ export default function EditPartnerForm({
     initialValues: {
       organization: partner.name,
       description: partner.description || "",
-<<<<<<< HEAD
-      time: partner.start_partner ? new Date(partner.start_partner) : null,
-      endTime: partner.end_partner ? new Date(partner.end_partner) : null,
-=======
       time: parseMonthDateForPicker(partner.start_partner),
       endTime: parseMonthDateForPicker(partner.end_partner),
->>>>>>> 64f60fec961c236a5a7b032abae5565eb4d78132
       status: partner.status,
       latitude: partner.coords ? partner.coords.lat : "",
       longitude: partner.coords ? partner.coords.lng : "",
@@ -225,31 +217,16 @@ export default function EditPartnerForm({
   async function submitEditPartner(values: typeof form.values) {
     setLoading(true);
 
-<<<<<<< HEAD
-    const formatDate = (date: Date | null) => {
-      if (!date) return null;
-      const d = new Date(date);
-      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-01`;
-    };
-
-=======
->>>>>>> 64f60fec961c236a5a7b032abae5565eb4d78132
     const formData = {
       id: partner.id,
       name: values.organization,
       description: values.description,
       // Clear start date if waitlisted
-<<<<<<< HEAD
-      start_partner: values.status !== "waitlisted" ? formatDate(values.time) : null,
-      // Include end date only for inactive status
-      end_partner: values.status === "inactive" ? formatDate(values.endTime) : null,
-=======
       start_partner:
         values.status !== "waitlisted" ? formatMonthDateForApi(values.time) : null,
       // Include end date only for inactive status
       end_partner:
         values.status === "inactive" ? formatMonthDateForApi(values.endTime) : null,
->>>>>>> 64f60fec961c236a5a7b032abae5565eb4d78132
       status: values.status,
       coordinates: {
         lat: values.latitude,
@@ -270,16 +247,6 @@ export default function EditPartnerForm({
         ? "remove"
         : "keep";
 
-<<<<<<< HEAD
-    const response = await fetch("/api/partners", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(formData),
-    });
-
-    if (!response.ok) {
-      console.error("Failed to update partner data");
-=======
     try {
       const requestBody = new FormData();
       requestBody.append("partner", JSON.stringify(formData));
@@ -305,7 +272,6 @@ export default function EditPartnerForm({
       }
       onClose();
     } finally {
->>>>>>> 64f60fec961c236a5a7b032abae5565eb4d78132
       setLoading(false);
     }
   }
@@ -464,10 +430,6 @@ export default function EditPartnerForm({
           <Group justify="space-between" align="flex-start">
             <Text c="#344054" fw={600}>Logo file or link</Text>
             <div className="gap-4 flex">
-<<<<<<< HEAD
-              <FileInput accept="image/png,image/jpeg" placeholder="Upload file" radius="md" clearable onChange={(f) => form.setFieldValue("logoFile", f)} className="min-w-83" />
-              <TextInput placeholder="Logo URL" {...form.getInputProps("logoUrl")} radius="md" className="min-w-83" />
-=======
               <FileInput
                 accept="image/png,image/jpeg"
                 placeholder="Upload image file"
@@ -492,7 +454,6 @@ export default function EditPartnerForm({
                 radius="md"
                 className="min-w-83"
               />
->>>>>>> 64f60fec961c236a5a7b032abae5565eb4d78132
             </div>
           </Group>
 
@@ -500,20 +461,6 @@ export default function EditPartnerForm({
           {form.values.status !== "waitlisted" && (
             <Group justify="space-between" align="flex-start">
               <Text fw={600} c="#344054">City Distribution Percentages</Text>
-<<<<<<< HEAD
-              <Tabs
-                value={activePercentTab}
-                onChange={(v) => { if (v) setActivePercentTab(v as UpdatePercentagesOptions); }}
-                className="min-w-170 w-full max-w-[600px]"
-              >
-                <Tabs.List grow mb="xl">
-                  <Tabs.Tab value="one-time">One-Time Update</Tabs.Tab>
-                  <Tabs.Tab value="continuous">Continuous Update</Tabs.Tab>
-                </Tabs.List>
-                <Tabs.Panel value="one-time"><OneTimeUpdateForm initialCityPercentages={initialCityPercentEntries} /></Tabs.Panel>
-                <Tabs.Panel value="continuous"><ContinuousUpdateForm initialCityPercentages={initialCityPercentEntries} /></Tabs.Panel>
-              </Tabs>
-=======
                          <Tabs
               value={activePercentTab}
               onChange={(val) => {
@@ -597,7 +544,6 @@ export default function EditPartnerForm({
                 />
               </Tabs.Panel>
             </Tabs>
->>>>>>> 64f60fec961c236a5a7b032abae5565eb4d78132
             </Group>
           )}
 
