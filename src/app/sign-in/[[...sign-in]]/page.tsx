@@ -36,7 +36,7 @@ export default function SignInPage() {
         identifier: email,
         password,
       });
-      
+
       if (result.status === "complete") {
         await setActive({ session: result.createdSessionId });
         router.push("/admin");
@@ -53,7 +53,7 @@ export default function SignInPage() {
       <Container size={460} w="100%">
         <Stack align="center" mb="xl">
           <Image
-            src="/beantown_logo.png"
+            src="/beantown-logo.svg"
             alt="Beantown Baby Diaper Bank"
             width={300}
             height={80}
