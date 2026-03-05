@@ -9,7 +9,7 @@ import {
   validateImageSignature,
   validateLogoFile,
 } from "@/lib/server/logoUpload";
-import { status, Partner, City } from "@prisma/client"; // Ensure these are imported from your client
+import { status } from "@prisma/client";
 
 type LogoAction = "keep" | "replace" | "remove";
 
@@ -24,7 +24,7 @@ type CreatePartnerPayload = {
   start_partner: string | null;
   end_partner?: string | null;
   status: status;
-  coordinates: any; 
+  coordinates: { lat: number; lng: number }; 
   address: string;
   logo?: string;
   cities: CityPercentage[];
@@ -37,28 +37,17 @@ type UpdatePartnerPayload = {
   start_partner: string | null;
   end_partner?: string | null;
   status: status;
-  coordinates: any;
+  coordinates: { lat: number; lng: number };
   address: string;
   logo?: string;
 };
 
-class PartnerRequestError extends Error {
-  status: number;
-  constructor(message: string, status = 400) {
-    super(message);
-    this.status = status;
-  }
-}
-
 // Helper to ensure dates are saved as the 1st of the month per requirements
 const normalizeMonthDate = (value: string | null): string | null => {
   if (!value) return null;
-  const match = value.match(/^(\d{4})-(\d{2})(?:-(\d{2}))?/);
-  if (!match) return new Date(value).toISOString(); // Fallback for standard ISO strings
-
-  const year = Number(match[1]);
-  const month = Number(match[2]);
-  return new Date(Date.UTC(year, month - 1, 1)).toISOString();
+  const date = new Date(value);
+  if (isNaN(date.getTime())) return null;
+  return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), 1)).toISOString();
 };
 
 export async function GET() {
@@ -86,41 +75,30 @@ export async function GET() {
   }
 }
 
-// Add New Partner logic
+// Add New Partner logic 
 export async function PUT(request: Request) {
-  let payload: CreatePartnerPayload;
-  let logoAction: LogoAction;
-  let logoFile: File | null;
-
-  try {
-    const parsed = await parseCreatePartnerRequest(request);
-    payload = parsed.payload;
-    logoAction = parsed.logoAction;
-    logoFile = parsed.logoFile;
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message || "Invalid request" }, { status: 400 });
-  }
-
   let partnerId: number | undefined;
   let uploadedObjectKey: string | undefined;
 
   try {
-    // 1. Create the Partner
+    const { payload, logoAction, logoFile } = await parseCreatePartnerRequest(request);
+
+    // Create the Partner Record
     const partner = await prisma.partner.create({
       data: {
         name: payload.name,
         description: payload.description,
         startPartner: normalizeMonthDate(payload.start_partner),
         status: payload.status,
-        coords: payload.coordinates,
+        coords: payload.coordinates, 
         address: payload.address,
-        logoUrl: "",
+        logoUrl: "", 
       },
     });
 
     partnerId = Number(partner.id);
 
-    // 2. Handle Cities/Regions
+    // Map Cities/Regions if provided
     if (payload.cities && payload.cities.length > 0) {
       const cityNames = payload.cities.map((c) => c.city);
       const dbCities = await prisma.city.findMany({
@@ -130,19 +108,20 @@ export async function PUT(request: Request) {
       const cityIdByName = new Map(dbCities.map((c) => [c.name, c.id]));
       
       await prisma.partnerRegion.createMany({
-        data: payload.cities.map((city) => ({
-          partnerId: partnerId!,
-          cityId: cityIdByName.get(city.city)!,
-          percentage: city.percentage,
-        })),
+        data: payload.cities
+          .filter(c => cityIdByName.has(c.city))
+          .map((city) => ({
+            partnerId: partnerId!,
+            cityId: cityIdByName.get(city.city)!,
+            percentage: city.percentage,
+          })),
       });
     }
 
-    // 3. Handle Logo Upload
+    // Handle Logo Upload
     let finalLogoUrl = payload.logo || "";
     if (logoAction === "replace" && logoFile) {
       validateLogoFile(logoFile);
-      await validateImageSignature(logoFile);
       const uploadResult = await uploadLogoForPartner(partnerId, logoFile);
       uploadedObjectKey = uploadResult.objectKey;
       finalLogoUrl = uploadResult.publicUrl;
@@ -160,7 +139,7 @@ export async function PUT(request: Request) {
   }
 }
 
-// Update Partner logic
+// Update Partner logic (Using POST)
 export async function POST(request: Request) {
   try {
     const { payload, logoAction, logoFile } = await parseUpdatePartnerRequest(request);
@@ -169,7 +148,6 @@ export async function POST(request: Request) {
 
     if (logoAction === "replace" && logoFile) {
       validateLogoFile(logoFile);
-      await validateImageSignature(logoFile);
       const uploadResult = await uploadLogoForPartner(partnerId, logoFile);
       uploadedPublicUrl = uploadResult.publicUrl;
     }
@@ -198,7 +176,7 @@ export async function POST(request: Request) {
   }
 }
 
-// --- Parsing Helpers ---
+// --- Helpers ---
 
 async function parseCreatePartnerRequest(request: Request) {
   const formData = await request.formData();
