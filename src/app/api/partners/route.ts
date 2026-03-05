@@ -384,7 +384,12 @@ function normalizeMonthDate(value: string | null): string | null {
 
   const year = Number(match[1]);
   const month = Number(match[2]);
-  if (!Number.isInteger(year) || !Number.isInteger(month) || month < 1 || month > 12) {
+  if (
+    !Number.isInteger(year) ||
+    !Number.isInteger(month) ||
+    month < 1 ||
+    month > 12
+  ) {
     throw new PartnerRequestError("Invalid date value", 400);
   }
 
