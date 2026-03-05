@@ -36,7 +36,7 @@ export default function SignInPage() {
         identifier: email,
         password,
       });
-      
+
       if (result.status === "complete") {
         await setActive({ session: result.createdSessionId });
         router.push("/admin");

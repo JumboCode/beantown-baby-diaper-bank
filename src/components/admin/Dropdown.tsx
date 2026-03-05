@@ -132,9 +132,7 @@ export function CollapsibleDropdown<T>({
           ) : null}
 
           {state.status === "success" ? (
-            <div className="space-y-2">
-              {render(state.data)}
-            </div>
+            <div className="space-y-2">{render(state.data)}</div>
           ) : null}
         </div>
       ) : null}
