@@ -1,7 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { Box, Stack, Title, Text, Paper, Skeleton } from "@mantine/core";
+import { Box, Stack, Title, Text, Paper, Skeleton, Group } from "@mantine/core";
 import TimelineSliderControls from "@/components/map/TimelineSliderControls";
 import { useTimelinePeriod } from "@/components/map/useTimelinePeriod";
 import TotalDiapersDistributed from "@/components/map/TotalDiapersDistributed";
@@ -9,7 +9,6 @@ import { useState, useEffect, useCallback } from "react";
 import ImpactModal from "@/components/map/ImpactModal";
 import { FeatureCollection, Polygon } from "geojson";
 import { City, Distribution } from "@/generated/prisma/client";
-import { SimpleGrid } from "@mantine/core";
 import YearlyMonthlySwitch from "@/components/sprint2/YearlyMonthlySwitch";
 
 // hex values: 1(#B2E5FF) 2(#7EC3E5) 3(#51A3CC) 4(#2C85B2) 5(#0F6B99)
@@ -153,52 +152,31 @@ export default function Page() {
         >
           Distribution Heat Map
         </Title>
-        <SimpleGrid
-          cols={{ base: 1, sm: 3 }}
-          spacing={{ base: 0, sm: "3%" }}
-          verticalSpacing={{ base: "3%", sm: 0 }}
-        >
-          {/* Left Column: Map */}
-          <div style={{ gridColumn: "span 2" }}>
-            <Paper shadow="sm" p="md" radius="md" withBorder>
-              <Box mb="md">
-                <YearlyMonthlySwitch
-                  value={timeline.view}
-                  onChange={timeline.toggleView}
-                />
-              </Box>
-              <Box h="60vh" pos="relative" mb="md">
-                {mapData ? (
-                  <LeafletMap mapData={mapData} />
-                ) : (
-                  <Skeleton h="60vh" mb="md" />
-                )}
-              </Box>
-
-              {/* Timeline Slider below map */}
-
-              <TimelineSliderControls
-                view={timeline.view}
-                index={timeline.index}
-                setIndex={timeline.setIndex}
-                move={timeline.move}
-                labels={timeline.labels}
-                onTimelineChange={handleTimelineChange}
-              />
-            </Paper>
-          </div>
-
-          {/* Right Column: Impact Modal */}
-          <div
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              justifyContent: "flex-center",
-            }}
-          >
+        <Paper shadow="sm" p="md" radius="md" withBorder>
+          <Group justify="space-between" align="center" mb="md">
+            <YearlyMonthlySwitch
+              value={timeline.view}
+              onChange={timeline.toggleView}
+            />
             <ImpactModal />
-          </div>
-        </SimpleGrid>
+          </Group>
+          <Box h="60vh" pos="relative" mb="md">
+            {mapData ? (
+              <LeafletMap mapData={mapData} />
+            ) : (
+              <Skeleton h="60vh" mb="md" />
+            )}
+          </Box>
+
+          <TimelineSliderControls
+            view={timeline.view}
+            index={timeline.index}
+            setIndex={timeline.setIndex}
+            move={timeline.move}
+            labels={timeline.labels}
+            onTimelineChange={handleTimelineChange}
+          />
+        </Paper>
       </Stack>
     </Box>
   );

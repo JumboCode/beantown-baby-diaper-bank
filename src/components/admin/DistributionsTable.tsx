@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
-import { Text } from "@mantine/core";
+import { Table, Text } from "@mantine/core";
 import { Distribution } from "@/lib/types";
 import { CollapsibleDropdown } from "./Dropdown";
 
@@ -96,7 +96,8 @@ export default function DistributionsTable({
           render={(monthData) => {
             const rowsForMonth = monthData
               .filter(
-                (dist) => dist.month === date.month && dist.year === date.year,
+                (dist) =>
+                  dist.month === date.month && dist.year === date.year,
               )
               .sort((a, b) =>
                 (a.partner?.name ?? "").localeCompare(b.partner?.name ?? ""),
