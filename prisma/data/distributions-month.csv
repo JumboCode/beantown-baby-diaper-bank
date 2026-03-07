@@ -1,0 +1,579 @@
+year,month,partner_id,Partner Name,Total Num Diapers,City,city_id,percentage,number_diapers
+2025,January,12,WeeCare,1448,Burlington,24,0.31,449
+2025,January,12,WeeCare,1448,Billerica,37,0.27,391
+2025,January,12,WeeCare,1448,Acton,36,0.05,72
+2025,January,12,WeeCare,1448,Woburn,18,0.05,72
+2025,January,12,WeeCare,1448,Stoneham,35,0.09,130
+2025,January,12,WeeCare,1448,Wintrhop,38,0.09,130
+2025,January,12,WeeCare,1448,Arlington,14,0.14,203
+2025,February,12,WeeCare,1116,Burlington,24,0.31,346
+2025,February,12,WeeCare,1116,Billerica,37,0.27,301
+2025,February,12,WeeCare,1116,Acton,36,0.05,56
+2025,February,12,WeeCare,1116,Woburn,18,0.05,56
+2025,February,12,WeeCare,1116,Stoneham,35,0.09,100
+2025,February,12,WeeCare,1116,Wintrhop,38,0.09,100
+2025,February,12,WeeCare,1116,Arlington,14,0.14,156
+2025,March,12,WeeCare,1952,Burlington,24,0.31,605
+2025,March,12,WeeCare,1952,Billerica,37,0.27,527
+2025,March,12,WeeCare,1952,Acton,36,0.05,98
+2025,March,12,WeeCare,1952,Woburn,18,0.05,98
+2025,March,12,WeeCare,1952,Stoneham,35,0.09,176
+2025,March,12,WeeCare,1952,Wintrhop,38,0.09,176
+2025,March,12,WeeCare,1952,Arlington,14,0.14,273
+2025,April,12,WeeCare,1269,Burlington,24,0.31,393
+2025,April,12,WeeCare,1269,Billerica,37,0.27,343
+2025,April,12,WeeCare,1269,Acton,36,0.05,63
+2025,April,12,WeeCare,1269,Woburn,18,0.05,63
+2025,April,12,WeeCare,1269,Stoneham,35,0.09,114
+2025,April,12,WeeCare,1269,Wintrhop,38,0.09,114
+2025,April,12,WeeCare,1269,Arlington,14,0.14,178
+2025,May,12,WeeCare,1727,Burlington,24,0.31,535
+2025,May,12,WeeCare,1727,Billerica,37,0.27,466
+2025,May,12,WeeCare,1727,Acton,36,0.05,86
+2025,May,12,WeeCare,1727,Woburn,18,0.05,86
+2025,May,12,WeeCare,1727,Stoneham,35,0.09,155
+2025,May,12,WeeCare,1727,Wintrhop,38,0.09,155
+2025,May,12,WeeCare,1727,Arlington,14,0.14,242
+2025,June,12,WeeCare,1564,Burlington,24,0.31,485
+2025,June,12,WeeCare,1564,Billerica,37,0.27,422
+2025,June,12,WeeCare,1564,Acton,36,0.05,78
+2025,June,12,WeeCare,1564,Woburn,18,0.05,78
+2025,June,12,WeeCare,1564,Stoneham,35,0.09,141
+2025,June,12,WeeCare,1564,Wintrhop,38,0.09,141
+2025,June,12,WeeCare,1564,Arlington,14,0.14,219
+2025,August,12,WeeCare,3691,Burlington,24,0.31,1144
+2025,August,12,WeeCare,3691,Billerica,37,0.27,997
+2025,August,12,WeeCare,3691,Acton,36,0.05,185
+2025,August,12,WeeCare,3691,Woburn,18,0.05,185
+2025,August,12,WeeCare,3691,Stoneham,35,0.09,332
+2025,August,12,WeeCare,3691,Wintrhop,38,0.09,332
+2025,August,12,WeeCare,3691,Arlington,14,0.14,517
+2025,September,12,WeeCare,875,Burlington,24,0.31,271
+2025,September,12,WeeCare,875,Billerica,37,0.27,236
+2025,September,12,WeeCare,875,Acton,36,0.05,44
+2025,September,12,WeeCare,875,Woburn,18,0.05,44
+2025,September,12,WeeCare,875,Stoneham,35,0.09,79
+2025,September,12,WeeCare,875,Wintrhop,38,0.09,79
+2025,September,12,WeeCare,875,Arlington,14,0.14,123
+2025,October,12,WeeCare,1602,Burlington,24,0.31,497
+2025,October,12,WeeCare,1602,Billerica,37,0.27,433
+2025,October,12,WeeCare,1602,Acton,36,0.05,80
+2025,October,12,WeeCare,1602,Woburn,18,0.05,80
+2025,October,12,WeeCare,1602,Stoneham,35,0.09,144
+2025,October,12,WeeCare,1602,Wintrhop,38,0.09,144
+2025,October,12,WeeCare,1602,Arlington,14,0.14,224
+2025,November,12,WeeCare,1081,Burlington,24,0.31,335
+2025,November,12,WeeCare,1081,Billerica,37,0.27,292
+2025,November,12,WeeCare,1081,Acton,36,0.05,54
+2025,November,12,WeeCare,1081,Woburn,18,0.05,54
+2025,November,12,WeeCare,1081,Stoneham,35,0.09,97
+2025,November,12,WeeCare,1081,Wintrhop,38,0.09,97
+2025,November,12,WeeCare,1081,Arlington,14,0.14,151
+2025,December,12,WeeCare,818,Burlington,24,0.31,254
+2025,December,12,WeeCare,818,Billerica,37,0.27,221
+2025,December,12,WeeCare,818,Acton,36,0.05,41
+2025,December,12,WeeCare,818,Woburn,18,0.05,41
+2025,December,12,WeeCare,818,Stoneham,35,0.09,74
+2025,December,12,WeeCare,818,Wintrhop,38,0.09,74
+2025,December,12,WeeCare,818,Arlington,14,0.14,115
+2025,January,6,Middlesex Human Service Agency (MHSA),1000,Dorchester,27,0.03,30
+2025,January,6,Middlesex Human Service Agency (MHSA),1000,Mattapan,30,0.02,20
+2025,January,6,Middlesex Human Service Agency (MHSA),1000,Waltham,13,0.95,950
+2025,February,6,Middlesex Human Service Agency (MHSA),6433,Dorchester,27,0.03,193
+2025,February,6,Middlesex Human Service Agency (MHSA),6433,Mattapan,30,0.02,129
+2025,February,6,Middlesex Human Service Agency (MHSA),6433,Waltham,13,0.95,6111
+2025,March,6,Middlesex Human Service Agency (MHSA),6481,Dorchester,27,0.03,194
+2025,March,6,Middlesex Human Service Agency (MHSA),6481,Mattapan,30,0.02,130
+2025,March,6,Middlesex Human Service Agency (MHSA),6481,Waltham,13,0.95,6157
+2025,April,6,Middlesex Human Service Agency (MHSA),6308,Dorchester,27,0.03,189
+2025,April,6,Middlesex Human Service Agency (MHSA),6308,Mattapan,30,0.02,126
+2025,April,6,Middlesex Human Service Agency (MHSA),6308,Waltham,13,0.95,5993
+2025,May,6,Middlesex Human Service Agency (MHSA),4503,Dorchester,27,0.03,135
+2025,May,6,Middlesex Human Service Agency (MHSA),4503,Mattapan,30,0.02,90
+2025,May,6,Middlesex Human Service Agency (MHSA),4503,Waltham,13,0.95,4278
+2025,June,6,Middlesex Human Service Agency (MHSA),7066,Dorchester,27,0.03,212
+2025,June,6,Middlesex Human Service Agency (MHSA),7066,Mattapan,30,0.02,141
+2025,June,6,Middlesex Human Service Agency (MHSA),7066,Waltham,13,0.95,6713
+2025,July,6,Middlesex Human Service Agency (MHSA),4436,Dorchester,27,0.03,133
+2025,July,6,Middlesex Human Service Agency (MHSA),4436,Mattapan,30,0.02,89
+2025,July,6,Middlesex Human Service Agency (MHSA),4436,Waltham,13,0.95,4214
+2025,August,6,Middlesex Human Service Agency (MHSA),4705,Dorchester,27,0.03,141
+2025,August,6,Middlesex Human Service Agency (MHSA),4705,Mattapan,30,0.02,94
+2025,August,6,Middlesex Human Service Agency (MHSA),4705,Waltham,13,0.95,4470
+2025,September,6,Middlesex Human Service Agency (MHSA),4407,Dorchester,27,0.03,132
+2025,September,6,Middlesex Human Service Agency (MHSA),4407,Mattapan,30,0.02,88
+2025,September,6,Middlesex Human Service Agency (MHSA),4407,Waltham,13,0.95,4187
+2025,October,6,Middlesex Human Service Agency (MHSA),400,Dorchester,27,0.03,12
+2025,October,6,Middlesex Human Service Agency (MHSA),400,Mattapan,30,0.02,8
+2025,October,6,Middlesex Human Service Agency (MHSA),400,Waltham,13,0.95,380
+2025,November,6,Middlesex Human Service Agency (MHSA),10698,Dorchester,27,0.03,321
+2025,November,6,Middlesex Human Service Agency (MHSA),10698,Mattapan,30,0.02,214
+2025,November,6,Middlesex Human Service Agency (MHSA),10698,Waltham,13,0.95,10163
+2025,December,6,Middlesex Human Service Agency (MHSA),4404,Dorchester,27,0.03,132
+2025,December,6,Middlesex Human Service Agency (MHSA),4404,Mattapan,30,0.02,88
+2025,December,6,Middlesex Human Service Agency (MHSA),4404,Waltham,13,0.95,4184
+2025,January,3,Family ACCESS,3514,Arlington,14,0.01,35
+2025,January,3,Family ACCESS,3514,Burlington,24,0.01,35
+2025,January,3,Family ACCESS,3514,Lexington,4,0.01,35
+2025,January,3,Family ACCESS,3514,Newton,11,0.25,879
+2025,January,3,Family ACCESS,3514,Waltham,13,0.7,2460
+2025,January,3,Family ACCESS,3514,Wayland,25,0,0
+2025,January,3,Family ACCESS,3514,Wellesley,26,0.01,35
+2025,January,3,Family ACCESS,3514,Woburn,18,0.01,35
+2025,February,3,Family ACCESS,5356,Arlington,14,0.01,54
+2025,February,3,Family ACCESS,5356,Burlington,24,0.01,54
+2025,February,3,Family ACCESS,5356,Lexington,4,0.01,54
+2025,February,3,Family ACCESS,5356,Newton,11,0.25,1339
+2025,February,3,Family ACCESS,5356,Waltham,13,0.7,3749
+2025,February,3,Family ACCESS,5356,Wayland,25,0,0
+2025,February,3,Family ACCESS,5356,Wellesley,26,0.01,54
+2025,February,3,Family ACCESS,5356,Woburn,18,0.01,54
+2025,March,3,Family ACCESS,3046,Arlington,14,0.01,30
+2025,March,3,Family ACCESS,3046,Burlington,24,0.01,30
+2025,March,3,Family ACCESS,3046,Lexington,4,0.01,30
+2025,March,3,Family ACCESS,3046,Newton,11,0.25,762
+2025,March,3,Family ACCESS,3046,Waltham,13,0.7,2132
+2025,March,3,Family ACCESS,3046,Wayland,25,0,0
+2025,March,3,Family ACCESS,3046,Wellesley,26,0.01,30
+2025,March,3,Family ACCESS,3046,Woburn,18,0.01,30
+2025,April,3,Family ACCESS,3249,Arlington,14,0.01,32
+2025,April,3,Family ACCESS,3249,Burlington,24,0.01,32
+2025,April,3,Family ACCESS,3249,Lexington,4,0.01,32
+2025,April,3,Family ACCESS,3249,Newton,11,0.25,812
+2025,April,3,Family ACCESS,3249,Waltham,13,0.7,2274
+2025,April,3,Family ACCESS,3249,Wayland,25,0,0
+2025,April,3,Family ACCESS,3249,Wellesley,26,0.01,32
+2025,April,3,Family ACCESS,3249,Woburn,18,0.01,32
+2025,May,3,Family ACCESS,4970,Arlington,14,0.01,50
+2025,May,3,Family ACCESS,4970,Burlington,24,0.01,50
+2025,May,3,Family ACCESS,4970,Lexington,4,0.01,50
+2025,May,3,Family ACCESS,4970,Newton,11,0.25,1243
+2025,May,3,Family ACCESS,4970,Waltham,13,0.7,3479
+2025,May,3,Family ACCESS,4970,Wayland,25,0,0
+2025,May,3,Family ACCESS,4970,Wellesley,26,0.01,50
+2025,May,3,Family ACCESS,4970,Woburn,18,0.01,50
+2025,June,3,Family ACCESS,4402,Arlington,14,0.01,44
+2025,June,3,Family ACCESS,4402,Burlington,24,0.01,44
+2025,June,3,Family ACCESS,4402,Lexington,4,0.01,44
+2025,June,3,Family ACCESS,4402,Newton,11,0.25,1101
+2025,June,3,Family ACCESS,4402,Waltham,13,0.7,3081
+2025,June,3,Family ACCESS,4402,Wayland,25,0,0
+2025,June,3,Family ACCESS,4402,Wellesley,26,0.01,44
+2025,June,3,Family ACCESS,4402,Woburn,18,0.01,44
+2025,July,3,Family ACCESS,800,Arlington,14,0.01,8
+2025,July,3,Family ACCESS,800,Burlington,24,0.01,8
+2025,July,3,Family ACCESS,800,Lexington,4,0.01,8
+2025,July,3,Family ACCESS,800,Newton,11,0.25,200
+2025,July,3,Family ACCESS,800,Waltham,13,0.7,560
+2025,July,3,Family ACCESS,800,Wayland,25,0,0
+2025,July,3,Family ACCESS,800,Wellesley,26,0.01,8
+2025,July,3,Family ACCESS,800,Woburn,18,0.01,8
+2025,August,3,Family ACCESS,5765,Arlington,14,0.01,58
+2025,August,3,Family ACCESS,5765,Burlington,24,0.01,58
+2025,August,3,Family ACCESS,5765,Lexington,4,0.01,58
+2025,August,3,Family ACCESS,5765,Newton,11,0.25,1441
+2025,August,3,Family ACCESS,5765,Waltham,13,0.7,4036
+2025,August,3,Family ACCESS,5765,Wayland,25,0,0
+2025,August,3,Family ACCESS,5765,Wellesley,26,0.01,58
+2025,August,3,Family ACCESS,5765,Woburn,18,0.01,58
+2025,September,3,Family ACCESS,5629,Arlington,14,0.01,56
+2025,September,3,Family ACCESS,5629,Burlington,24,0.01,56
+2025,September,3,Family ACCESS,5629,Lexington,4,0.01,56
+2025,September,3,Family ACCESS,5629,Newton,11,0.25,1407
+2025,September,3,Family ACCESS,5629,Waltham,13,0.7,3940
+2025,September,3,Family ACCESS,5629,Wayland,25,0,0
+2025,September,3,Family ACCESS,5629,Wellesley,26,0.01,56
+2025,September,3,Family ACCESS,5629,Woburn,18,0.01,56
+2025,October,3,Family ACCESS,3088,Arlington,14,0.01,31
+2025,October,3,Family ACCESS,3088,Burlington,24,0.01,31
+2025,October,3,Family ACCESS,3088,Lexington,4,0.01,31
+2025,October,3,Family ACCESS,3088,Newton,11,0.25,772
+2025,October,3,Family ACCESS,3088,Waltham,13,0.7,2162
+2025,October,3,Family ACCESS,3088,Wayland,25,0,0
+2025,October,3,Family ACCESS,3088,Wellesley,26,0.01,31
+2025,October,3,Family ACCESS,3088,Woburn,18,0.01,31
+2025,November,3,Family ACCESS,5651,Arlington,14,0.01,57
+2025,November,3,Family ACCESS,5651,Burlington,24,0.01,57
+2025,November,3,Family ACCESS,5651,Lexington,4,0.01,57
+2025,November,3,Family ACCESS,5651,Newton,11,0.25,1413
+2025,November,3,Family ACCESS,5651,Waltham,13,0.7,3956
+2025,November,3,Family ACCESS,5651,Wayland,25,0,0
+2025,November,3,Family ACCESS,5651,Wellesley,26,0.01,57
+2025,November,3,Family ACCESS,5651,Woburn,18,0.01,57
+2025,December,3,Family ACCESS,4884,Arlington,14,0.01,49
+2025,December,3,Family ACCESS,4884,Burlington,24,0.01,49
+2025,December,3,Family ACCESS,4884,Lexington,4,0.01,49
+2025,December,3,Family ACCESS,4884,Newton,11,0.25,1221
+2025,December,3,Family ACCESS,4884,Waltham,13,0.7,3419
+2025,December,3,Family ACCESS,4884,Wayland,25,0,0
+2025,December,3,Family ACCESS,4884,Wellesley,26,0.01,49
+2025,December,3,Family ACCESS,4884,Woburn,18,0.01,49
+2025,February,2,Diaper Depot,4300,Waltham,13,1,4300
+2025,April,2,Diaper Depot,6000,Waltham,13,1,6000
+2025,June,2,Diaper Depot,5284,Waltham,13,1,5284
+2025,September,2,Diaper Depot,6245,Waltham,13,1,6245
+2025,November,2,Diaper Depot,7809,Waltham,13,1,7809
+2025,January,9,REACH Beyond Domestic Violence,200,Waltham,13,1,200
+2025,February,9,REACH Beyond Domestic Violence,575,Waltham,13,1,575
+2025,April,9,REACH Beyond Domestic Violence,800,Waltham,13,1,800
+2025,June,9,REACH Beyond Domestic Violence,799,Waltham,13,1,799
+2025,August,9,REACH Beyond Domestic Violence,1464,Waltham,13,1,1464
+2025,September,9,REACH Beyond Domestic Violence,1595,Waltham,13,1,1595
+2025,October,9,REACH Beyond Domestic Violence,1073,Waltham,13,1,1073
+2025,November,9,REACH Beyond Domestic Violence,764,Waltham,13,1,764
+2025,December,9,REACH Beyond Domestic Violence,1930,Waltham,13,1,1930
+2025,January,4,Lexington Food Pantry,3206,Lexington,4,0.99,3174
+2025,January,4,Lexington Food Pantry,3206,Woburn,18,0.01,32
+2025,February,4,Lexington Food Pantry,3632,Lexington,4,0.99,3596
+2025,February,4,Lexington Food Pantry,3632,Woburn,18,0.01,36
+2025,March,4,Lexington Food Pantry,2720,Lexington,4,0.99,2693
+2025,March,4,Lexington Food Pantry,2720,Woburn,18,0.01,27
+2025,April,4,Lexington Food Pantry,5120,Lexington,4,0.99,5069
+2025,April,4,Lexington Food Pantry,5120,Woburn,18,0.01,51
+2025,May,4,Lexington Food Pantry,2687,Lexington,4,0.99,2660
+2025,May,4,Lexington Food Pantry,2687,Woburn,18,0.01,27
+2025,June,4,Lexington Food Pantry,2238,Lexington,4,0.99,2216
+2025,June,4,Lexington Food Pantry,2238,Woburn,18,0.01,22
+2025,July,4,Lexington Food Pantry,2871,Lexington,4,0.99,2842
+2025,July,4,Lexington Food Pantry,2871,Woburn,18,0.01,29
+2025,August,4,Lexington Food Pantry,2641,Lexington,4,0.99,2615
+2025,August,4,Lexington Food Pantry,2641,Woburn,18,0.01,26
+2025,September,4,Lexington Food Pantry,3388,Lexington,4,0.99,3354
+2025,September,4,Lexington Food Pantry,3388,Woburn,18,0.01,34
+2025,October,4,Lexington Food Pantry,2917,Lexington,4,0.99,2888
+2025,October,4,Lexington Food Pantry,2917,Woburn,18,0.01,29
+2025,November,4,Lexington Food Pantry,3780,Lexington,4,0.99,3742
+2025,November,4,Lexington Food Pantry,3780,Woburn,18,0.01,38
+2025,December,4,Lexington Food Pantry,4142,Lexington,4,0.99,4101
+2025,December,4,Lexington Food Pantry,4142,Woburn,18,0.01,41
+2025,January,7,People Helping People- Burlington Food Pantry,3361,Burlington,24,1,3361
+2025,February,7,People Helping People- Burlington Food Pantry,3966,Burlington,24,1,3966
+2025,March,7,People Helping People- Burlington Food Pantry,4358,Burlington,24,1,4358
+2025,April,7,People Helping People- Burlington Food Pantry,3222,Burlington,24,1,3222
+2025,May,7,People Helping People- Burlington Food Pantry,3336,Burlington,24,1,3336
+2025,June,7,People Helping People- Burlington Food Pantry,3145,Burlington,24,1,3145
+2025,July,7,People Helping People- Burlington Food Pantry,2808,Burlington,24,1,2808
+2025,August,7,People Helping People- Burlington Food Pantry,4038,Burlington,24,1,4038
+2025,September,7,People Helping People- Burlington Food Pantry,4269,Burlington,24,1,4269
+2025,October,7,People Helping People- Burlington Food Pantry,3334,Burlington,24,1,3334
+2025,November,7,People Helping People- Burlington Food Pantry,4744,Burlington,24,1,4744
+2025,December,7,People Helping People- Burlington Food Pantry,4380,Burlington,24,1,4380
+2025,February,1,Arlington EATS,5776,Arlington,14,1,5776
+2025,March,1,Arlington EATS,5524,Arlington,14,1,5524
+2025,April,1,Arlington EATS,4157,Arlington,14,1,4157
+2025,May,1,Arlington EATS,4437,Arlington,14,1,4437
+2025,June,1,Arlington EATS,5207,Arlington,14,1,5207
+2025,July,1,Arlington EATS,4637,Arlington,14,1,4637
+2025,August,1,Arlington EATS,6834,Arlington,14,1,6834
+2025,September,1,Arlington EATS,7447,Arlington,14,1,7447
+2025,October,1,Arlington EATS,7198,Arlington,14,1,7198
+2025,November,1,Arlington EATS,8827,Arlington,14,1,8827
+2025,December,1,Arlington EATS,6696,Arlington,14,1,6696
+2025,January,13,Woburn Council of Social Concern,1430,Winchester,21,0.2,286
+2025,January,13,Woburn Council of Social Concern,1430,Woburn,18,0.8,1144
+2025,May,13,Woburn Council of Social Concern,331,Winchester,21,0.2,66
+2025,May,13,Woburn Council of Social Concern,331,Woburn,18,0.8,265
+2025,June,13,Woburn Council of Social Concern,1505,Winchester,21,0.2,301
+2025,June,13,Woburn Council of Social Concern,1505,Woburn,18,0.8,1204
+2025,August,13,Woburn Council of Social Concern,1505,Winchester,21,0.2,301
+2025,August,13,Woburn Council of Social Concern,1505,Woburn,18,0.8,1204
+2025,October,13,Woburn Council of Social Concern,810,Winchester,21,0.2,162
+2025,October,13,Woburn Council of Social Concern,810,Woburn,18,0.8,648
+2025,January,11,Watertown Food Pantry,2212,Belmont,16,0.1,221
+2025,January,11,Watertown Food Pantry,2212,Cambridge,3,0.15,332
+2025,January,11,Watertown Food Pantry,2212,Newton,11,0.05,111
+2025,January,11,Watertown Food Pantry,2212,Waltham,13,0.15,332
+2025,January,11,Watertown Food Pantry,2212,Watertown,12,0.45,995
+2025,January,11,Watertown Food Pantry,2212,Brighton,29,0.03,66
+2025,January,11,Watertown Food Pantry,2212,Arlington,14,0.04,88
+2025,January,11,Watertown Food Pantry,2212,Needham,20,0.01,22
+2025,January,11,Watertown Food Pantry,2212,Allston,28,0.02,44
+2025,February,11,Watertown Food Pantry,1366,Belmont,16,0.1,137
+2025,February,11,Watertown Food Pantry,1366,Cambridge,3,0.15,205
+2025,February,11,Watertown Food Pantry,1366,Newton,11,0.05,68
+2025,February,11,Watertown Food Pantry,1366,Waltham,13,0.15,205
+2025,February,11,Watertown Food Pantry,1366,Watertown,12,0.45,615
+2025,February,11,Watertown Food Pantry,1366,Brighton,29,0.03,41
+2025,February,11,Watertown Food Pantry,1366,Arlington,14,0.04,55
+2025,February,11,Watertown Food Pantry,1366,Needham,20,0.01,14
+2025,February,11,Watertown Food Pantry,1366,Allston,28,0.02,27
+2025,May,11,Watertown Food Pantry,2001,Belmont,16,0.1,200
+2025,May,11,Watertown Food Pantry,2001,Cambridge,3,0.15,300
+2025,May,11,Watertown Food Pantry,2001,Newton,11,0.05,100
+2025,May,11,Watertown Food Pantry,2001,Waltham,13,0.15,300
+2025,May,11,Watertown Food Pantry,2001,Watertown,12,0.45,900
+2025,May,11,Watertown Food Pantry,2001,Brighton,29,0.03,60
+2025,May,11,Watertown Food Pantry,2001,Arlington,14,0.04,80
+2025,May,11,Watertown Food Pantry,2001,Needham,20,0.01,20
+2025,May,11,Watertown Food Pantry,2001,Allston,28,0.02,40
+2025,June,11,Watertown Food Pantry,1500,Belmont,16,0.1,150
+2025,June,11,Watertown Food Pantry,1500,Cambridge,3,0.15,225
+2025,June,11,Watertown Food Pantry,1500,Newton,11,0.05,75
+2025,June,11,Watertown Food Pantry,1500,Waltham,13,0.15,225
+2025,June,11,Watertown Food Pantry,1500,Watertown,12,0.45,675
+2025,June,11,Watertown Food Pantry,1500,Brighton,29,0.03,45
+2025,June,11,Watertown Food Pantry,1500,Arlington,14,0.04,60
+2025,June,11,Watertown Food Pantry,1500,Needham,20,0.01,15
+2025,June,11,Watertown Food Pantry,1500,Allston,28,0.02,30
+2025,July,11,Watertown Food Pantry,1084,Belmont,16,0.1,108
+2025,July,11,Watertown Food Pantry,1084,Cambridge,3,0.15,163
+2025,July,11,Watertown Food Pantry,1084,Newton,11,0.05,54
+2025,July,11,Watertown Food Pantry,1084,Waltham,13,0.15,163
+2025,July,11,Watertown Food Pantry,1084,Watertown,12,0.45,488
+2025,July,11,Watertown Food Pantry,1084,Brighton,29,0.03,33
+2025,July,11,Watertown Food Pantry,1084,Arlington,14,0.04,43
+2025,July,11,Watertown Food Pantry,1084,Needham,20,0.01,11
+2025,July,11,Watertown Food Pantry,1084,Allston,28,0.02,22
+2025,August,11,Watertown Food Pantry,1395,Belmont,16,0.1,140
+2025,August,11,Watertown Food Pantry,1395,Cambridge,3,0.15,209
+2025,August,11,Watertown Food Pantry,1395,Newton,11,0.05,70
+2025,August,11,Watertown Food Pantry,1395,Waltham,13,0.15,209
+2025,August,11,Watertown Food Pantry,1395,Watertown,12,0.45,628
+2025,August,11,Watertown Food Pantry,1395,Brighton,29,0.03,42
+2025,August,11,Watertown Food Pantry,1395,Arlington,14,0.04,56
+2025,August,11,Watertown Food Pantry,1395,Needham,20,0.01,14
+2025,August,11,Watertown Food Pantry,1395,Allston,28,0.02,28
+2025,February,5,Margaret Fuller Neighborhood House,3966,Boston,1,0.23,912
+2025,February,5,Margaret Fuller Neighborhood House,3966,Cambridge,3,0.55,2181
+2025,February,5,Margaret Fuller Neighborhood House,3966,Dorchester,27,0.03,119
+2025,February,5,Margaret Fuller Neighborhood House,3966,Malden,10,0.03,119
+2025,February,5,Margaret Fuller Neighborhood House,3966,Somerville,2,0.05,198
+2025,February,5,Margaret Fuller Neighborhood House,3966,Quincy,5,0.02,79
+2025,February,5,Margaret Fuller Neighborhood House,3966,Revere,15,0.02,79
+2025,February,5,Margaret Fuller Neighborhood House,3966,Allston,28,0.01,40
+2025,February,5,Margaret Fuller Neighborhood House,3966,Brighton,29,0.02,79
+2025,February,5,Margaret Fuller Neighborhood House,3966,Mattapan,30,0.02,79
+2025,February,5,Margaret Fuller Neighborhood House,3966,Charlestown,31,0.02,79
+2025,March,5,Margaret Fuller Neighborhood House,2953,Boston,1,0.23,679
+2025,March,5,Margaret Fuller Neighborhood House,2953,Cambridge,3,0.55,1624
+2025,March,5,Margaret Fuller Neighborhood House,2953,Dorchester,27,0.03,89
+2025,March,5,Margaret Fuller Neighborhood House,2953,Malden,10,0.03,89
+2025,March,5,Margaret Fuller Neighborhood House,2953,Somerville,2,0.05,148
+2025,March,5,Margaret Fuller Neighborhood House,2953,Quincy,5,0.02,59
+2025,March,5,Margaret Fuller Neighborhood House,2953,Revere,15,0.02,59
+2025,March,5,Margaret Fuller Neighborhood House,2953,Allston,28,0.01,30
+2025,March,5,Margaret Fuller Neighborhood House,2953,Brighton,29,0.02,59
+2025,March,5,Margaret Fuller Neighborhood House,2953,Mattapan,30,0.02,59
+2025,March,5,Margaret Fuller Neighborhood House,2953,Charlestown,31,0.02,59
+2025,May,5,Margaret Fuller Neighborhood House,1729,Boston,1,0.23,398
+2025,May,5,Margaret Fuller Neighborhood House,1729,Cambridge,3,0.55,951
+2025,May,5,Margaret Fuller Neighborhood House,1729,Dorchester,27,0.03,52
+2025,May,5,Margaret Fuller Neighborhood House,1729,Malden,10,0.03,52
+2025,May,5,Margaret Fuller Neighborhood House,1729,Somerville,2,0.05,86
+2025,May,5,Margaret Fuller Neighborhood House,1729,Quincy,5,0.02,35
+2025,May,5,Margaret Fuller Neighborhood House,1729,Revere,15,0.02,35
+2025,May,5,Margaret Fuller Neighborhood House,1729,Allston,28,0.01,17
+2025,May,5,Margaret Fuller Neighborhood House,1729,Brighton,29,0.02,35
+2025,May,5,Margaret Fuller Neighborhood House,1729,Mattapan,30,0.02,35
+2025,May,5,Margaret Fuller Neighborhood House,1729,Charlestown,31,0.02,35
+2025,June,5,Margaret Fuller Neighborhood House,1679,Boston,1,0.23,386
+2025,June,5,Margaret Fuller Neighborhood House,1679,Cambridge,3,0.55,923
+2025,June,5,Margaret Fuller Neighborhood House,1679,Dorchester,27,0.03,50
+2025,June,5,Margaret Fuller Neighborhood House,1679,Malden,10,0.03,50
+2025,June,5,Margaret Fuller Neighborhood House,1679,Somerville,2,0.05,84
+2025,June,5,Margaret Fuller Neighborhood House,1679,Quincy,5,0.02,34
+2025,June,5,Margaret Fuller Neighborhood House,1679,Revere,15,0.02,34
+2025,June,5,Margaret Fuller Neighborhood House,1679,Allston,28,0.01,17
+2025,June,5,Margaret Fuller Neighborhood House,1679,Brighton,29,0.02,34
+2025,June,5,Margaret Fuller Neighborhood House,1679,Mattapan,30,0.02,34
+2025,June,5,Margaret Fuller Neighborhood House,1679,Charlestown,31,0.02,34
+2025,July,5,Margaret Fuller Neighborhood House,2213,Boston,1,0.23,509
+2025,July,5,Margaret Fuller Neighborhood House,2213,Cambridge,3,0.55,1217
+2025,July,5,Margaret Fuller Neighborhood House,2213,Dorchester,27,0.03,66
+2025,July,5,Margaret Fuller Neighborhood House,2213,Malden,10,0.03,66
+2025,July,5,Margaret Fuller Neighborhood House,2213,Somerville,2,0.05,111
+2025,July,5,Margaret Fuller Neighborhood House,2213,Quincy,5,0.02,44
+2025,July,5,Margaret Fuller Neighborhood House,2213,Revere,15,0.02,44
+2025,July,5,Margaret Fuller Neighborhood House,2213,Allston,28,0.01,22
+2025,July,5,Margaret Fuller Neighborhood House,2213,Brighton,29,0.02,44
+2025,July,5,Margaret Fuller Neighborhood House,2213,Mattapan,30,0.02,44
+2025,July,5,Margaret Fuller Neighborhood House,2213,Charlestown,31,0.02,44
+2025,August,5,Margaret Fuller Neighborhood House,2896,Boston,1,0.23,666
+2025,August,5,Margaret Fuller Neighborhood House,2896,Cambridge,3,0.55,1593
+2025,August,5,Margaret Fuller Neighborhood House,2896,Dorchester,27,0.03,87
+2025,August,5,Margaret Fuller Neighborhood House,2896,Malden,10,0.03,87
+2025,August,5,Margaret Fuller Neighborhood House,2896,Somerville,2,0.05,145
+2025,August,5,Margaret Fuller Neighborhood House,2896,Quincy,5,0.02,58
+2025,August,5,Margaret Fuller Neighborhood House,2896,Revere,15,0.02,58
+2025,August,5,Margaret Fuller Neighborhood House,2896,Allston,28,0.01,29
+2025,August,5,Margaret Fuller Neighborhood House,2896,Brighton,29,0.02,58
+2025,August,5,Margaret Fuller Neighborhood House,2896,Mattapan,30,0.02,58
+2025,August,5,Margaret Fuller Neighborhood House,2896,Charlestown,31,0.02,58
+2025,September,5,Margaret Fuller Neighborhood House,3522,Boston,1,0.23,810
+2025,September,5,Margaret Fuller Neighborhood House,3522,Cambridge,3,0.55,1937
+2025,September,5,Margaret Fuller Neighborhood House,3522,Dorchester,27,0.03,106
+2025,September,5,Margaret Fuller Neighborhood House,3522,Malden,10,0.03,106
+2025,September,5,Margaret Fuller Neighborhood House,3522,Somerville,2,0.05,176
+2025,September,5,Margaret Fuller Neighborhood House,3522,Quincy,5,0.02,70
+2025,September,5,Margaret Fuller Neighborhood House,3522,Revere,15,0.02,70
+2025,September,5,Margaret Fuller Neighborhood House,3522,Allston,28,0.01,35
+2025,September,5,Margaret Fuller Neighborhood House,3522,Brighton,29,0.02,70
+2025,September,5,Margaret Fuller Neighborhood House,3522,Mattapan,30,0.02,70
+2025,September,5,Margaret Fuller Neighborhood House,3522,Charlestown,31,0.02,70
+2025,October,5,Margaret Fuller Neighborhood House,3826,Boston,1,0.23,880
+2025,October,5,Margaret Fuller Neighborhood House,3826,Cambridge,3,0.55,2104
+2025,October,5,Margaret Fuller Neighborhood House,3826,Dorchester,27,0.03,115
+2025,October,5,Margaret Fuller Neighborhood House,3826,Malden,10,0.03,115
+2025,October,5,Margaret Fuller Neighborhood House,3826,Somerville,2,0.05,191
+2025,October,5,Margaret Fuller Neighborhood House,3826,Quincy,5,0.02,77
+2025,October,5,Margaret Fuller Neighborhood House,3826,Revere,15,0.02,77
+2025,October,5,Margaret Fuller Neighborhood House,3826,Allston,28,0.01,38
+2025,October,5,Margaret Fuller Neighborhood House,3826,Brighton,29,0.02,77
+2025,October,5,Margaret Fuller Neighborhood House,3826,Mattapan,30,0.02,77
+2025,October,5,Margaret Fuller Neighborhood House,3826,Charlestown,31,0.02,77
+2025,November,5,Margaret Fuller Neighborhood House,4016,Boston,1,0.23,924
+2025,November,5,Margaret Fuller Neighborhood House,4016,Cambridge,3,0.55,2209
+2025,November,5,Margaret Fuller Neighborhood House,4016,Dorchester,27,0.03,120
+2025,November,5,Margaret Fuller Neighborhood House,4016,Malden,10,0.03,120
+2025,November,5,Margaret Fuller Neighborhood House,4016,Somerville,2,0.05,201
+2025,November,5,Margaret Fuller Neighborhood House,4016,Quincy,5,0.02,80
+2025,November,5,Margaret Fuller Neighborhood House,4016,Revere,15,0.02,80
+2025,November,5,Margaret Fuller Neighborhood House,4016,Allston,28,0.01,40
+2025,November,5,Margaret Fuller Neighborhood House,4016,Brighton,29,0.02,80
+2025,November,5,Margaret Fuller Neighborhood House,4016,Mattapan,30,0.02,80
+2025,November,5,Margaret Fuller Neighborhood House,4016,Charlestown,31,0.02,80
+2025,December,5,Margaret Fuller Neighborhood House,3838,Boston,1,0.23,883
+2025,December,5,Margaret Fuller Neighborhood House,3838,Cambridge,3,0.55,2111
+2025,December,5,Margaret Fuller Neighborhood House,3838,Dorchester,27,0.03,115
+2025,December,5,Margaret Fuller Neighborhood House,3838,Malden,10,0.03,115
+2025,December,5,Margaret Fuller Neighborhood House,3838,Somerville,2,0.05,192
+2025,December,5,Margaret Fuller Neighborhood House,3838,Quincy,5,0.02,77
+2025,December,5,Margaret Fuller Neighborhood House,3838,Revere,15,0.02,77
+2025,December,5,Margaret Fuller Neighborhood House,3838,Allston,28,0.01,38
+2025,December,5,Margaret Fuller Neighborhood House,3838,Brighton,29,0.02,77
+2025,December,5,Margaret Fuller Neighborhood House,3838,Mattapan,30,0.02,77
+2025,December,5,Margaret Fuller Neighborhood House,3838,Charlestown,31,0.02,77
+2025,March,8,Project SOUP - Somerville Homeless Coalition,1616,Somerville,2,1,1616
+2025,April,8,Project SOUP - Somerville Homeless Coalition,3899,Somerville,2,1,3899
+2025,May,8,Project SOUP - Somerville Homeless Coalition,3400,Somerville,2,1,3400
+2025,June,8,Project SOUP - Somerville Homeless Coalition,3781,Somerville,2,1,3781
+2025,July,8,Project SOUP - Somerville Homeless Coalition,2616,Somerville,2,1,2616
+2025,August,8,Project SOUP - Somerville Homeless Coalition,600,Somerville,2,1,600
+2025,September,8,Project SOUP - Somerville Homeless Coalition,2811,Somerville,2,1,2811
+2025,October,8,Project SOUP - Somerville Homeless Coalition,1989,Somerville,2,1,1989
+2025,November,8,Project SOUP - Somerville Homeless Coalition,2266,Somerville,2,1,2266
+2025,December,8,Project SOUP - Somerville Homeless Coalition,2327,Somerville,2,1,2327
+2025,May,10,Tufts Wakefield/Melrose,1300,Medford,6,0.23,299
+2025,May,10,Tufts Wakefield/Melrose,1300,Melrose,17,0.22,286
+2025,May,10,Tufts Wakefield/Melrose,1300,Malden,10,0.14,182
+2025,May,10,Tufts Wakefield/Melrose,1300,Reading,32,0.05,65
+2025,May,10,Tufts Wakefield/Melrose,1300,Wakefield,33,0.07,91
+2025,May,10,Tufts Wakefield/Melrose,1300,Winchester,21,0.05,65
+2025,May,10,Tufts Wakefield/Melrose,1300,Woburn,18,0.04,52
+2025,May,10,Tufts Wakefield/Melrose,1300,Everett,8,0.05,65
+2025,May,10,Tufts Wakefield/Melrose,1300,Saugus,34,0.03,39
+2025,May,10,Tufts Wakefield/Melrose,1300,Stoneham,35,0.05,65
+2025,May,10,Tufts Wakefield/Melrose,1300,Revere,15,0.05,65
+2025,May,10,Tufts Wakefield/Melrose,1300,Winthrop,19,0.02,26
+2025,July,10,Tufts Wakefield/Melrose,1520,Medford,6,0.23,350
+2025,July,10,Tufts Wakefield/Melrose,1520,Melrose,17,0.22,334
+2025,July,10,Tufts Wakefield/Melrose,1520,Malden,10,0.14,213
+2025,July,10,Tufts Wakefield/Melrose,1520,Reading,32,0.05,76
+2025,July,10,Tufts Wakefield/Melrose,1520,Wakefield,33,0.07,106
+2025,July,10,Tufts Wakefield/Melrose,1520,Winchester,21,0.05,76
+2025,July,10,Tufts Wakefield/Melrose,1520,Woburn,18,0.04,61
+2025,July,10,Tufts Wakefield/Melrose,1520,Everett,8,0.05,76
+2025,July,10,Tufts Wakefield/Melrose,1520,Saugus,34,0.03,46
+2025,July,10,Tufts Wakefield/Melrose,1520,Stoneham,35,0.05,76
+2025,July,10,Tufts Wakefield/Melrose,1520,Revere,15,0.05,76
+2025,July,10,Tufts Wakefield/Melrose,1520,Winthrop,19,0.02,30
+2025,August,10,Tufts Wakefield/Melrose,1508,Medford,6,0.23,347
+2025,August,10,Tufts Wakefield/Melrose,1508,Melrose,17,0.22,332
+2025,August,10,Tufts Wakefield/Melrose,1508,Malden,10,0.14,211
+2025,August,10,Tufts Wakefield/Melrose,1508,Reading,32,0.05,75
+2025,August,10,Tufts Wakefield/Melrose,1508,Wakefield,33,0.07,106
+2025,August,10,Tufts Wakefield/Melrose,1508,Winchester,21,0.05,75
+2025,August,10,Tufts Wakefield/Melrose,1508,Woburn,18,0.04,60
+2025,August,10,Tufts Wakefield/Melrose,1508,Everett,8,0.05,75
+2025,August,10,Tufts Wakefield/Melrose,1508,Saugus,34,0.03,45
+2025,August,10,Tufts Wakefield/Melrose,1508,Stoneham,35,0.05,75
+2025,August,10,Tufts Wakefield/Melrose,1508,Revere,15,0.05,75
+2025,August,10,Tufts Wakefield/Melrose,1508,Winthrop,19,0.02,30
+2025,September,10,Tufts Wakefield/Melrose,1495,Medford,6,0.23,344
+2025,September,10,Tufts Wakefield/Melrose,1495,Melrose,17,0.22,329
+2025,September,10,Tufts Wakefield/Melrose,1495,Malden,10,0.14,209
+2025,September,10,Tufts Wakefield/Melrose,1495,Reading,32,0.05,75
+2025,September,10,Tufts Wakefield/Melrose,1495,Wakefield,33,0.07,105
+2025,September,10,Tufts Wakefield/Melrose,1495,Winchester,21,0.05,75
+2025,September,10,Tufts Wakefield/Melrose,1495,Woburn,18,0.04,60
+2025,September,10,Tufts Wakefield/Melrose,1495,Everett,8,0.05,75
+2025,September,10,Tufts Wakefield/Melrose,1495,Saugus,34,0.03,45
+2025,September,10,Tufts Wakefield/Melrose,1495,Stoneham,35,0.05,75
+2025,September,10,Tufts Wakefield/Melrose,1495,Revere,15,0.05,75
+2025,September,10,Tufts Wakefield/Melrose,1495,Winthrop,19,0.02,30
+2025,October,10,Tufts Wakefield/Melrose,1497,Medford,6,0.23,344
+2025,October,10,Tufts Wakefield/Melrose,1497,Melrose,17,0.22,329
+2025,October,10,Tufts Wakefield/Melrose,1497,Malden,10,0.14,210
+2025,October,10,Tufts Wakefield/Melrose,1497,Reading,32,0.05,75
+2025,October,10,Tufts Wakefield/Melrose,1497,Wakefield,33,0.07,105
+2025,October,10,Tufts Wakefield/Melrose,1497,Winchester,21,0.05,75
+2025,October,10,Tufts Wakefield/Melrose,1497,Woburn,18,0.04,60
+2025,October,10,Tufts Wakefield/Melrose,1497,Everett,8,0.05,75
+2025,October,10,Tufts Wakefield/Melrose,1497,Saugus,34,0.03,45
+2025,October,10,Tufts Wakefield/Melrose,1497,Stoneham,35,0.05,75
+2025,October,10,Tufts Wakefield/Melrose,1497,Revere,15,0.05,75
+2025,October,10,Tufts Wakefield/Melrose,1497,Winthrop,19,0.02,30
+2025,November,10,Tufts Wakefield/Melrose,2003,Medford,6,0.23,461
+2025,November,10,Tufts Wakefield/Melrose,2003,Melrose,17,0.22,441
+2025,November,10,Tufts Wakefield/Melrose,2003,Malden,10,0.14,280
+2025,November,10,Tufts Wakefield/Melrose,2003,Reading,32,0.05,100
+2025,November,10,Tufts Wakefield/Melrose,2003,Wakefield,33,0.07,140
+2025,November,10,Tufts Wakefield/Melrose,2003,Winchester,21,0.05,100
+2025,November,10,Tufts Wakefield/Melrose,2003,Woburn,18,0.04,80
+2025,November,10,Tufts Wakefield/Melrose,2003,Everett,8,0.05,100
+2025,November,10,Tufts Wakefield/Melrose,2003,Saugus,34,0.03,60
+2025,November,10,Tufts Wakefield/Melrose,2003,Stoneham,35,0.05,100
+2025,November,10,Tufts Wakefield/Melrose,2003,Revere,15,0.05,100
+2025,November,10,Tufts Wakefield/Melrose,2003,Winthrop,19,0.02,40
+2025,December,10,Tufts Wakefield/Melrose,2016,Medford,6,0.23,464
+2025,December,10,Tufts Wakefield/Melrose,2016,Melrose,17,0.22,444
+2025,December,10,Tufts Wakefield/Melrose,2016,Malden,10,0.14,282
+2025,December,10,Tufts Wakefield/Melrose,2016,Reading,32,0.05,101
+2025,December,10,Tufts Wakefield/Melrose,2016,Wakefield,33,0.07,141
+2025,December,10,Tufts Wakefield/Melrose,2016,Winchester,21,0.05,101
+2025,December,10,Tufts Wakefield/Melrose,2016,Woburn,18,0.04,81
+2025,December,10,Tufts Wakefield/Melrose,2016,Everett,8,0.05,101
+2025,December,10,Tufts Wakefield/Melrose,2016,Saugus,34,0.03,60
+2025,December,10,Tufts Wakefield/Melrose,2016,Stoneham,35,0.05,101
+2025,December,10,Tufts Wakefield/Melrose,2016,Revere,15,0.05,101
+2025,December,10,Tufts Wakefield/Melrose,2016,Winthrop,19,0.02,40
+2026,January,3,Family ACCESS,4043,Arlington,14,0.01,40
+2026,January,3,Family ACCESS,4043,Burlington,24,0.01,40
+2026,January,3,Family ACCESS,4043,Lexington,4,0.01,40
+2026,January,3,Family ACCESS,4043,Newton,11,0.25,1011
+2026,January,3,Family ACCESS,4043,Waltham,13,0.7,2830
+2026,January,3,Family ACCESS,4043,Wayland,25,0,0
+2026,January,3,Family ACCESS,4043,Wellesley,26,0.01,40
+2026,January,3,Family ACCESS,4043,Woburn,18,0.01,40
+2026,January,2,Diaper Depot,6322,Waltham,13,1,6322
+2026,January,9,REACH Beyond Domestic Violence,1989,Waltham,13,1,1989
+2026,January,4,Lexington Food Pantry,4121,Lexington,4,0.99,4080
+2026,January,4,Lexington Food Pantry,4121,Woburn,18,0.01,41
+2026,January,7,People Helping People- Burlington Food Pantry,3806,Burlington,24,1,3806
+2026,January,1,Arlington EATS,7599,Arlington,14,1,7599
+2026,January,13,Woburn Council of Social Concern,801,Winchester,21,0.2,160
+2026,January,13,Woburn Council of Social Concern,801,Woburn,18,0.8,641
+2026,January,5,Margaret Fuller Neighborhood House,4494,Boston,1,0.23,1034
+2026,January,5,Margaret Fuller Neighborhood House,4494,Cambridge,3,0.55,2472
+2026,January,5,Margaret Fuller Neighborhood House,4494,Dorchester,27,0.03,135
+2026,January,5,Margaret Fuller Neighborhood House,4494,Malden,10,0.03,135
+2026,January,5,Margaret Fuller Neighborhood House,4494,Somerville,2,0.05,225
+2026,January,5,Margaret Fuller Neighborhood House,4494,Quincy,5,0.02,90
+2026,January,5,Margaret Fuller Neighborhood House,4494,Revere,15,0.02,90
+2026,January,5,Margaret Fuller Neighborhood House,4494,Allston,28,0.01,45
+2026,January,5,Margaret Fuller Neighborhood House,4494,Brighton,29,0.02,90
+2026,January,5,Margaret Fuller Neighborhood House,4494,Mattapan,30,0.02,90
+2026,January,5,Margaret Fuller Neighborhood House,4494,Charlestown,31,0.02,90
+2026,January,8,Project SOUP - Somerville Homeless Coalition,1476,Somerville,2,1,1476
+2026,January,10,Tufts Wakefield/Melrose,1886,Medford,6,0.23,434
+2026,January,10,Tufts Wakefield/Melrose,1886,Melrose,17,0.22,415
+2026,January,10,Tufts Wakefield/Melrose,1886,Malden,10,0.14,264
+2026,January,10,Tufts Wakefield/Melrose,1886,Reading,32,0.05,94
+2026,January,10,Tufts Wakefield/Melrose,1886,Wakefield,33,0.07,132
+2026,January,10,Tufts Wakefield/Melrose,1886,Winchester,21,0.05,94
+2026,January,10,Tufts Wakefield/Melrose,1886,Woburn,18,0.04,75
+2026,January,10,Tufts Wakefield/Melrose,1886,Everett,8,0.05,94
+2026,January,10,Tufts Wakefield/Melrose,1886,Saugus,34,0.03,57
+2026,January,10,Tufts Wakefield/Melrose,1886,Stoneham,35,0.05,94
+2026,January,10,Tufts Wakefield/Melrose,1886,Revere,15,0.05,94
+2026,January,10,Tufts Wakefield/Melrose,1886,Winthrop,19,0.02,38
