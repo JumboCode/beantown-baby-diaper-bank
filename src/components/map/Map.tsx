@@ -3,7 +3,7 @@
 import dynamic from "next/dynamic";
 import { useLeafletMap } from "./useLeafletMap";
 import { useBaseTileLayer } from "./useBaseTileLayer";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { City, Distribution, status } from "@/generated/prisma/client";
 import {
   Popup,
@@ -87,9 +87,13 @@ type CityMapInfo = City & {
   partners: PartnerInfoType[];
 };
 
+type MapTimelineSlider = {
+  value: string | number;
+};
+
 // --- 3. Main HeatMap Component ---
 
-export default function Map({ mapData, timelineSlider }: { mapData: MapData, timelineSlider: { value: string | number } }) {
+export default function Map({ mapData, timelineSlider }: { mapData: MapData, timelineSlider: MapTimelineSlider }) {
   const { mapConfig } = useLeafletMap();
   const { style: mapStyle, ...mapOptions } = mapConfig;
   const { tileLayerProps } = useBaseTileLayer();
@@ -131,22 +135,52 @@ export default function Map({ mapData, timelineSlider }: { mapData: MapData, tim
     });
   }, [mapData, cities]);
 
+  const visibleBoundaries = useMemo(
+    () => boundaryPolygons.filter((boundary) => boundary.totalDiapers > 0),
+    [boundaryPolygons],
+  );
+
+  const previousVisibleIdsRef = useRef<Set<string>>(new Set());
+
+  const enteringBoundaryIds = useMemo(() => {
+    const previous = previousVisibleIdsRef.current;
+    const entering = new Set<string>();
+
+    visibleBoundaries.forEach((boundary, index) => {
+      const boundaryId = String(boundary.id || index);
+      if (!previous.has(boundaryId)) entering.add(boundaryId);
+    });
+
+    return entering;
+  }, [visibleBoundaries]);
+
+  useEffect(() => {
+    previousVisibleIdsRef.current = new Set(
+      visibleBoundaries.map((boundary, index) => String(boundary.id || index)),
+    );
+  }, [visibleBoundaries]);
+
   return (
     <div
       style={{ position: "relative", height: "100%", width: "100%", zIndex: 0 }}
     >
       <MapContainer {...mapOptions} style={mapStyle}>
         <TileLayer {...tileLayerProps} />
-        {boundaryPolygons
-          .filter((boundary) => boundary.totalDiapers > 0)
-          .map((boundary, index) => (
-            <Polygon
-              key={boundary.id || index}
-              pathOptions={{
-                weight:
-                  activeId === boundary.id || hoveredId === boundary.id
-                    ? 1.5
-                    : 0.5,
+        {visibleBoundaries.map((boundary, index) => {
+          const boundaryId = String(boundary.id || index);
+          const isEntering = enteringBoundaryIds.has(boundaryId);
+
+          return (
+          <Polygon
+            key={boundaryId}
+            pathOptions={{
+              className: isEntering
+                ? "city-boundary city-boundary-enter"
+                : "city-boundary",
+              weight:
+                activeId === boundary.id || hoveredId === boundary.id
+                  ? 1.5
+                  : 0.5,
                 color:
                   activeId === boundary.id || hoveredId === boundary.id
                     ? "#0F4F78"
@@ -192,14 +226,38 @@ export default function Map({ mapData, timelineSlider }: { mapData: MapData, tim
                       />
                     ),
                 )}
-            </Polygon>
-          ))}
+          </Polygon>
+          );
+        })}
       </MapContainer>
 
       <PartnerIconDrawer
         partnerId={selectedPartnerId}
         onClose={() => setSelectedPartnerId(null)}
       />
+
+      <style jsx global>{`
+        @keyframes cityBoundaryFadeIn {
+          from {
+            opacity: 0;
+          }
+          to {
+            opacity: 1;
+          }
+        }
+
+        .city-boundary-enter {
+          animation: cityBoundaryFadeIn 700ms ease-out;
+        }
+
+        .city-boundary {
+          transition:
+            fill 700ms ease-out,
+            fill-opacity 700ms ease-out,
+            stroke 700ms ease-out,
+            stroke-opacity 700ms ease-out;
+        }
+      `}</style>
     </div>
   );
 }
@@ -212,7 +270,7 @@ function PopupContent({
   onPartnerSelect,
 }: {
   city: CityMapInfo;
-  timelineSlider: { value: string | number };
+  timelineSlider: MapTimelineSlider;
   onPartnerSelect: (id: number) => void;
 }) {
   // ROBUST FILTER: Detects waitlisted by string or boolean
