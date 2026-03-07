@@ -7,7 +7,7 @@ import { useTimelinePeriod } from "@/components/map/useTimelinePeriod";
 import TotalDiapersDistributed from "@/components/map/TotalDiapersDistributed";
 import { useState, useEffect, useCallback } from "react";
 import ImpactModal from "@/components/map/ImpactModal";
-import { FeatureCollection, Polygon } from "geojson";
+import { FeatureCollection, MultiPolygon, Polygon } from "geojson";
 import { City, Distribution } from "@/generated/prisma/client";
 import YearlyMonthlySwitch from "@/components/sprint2/YearlyMonthlySwitch";
 
@@ -29,21 +29,43 @@ type CityMapInfo = City & {
 };
 
 export type MapData = {
-  boundaries: FeatureCollection<Polygon>;
+  boundaries: FeatureCollection<Polygon | MultiPolygon>;
   cities: { data: CityMapInfo[] };
 };
 
+const flipCoordinates = (coords: unknown): unknown => {
+  if (!Array.isArray(coords)) return coords;
+  if (
+    coords.length > 0 &&
+    Array.isArray(coords[0]) &&
+    coords[0].length >= 2 &&
+    typeof coords[0][0] === "number" &&
+    typeof coords[0][1] === "number"
+  ) {
+    return (coords as number[][]).map(([lng, lat, ...rest]) => [
+      lat,
+      lng,
+      ...rest,
+    ]);
+  }
+  return coords.map((child) => flipCoordinates(child));
+};
+
 const flipBoundaries = (
-  data: FeatureCollection<Polygon>,
-): FeatureCollection<Polygon> => {
+  data: FeatureCollection<Polygon | MultiPolygon>,
+): FeatureCollection<Polygon | MultiPolygon> => {
   const flippedFeatures = data.features.map((feature) => ({
     ...feature,
-    geometry: {
-      ...feature.geometry,
-      coordinates: feature.geometry.coordinates.map(
-        (ring) => ring.map((coord) => [coord[1], coord[0]]), // Swap index 0 and 1
-      ),
-    },
+    geometry:
+      feature.geometry.type === "Polygon"
+        ? {
+            ...feature.geometry,
+            coordinates: flipCoordinates(feature.geometry.coordinates) as Polygon["coordinates"],
+          }
+        : {
+            ...feature.geometry,
+            coordinates: flipCoordinates(feature.geometry.coordinates) as MultiPolygon["coordinates"],
+          },
   }));
 
   return {
@@ -57,7 +79,7 @@ export default function Page() {
   const [mapData, setMapData] = useState<MapData | null>(null);
   const [totalDiapers, setTotalDiapers] = useState<number>();
   const [cachedBoundaries, setCachedBoundaries] =
-    useState<FeatureCollection<Polygon> | null>(null);
+    useState<FeatureCollection<Polygon | MultiPolygon> | null>(null);
 
   const handleTimelineChange = useCallback(
     async (params: { month?: string; year: string }) => {
@@ -73,8 +95,8 @@ export default function Page() {
         const boundariesPromise = cachedBoundaries
           ? Promise.resolve(cachedBoundaries)
           : fetch(`/api/cities/boundaries`)
-              .then((res) => res.json())
-              .then(flipBoundaries);
+            .then((res) => res.json())
+            .then(flipBoundaries);
 
         const [cities, boundaries] = await Promise.all([
           fetch(`/api/cities?${queryParams.toString()}`).then((res) =>

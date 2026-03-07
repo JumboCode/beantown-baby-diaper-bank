@@ -66,6 +66,46 @@ const getColor = (value: number, max: number) => {
   return rgbToHex(r, g, b);
 };
 
+const isFiniteNumber = (value: unknown): value is number =>
+  typeof value === "number" && Number.isFinite(value);
+
+const isLatLngPair = (value: unknown): value is [number, number] =>
+  Array.isArray(value) &&
+  value.length >= 2 &&
+  isFiniteNumber(value[0]) &&
+  isFiniteNumber(value[1]);
+
+const normalizeRing = (value: unknown): LatLngExpression[] | null => {
+  if (!Array.isArray(value)) return null;
+  const ring = value
+    .filter(isLatLngPair)
+    .map(([lat, lng]) => [lat, lng] as [number, number]);
+  return ring.length >= 3 ? ring : null;
+};
+
+const getPolygonSets = (
+  geometry: MapData["boundaries"]["features"][number]["geometry"],
+): LatLngExpression[][][] => {
+  if (geometry.type === "Polygon") {
+    const rings = geometry.coordinates
+      .map((ring) => normalizeRing(ring))
+      .filter((ring): ring is LatLngExpression[] => ring !== null);
+    return rings.length > 0 ? [rings] : [];
+  }
+
+  if (geometry.type === "MultiPolygon") {
+    return geometry.coordinates
+      .map((polygon) =>
+        polygon
+          .map((ring) => normalizeRing(ring))
+          .filter((ring): ring is LatLngExpression[] => ring !== null),
+      )
+      .filter((polygon) => polygon.length > 0);
+  }
+
+  return [];
+};
+
 // --- 2. Types and Dynamic Imports ---
 
 export const Marker = dynamic(
@@ -116,18 +156,23 @@ export default function Map({ mapData }: { mapData: MapData }) {
       if (total > maxDiapers) maxDiapers = total;
     });
 
-    return mapData.boundaries.features.map((feature) => {
+    return mapData.boundaries.features.flatMap((feature, featureIndex) => {
       const name = feature.properties?.name;
       const total = name ? cityTotals[name] || 0 : 0;
+      const polygons = getPolygonSets(feature.geometry);
 
-      return {
-        id: name || Math.random(),
-        positions: feature.geometry
-          .coordinates as unknown as LatLngExpression[][],
+      if (polygons.length === 0) return [];
+
+      return polygons.map((positions, polygonIndex) => ({
+        renderKey: `${String(feature.id ?? featureIndex)}-${polygonIndex}`,
+        id:
+          name ??
+          `feature-${String(feature.id ?? featureIndex)}-${polygonIndex}`,
+        positions,
         name: name,
         fillColor: getColor(total, maxDiapers),
         totalDiapers: total,
-      };
+      }));
     });
   }, [mapData, cities]);
 
@@ -139,7 +184,7 @@ export default function Map({ mapData }: { mapData: MapData }) {
         <TileLayer {...tileLayerProps} />
         {boundaryPolygons.map((boundary, index) => (
           <Polygon
-            key={boundary.id || index}
+            key={boundary.renderKey || index}
             pathOptions={{
               weight:
                 activeId === boundary.id || hoveredId === boundary.id
