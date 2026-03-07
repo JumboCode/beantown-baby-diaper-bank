@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
-export const revalidate = 2592000;
+export const revalidate = 1200;
 
 export async function GET() {
   try {
