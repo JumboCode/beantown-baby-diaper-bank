@@ -1,9 +1,11 @@
 "use client";
 
-import { useMemo } from "react";
-import { Text } from "@mantine/core";
+import { useMemo, useState, useEffect } from "react";
+import { Button, Input, Text } from "@mantine/core";
 import { Distribution } from "@/lib/types";
 import { CollapsibleDropdown } from "./Dropdown";
+import { Modal } from '@mantine/core';
+import { useDisclosure } from '@mantine/hooks';
 
 const MONTH_ORDER: Record<string, number> = {
   January: 1,
@@ -27,12 +29,94 @@ interface DateTotal {
   distributions: Distribution[];
 }
 
+interface EditInfo {
+  name: string;
+  year: string;
+  month: string;
+  numDiapers: number;
+  partnerId: number;
+}
+
 export default function DistributionsTable({
   distributionData,
 }: {
   distributionData: Distribution[];
 }) {
   const error: string | undefined = undefined;
+
+  // Edit Modal
+  const [opened, { open, close }] = useDisclosure(false);
+  const [currEditInfo, setCurrEditInfo] = useState<EditInfo>();
+  const [inputValue, setInputValue] = useState<string>("");
+
+  // Central diaper count map keyed by `${partnerId}-${month}-${year}`.
+  // Seeded from the MonthlyData fetch (same source as edits); updated on submit.
+  const [diapersMap, setDiapersMap] = useState<Record<string, number>>({});
+
+  // Tracks net changes to monthly totals after edits, keyed by `${year}-${month}`.
+  const [monthDeltaMap, setMonthDeltaMap] = useState<Record<string, number>>({});
+
+  // Authoritative monthly totals fetched from MonthlyData table on mount.
+  // Keyed by `${year}-${month}`. Falls back to date.total (from Distributions)
+  // if the fetch hasn't resolved yet or a month has no MonthlyData records.
+  const [monthlyBaseTotals, setMonthlyBaseTotals] = useState<Record<string, number>>({});
+
+  useEffect(() => {
+    fetch("/api/monthly-data")
+      .then((r) => r.json())
+      .then((data: { partnerId: string; month: string; year: string; numberDiapers: string | null }[]) => {
+        const totalsMap: Record<string, number> = {};
+        const partnerMap: Record<string, number> = {};
+        data.forEach((row) => {
+          if (!row.month || !row.year) return;
+          const monthKey = `${row.year}-${row.month}`;
+          const partnerKey = `${row.partnerId}-${row.month}-${row.year}`;
+          const diapers = row.numberDiapers ? parseInt(row.numberDiapers, 10) : 0;
+          totalsMap[monthKey] = (totalsMap[monthKey] ?? 0) + diapers;
+          partnerMap[partnerKey] = (partnerMap[partnerKey] ?? 0) + diapers;
+        });
+        setMonthlyBaseTotals(totalsMap);
+        setDiapersMap(partnerMap);
+      })
+      .catch((err) => console.error("Failed to load monthly totals:", err));
+  }, []);
+
+  const submitEdit = async (info: EditInfo | undefined, newValue: string) => {
+    if (!info) return;
+
+    const payload = {
+      partnerId: info.partnerId,
+      month: info.month,
+      year: info.year,
+      numDiapers: parseInt(newValue, 10),
+    };
+
+    console.log("Submitting edit with payload:", payload);
+
+    // clear input value
+    setInputValue("");
+
+    try {
+      const response = await fetch("/api/monthly-data", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      const result = await response.json();
+      console.log("Result:", result);
+      // Update partner diaper count and propagate the delta to the monthly total.
+      const key = `${info.partnerId}-${info.month}-${info.year}`;
+      const parsed = parseInt(newValue, 10);
+      const oldVal = diapersMap[key] ?? 0;
+      const delta = parsed - oldVal;
+      const monthKey = `${info.year}-${info.month}`;
+      setDiapersMap((prev) => ({ ...prev, [key]: parsed }));
+      setMonthDeltaMap((prev) => ({ ...prev, [monthKey]: (prev[monthKey] ?? 0) + delta }));
+      close();
+    } catch (err) {
+      console.error("Error submitting edit:", err);
+    }
+  };
 
   const totals: DateTotal[] = useMemo(() => {
     const grouped = distributionData.reduce<Record<string, DateTotal>>(
@@ -76,10 +160,33 @@ export default function DistributionsTable({
     });
   }, [distributionData]);
 
+
   if (error) return <Text c="red">Error: {error}</Text>;
 
   return (
     <div className="space-y-2">
+      <Modal.Root opened={opened} onClose={close}>
+        <Modal.Overlay />
+        <Modal.Content>
+          <Modal.Header>
+            <Modal.Title>Edit</Modal.Title>
+            <Modal.CloseButton />
+          </Modal.Header>
+          <Modal.Body>
+            <Text>Current number of diapers distributed by {currEditInfo?.name} in {currEditInfo?.month}: {currEditInfo?.numDiapers}</Text>
+            <Input
+              placeholder="Enter new diaper count here"
+              value={inputValue}
+              onChange={(e) => setInputValue(e.currentTarget.value)}
+            />
+            <div className="flex justify-center mt-4">
+              <Button onClick={() => submitEdit(currEditInfo, inputValue)}>Update</Button>
+            </div>
+            
+           
+          </Modal.Body>
+        </Modal.Content>
+      </Modal.Root>
       {totals.map((date) => (
         <CollapsibleDropdown<Distribution[]>
           key={`${date.year}-${date.month}`}
@@ -87,13 +194,18 @@ export default function DistributionsTable({
             <span className="flex items-center gap-3">
               <span>{`${date.month} ${date.year}`}</span>
               <span className="rounded-full bg-blue-50 px-3 py-1 text-sm font-medium text-[#053766]">
-                {date.total.toLocaleString()} diapers
+                {(
+                  (monthlyBaseTotals[`${date.year}-${date.month}`] ?? date.total) +
+                  (monthDeltaMap[`${date.year}-${date.month}`] ?? 0)
+                ).toLocaleString()} diapers
               </span>
             </span>
           }
           titleClassName="text-[22px] font-bold"
-          endpoint={`/api/distributions?month=${date.month}&year=${date.year}`}
+          // endpoint={`/api/distributions?month=${date.month}&year=${date.year}`}
+          endpoint={`/api/monthly-data?month=${date.month}&year=${date.year}`}
           render={(monthData) => {
+            console.log("Month Data:", monthData);
             const rowsForMonth = monthData
               .filter(
                 (dist) => dist.month === date.month && dist.year === date.year,
@@ -103,7 +215,7 @@ export default function DistributionsTable({
               );
 
             const partnerGroups = rowsForMonth.reduce<
-              Record<string, { partnerName: string; totalDiapers: number }>
+              Record<string, { partnerName: string; totalDiapers: number; partnerId: number }>
             >((acc, dist) => {
               const partnerName =
                 dist.partner?.name?.trim() || "Unknown Partner";
@@ -115,6 +227,7 @@ export default function DistributionsTable({
                 acc[partnerName] = {
                   partnerName,
                   totalDiapers: 0,
+                  partnerId: parseInt(dist.partnerId ?? "0", 10) || 0
                 };
               }
 
@@ -128,30 +241,30 @@ export default function DistributionsTable({
 
             return (
               <div className="space-y-2">
-                {partnerEntries.map((partner) => (
+                {partnerEntries.map((partner) => {
+                  const mapKey = `${partner.partnerId}-${date.month}-${date.year}`;
+                  const displayDiapers = diapersMap[mapKey] ?? partner.totalDiapers;
+                  return (
                   <CollapsibleDropdown<Distribution[]>
                     key={`${date.year}-${date.month}-${partner.partnerName}`}
                     title={partner.partnerName}
                     right={
                       <div className="flex items-center gap-2">
                         <span className="text-sm font-medium text-[#053766]">
-                          {partner.totalDiapers.toLocaleString()} diapers
+                          {displayDiapers.toLocaleString()} diapers
                         </span>
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            console.log(
-                              "Edit",
-                              partner.partnerName,
-                              date.month,
-                              date.year,
-                            );
-                          }}
-                          className="rounded border border-gray-300 px-2 py-1 text-xs font-medium text-gray-700 hover:bg-gray-50"
-                        >
+                        <Button variant="default" onClick={() => {
+                          setCurrEditInfo({
+                            name: partner.partnerName,
+                            month: date.month,
+                            numDiapers: displayDiapers,
+                            year: date.year,
+                            partnerId: partner.partnerId
+                          });
+                          open();
+                        }}>
                           Edit
-                        </button>
+                        </Button>
                       </div>
                     }
                     endpoint={`/api/distributions?month=${date.month}&year=${date.year}`}
@@ -197,7 +310,8 @@ export default function DistributionsTable({
                       );
                     }}
                   />
-                ))}
+                );
+              })}
               </div>
             );
           }}
