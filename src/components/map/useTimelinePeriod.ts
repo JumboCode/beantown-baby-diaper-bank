@@ -57,10 +57,16 @@ export function useTimelinePeriod() {
     setIndex,
     toggleView,
     move,
-    length,
+    length: labels.length,
     labels,
     months,
     years,
     value: labels[index],
+    setValue: (val: string) => {
+      const newIndex = labels.indexOf(val);
+      if (newIndex !== -1) {
+        setIndex(newIndex);
+      }
+    },
   };
 }

@@ -27,7 +27,6 @@ import {
 } from "@mantine/core";
 import PartnerIconDrawer from "./PartnerIconDrawer";
 import PartnerAvatar from "./PartnerAvatar";
-import { TimelineSliderProps } from "./TimelineSlider";
 
 // --- 1. Helper Functions ---
 
@@ -90,7 +89,7 @@ type CityMapInfo = City & {
 
 // --- 3. Main HeatMap Component ---
 
-export default function Map({ mapData, timelineSlider }: { mapData: MapData, timelineSlider: TimelineSliderProps }) {
+export default function Map({ mapData, timelineSlider }: { mapData: MapData, timelineSlider: { value: string | number } }) {
   const { mapConfig } = useLeafletMap();
   const { style: mapStyle, ...mapOptions } = mapConfig;
   const { tileLayerProps } = useBaseTileLayer();
@@ -138,61 +137,63 @@ export default function Map({ mapData, timelineSlider }: { mapData: MapData, tim
     >
       <MapContainer {...mapOptions} style={mapStyle}>
         <TileLayer {...tileLayerProps} />
-        {boundaryPolygons.map((boundary, index) => (
-          <Polygon
-            key={boundary.id || index}
-            pathOptions={{
-              weight:
-                activeId === boundary.id || hoveredId === boundary.id
-                  ? 1.5
-                  : 0.5,
-              color:
-                activeId === boundary.id || hoveredId === boundary.id
-                  ? "#0F4F78"
-                  : "#5A7687",
-              fillColor: boundary.fillColor,
-              fillOpacity:
-                activeId === boundary.id
-                  ? 0.65
-                  : hoveredId === boundary.id
-                    ? 0.5
-                    : 0.35,
-            }}
-            positions={boundary.positions}
-            eventHandlers={{
-              mouseover: () => setHoveredId(boundary.id),
-              mouseout: () =>
-                setHoveredId((current) =>
-                  current === boundary.id ? null : current,
-                ),
-              click: () => setActiveId(boundary.id),
-              popupclose: () =>
-                setActiveId((current) =>
-                  current === boundary.id ? null : current,
-                ),
-            }}
-          >
-            {boundary.name && (
-              <Tooltip sticky direction="top" offset={[0, -4]}>
-                <Text fw={700} fz="sm" c="#0F4F78">
-                  {boundary.name}
-                </Text>
-              </Tooltip>
-            )}
-            {boundary.name &&
-              cities.map(
-                (city) =>
-                  city.name === boundary.name && (
-                    <PopupContent
-                      key={city.id.toString()}
-                      city={city}
-                      timelineSlider={timelineSlider}
-                      onPartnerSelect={setSelectedPartnerId}
-                    />
+        {boundaryPolygons
+          .filter((boundary) => boundary.totalDiapers > 0)
+          .map((boundary, index) => (
+            <Polygon
+              key={boundary.id || index}
+              pathOptions={{
+                weight:
+                  activeId === boundary.id || hoveredId === boundary.id
+                    ? 1.5
+                    : 0.5,
+                color:
+                  activeId === boundary.id || hoveredId === boundary.id
+                    ? "#0F4F78"
+                    : "#5A7687",
+                fillColor: boundary.fillColor,
+                fillOpacity:
+                  activeId === boundary.id
+                    ? 0.65
+                    : hoveredId === boundary.id
+                      ? 0.5
+                      : 0.35,
+              }}
+              positions={boundary.positions}
+              eventHandlers={{
+                mouseover: () => setHoveredId(boundary.id),
+                mouseout: () =>
+                  setHoveredId((current) =>
+                    current === boundary.id ? null : current,
                   ),
+                click: () => setActiveId(boundary.id),
+                popupclose: () =>
+                  setActiveId((current) =>
+                    current === boundary.id ? null : current,
+                  ),
+              }}
+            >
+              {boundary.name && (
+                <Tooltip sticky direction="top" offset={[0, -4]}>
+                  <Text fw={700} fz="sm" c="#0F4F78">
+                    {boundary.name}
+                  </Text>
+                </Tooltip>
               )}
-          </Polygon>
-        ))}
+              {boundary.name &&
+                cities.map(
+                  (city) =>
+                    city.name === boundary.name && (
+                      <PopupContent
+                        key={city.id.toString()}
+                        city={city}
+                        timelineSlider={timelineSlider}
+                        onPartnerSelect={setSelectedPartnerId}
+                      />
+                    ),
+                )}
+            </Polygon>
+          ))}
       </MapContainer>
 
       <PartnerIconDrawer
@@ -211,7 +212,7 @@ function PopupContent({
   onPartnerSelect,
 }: {
   city: CityMapInfo;
-  timelineSlider: TimelineSliderProps;
+  timelineSlider: { value: string | number };
   onPartnerSelect: (id: number) => void;
 }) {
   // ROBUST FILTER: Detects waitlisted by string or boolean
