@@ -7,6 +7,9 @@ export async function GET() {
   try {
     const yearly_data = await prisma.yearlyData.findMany({
       distinct: ["year"],
+      orderBy: {
+        year: "asc",
+      },
     });
 
     const years = yearly_data.map((yearlyData) => yearlyData.year);
