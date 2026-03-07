@@ -61,5 +61,6 @@ export function useTimelinePeriod() {
     labels,
     months,
     years,
+    value: labels[index],
   };
 }

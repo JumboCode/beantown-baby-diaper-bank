@@ -73,8 +73,8 @@ export default function Page() {
         const boundariesPromise = cachedBoundaries
           ? Promise.resolve(cachedBoundaries)
           : fetch(`/api/cities/boundaries`)
-              .then((res) => res.json())
-              .then(flipBoundaries);
+            .then((res) => res.json())
+            .then(flipBoundaries);
 
         const [cities, boundaries] = await Promise.all([
           fetch(`/api/cities?${queryParams.toString()}`).then((res) =>
@@ -162,7 +162,7 @@ export default function Page() {
           </Group>
           <Box h="60vh" pos="relative" mb="md">
             {mapData ? (
-              <LeafletMap mapData={mapData} />
+              <LeafletMap mapData={mapData} timelineSlider={timeline} />
             ) : (
               <Skeleton h="60vh" mb="md" />
             )}

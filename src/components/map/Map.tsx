@@ -27,6 +27,7 @@ import {
 } from "@mantine/core";
 import PartnerIconDrawer from "./PartnerIconDrawer";
 import PartnerAvatar from "./PartnerAvatar";
+import { TimelineSliderProps } from "./TimelineSlider";
 
 // --- 1. Helper Functions ---
 
@@ -89,7 +90,7 @@ type CityMapInfo = City & {
 
 // --- 3. Main HeatMap Component ---
 
-export default function Map({ mapData }: { mapData: MapData }) {
+export default function Map({ mapData, timelineSlider }: { mapData: MapData, timelineSlider: TimelineSliderProps }) {
   const { mapConfig } = useLeafletMap();
   const { style: mapStyle, ...mapOptions } = mapConfig;
   const { tileLayerProps } = useBaseTileLayer();
@@ -185,6 +186,7 @@ export default function Map({ mapData }: { mapData: MapData }) {
                     <PopupContent
                       key={city.id.toString()}
                       city={city}
+                      timelineSlider={timelineSlider}
                       onPartnerSelect={setSelectedPartnerId}
                     />
                   ),
@@ -205,9 +207,11 @@ export default function Map({ mapData }: { mapData: MapData }) {
 
 function PopupContent({
   city,
+  timelineSlider,
   onPartnerSelect,
 }: {
   city: CityMapInfo;
+  timelineSlider: TimelineSliderProps;
   onPartnerSelect: (id: number) => void;
 }) {
   // ROBUST FILTER: Detects waitlisted by string or boolean
@@ -231,10 +235,6 @@ function PopupContent({
   const totalDiapers =
     city.distributions.reduce((sum, d) => sum + Number(d.numberDiapers), 0) ??
     0;
-  const totalChildren =
-    city.distributions.reduce((sum, d) => sum + Number(d.numberChildren), 0) ??
-    0;
-
   return (
     <Popup minWidth={280}>
       <Stack gap="xs">
@@ -244,10 +244,7 @@ function PopupContent({
 
         <Stack gap={0}>
           <Text fz="14px" c="#344054">
-            Diapers Distributed: <b>{totalDiapers.toLocaleString()}</b>
-          </Text>
-          <Text fz="14px" c="#344054">
-            Children helped: <b>{totalChildren.toLocaleString()}</b>
+            Total Diapers Distributed in {timelineSlider.value}: <b>{totalDiapers.toLocaleString()}</b>
           </Text>
         </Stack>
 
