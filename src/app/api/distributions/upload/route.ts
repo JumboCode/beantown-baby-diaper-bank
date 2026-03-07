@@ -23,7 +23,7 @@ export async function POST(request: Request) {
       selectedDate: body.selectedDate,
     });
 
-    revalidateTag("cities");
+    revalidateTag("cities", "max");
 
     return NextResponse.json({ data: result }, { status: 200 });
   } catch (error) {
