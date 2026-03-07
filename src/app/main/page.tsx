@@ -9,7 +9,6 @@ import { useState, useEffect, useCallback } from "react";
 import ImpactModal from "@/components/map/ImpactModal";
 import { FeatureCollection, Polygon } from "geojson";
 import { City, Distribution } from "@/generated/prisma/client";
-import YearlyMonthlySwitch from "@/components/sprint2/YearlyMonthlySwitch";
 
 // hex values: 1(#B2E5FF) 2(#7EC3E5) 3(#51A3CC) 4(#2C85B2) 5(#0F6B99)
 
@@ -154,10 +153,6 @@ export default function Page() {
         </Title>
         <Paper shadow="sm" p="md" radius="md" withBorder>
           <Group justify="space-between" align="center" mb="md">
-            <YearlyMonthlySwitch
-              value={timeline.view}
-              onChange={timeline.toggleView}
-            />
             <ImpactModal />
           </Group>
           <Box h="60vh" pos="relative" mb="md">

@@ -8,7 +8,7 @@ type TimelineResponse = {
 export type TimelineView = "monthly" | "yearly";
 
 export function useTimelinePeriod() {
-  const [view, setView] = useState<TimelineView>("monthly");
+  const [view, setView] = useState<TimelineView>("yearly");
   const [index, setIndex] = useState(0);
   const [years, setYears] = useState<string[]>([]);
   const [months, setMonths] = useState<string[]>([]);
