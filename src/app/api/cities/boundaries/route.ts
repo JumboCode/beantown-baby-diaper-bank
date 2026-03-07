@@ -5,7 +5,7 @@ import { City } from "@/generated/prisma/client";
 
 // Use static generation for this route and revalidate monthly.
 // set to
-export const revalidate = 2592000;
+export const revalidate = 0;
 
 type RawCityWithBoundaries = Omit<City, "boundary"> & {
   boundary: string;
