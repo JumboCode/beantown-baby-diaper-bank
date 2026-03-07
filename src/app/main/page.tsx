@@ -142,22 +142,19 @@ export default function Page() {
         <TotalDiapersDistributed totalDiapers={totalDiapers} />
 
         {/* Map Section with Timeline and Impact Modal - Two Column Layout */}
-        <Title
-          fz={24}
-          c="#101728"
-          // mb="md"
-          mt="md"
-          fw={600}
-        >
-          Distribution Heat Map
-        </Title>
+        <Group justify="space-between" align="center" mt="md">
+          <Title fz={24} c="#101728" fw={600}>
+            Distribution Heat Map
+          </Title>
+          <ImpactModal />
+        </Group>
         <Paper shadow="sm" p="md" radius="md" withBorder>
-          <Group justify="space-between" align="center" mb="md">
-            <ImpactModal />
-          </Group>
           <Box h="60vh" pos="relative" mb="md">
             {mapData ? (
-              <LeafletMap mapData={mapData} timelineSlider={timeline} />
+              <LeafletMap
+                mapData={mapData}
+                timelineSlider={timeline}
+              />
             ) : (
               <Skeleton h="60vh" mb="md" />
             )}
