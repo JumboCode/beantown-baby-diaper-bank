@@ -24,6 +24,8 @@ import {
   Avatar,
   Tooltip as MantineTooltip,
   Divider,
+  Box,
+  Badge,
 } from "@mantine/core";
 import PartnerIconDrawer from "./PartnerIconDrawer";
 import PartnerAvatar from "./PartnerAvatar";
@@ -257,6 +259,7 @@ export default function Map({ mapData, timelineSlider }: { mapData: MapData, tim
             stroke 700ms ease-out,
             stroke-opacity 700ms ease-out;
         }
+
       `}</style>
     </div>
   );
@@ -295,20 +298,37 @@ function PopupContent({
     city.distributions.reduce((sum, d) => sum + Number(d.numberDiapers), 0) ??
     0;
   return (
-    <Popup minWidth={280}>
-      <Stack gap="xs">
-        <Title order={3} fz="18px" c="#101828">
-          {city.name}
-        </Title>
+    <Popup minWidth={280} maxWidth={320}>
+      <Stack gap={6}>
+        <Group justify="space-between" align="flex-start" wrap="nowrap">
+          <Title order={3} fz="19px" c="#101828" lh={1.1}>
+            {city.name}
+          </Title>
+          <Badge color="blue" variant="light" radius="sm" fw={700}>
+            Year: {timelineSlider.value}
+          </Badge>
+        </Group>
 
-        <Stack gap={0}>
-          <Text fz="14px" c="#344054">
-            Total Diapers Distributed in {timelineSlider.value}: <b>{totalDiapers.toLocaleString()}</b>
+        <Box
+          style={{
+            background: "#F8FAFC",
+            border: "1px solid #E4E7EC",
+            borderRadius: 8,
+            padding: "7px 10px",
+          }}
+        >
+          <Text fz="12px" c="#475467" tt="uppercase" fw={600}>
+            Total Diapers Distributed in {timelineSlider.value}
           </Text>
-        </Stack>
+          <Text fz="34px" fw={800} c="#0F6B99" lh={1} mt={2}>
+            {totalDiapers.toLocaleString()}
+          </Text>
+        </Box>
 
-        {/* --- Active Partners --- */}
-        <Divider my="xs" label="Active Partners" labelPosition="left" />
+        <Divider my={2} />
+        <Text fz="12px" fw={600} c="#344054">
+          Active Partners ({activePartners.length})
+        </Text>
         <Group gap="xs" wrap="wrap">
           {activePartners.length > 0 ? (
             activePartners.map((p) => (
@@ -329,33 +349,29 @@ function PopupContent({
         </Group>
 
         {/* --- Waitlisted Partners --- */}
-        <Divider
-          my="xs"
-          label={`Waitlisted (${waitlistedPartners.length})`}
-          labelPosition="left"
-        />
-        <Group gap="xs" wrap="wrap">
-          {waitlistedPartners.length > 0 ? (
-            waitlistedPartners.map((p) => (
-              <MantineTooltip key={p.id} label={p.name} withArrow>
-                <Avatar
-                  src={p.logo_url || p.logoUrl}
-                  size="sm"
-                  radius="xl"
-                  color="gray"
-                  variant="outline"
-                  style={{ opacity: 0.8, cursor: "pointer" }}
-                >
-                  {p.name.substring(0, 2).toUpperCase()}
-                </Avatar>
-              </MantineTooltip>
-            ))
-          ) : (
-            <Text fz="xs" c="dimmed" fs="italic">
-              No waitlisted partners found
+        {waitlistedPartners.length > 0 && (
+          <>
+            <Text fz="12px" fw={600} c="#667085">
+              Waitlisted ({waitlistedPartners.length})
             </Text>
-          )}
-        </Group>
+            <Group gap="xs" wrap="wrap">
+              {waitlistedPartners.map((p) => (
+                <MantineTooltip key={p.id} label={p.name} withArrow>
+                  <Avatar
+                    src={p.logo_url || p.logoUrl}
+                    size="md"
+                    radius="xl"
+                    color="gray"
+                    variant="outline"
+                    style={{ opacity: 0.8, cursor: "pointer" }}
+                  >
+                    {p.name.substring(0, 2).toUpperCase()}
+                  </Avatar>
+                </MantineTooltip>
+              ))}
+            </Group>
+          </>
+        )}
       </Stack>
     </Popup>
   );

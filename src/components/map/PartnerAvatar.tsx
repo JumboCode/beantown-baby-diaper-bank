@@ -18,7 +18,7 @@ export default function PartnerAvatar({
     <Tooltip label={name} withArrow>
       <Avatar
         src={url}
-        size="sm"
+        size="md"
         radius="xl"
         color="blue"
         variant="light"
