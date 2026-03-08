@@ -35,13 +35,28 @@ export type MapData = {
 const flipBoundaries = (
   data: FeatureCollection<Polygon>,
 ): FeatureCollection<Polygon> => {
+  const swapLngLat = (coords: unknown): unknown => {
+    if (!Array.isArray(coords)) {
+      return coords;
+    }
+
+    if (
+      coords.length >= 2 &&
+      typeof coords[0] === "number" &&
+      typeof coords[1] === "number"
+    ) {
+      const [lng, lat, ...rest] = coords;
+      return [lat, lng, ...rest];
+    }
+
+    return coords.map(swapLngLat);
+  };
+
   const flippedFeatures = data.features.map((feature) => ({
     ...feature,
     geometry: {
       ...feature.geometry,
-      coordinates: feature.geometry.coordinates.map(
-        (ring) => ring.map((coord) => [coord[1], coord[0]]), // Swap index 0 and 1
-      ),
+      coordinates: swapLngLat(feature.geometry.coordinates) as Polygon["coordinates"],
     },
   }));
 
