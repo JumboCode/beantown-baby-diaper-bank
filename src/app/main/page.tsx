@@ -7,7 +7,7 @@ import { useTimelinePeriod } from "@/components/map/useTimelinePeriod";
 import TotalDiapersDistributed from "@/components/map/TotalDiapersDistributed";
 import { useState, useEffect, useCallback } from "react";
 import ImpactModal from "@/components/map/ImpactModal";
-import { FeatureCollection, Polygon } from "geojson";
+import { FeatureCollection, MultiPolygon, Polygon } from "geojson";
 import { City, Distribution } from "@/generated/prisma/client";
 
 // hex values: 1(#B2E5FF) 2(#7EC3E5) 3(#51A3CC) 4(#2C85B2) 5(#0F6B99)
@@ -28,13 +28,13 @@ type CityMapInfo = City & {
 };
 
 export type MapData = {
-  boundaries: FeatureCollection<Polygon>;
+  boundaries: FeatureCollection<Polygon | MultiPolygon>;
   cities: { data: CityMapInfo[] };
 };
 
 const flipBoundaries = (
-  data: FeatureCollection<Polygon>,
-): FeatureCollection<Polygon> => {
+  data: FeatureCollection<Polygon | MultiPolygon>,
+): FeatureCollection<Polygon | MultiPolygon> => {
   const swapLngLat = (coords: unknown): unknown => {
     if (!Array.isArray(coords)) {
       return coords;
@@ -54,10 +54,16 @@ const flipBoundaries = (
 
   const flippedFeatures = data.features.map((feature) => ({
     ...feature,
-    geometry: {
-      ...feature.geometry,
-      coordinates: swapLngLat(feature.geometry.coordinates) as Polygon["coordinates"],
-    },
+    geometry:
+      feature.geometry.type === "Polygon"
+        ? {
+            ...feature.geometry,
+            coordinates: swapLngLat(feature.geometry.coordinates) as Polygon["coordinates"],
+          }
+        : {
+            ...feature.geometry,
+            coordinates: swapLngLat(feature.geometry.coordinates) as MultiPolygon["coordinates"],
+          },
   }));
 
   return {
@@ -71,7 +77,7 @@ export default function Page() {
   const [mapData, setMapData] = useState<MapData | null>(null);
   const [totalDiapers, setTotalDiapers] = useState<number>();
   const [cachedBoundaries, setCachedBoundaries] =
-    useState<FeatureCollection<Polygon> | null>(null);
+    useState<FeatureCollection<Polygon | MultiPolygon> | null>(null);
 
   const handleTimelineChange = useCallback(
     async (params: { month?: string; year: string }) => {
