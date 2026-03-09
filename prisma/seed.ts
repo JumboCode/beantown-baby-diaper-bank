@@ -39,7 +39,7 @@ const toDate = (value: string | undefined) =>
 const toStringOrNull = (value: string | undefined) =>
   value && value.length > 0 ? value : null;
 
-async function loadBoundaryGeometry(cityName?: string) {
+async function loadBoundaryGeometry(cityName?: string) {  
   if (!cityName) return null;
   const slug = cityName.toLowerCase().replace(/\s+/g, "-");
   const file = path.join(__dirname, "data/geojson", `${slug}.geojson`);
