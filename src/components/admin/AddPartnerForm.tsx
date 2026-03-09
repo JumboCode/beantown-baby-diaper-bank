@@ -17,7 +17,6 @@ import {
   Title,
   Stack,
   SimpleGrid,
-  Box,
   LoadingOverlay,
 } from "@mantine/core";
 import { useForm } from "@mantine/form";
@@ -124,7 +123,7 @@ export default function AddPartnerForm({
   const [citiesAPI, setCitiesAPI] = useState<string[]>([]);
   const [isLoadingCities, setIsLoadingCities] = useState<boolean>(false);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
-  const [isUploadingFile, setIsUploadingFile] = useState<boolean>(false);
+  const [submitWarning, setSubmitWarning] = useState<string>("");
 
   useEffect(() => {
     const fetchCities = async () => {
@@ -229,6 +228,7 @@ export default function AddPartnerForm({
 
   async function submitPartner(values: typeof form.values) {
     setIsSubmitting(true);
+    setSubmitWarning("");
     const cityPercentages = values.cities.map((city) => {
       const raw = Number(percentages[city] ?? 0);
       // rounds percentages to avoid floating-point errors
@@ -261,6 +261,7 @@ export default function AddPartnerForm({
     try {
       const requestBody = new FormData();
       requestBody.append("partner", JSON.stringify(partnerPayload));
+      /* replace = upload file to storage, keep = don't upload */
       requestBody.append("logoAction", values.logoFile ? "replace" : "keep");
       if (values.logoFile) {
         requestBody.append("file", values.logoFile);
@@ -273,12 +274,28 @@ export default function AddPartnerForm({
 
       if (!response.ok) {
         const err = await response.json();
-        form.setFieldError("logoFile", err.error);
+        const warning =
+          typeof err?.error === "string"
+            ? err.error
+            : "Unable to submit partner.";
+        if (
+          response.status === 422 ||
+          warning === "Please check the entered cities."
+        ) {
+          const cityWarning = "Please check the entered cities.";
+          console.error("City geodata validation failed:", err);
+          form.setFieldError("cities", cityWarning);
+          setSubmitWarning(cityWarning);
+          return;
+        }
+        form.setFieldError("logoFile", warning);
+        setSubmitWarning(warning);
         return;
       }
 
       form.reset();
       setPercentages({});
+      setSubmitWarning("");
       onClose();
 
       if (typeof window !== "undefined") {
@@ -437,6 +454,11 @@ export default function AddPartnerForm({
                 );
               }}
               error={form.errors.cities}
+              styles={{
+                input: form.errors.cities
+                  ? { borderColor: "var(--mantine-color-red-6)" }
+                  : undefined,
+              }}
               size="md"
               w={526}
               radius="md"
@@ -633,6 +655,13 @@ export default function AddPartnerForm({
           </Group>
 
           {/* Submit and Cancel Buttons */}
+          {submitWarning ? (
+            <Group justify="flex-end" mt="xs">
+              <Text c="red" size="sm">
+                {submitWarning}
+              </Text>
+            </Group>
+          ) : null}
           <Group justify="flex-end" mt="md">
             <Button
               variant="outline"
@@ -654,7 +683,6 @@ export default function AddPartnerForm({
               radius="md"
               type="submit"
               loading={isSubmitting}
-              disabled={isUploadingFile}
             >
               Submit
             </Button>
