@@ -78,58 +78,66 @@ export default function DistributionsTable({
 
   if (error) return <Text c="red">Error: {error}</Text>;
 
-  const rows: React.ReactNode[] = totals.map((date) => {
-    return (
-      // OUTER TABLE (MONTH, YEAR, TOTAL DIAPERS OF MONTH, YEAR)
-      <Table.Tr key={`${date.year}-${date.month}`}>
-        <Table.Td>
-          <CollapsibleDropdown<Distribution[]>
-            title={`${date.month} ${date.year}, ${date.total} diapers`}
-            titleClassName="text-[28px] font-bold"
-            endpoint={`/api/distributions?month=${date.month}&year=${date.year}`}
-            // Logic for finding the sum of diapers for a certain org for a certain month, year
-            render={(monthData) => {
-              const rowsForMonth = monthData
-                .filter(
-                  (dist) =>
-                    dist.month === date.month && dist.year === date.year,
-                )
-                .sort((a, b) =>
-                  (a.partner?.name ?? "").localeCompare(b.partner?.name ?? ""),
-                );
-
-              const partnerGroups = rowsForMonth.reduce<
-                Record<string, { partnerName: string; totalDiapers: number }>
-              >((acc, dist) => {
-                const partnerName =
-                  dist.partner?.name?.trim() || "Unknown Partner";
-                const diapers = dist.numberDiapers
-                  ? parseInt(dist.numberDiapers, 10)
-                  : 0;
-
-                if (!acc[partnerName]) {
-                  acc[partnerName] = {
-                    partnerName,
-                    totalDiapers: 0,
-                  };
-                }
-
-                acc[partnerName].totalDiapers += diapers;
-                return acc;
-              }, {});
-
-              const partnerEntries = Object.values(partnerGroups).sort((a, b) =>
-                a.partnerName.localeCompare(b.partnerName),
+  return (
+    <div className="space-y-2">
+      {totals.map((date) => (
+        <CollapsibleDropdown<Distribution[]>
+          key={`${date.year}-${date.month}`}
+          title={
+            <span className="flex items-center gap-3">
+              <span>{`${date.month} ${date.year}`}</span>
+              <span className="rounded-full bg-blue-50 px-3 py-1 text-sm font-medium text-[#053766]">
+                {date.total.toLocaleString()} diapers
+              </span>
+            </span>
+          }
+          titleClassName="text-[22px] font-bold"
+          endpoint={`/api/distributions?month=${date.month}&year=${date.year}`}
+          render={(monthData) => {
+            const rowsForMonth = monthData
+              .filter(
+                (dist) =>
+                  dist.month === date.month && dist.year === date.year,
+              )
+              .sort((a, b) =>
+                (a.partner?.name ?? "").localeCompare(b.partner?.name ?? ""),
               );
 
-              return (
-                // INNER TABLE (PARTNER NAME, DIAPERS OF MONTH, YEAR)
-                <div className="space-y-2">
-                  {partnerEntries.map((partner) => (
-                    <CollapsibleDropdown<Distribution[]>
-                      key={`${date.year}-${date.month}-${partner.partnerName}`}
-                      title={`${partner.partnerName} ${partner.totalDiapers}`}
-                      right={
+            const partnerGroups = rowsForMonth.reduce<
+              Record<string, { partnerName: string; totalDiapers: number }>
+            >((acc, dist) => {
+              const partnerName =
+                dist.partner?.name?.trim() || "Unknown Partner";
+              const diapers = dist.numberDiapers
+                ? parseInt(dist.numberDiapers, 10)
+                : 0;
+
+              if (!acc[partnerName]) {
+                acc[partnerName] = {
+                  partnerName,
+                  totalDiapers: 0,
+                };
+              }
+
+              acc[partnerName].totalDiapers += diapers;
+              return acc;
+            }, {});
+
+            const partnerEntries = Object.values(partnerGroups).sort((a, b) =>
+              a.partnerName.localeCompare(b.partnerName),
+            );
+
+            return (
+              <div className="space-y-2">
+                {partnerEntries.map((partner) => (
+                  <CollapsibleDropdown<Distribution[]>
+                    key={`${date.year}-${date.month}-${partner.partnerName}`}
+                    title={partner.partnerName}
+                    right={
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-medium text-[#053766]">
+                          {partner.totalDiapers.toLocaleString()} diapers
+                        </span>
                         <button
                           type="button"
                           onClick={(e) => {
@@ -145,78 +153,57 @@ export default function DistributionsTable({
                         >
                           Edit
                         </button>
-                      }
-                      endpoint={`/api/distributions?month=${date.month}&year=${date.year}`}
-                      render={(data) => {
-                        const rowsForPartner = data
-                          .filter(
-                            (dist) =>
-                              dist.month === date.month &&
-                              dist.year === date.year &&
-                              (dist.partner?.name?.trim() ||
-                                "Unknown Partner") === partner.partnerName,
-                          )
-                          .sort((a, b) =>
-                            (a.city?.name ?? "").localeCompare(
-                              b.city?.name ?? "",
-                            ),
-                          );
+                      </div>
+                    }
+                    endpoint={`/api/distributions?month=${date.month}&year=${date.year}`}
+                    render={(data) => {
+                      const rowsForPartner = data
+                        .filter(
+                          (dist) =>
+                            dist.month === date.month &&
+                            dist.year === date.year &&
+                            (dist.partner?.name?.trim() ||
+                              "Unknown Partner") === partner.partnerName,
+                        )
+                        .sort((a, b) =>
+                          (a.city?.name ?? "").localeCompare(
+                            b.city?.name ?? "",
+                          ),
+                        );
 
-                        if (rowsForPartner.length === 0) {
-                          return (
-                            <div className="text-sm text-gray-600">
-                              No distributions found.
-                            </div>
-                          );
-                        }
-
+                      if (rowsForPartner.length === 0) {
                         return (
-                          <div className="overflow-x-auto rounded-lg border border-gray-200">
-                            <div className="grid grid-cols-5 gap-4 border-b border-gray-200 bg-gray-50 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-gray-600">
-                              <div>City</div>
-                              <div>Diapers</div>
-                              <div>Children</div>
-                              <div>Month</div>
-                              <div>Year</div>
-                            </div>
-                            {rowsForPartner.map((dist) => (
-                              <div
-                                key={dist.id}
-                                className="grid grid-cols-5 gap-4 border-b border-gray-100 px-4 py-3 text-sm text-gray-700 last:border-b-0"
-                              >
-                                <div>{dist.city?.name ?? "-"}</div>
-                                <div>{dist.numberDiapers ?? "0"}</div>
-                                <div>{dist.numberChildren ?? "0"}</div>
-                                <div>{dist.month ?? "-"}</div>
-                                <div>{dist.year ?? "-"}</div>
-                              </div>
-                            ))}
+                          <div className="text-sm text-gray-600">
+                            No distributions found.
                           </div>
                         );
-                      }}
-                    />
-                  ))}
-                </div>
-              );
-            }}
-          />
-        </Table.Td>
-      </Table.Tr>
-    );
-  });
+                      }
 
-  return (
-    <div className="bg-white rounded-xl shadow-lg overflow-hidden flex flex-col">
-      <div className="overflow-x-auto flex-1">
-        <Table
-          highlightOnHover
-          withTableBorder
-          styles={{ th: { color: "#667085" } }}
-          tabularNums
-        >
-          <Table.Tbody>{rows}</Table.Tbody>
-        </Table>
-      </div>
+                      return (
+                        <div className="overflow-x-auto rounded-lg border border-gray-200">
+                          <div className="grid grid-cols-2 gap-4 border-b border-gray-200 bg-gray-50 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-[#053766]">
+                            <div>City</div>
+                            <div>Diapers</div>
+                          </div>
+                          {rowsForPartner.map((dist) => (
+                            <div
+                              key={dist.id}
+                              className="grid grid-cols-2 gap-4 border-b border-gray-100 px-4 py-3 text-sm text-gray-700 last:border-b-0"
+                            >
+                              <div>{dist.city?.name ?? "-"}</div>
+                              <div>{dist.numberDiapers ?? "0"}</div>
+                            </div>
+                          ))}
+                        </div>
+                      );
+                    }}
+                  />
+                ))}
+              </div>
+            );
+          }}
+        />
+      ))}
     </div>
   );
 }

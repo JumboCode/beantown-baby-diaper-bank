@@ -14,10 +14,7 @@ const getCities = unstable_cache(
     year: string | null,
   ) => {
     if (month && !year) {
-      return NextResponse.json(
-        { error: "Year must be provided if month is provided." },
-        { status: 400 },
-      );
+      throw new Error("Year must be provided if month is provided.");
     }
 
     /* build filters based on city name */

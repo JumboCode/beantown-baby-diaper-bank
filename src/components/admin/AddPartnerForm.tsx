@@ -17,7 +17,6 @@ import {
   Title,
   Stack,
   SimpleGrid,
-  Box,
   LoadingOverlay,
 } from "@mantine/core";
 import { useForm } from "@mantine/form";
@@ -105,7 +104,7 @@ const requiredNumber = (label: string) => (value: unknown) => {
   const v = (value === 0 ? "0" : (value ?? "")).toString().trim();
   if (v === "") return `${label} is required`;
   return /^-?\d+(\.\d+)?$/.test(v) ? null : `${label} must be a number`;
-}
+};
 // Checks if input is an integer
 const requiredInteger = (label: string) => (value: unknown) => {
   const v = (value === 0 ? "0" : (value ?? "")).toString().trim();
@@ -124,7 +123,7 @@ export default function AddPartnerForm({
   const [citiesAPI, setCitiesAPI] = useState<string[]>([]);
   const [isLoadingCities, setIsLoadingCities] = useState<boolean>(false);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
-  const [isUploadingFile, setIsUploadingFile] = useState<boolean>(false);
+  const [submitWarning, setSubmitWarning] = useState<string>("");
 
   useEffect(() => {
     const fetchCities = async () => {
@@ -229,6 +228,7 @@ export default function AddPartnerForm({
 
   async function submitPartner(values: typeof form.values) {
     setIsSubmitting(true);
+    setSubmitWarning("");
     const cityPercentages = values.cities.map((city) => {
       const raw = Number(percentages[city] ?? 0);
       // rounds percentages to avoid floating-point errors
@@ -261,6 +261,7 @@ export default function AddPartnerForm({
     try {
       const requestBody = new FormData();
       requestBody.append("partner", JSON.stringify(partnerPayload));
+      /* replace = upload file to storage, keep = don't upload */
       requestBody.append("logoAction", values.logoFile ? "replace" : "keep");
       if (values.logoFile) {
         requestBody.append("file", values.logoFile);
@@ -273,12 +274,28 @@ export default function AddPartnerForm({
 
       if (!response.ok) {
         const err = await response.json();
-        form.setFieldError("logoFile", err.error);
+        const warning =
+          typeof err?.error === "string"
+            ? err.error
+            : "Unable to submit partner.";
+        if (
+          response.status === 422 ||
+          warning === "Please check the entered cities."
+        ) {
+          const cityWarning = "Please check the entered cities.";
+          console.error("City geodata validation failed:", err);
+          form.setFieldError("cities", cityWarning);
+          setSubmitWarning(cityWarning);
+          return;
+        }
+        form.setFieldError("logoFile", warning);
+        setSubmitWarning(warning);
         return;
       }
 
       form.reset();
       setPercentages({});
+      setSubmitWarning("");
       onClose();
 
       if (typeof window !== "undefined") {
@@ -329,8 +346,16 @@ export default function AddPartnerForm({
             >
               <Group gap="md" grow>
                 {[
-                  { value: "active", title: "Active", description: "Currently active" },
-                  { value: "waitlisted", title: "Waitlisted", description: "On the waitlist" },
+                  {
+                    value: "active",
+                    title: "Active",
+                    description: "Currently active",
+                  },
+                  {
+                    value: "waitlisted",
+                    title: "Waitlisted",
+                    description: "On the waitlist",
+                  },
                 ].map((option) => (
                   <Radio.Card
                     key={option.value}
@@ -343,13 +368,19 @@ export default function AddPartnerForm({
                       <Radio.Indicator />
                       <Stack gap={4}>
                         <Text fw={700}>{option.title}</Text>
-                        <Text size="xs" c="dimmed">{option.description}</Text>
+                        <Text size="xs" c="dimmed">
+                          {option.description}
+                        </Text>
                       </Stack>
                     </Group>
                   </Radio.Card>
                 ))}
               </Group>
-              {form.errors.status && <Text c="red" size="sm" mt="xs">{form.errors.status}</Text>}
+              {form.errors.status && (
+                <Text c="red" size="sm" mt="xs">
+                  {form.errors.status}
+                </Text>
+              )}
             </Radio.Group>
           </Group>
 
@@ -423,6 +454,11 @@ export default function AddPartnerForm({
                 );
               }}
               error={form.errors.cities}
+              styles={{
+                input: form.errors.cities
+                  ? { borderColor: "var(--mantine-color-red-6)" }
+                  : undefined,
+              }}
               size="md"
               w={526}
               radius="md"
@@ -432,68 +468,69 @@ export default function AddPartnerForm({
           {/* Selected Cities Table with Percentages, sorry this looks digusting */}
           <Group w={526} ml="auto" justify="flex-end">
             {/* Selected Cities Table */}
-            {form.values.cities.length > 0 && form.values.status !== "waitlisted" && (
-              <>
-                <Table w="100%" striped highlightOnHover withTableBorder>
-                  <Table.Thead>
-                    <Table.Tr>
-                      <Table.Th>Cities</Table.Th>
-                      <Table.Th>Percentage</Table.Th>
-                    </Table.Tr>
-                  </Table.Thead>
-                  <Table.Tbody>
-                    {form.values.cities.map((city) => (
-                      <Table.Tr key={city}>
-                        <Table.Td>{city}</Table.Td>
-                        <Table.Td>
-                          <NumberInput
-                            placeholder="Enter %"
-                            min={0}
-                            max={100}
-                            suffix="%"
-                            value={percentages[city] || ""}
-                            onChange={(value) => {
-                              let res = 0;
-                              /* decimal percentages can have up to 2 decimal places */
-                              if (typeof value === "number") {
-                                res = value;
-                                const decimalPart = value
-                                  .toString()
-                                  .split(".")[1];
-                                if (decimalPart && decimalPart.length > 2) {
-                                  res = Math.round(value * 100) / 100;
-                                }
-                              }
-                              setPercentages((prev) => ({
-                                ...prev,
-                                [city]: res,
-                              }));
-                            }}
-                          />
-                        </Table.Td>
+            {form.values.cities.length > 0 &&
+              form.values.status !== "waitlisted" && (
+                <>
+                  <Table w="100%" striped highlightOnHover withTableBorder>
+                    <Table.Thead>
+                      <Table.Tr>
+                        <Table.Th>Cities</Table.Th>
+                        <Table.Th>Percentage</Table.Th>
                       </Table.Tr>
-                    ))}
-                  </Table.Tbody>
-                </Table>
-              </>
-            )}
+                    </Table.Thead>
+                    <Table.Tbody>
+                      {form.values.cities.map((city) => (
+                        <Table.Tr key={city}>
+                          <Table.Td>{city}</Table.Td>
+                          <Table.Td>
+                            <NumberInput
+                              placeholder="Enter %"
+                              min={0}
+                              max={100}
+                              suffix="%"
+                              value={percentages[city] || ""}
+                              onChange={(value) => {
+                                let res = 0;
+                                /* decimal percentages can have up to 2 decimal places */
+                                if (typeof value === "number") {
+                                  res = value;
+                                  const decimalPart = value
+                                    .toString()
+                                    .split(".")[1];
+                                  if (decimalPart && decimalPart.length > 2) {
+                                    res = Math.round(value * 100) / 100;
+                                  }
+                                }
+                                setPercentages((prev) => ({
+                                  ...prev,
+                                  [city]: res,
+                                }));
+                              }}
+                            />
+                          </Table.Td>
+                        </Table.Tr>
+                      ))}
+                    </Table.Tbody>
+                  </Table>
+                </>
+              )}
           </Group>
 
           {/* Time Started*/}
-            {form.values.status !== "waitlisted" && (
+          {form.values.status !== "waitlisted" && (
             <Group justify="space-between" align="flex-start">
-            <Text c="#344054" fz={16} fw={600}>
-              Time it started <span className="text-red-600">*</span>
-            </Text>
-            <MonthPickerInput
-              placeholder="Pick date"
-              value={form.values.time}
-              onChange={(val) => form.setFieldValue("time", val)}
-              error={form.errors.time}
-              required
-              w={526}
-            />
-          </Group>
+              <Text c="#344054" fz={16} fw={600}>
+                Time it started <span className="text-red-600">*</span>
+              </Text>
+              <MonthPickerInput
+                placeholder="Pick date"
+                value={form.values.time}
+                onChange={(val) => form.setFieldValue("time", val)}
+                error={form.errors.time}
+                required
+                w={526}
+              />
+            </Group>
           )}
 
           {/* Latitude and Longitude */}
@@ -618,6 +655,13 @@ export default function AddPartnerForm({
           </Group>
 
           {/* Submit and Cancel Buttons */}
+          {submitWarning ? (
+            <Group justify="flex-end" mt="xs">
+              <Text c="red" size="sm">
+                {submitWarning}
+              </Text>
+            </Group>
+          ) : null}
           <Group justify="flex-end" mt="md">
             <Button
               variant="outline"
@@ -639,7 +683,6 @@ export default function AddPartnerForm({
               radius="md"
               type="submit"
               loading={isSubmitting}
-              disabled={isUploadingFile}
             >
               Submit
             </Button>

@@ -3,6 +3,7 @@ import {
   parsePartnerRows,
   processDistributionUpload,
 } from "@/lib/server/distribution-upload";
+import { revalidateTag } from "next/cache";
 
 type UploadRequestBody = {
   csv: string;
@@ -205,7 +206,7 @@ export async function POST(request: Request) {
       selectedDate: body.selectedDate,
     });
 
-    console.log("Upload processed:", result);
+    revalidateTag("cities", "max");
 
     return NextResponse.json({ data: result }, { status: 200 });
   } catch (error) {

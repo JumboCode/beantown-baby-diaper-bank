@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { FeatureCollection, Polygon } from "geojson";
+import { FeatureCollection, MultiPolygon, Polygon } from "geojson";
 import { prisma } from "@/lib/prisma";
 import { City } from "@/generated/prisma/client";
 
@@ -12,7 +12,7 @@ type RawCityWithBoundaries = Omit<City, "boundary"> & {
 };
 
 export type CityWithBoundaries = Omit<City, "boundary"> & {
-  boundary: Polygon;
+  boundary: Polygon | MultiPolygon;
 };
 
 export async function GET() {
@@ -33,10 +33,10 @@ export async function GET() {
 
     const citiesFormatted: CityWithBoundaries[] = result.map((city) => ({
       ...city,
-      boundary: JSON.parse(city.boundary) as Polygon,
+      boundary: JSON.parse(city.boundary) as Polygon | MultiPolygon,
     }));
 
-    const featureCollection: FeatureCollection = {
+    const featureCollection: FeatureCollection<Polygon | MultiPolygon> = {
       type: "FeatureCollection",
       features: citiesFormatted.map((city) => ({
         type: "Feature",
