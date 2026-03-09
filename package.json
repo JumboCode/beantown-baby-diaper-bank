@@ -10,6 +10,7 @@
     "lint:fix": "eslint . --ext .ts,.tsx,.js,.jsx --fix && prettier \"**/*.{ts,tsx,js,jsx,json,md,css}\" --write",
     "prisma:generate": "prisma generate --no-engine",
     "prisma:seed": "prisma db seed",
+    "prisma:seed:city-boundaries": "tsx prisma/reseed-city-boundaries.ts",
     "postinstall": "prisma generate"
   },
   "dependencies": {
