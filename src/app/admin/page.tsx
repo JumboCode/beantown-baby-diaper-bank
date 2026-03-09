@@ -14,6 +14,7 @@ import {
   Popover,
   Checkbox,
   TextInput,
+  Stepper,
 } from "@mantine/core";
 import { MonthPickerInput } from "@mantine/dates";
 import { useState, useEffect, useCallback, useMemo } from "react";
@@ -100,6 +101,7 @@ const monthMap: Record<string, string> = {
 };
 
 const years: Array<string> = ["All", "2023", "2024", "2025"];
+const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
 const statuses = (Object.values(status) as string[]).map((s) => ({
   value: s,
@@ -208,6 +210,38 @@ export default function Page() {
       window.removeEventListener("partners:refresh", handlePartnersRefresh);
     };
   }, [fetchPartners, fetchPercentages]);
+
+    const [uploadedMonths, setUploadedMonths] = useState<number[]>([]);
+    const [lastUploaded, setLastUploaded] = useState<string | null>(null);
+    const currentYear = new Date().getFullYear();
+  
+    const fetchTimelineData = useCallback(async () => {
+  try {
+    const res = await fetch(`/api/timeline-slider?year=${currentYear}`);
+    const data = await res.json();
+    if (data.months) {
+      const currentYearMonths = data.months.filter(
+        (d: { Month: string; Year: string }) => d.Year === String(currentYear)
+      );
+      const indices = currentYearMonths.map(
+        (d: { Month: string; Year: string }) =>
+          MONTHS.findIndex((m) => d.Month.startsWith(m))
+      );
+      setUploadedMonths(indices);
+
+      if (data.months.length > 0) {
+        const last = data.months[data.months.length - 1];
+        setLastUploaded(`${last.Month} ${last.Year}`);
+      }
+    }
+  } catch (err) {
+    console.error("Failed to fetch timeline data:", err);
+  }
+}, [currentYear]);
+
+useEffect(() => {
+  fetchTimelineData();
+}, [fetchTimelineData]);
 
   const formatMonthKeyFromDate = (date: Date) =>
     `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, "0")}`;
@@ -401,10 +435,7 @@ export default function Page() {
                 <Title order={2}>Hello, Rachel 👋</Title>
                 <Group gap="xl" wrap="wrap">
                   <Text size="sm" c="dimmed">
-                    Last data uploaded: Monday, 30 Aug, 2025
-                  </Text>
-                  <Text size="sm" c="dimmed">
-                    Last updated: Friday, 2 Sep, 2025
+                    Last data uploaded: {lastUploaded ?? "N/A"}
                   </Text>
                 </Group>
               </Stack>
@@ -412,6 +443,7 @@ export default function Page() {
                 opened={openedUploadDataForm}
                 onClose={closeUploadDataForm}
                 onUploaded={fetchDistributions}
+                uploadedMonths={uploadedMonths}
               />
               <AddPartnerForm
                 opened={openedPartnerForm}
