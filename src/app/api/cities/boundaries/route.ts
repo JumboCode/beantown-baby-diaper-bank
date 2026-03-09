@@ -5,7 +5,7 @@ import { City } from "@/generated/prisma/client";
 
 // Use static generation for this route and revalidate monthly.
 // set to
-export const revalidate = 0;
+export const revalidate = 2592000;
 
 type RawCityWithBoundaries = Omit<City, "boundary"> & {
   boundary: string;
@@ -33,10 +33,10 @@ export async function GET() {
 
     const citiesFormatted: CityWithBoundaries[] = result.map((city) => ({
       ...city,
-      boundary: JSON.parse(city.boundary) as Polygon,
+      boundary: JSON.parse(city.boundary) as Polygon | MultiPolygon,
     }));
 
-    const featureCollection: FeatureCollection = {
+    const featureCollection: FeatureCollection<Polygon | MultiPolygon> = {
       type: "FeatureCollection",
       features: citiesFormatted.map((city) => ({
         type: "Feature",

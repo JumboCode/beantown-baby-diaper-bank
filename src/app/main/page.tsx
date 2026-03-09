@@ -9,7 +9,6 @@ import { useState, useEffect, useCallback } from "react";
 import ImpactModal from "@/components/map/ImpactModal";
 import { FeatureCollection, MultiPolygon, Polygon } from "geojson";
 import { City, Distribution } from "@/generated/prisma/client";
-import YearlyMonthlySwitch from "@/components/sprint2/YearlyMonthlySwitch";
 
 // hex values: 1(#B2E5FF) 2(#7EC3E5) 3(#51A3CC) 4(#2C85B2) 5(#0F6B99)
 
@@ -33,38 +32,37 @@ export type MapData = {
   cities: { data: CityMapInfo[] };
 };
 
-const flipCoordinates = (coords: unknown): unknown => {
-  if (!Array.isArray(coords)) return coords;
-  if (
-    coords.length > 0 &&
-    Array.isArray(coords[0]) &&
-    coords[0].length >= 2 &&
-    typeof coords[0][0] === "number" &&
-    typeof coords[0][1] === "number"
-  ) {
-    return (coords as number[][]).map(([lng, lat, ...rest]) => [
-      lat,
-      lng,
-      ...rest,
-    ]);
-  }
-  return coords.map((child) => flipCoordinates(child));
-};
-
 const flipBoundaries = (
   data: FeatureCollection<Polygon | MultiPolygon>,
 ): FeatureCollection<Polygon | MultiPolygon> => {
+  const swapLngLat = (coords: unknown): unknown => {
+    if (!Array.isArray(coords)) {
+      return coords;
+    }
+
+    if (
+      coords.length >= 2 &&
+      typeof coords[0] === "number" &&
+      typeof coords[1] === "number"
+    ) {
+      const [lng, lat, ...rest] = coords;
+      return [lat, lng, ...rest];
+    }
+
+    return coords.map(swapLngLat);
+  };
+
   const flippedFeatures = data.features.map((feature) => ({
     ...feature,
     geometry:
       feature.geometry.type === "Polygon"
         ? {
             ...feature.geometry,
-            coordinates: flipCoordinates(feature.geometry.coordinates) as Polygon["coordinates"],
+            coordinates: swapLngLat(feature.geometry.coordinates) as Polygon["coordinates"],
           }
         : {
             ...feature.geometry,
-            coordinates: flipCoordinates(feature.geometry.coordinates) as MultiPolygon["coordinates"],
+            coordinates: swapLngLat(feature.geometry.coordinates) as MultiPolygon["coordinates"],
           },
   }));
 
@@ -165,26 +163,19 @@ export default function Page() {
         <TotalDiapersDistributed totalDiapers={totalDiapers} />
 
         {/* Map Section with Timeline and Impact Modal - Two Column Layout */}
-        <Title
-          fz={24}
-          c="#101728"
-          // mb="md"
-          mt="md"
-          fw={600}
-        >
-          Distribution Heat Map
-        </Title>
+        <Group justify="space-between" align="center" mt="md">
+          <Title fz={24} c="#101728" fw={600}>
+            Distribution Heat Map
+          </Title>
+          <ImpactModal />
+        </Group>
         <Paper shadow="sm" p="md" radius="md" withBorder>
-          <Group justify="space-between" align="center" mb="md">
-            <YearlyMonthlySwitch
-              value={timeline.view}
-              onChange={timeline.toggleView}
-            />
-            <ImpactModal />
-          </Group>
           <Box h="60vh" pos="relative" mb="md">
             {mapData ? (
-              <LeafletMap mapData={mapData} />
+              <LeafletMap
+                mapData={mapData}
+                timelineSlider={timeline}
+              />
             ) : (
               <Skeleton h="60vh" mb="md" />
             )}
