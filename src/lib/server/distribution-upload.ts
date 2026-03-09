@@ -4,8 +4,8 @@ import { prisma } from "@/lib/prisma";
 
 type ParsedPartnerRow = {
   partnerName: string;
-  totalChildren: number;
-  totalDiapers: number;
+  totalChildren: string | undefined;
+  totalDiapers: string | undefined;
 };
 
 export type UploadComputationResult = {
@@ -47,17 +47,17 @@ function parseNumericCell(cell: string | undefined): number | null {
 }
 
 export function parsePartnerRows(csv: string): {
-  parsed: any[];
+  parsed: ParsedPartnerRow[];
 } {
   const { data } = Papa.parse<string[]>(csv, { skipEmptyLines: "greedy" });
 
-  const rows = data.slice(1); 
+  const rows = data.slice(1);
 
   const parsed = rows.map((row) => {
     return {
       partnerName: row[0]?.trim() || "",
-      totalChildren: row[1], // Pass raw value string ("abc", "", etc.)
-      totalDiapers: row[2],  // Pass raw value string
+      totalChildren: row[1],
+      totalDiapers: row[2],
     };
   });
 
@@ -132,13 +132,22 @@ export async function processDistributionUpload(input: {
       continue;
     }
 
+    const totalChildren = parseNumericCell(row.totalChildren);
+    const totalDiapers = parseNumericCell(row.totalDiapers);
+
+    if (totalChildren === null || totalDiapers === null) {
+      throw new Error(
+        `Invalid numeric values for partner "${row.partnerName}" in uploaded CSV.`,
+      );
+    }
+
     monthlyRows.push({
       id: crypto.randomUUID(),
       partnerId: partner.id,
       year: targetYear,
       month: targetMonth,
-      numDiapers: BigInt(Math.round(row.totalDiapers)),
-      numBabies: BigInt(Math.round(row.totalChildren)),
+      numDiapers: BigInt(Math.round(totalDiapers)),
+      numBabies: BigInt(Math.round(totalChildren)),
     });
 
     for (const partnerRegion of partner.partnerRegions) {
@@ -149,8 +158,8 @@ export async function processDistributionUpload(input: {
         year: targetYear,
         month: targetMonth,
         percentage,
-        numberDiapers: BigInt(Math.round(row.totalDiapers * percentage)),
-        numberChildren: BigInt(Math.round(row.totalChildren * percentage)),
+        numberDiapers: BigInt(Math.round(totalDiapers * percentage)),
+        numberChildren: BigInt(Math.round(totalChildren * percentage)),
       });
     }
   }

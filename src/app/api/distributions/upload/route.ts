@@ -4,6 +4,7 @@ import {
   processDistributionUpload,
 } from "@/lib/server/distribution-upload";
 import { revalidateTag } from "next/cache";
+import { month } from "@/generated/prisma/client";
 
 type UploadRequestBody = {
   csv: string;
@@ -16,24 +17,11 @@ type PartnerApiItem = {
 };
 
 type TimelineMonthItem = {
-  Month: string | null;
+  Month: month;
   Year: string | null;
 };
 
-const MONTH_NAMES = [
-  "January",
-  "February",
-  "March",
-  "April",
-  "May",
-  "June",
-  "July",
-  "August",
-  "September",
-  "October",
-  "November",
-  "December",
-];
+const MONTH_NAMES = Object.values(month) as month[];
 
 function normalizeName(name: string) {
   return name.trim().toLowerCase();
