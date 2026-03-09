@@ -12,3 +12,5 @@ node_modules
 
 # clerk configuration (can include secrets)
 /.clerk/
+skills-lock.json
+.agents/skills

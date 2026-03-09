@@ -8,7 +8,7 @@ type TimelineResponse = {
 export type TimelineView = "monthly" | "yearly";
 
 export function useTimelinePeriod() {
-  const [view, setView] = useState<TimelineView>("monthly");
+  const [view, setView] = useState<TimelineView>("yearly");
   const [index, setIndex] = useState(0);
   const [years, setYears] = useState<string[]>([]);
   const [months, setMonths] = useState<string[]>([]);
@@ -57,9 +57,16 @@ export function useTimelinePeriod() {
     setIndex,
     toggleView,
     move,
-    length,
+    length: labels.length,
     labels,
     months,
     years,
+    value: labels[index],
+    setValue: (val: string) => {
+      const newIndex = labels.indexOf(val);
+      if (newIndex !== -1) {
+        setIndex(newIndex);
+      }
+    },
   };
 }

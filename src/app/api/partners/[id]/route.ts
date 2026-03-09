@@ -48,7 +48,7 @@ export async function GET(
     return NextResponse.json({
       data: JSON.parse(stringifyWithBigInt(dataToReturn)),
     });
-  } catch {
+  } catch (error) {
     return NextResponse.json(
       { error: "Unable to load partner" },
       { status: 500 },
@@ -91,7 +91,7 @@ export async function POST(
     return NextResponse.json({
       data: JSON.parse(stringifyWithBigInt(updatedPartner)),
     });
-  } catch {
+  } catch (error) {
     return NextResponse.json(
       { error: "Failed to update partner" },
       { status: 500 },
