@@ -23,6 +23,7 @@ import { useForm } from "@mantine/form";
 import { MonthPickerInput } from "@mantine/dates";
 import { useEffect, useState } from "react";
 import "@mantine/dates/styles.css";
+import { fetchCoordsFromAddress } from "@/lib/util";
 
 const countries = ["United States", "Canada"];
 const DEFAULT_COUNTRY = "United States";
@@ -110,23 +111,6 @@ const requiredInteger = (label: string) => (value: unknown) => {
   if (v === "") return `${label} is required`;
   return /^\d+$/.test(v) ? null : `${label} must be a number`;
 };
-
-async function fetchCoordsFromAddress(address: string) {
-  const apiKey = "580b89e66bc6968ea58bac6909e6598c898970a";
-  try {
-    const response = await fetch(
-      `https://api.geocod.io/v1.9/geocode?q=${encodeURIComponent(address)}&api_key=${apiKey}`,
-    );
-    const data = await response.json();
-    return data.results?.[0]?.location as
-      | { lat: number; lng: number }
-      | null
-      | undefined;
-  } catch (error) {
-    console.error("Geocoding failed:", error);
-    return null;
-  }
-}
 
 export default function AddPartnerForm({
   opened,

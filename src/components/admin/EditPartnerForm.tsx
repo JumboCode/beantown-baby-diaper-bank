@@ -24,6 +24,7 @@ import ContinuousUpdateForm from "./ContinuousUpdateForm";
 import type { CityPercentage } from "./CityPercentagesForm";
 import "@mantine/dates/styles.css";
 import { RiCalendarEventLine, RiLineChartLine } from "react-icons/ri";
+import { fetchCoordsFromAddress } from "@/lib/util";
 
 interface EditPartnerFormProps {
   partner: Partner;
@@ -148,26 +149,6 @@ const requiredInput = (label: string) => (value: unknown) => {
 
 type UpdatePercentagesOptions = "one-time" | "continuous";
 
-async function fetchCoordsFromAddress(address: string) {
-  const apiKey = process.env.NEXT_PUBLIC_GEOCODE_API_KEY;
-  if (!apiKey) {
-    console.error("Geocoding API key is not set");
-    return null;
-  }
-  try {
-    const response = await fetch(
-      `https://api.geocod.io/v1.9/geocode?q=${encodeURIComponent(address)}&api_key=${apiKey}`,
-    );
-    const data = await response.json();
-    return data.results?.[0]?.location as
-      | { lat: number; lng: number }
-      | null
-      | undefined;
-  } catch (error) {
-    console.error("Geocoding failed:", error);
-    return null;
-  }
-}
 
 const parseMonthDateForPicker = (
   rawDate: string | null | undefined,
