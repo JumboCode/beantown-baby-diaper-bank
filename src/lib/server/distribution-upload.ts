@@ -4,8 +4,8 @@ import { prisma } from "@/lib/prisma";
 
 type ParsedPartnerRow = {
   partnerName: string;
-  totalChildren: number;
-  totalDiapers: number;
+  totalChildren: string | undefined;
+  totalDiapers: string | undefined;
 };
 
 export type UploadComputationResult = {
@@ -15,7 +15,6 @@ export type UploadComputationResult = {
   monthlyRowsCreated: number;
   distributionRowsCreated: number;
   yearlyRowsUpdated: number;
-  skippedRows: number;
   missingPartners: string[];
 };
 
@@ -47,32 +46,22 @@ function parseNumericCell(cell: string | undefined): number | null {
   return Number.isFinite(value) ? value : null;
 }
 
-function parsePartnerRows(csv: string): {
+export function parsePartnerRows(csv: string): {
   parsed: ParsedPartnerRow[];
-  skipped: number;
 } {
   const { data } = Papa.parse<string[]>(csv, { skipEmptyLines: "greedy" });
 
-  const parsed: ParsedPartnerRow[] = [];
-  let skipped = 0;
+  const rows = data.slice(1);
 
-  for (const rawRow of data) {
-    const row = rawRow ?? [];
-    const partnerName = row[0]?.trim();
-    if (!partnerName) continue;
+  const parsed = rows.map((row) => {
+    return {
+      partnerName: row[0]?.trim() || "",
+      totalChildren: row[1],
+      totalDiapers: row[2],
+    };
+  });
 
-    const totalChildren = parseNumericCell(row[1]);
-    const totalDiapers = parseNumericCell(row[2]);
-
-    if (totalChildren === null || totalDiapers === null) {
-      skipped += 1;
-      continue;
-    }
-
-    parsed.push({ partnerName, totalChildren, totalDiapers });
-  }
-
-  return { parsed, skipped };
+  return { parsed };
 }
 
 function monthFromDate(date: Date): month {
@@ -105,7 +94,7 @@ export async function processDistributionUpload(input: {
   const targetMonth = monthFromDate(parsedDate);
   const targetYear = String(parsedDate.getUTCFullYear());
 
-  const { parsed: partnerRows, skipped } = parsePartnerRows(csv);
+  const { parsed: partnerRows } = parsePartnerRows(csv);
   if (partnerRows.length === 0) {
     throw new Error("No valid partner rows were found in the uploaded CSV.");
   }
@@ -143,13 +132,22 @@ export async function processDistributionUpload(input: {
       continue;
     }
 
+    const totalChildren = parseNumericCell(row.totalChildren);
+    const totalDiapers = parseNumericCell(row.totalDiapers);
+
+    if (totalChildren === null || totalDiapers === null) {
+      throw new Error(
+        `Invalid numeric values for partner "${row.partnerName}" in uploaded CSV.`,
+      );
+    }
+
     monthlyRows.push({
       id: crypto.randomUUID(),
       partnerId: partner.id,
       year: targetYear,
       month: targetMonth,
-      numDiapers: BigInt(Math.round(row.totalDiapers)),
-      numBabies: BigInt(Math.round(row.totalChildren)),
+      numDiapers: BigInt(Math.round(totalDiapers)),
+      numBabies: BigInt(Math.round(totalChildren)),
     });
 
     for (const partnerRegion of partner.partnerRegions) {
@@ -160,8 +158,8 @@ export async function processDistributionUpload(input: {
         year: targetYear,
         month: targetMonth,
         percentage,
-        numberDiapers: BigInt(Math.round(row.totalDiapers * percentage)),
-        numberChildren: BigInt(Math.round(row.totalChildren * percentage)),
+        numberDiapers: BigInt(Math.round(totalDiapers * percentage)),
+        numberChildren: BigInt(Math.round(totalChildren * percentage)),
       });
     }
   }
@@ -264,7 +262,6 @@ export async function processDistributionUpload(input: {
     monthlyRowsCreated: monthlyRows.length,
     distributionRowsCreated: distributionRows.length,
     yearlyRowsUpdated,
-    skippedRows: skipped,
     missingPartners: Array.from(missingPartners),
   };
 }
