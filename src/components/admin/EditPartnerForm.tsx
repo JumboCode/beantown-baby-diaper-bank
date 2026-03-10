@@ -149,7 +149,11 @@ const requiredInput = (label: string) => (value: unknown) => {
 type UpdatePercentagesOptions = "one-time" | "continuous";
 
 async function fetchCoordsFromAddress(address: string) {
-  const apiKey = "580b89e66bc6968ea58bac6909e6598c898970a";
+  const apiKey = process.env.NEXT_PUBLIC_GEOCODE_API_KEY;
+  if (!apiKey) {
+    console.error("Geocoding API key is not set");
+    return null;
+  }
   try {
     const response = await fetch(
       `https://api.geocod.io/v1.9/geocode?q=${encodeURIComponent(address)}&api_key=${apiKey}`,
@@ -227,10 +231,10 @@ export default function EditPartnerForm({
   const initialCityPercentEntries: CityPercentage[] =
     cityPercentages.length > 0
       ? cityPercentages.map((entry, idx) => ({
-          id: `${entry.city.name}-${idx}`,
-          city: entry.city.name,
-          percent: Math.round((entry.percentage ?? 0) * 100),
-        }))
+        id: `${entry.city.name}-${idx}`,
+        city: entry.city.name,
+        percent: Math.round((entry.percentage ?? 0) * 100),
+      }))
       : [];
 
   const addressFields = parseAddressFields(partner.address);
@@ -629,18 +633,16 @@ export default function EditPartnerForm({
                         const isActive = activePercentTab === option.value;
                         return (
                           <div
-                            className={`rounded-xl shadow-sm transition hover:-translate-y-0.5 hover:shadow-md h-full border ${
-                              isActive
-                                ? "border-[#1D3A8A] bg-[#EEF2FF]"
-                                : "border-gray-300 bg-white"
-                            }`}
+                            className={`rounded-xl shadow-sm transition hover:-translate-y-0.5 hover:shadow-md h-full border ${isActive
+                              ? "border-[#1D3A8A] bg-[#EEF2FF]"
+                              : "border-gray-300 bg-white"
+                              }`}
                             style={{ borderWidth: isActive ? 2 : 1 }}
                           >
                             <Stack gap="xs" align="center" p="md">
                               <div
-                                className={`${
-                                  isActive ? "text-[#1D3A8A]" : "text-gray-500"
-                                } opacity-80`}
+                                className={`${isActive ? "text-[#1D3A8A]" : "text-gray-500"
+                                  } opacity-80`}
                               >
                                 {option.icon}
                               </div>
