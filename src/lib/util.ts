@@ -1,3 +1,4 @@
+const GEOCODIO_API_KEY = process.env.GEOCODIO_API_KEY;
 /**
  * Stringifies a value to JSON, converting any BigInt values to strings to avoid
  * serialization errors.
@@ -14,14 +15,13 @@ export function stringifyWithBigInt(value: unknown) {
  * @returns The coordinates of the address.
  */
 export async function fetchCoordsFromAddress(address: string) {
-  const apiKey = process.env.GEOCODIO_API_KEY;
-  if (!apiKey) {
+  if (!GEOCODIO_API_KEY) {
     console.error("Geocoding API key is not set");
     return null;
   }
   try {
     const response = await fetch(
-      `https://api.geocod.io/v1.9/geocode?q=${encodeURIComponent(address)}&api_key=${apiKey}`,
+      `https://api.geocod.io/v1.9/geocode?q=${encodeURIComponent(address)}&api_key=${GEOCODIO_API_KEY}`,
     );
     const data = await response.json();
     return data.results?.[0]?.location as
