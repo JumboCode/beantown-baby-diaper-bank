@@ -93,7 +93,7 @@ type MapTimelineSlider = {
   value: string | number;
 };
 
-function useCountUp(target?: number, duration = 700) {
+function useCountUp(target?: number, duration = 1400) {
   const [value, setValue] = useState(0);
 
   useEffect(() => {
@@ -153,8 +153,8 @@ export default function Map({
   const [selectedPartnerId, setSelectedPartnerId] = useState<number | null>(
     null,
   );
-  const animatedRunningTotal = useCountUp(totalDiapersForYear);
-  const animatedYearlyTotal = useCountUp(yearlyDistributed);
+  const animatedRunningTotal = useCountUp(totalDiapersForYear, 1400);
+  const animatedYearlyTotal = useCountUp(yearlyDistributed, 700);
 
   const cities = useMemo(() => mapData?.cities.data ?? [], [mapData]);
 
@@ -224,16 +224,16 @@ export default function Map({
           const isEntering = enteringBoundaryIds.has(boundaryId);
 
           return (
-          <Polygon
-            key={boundaryId}
-            pathOptions={{
-              className: isEntering
-                ? "city-boundary city-boundary-enter"
-                : "city-boundary",
-              weight:
-                activeId === boundary.id || hoveredId === boundary.id
-                  ? 1.5
-                  : 0.5,
+            <Polygon
+              key={boundaryId}
+              pathOptions={{
+                className: isEntering
+                  ? "city-boundary city-boundary-enter"
+                  : "city-boundary",
+                weight:
+                  activeId === boundary.id || hoveredId === boundary.id
+                    ? 1.5
+                    : 0.5,
                 color:
                   activeId === boundary.id || hoveredId === boundary.id
                     ? "#0F4F78"
@@ -279,7 +279,7 @@ export default function Map({
                       />
                     ),
                 )}
-          </Polygon>
+            </Polygon>
           );
         })}
       </MapContainer>
