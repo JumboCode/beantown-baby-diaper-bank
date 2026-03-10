@@ -1,4 +1,3 @@
-const GEOCODIO_API_KEY = process.env.GEOCODIO_API_KEY;
 /**
  * Stringifies a value to JSON, converting any BigInt values to strings to avoid
  * serialization errors.
@@ -10,26 +9,32 @@ export function stringifyWithBigInt(value: unknown) {
 }
 
 /**
- * Fetches the coordinates of an address using the Geocodio API.
- * @param address The address to geocode.
- * @returns The coordinates of the address.
+ * Calls the app geocoding endpoint so the browser never sees the third-party
+ * API key.
  */
 export async function fetchCoordsFromAddress(address: string) {
-  if (!GEOCODIO_API_KEY) {
-    console.error("Geocoding API key is not set");
-    return null;
-  }
+  if (!address.trim()) return null;
+
   try {
     const response = await fetch(
-      `https://api.geocod.io/v1.9/geocode?q=${encodeURIComponent(address)}&api_key=${GEOCODIO_API_KEY}`,
+      `/api/geocode?address=${encodeURIComponent(address)}`,
+      {
+        method: "GET",
+        cache: "no-store",
+      },
     );
-    const data = await response.json();
-    return data.results?.[0]?.location as
-      | { lat: number; lng: number }
-      | null
-      | undefined;
+
+    if (!response.ok) {
+      return null;
+    }
+
+    const data = (await response.json()) as {
+      data?: { lat: number; lng: number } | null;
+    };
+
+    return data.data ?? null;
   } catch (error) {
-    console.error("Geocoding failed:", error);
+    console.error("Geocoding request failed:", error);
     return null;
   }
 }
