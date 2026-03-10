@@ -37,10 +37,19 @@ interface EditInfo {
   partnerId: number;
 }
 
+interface MonthlyDataResponseRow {
+  partnerId: string;
+  month: string;
+  year: string;
+  numberDiapers: string | null;
+}
+
 export default function DistributionsTable({
   distributionData,
+  onDataUpdated,
 }: {
   distributionData: Distribution[];
+  onDataUpdated?: () => Promise<void> | void;
 }) {
   const error: string | undefined = undefined;
 
@@ -60,11 +69,13 @@ export default function DistributionsTable({
   // Keyed by `${year}-${month}`. Falls back to date.total (from Distributions)
   // if the fetch hasn't resolved yet or a month has no MonthlyData records.
   const [monthlyBaseTotals, setMonthlyBaseTotals] = useState<Record<string, number>>({});
+  const [distributionOverrides, setDistributionOverrides] = useState<Record<string, Distribution>>({});
+  const [distributionRefreshKey, setDistributionRefreshKey] = useState(0);
 
-  useEffect(() => {
+  const loadMonthlyTotals = () => {
     fetch("/api/monthly-data")
       .then((r) => r.json())
-      .then((data: { partnerId: string; month: string; year: string; numberDiapers: string | null }[]) => {
+      .then((data: MonthlyDataResponseRow[]) => {
         const totalsMap: Record<string, number> = {};
         const partnerMap: Record<string, number> = {};
         data.forEach((row) => {
@@ -79,6 +90,10 @@ export default function DistributionsTable({
         setDiapersMap(partnerMap);
       })
       .catch((err) => console.error("Failed to load monthly totals:", err));
+  };
+
+  useEffect(() => {
+    loadMonthlyTotals();
   }, []);
 
   const submitEdit = async (info: EditInfo | undefined, newValue: string) => {
@@ -102,16 +117,38 @@ export default function DistributionsTable({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
-      const result = await response.json();
+      const result = (await response.json()) as {
+        error?: string;
+        data?: MonthlyDataResponseRow;
+        distributions?: Distribution[];
+      };
+
+      if (!response.ok || !result.data) {
+        throw new Error(result.error ?? "Failed to update monthly data");
+      }
+
       console.log("Result:", result);
-      // Update partner diaper count and propagate the delta to the monthly total.
+
       const key = `${info.partnerId}-${info.month}-${info.year}`;
-      const parsed = parseInt(newValue, 10);
+      const parsed = result.data.numberDiapers
+        ? parseInt(result.data.numberDiapers, 10)
+        : 0;
       const oldVal = diapersMap[key] ?? 0;
       const delta = parsed - oldVal;
       const monthKey = `${info.year}-${info.month}`;
       setDiapersMap((prev) => ({ ...prev, [key]: parsed }));
       setMonthDeltaMap((prev) => ({ ...prev, [monthKey]: (prev[monthKey] ?? 0) + delta }));
+      if (result.distributions) {
+        setDistributionOverrides((prev) => ({
+          ...prev,
+          ...Object.fromEntries(
+            result.distributions.map((dist) => [dist.id, dist]),
+          ),
+        }));
+      }
+      setDistributionRefreshKey((prev) => prev + 1);
+      loadMonthlyTotals();
+      await onDataUpdated?.();
       close();
     } catch (err) {
       console.error("Error submitting edit:", err);
@@ -204,6 +241,7 @@ export default function DistributionsTable({
           titleClassName="text-[22px] font-bold"
           // endpoint={`/api/distributions?month=${date.month}&year=${date.year}`}
           endpoint={`/api/monthly-data?month=${date.month}&year=${date.year}`}
+          refreshKey={`${date.year}-${date.month}-${distributionRefreshKey}`}
           render={(monthData) => {
             console.log("Month Data:", monthData);
             const rowsForMonth = monthData
@@ -269,8 +307,10 @@ export default function DistributionsTable({
                       </div>
                     }
                     endpoint={`/api/distributions?month=${date.month}&year=${date.year}`}
+                    refreshKey={`${date.year}-${date.month}-${partner.partnerId}-${distributionRefreshKey}`}
                     render={(data) => {
                       const rowsForPartner = data
+                        .map((dist) => distributionOverrides[dist.id] ?? dist)
                         .filter(
                           (dist) =>
                             dist.month === date.month &&
