@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { prisma } from "@/lib/prisma";
 import {
   parsePartnerRows,
   processDistributionUpload,
@@ -52,60 +53,33 @@ export async function POST(request: Request) {
       csvPartnerNamesByNormalized.set(normalizeName(row.partnerName), row.partnerName);
     }
 
-    // forward cookies and auth headers to ensure background checks have the same context as the upload request
-    const origin = new URL(request.url).origin;
-    const cookieHeader = request.headers.get("cookie") ?? "";
-    const authHeader = request.headers.get("authorization") ?? "";
-
-    const [partnersResponse, timelineResponse] = await Promise.all([
-      fetch(`${origin}/api/partners`, {
-        method: "GET",
-        cache: "no-store",
-        headers: {
-          ...(cookieHeader ? { cookie: cookieHeader } : {}),
-          ...(authHeader ? { authorization: authHeader } : {}),
+    const [partners, distributions] = await Promise.all([
+      prisma.partner.findMany({
+        select: {
+          name: true,
+          status: true,
         },
       }),
-      fetch(`${origin}/api/timeline-slider`, {
-        method: "GET",
-        cache: "no-store",
-        headers: {
-          ...(cookieHeader ? { cookie: cookieHeader } : {}),
-          ...(authHeader ? { authorization: authHeader } : {}),
+      prisma.distribution.findMany({
+        distinct: ["year", "month"],
+        select: {
+          month: true,
+          year: true,
         },
       }),
     ]);
 
-    if (!partnersResponse.ok || !timelineResponse.ok) {
-      const partnerFailure = !partnersResponse.ok
-        ? `partners check failed (${partnersResponse.status})`
-        : null;
-      const timelineFailure = !timelineResponse.ok
-        ? `timeline check failed (${timelineResponse.status})`
-        : null;
-
-      return NextResponse.json(
-        {
-          error: "Unable to run upload background checks.",
-          errors: [partnerFailure, timelineFailure].filter(
-            (value): value is string => value !== null,
-          ),
-        },
-        { status: 502 },
-      );
-    }
-
-    const partnersPayload = (await partnersResponse.json()) as {
-      data?: PartnerApiItem[];
-    };
-    const timelinePayload = (await timelineResponse.json()) as {
-      months?: TimelineMonthItem[];
+    const timelinePayload = {
+      months: distributions.map((distribution) => ({
+        Month: distribution.month,
+        Year: distribution.year,
+      })) as TimelineMonthItem[],
     };
 
     const partnerByNormalizedName = new Map(
-      (partnersPayload.data ?? [])
+      partners
         .filter((partner) => partner.name)
-        .map((partner) => [normalizeName(partner.name as string), partner]),
+        .map((partner) => [normalizeName(partner.name as string), partner as PartnerApiItem]),
     );
 
     const errors = new Set<string>();
