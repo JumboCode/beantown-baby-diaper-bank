@@ -28,23 +28,6 @@ export type Partner = {
   logo_url: string | null;
 };
 
-function roundCoords(coords: { lat: number; lng: number }) {
-  if (coords.lat.toString().length > 4 && coords.lng.toString().length > 4) {
-    return {
-      lat: coords.lat.toFixed(4),
-      lng: coords.lng.toFixed(4),
-    };
-  }
-  return {
-    lat: coords.lat.toString(),
-    lng: coords.lng.toString(),
-  };
-}
-
-function joinCoords(coords: { lat: number; lng: number }) {
-  return `${roundCoords(coords).lat}, ${roundCoords(coords).lng}`;
-}
-
 function formatDate(rawDate: string) {
   const date = new Date(rawDate);
 
@@ -112,9 +95,6 @@ export default function PartnerTable({
                   Status
                 </Table.Th>
                 <Table.Th fw="normal" fz="14px">
-                  Coordinates
-                </Table.Th>
-                <Table.Th fw="normal" fz="14px">
                   Address
                 </Table.Th>
                 <Table.Th></Table.Th>
@@ -123,7 +103,7 @@ export default function PartnerTable({
             <Table.Tbody>
               {loading ? (
                 <Table.Tr>
-                  <Table.Td colSpan={8}>
+                  <Table.Td colSpan={7}>
                     <Center py="lg">
                       <Loader type="bars" />
                     </Center>
@@ -202,13 +182,6 @@ export default function PartnerTable({
                         {partner.status.charAt(0).toUpperCase() +
                           partner.status.slice(1)}
                       </Pill>
-                    </Table.Td>
-                    <Table.Td className="text-sm text-gray-600">
-                      {partner.coords ? (
-                        joinCoords(partner.coords)
-                      ) : (
-                        <span className="text-gray-400 italic">N/A</span>
-                      )}
                     </Table.Td>
                     <Table.Td className="text-sm text-gray-600">
                       {partner.address || (
