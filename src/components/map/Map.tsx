@@ -15,7 +15,7 @@ import {
 import { LatLngExpression } from "leaflet";
 
 import "leaflet/dist/leaflet.css";
-import type { MapData } from "@/app/main/page";
+import type { MapData } from "@/app/page";
 import {
   Title,
   Text,

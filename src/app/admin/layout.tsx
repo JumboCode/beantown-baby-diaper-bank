@@ -19,7 +19,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           </Text>
 
           <Group gap="xs">
-            <Link href="/main">
+            <Link href="/">
               View Map
             </Link>
             <Profile />
