@@ -5,10 +5,12 @@ import Image from "next/image";
 
 interface TotalDiapersDistributedProps {
   totalDiapers?: number;
+  year?: string;
 }
 
 export default function TotalDiapersDistributed({
   totalDiapers,
+  year,
 }: TotalDiapersDistributedProps) {
   return (
     <Paper
@@ -25,7 +27,7 @@ export default function TotalDiapersDistributed({
             fw={700}
             c="#344054"
           >
-            Total Diapers Distributed
+            {year ? `Total Diapers Distributed in ${year}` : "Total Diapers Distributed"}
           </Text>
           {totalDiapers != null ? (
             <Text fz={46} fw={700} c="#101828">
