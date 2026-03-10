@@ -364,6 +364,7 @@ function PopupContent({
   timelineSlider: MapTimelineSlider;
   onPartnerSelect: (id: number) => void;
 }) {
+  const [showAllWaitlisted, setShowAllWaitlisted] = useState(false);
   // ROBUST FILTER: Detects waitlisted by string or boolean
   const waitlistedPartners = city.partners.filter(
     (p) =>
@@ -385,6 +386,11 @@ function PopupContent({
   const totalDiapers =
     city.distributions.reduce((sum, d) => sum + Number(d.numberDiapers), 0) ??
     0;
+  const visibleWaitlistedPartners = showAllWaitlisted
+    ? waitlistedPartners
+    : waitlistedPartners.slice(0, 5);
+  const hasMoreWaitlistedPartners = waitlistedPartners.length > 5;
+
   return (
     <Popup minWidth={280} maxWidth={320}>
       <Stack gap={6}>
@@ -443,7 +449,7 @@ function PopupContent({
               Waitlisted ({waitlistedPartners.length})
             </Text>
             <Group gap="xs" wrap="wrap">
-              {waitlistedPartners.map((p) => (
+              {visibleWaitlistedPartners.map((p) => (
                 <MantineTooltip key={p.id} label={p.name} withArrow>
                   <Avatar
                     src={p.logo_url || p.logoUrl}
@@ -457,6 +463,25 @@ function PopupContent({
                   </Avatar>
                 </MantineTooltip>
               ))}
+              {hasMoreWaitlistedPartners && !showAllWaitlisted && (
+                <Text
+                  component="button"
+                  type="button"
+                  fz="md"
+                  fw={700}
+                  c="#0F6B99"
+                  style={{
+                    background: "transparent",
+                    border: "none",
+                    cursor: "pointer",
+                    padding: 0,
+                    lineHeight: 1,
+                  }}
+                  onClick={() => setShowAllWaitlisted(true)}
+                >
+                  ...
+                </Text>
+              )}
             </Group>
           </>
         )}

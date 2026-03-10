@@ -57,13 +57,13 @@ const flipBoundaries = (
     geometry:
       feature.geometry.type === "Polygon"
         ? {
-            ...feature.geometry,
-            coordinates: swapLngLat(feature.geometry.coordinates) as Polygon["coordinates"],
-          }
+          ...feature.geometry,
+          coordinates: swapLngLat(feature.geometry.coordinates) as Polygon["coordinates"],
+        }
         : {
-            ...feature.geometry,
-            coordinates: swapLngLat(feature.geometry.coordinates) as MultiPolygon["coordinates"],
-          },
+          ...feature.geometry,
+          coordinates: swapLngLat(feature.geometry.coordinates) as MultiPolygon["coordinates"],
+        },
   }));
 
   return {
