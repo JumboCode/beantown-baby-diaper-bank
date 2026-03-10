@@ -1,4 +1,4 @@
-import { Modal, Button, Group, Text, Stack } from "@mantine/core";
+import { Modal, Button, Group, Text, Stack, Alert } from "@mantine/core";
 import FileUpload, { FileInfo } from "../sprint2/FileUpload";
 import { MonthPickerInput } from "@mantine/dates";
 import { useState } from "react";
@@ -17,8 +17,17 @@ export default function UploadNewData({
   const [datasetMonth, setDatasetMonth] = useState<string | null>(null);
   const [fileInfo, setFileInfo] = useState<FileInfo | null>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [warnings, setWarnings] = useState<string[]>([]);
+
+  const handleClose = () => {
+    setWarnings([]);
+    onClose();
+  };
+
 
   const handleUpload = async () => {
+    setWarnings([]);
+
     if (!fileInfo) {
       console.log("No file uploaded.");
       return;
@@ -29,8 +38,14 @@ export default function UploadNewData({
       return;
     }
 
+
+
+
+
+
     setIsUploading(true);
     try {
+
       const response = await fetch("/api/distributions/upload", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -40,16 +55,27 @@ export default function UploadNewData({
         }),
       });
 
-      const result = await response.json();
+      const result = (await response.json()) as {
+        data?: unknown;
+        error?: string;
+        errors?: string[];
+      };
+
       if (!response.ok) {
-        throw new Error(result.error ?? "Upload failed.");
+        const nextWarnings =
+          result.errors && result.errors.length > 0
+            ? result.errors
+            : [result.error ?? "Upload failed."];
+        setWarnings(nextWarnings);
+        return;
       }
 
       console.log("Upload processed:", result.data);
       onUploaded?.();
-      onClose();
+      handleClose();
     } catch (error) {
       console.error("Failed to upload distribution data:", error);
+      setWarnings(["Upload failed. Please try again."]);
     } finally {
       setIsUploading(false);
     }
@@ -59,7 +85,7 @@ export default function UploadNewData({
     <>
       <Modal
         opened={opened}
-        onClose={onClose}
+        onClose={handleClose}
         size="lg"
         title={
           <Text fw={700} size="xl">
@@ -68,6 +94,18 @@ export default function UploadNewData({
         }
       >
         <Stack gap="sm">
+          {warnings.length > 0 ? (
+            <Alert color="red" title="Please fix the following:">
+              <Stack gap={4}>
+                {warnings.map((warning) => (
+                  <Text key={warning} size="sm">
+                    {warning}
+                  </Text>
+                ))}
+              </Stack>
+            </Alert>
+          ) : null}
+
           <Group justify="center" grow>
             <MonthPickerInput
               label="Dataset Information"
@@ -91,7 +129,7 @@ export default function UploadNewData({
           </Group>
 
           <Group justify="flex-end" gap="xs">
-            <Button variant="default" color="#163663" onClick={onClose}>
+            <Button variant="default" color="#163663" onClick={handleClose}>
               Cancel
             </Button>
             <Button
