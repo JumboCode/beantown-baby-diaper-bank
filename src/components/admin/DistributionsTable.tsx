@@ -4,8 +4,6 @@ import { useMemo, useState, useEffect } from "react";
 import { Button, Input, Text } from "@mantine/core";
 import { Distribution } from "@/lib/types";
 import { CollapsibleDropdown } from "./Dropdown";
-import { Modal } from '@mantine/core';
-import { useDisclosure } from '@mantine/hooks';
 
 const MONTH_ORDER: Record<string, number> = {
   January: 1,
@@ -51,12 +49,9 @@ export default function DistributionsTable({
   distributionData: Distribution[];
   onDataUpdated?: () => Promise<void> | void;
 }) {
-  const error: string | undefined = undefined;
-
-  // Edit Modal
-  const [opened, { open, close }] = useDisclosure(false);
-  const [currEditInfo, setCurrEditInfo] = useState<EditInfo>();
+  const [editingKey, setEditingKey] = useState<string | null>(null);
   const [inputValue, setInputValue] = useState<string>("");
+  const [error, setError] = useState<string | null>(null);
 
   // Central diaper count map keyed by `${partnerId}-${month}-${year}`.
   // Seeded from the MonthlyData fetch (same source as edits); updated on submit.
@@ -108,9 +103,6 @@ export default function DistributionsTable({
 
     console.log("Submitting edit with payload:", payload);
 
-    // clear input value
-    setInputValue("");
-
     try {
       const response = await fetch("/api/monthly-data", {
         method: "PUT",
@@ -138,18 +130,24 @@ export default function DistributionsTable({
       const monthKey = `${info.year}-${info.month}`;
       setDiapersMap((prev) => ({ ...prev, [key]: parsed }));
       setMonthDeltaMap((prev) => ({ ...prev, [monthKey]: (prev[monthKey] ?? 0) + delta }));
+      if (!result.distributions) {
+        setError("No distributions found for this month and year");
+        return;
+      }
+
       if (result.distributions) {
         setDistributionOverrides((prev) => ({
           ...prev,
           ...Object.fromEntries(
-            result.distributions.map((dist) => [dist.id, dist]),
+            result.distributions?.map((dist) => [dist.id, dist]) ?? [],
           ),
         }));
       }
       setDistributionRefreshKey((prev) => prev + 1);
       loadMonthlyTotals();
       await onDataUpdated?.();
-      close();
+      setEditingKey(null);
+      setInputValue("");
     } catch (err) {
       console.error("Error submitting edit:", err);
     }
@@ -202,28 +200,6 @@ export default function DistributionsTable({
 
   return (
     <div className="space-y-2">
-      <Modal.Root opened={opened} onClose={close}>
-        <Modal.Overlay />
-        <Modal.Content>
-          <Modal.Header>
-            <Modal.Title>Edit</Modal.Title>
-            <Modal.CloseButton />
-          </Modal.Header>
-          <Modal.Body>
-            <Text>Current number of diapers distributed by {currEditInfo?.name} in {currEditInfo?.month}: {currEditInfo?.numDiapers}</Text>
-            <Input
-              placeholder="Enter new diaper count here"
-              value={inputValue}
-              onChange={(e) => setInputValue(e.currentTarget.value)}
-            />
-            <div className="flex justify-center mt-4">
-              <Button onClick={() => submitEdit(currEditInfo, inputValue)}>Update</Button>
-            </div>
-            
-           
-          </Modal.Body>
-        </Modal.Content>
-      </Modal.Root>
       {totals.map((date) => (
         <CollapsibleDropdown<Distribution[]>
           key={`${date.year}-${date.month}`}
@@ -282,77 +258,118 @@ export default function DistributionsTable({
               <div className="space-y-2">
                 {partnerEntries.map((partner) => {
                   const mapKey = `${partner.partnerId}-${date.month}-${date.year}`;
+                  const currentEditKey = `${partner.partnerId}-${date.month}-${date.year}`;
+                  const isEditing = editingKey === currentEditKey;
                   const displayDiapers = diapersMap[mapKey] ?? partner.totalDiapers;
+                  const editInfo: EditInfo = {
+                    name: partner.partnerName,
+                    month: date.month,
+                    numDiapers: displayDiapers,
+                    year: date.year,
+                    partnerId: partner.partnerId,
+                  };
                   return (
-                  <CollapsibleDropdown<Distribution[]>
-                    key={`${date.year}-${date.month}-${partner.partnerName}`}
-                    title={partner.partnerName}
-                    right={
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm font-medium text-[#053766]">
-                          {displayDiapers.toLocaleString()} diapers
-                        </span>
-                        <Button variant="default" onClick={() => {
-                          setCurrEditInfo({
-                            name: partner.partnerName,
-                            month: date.month,
-                            numDiapers: displayDiapers,
-                            year: date.year,
-                            partnerId: partner.partnerId
-                          });
-                          open();
-                        }}>
-                          Edit
-                        </Button>
-                      </div>
-                    }
-                    endpoint={`/api/distributions?month=${date.month}&year=${date.year}`}
-                    refreshKey={`${date.year}-${date.month}-${partner.partnerId}-${distributionRefreshKey}`}
-                    render={(data) => {
-                      const rowsForPartner = data
-                        .map((dist) => distributionOverrides[dist.id] ?? dist)
-                        .filter(
-                          (dist) =>
-                            dist.month === date.month &&
-                            dist.year === date.year &&
-                            (dist.partner?.name?.trim() ||
-                              "Unknown Partner") === partner.partnerName,
-                        )
-                        .sort((a, b) =>
-                          (a.city?.name ?? "").localeCompare(
-                            b.city?.name ?? "",
-                          ),
-                        );
+                    <CollapsibleDropdown<Distribution[]>
+                      key={`${date.year}-${date.month}-${partner.partnerName}`}
+                      title={partner.partnerName}
+                      right={
+                        <div className="flex items-center gap-2">
+                          {isEditing ? (
+                            <>
+                              <Input
+                                value={inputValue}
+                                onChange={(e) => setInputValue(e.currentTarget.value)}
+                                className="w-32"
+                                onKeyDown={(e) => {
+                                  if (e.key === "Enter") {
+                                    void submitEdit(editInfo, inputValue);
+                                  }
 
-                      if (rowsForPartner.length === 0) {
-                        return (
-                          <div className="text-sm text-gray-600">
-                            No distributions found.
-                          </div>
-                        );
-                      }
-
-                      return (
-                        <div className="overflow-x-auto rounded-lg border border-gray-200">
-                          <div className="grid grid-cols-2 gap-4 border-b border-gray-200 bg-gray-50 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-[#053766]">
-                            <div>City</div>
-                            <div>Diapers</div>
-                          </div>
-                          {rowsForPartner.map((dist) => (
-                            <div
-                              key={dist.id}
-                              className="grid grid-cols-2 gap-4 border-b border-gray-100 px-4 py-3 text-sm text-gray-700 last:border-b-0"
-                            >
-                              <div>{dist.city?.name ?? "-"}</div>
-                              <div>{dist.numberDiapers ?? "0"}</div>
-                            </div>
-                          ))}
+                                  if (e.key === "Escape") {
+                                    setEditingKey(null);
+                                    setInputValue("");
+                                  }
+                                }}
+                              />
+                              <Button size="xs" onClick={() => void submitEdit(editInfo, inputValue)}>
+                                Save
+                              </Button>
+                              <Button
+                                size="xs"
+                                variant="default"
+                                onClick={() => {
+                                  setEditingKey(null);
+                                  setInputValue("");
+                                }}
+                              >
+                                Cancel
+                              </Button>
+                            </>
+                          ) : (
+                            <>
+                              <span className="text-sm font-medium text-[#053766]">
+                                {displayDiapers.toLocaleString()} diapers
+                              </span>
+                              <Button
+                                variant="default"
+                                onClick={() => {
+                                  setEditingKey(currentEditKey);
+                                  setInputValue(String(displayDiapers));
+                                }}
+                              >
+                                Edit
+                              </Button>
+                            </>
+                          )}
                         </div>
-                      );
-                    }}
-                  />
-                );
-              })}
+                      }
+                      endpoint={`/api/distributions?month=${date.month}&year=${date.year}`}
+                      refreshKey={`${date.year}-${date.month}-${partner.partnerId}-${distributionRefreshKey}`}
+                      render={(data) => {
+                        const rowsForPartner = data
+                          .map((dist) => distributionOverrides[dist.id] ?? dist)
+                          .filter(
+                            (dist) =>
+                              dist.month === date.month &&
+                              dist.year === date.year &&
+                              (dist.partner?.name?.trim() ||
+                                "Unknown Partner") === partner.partnerName,
+                          )
+                          .sort((a, b) =>
+                            (a.city?.name ?? "").localeCompare(
+                              b.city?.name ?? "",
+                            ),
+                          );
+
+                        if (rowsForPartner.length === 0) {
+                          return (
+                            <div className="text-sm text-gray-600">
+                              No distributions found.
+                            </div>
+                          );
+                        }
+
+                        return (
+                          <div className="overflow-x-auto rounded-lg border border-gray-200">
+                            <div className="grid grid-cols-2 gap-4 border-b border-gray-200 bg-gray-50 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-[#053766]">
+                              <div>City</div>
+                              <div>Diapers</div>
+                            </div>
+                            {rowsForPartner.map((dist) => (
+                              <div
+                                key={dist.id}
+                                className="grid grid-cols-2 gap-4 border-b border-gray-100 px-4 py-3 text-sm text-gray-700 last:border-b-0"
+                              >
+                                <div>{dist.city?.name ?? "-"}</div>
+                                <div>{dist.numberDiapers ?? "0"}</div>
+                              </div>
+                            ))}
+                          </div>
+                        );
+                      }}
+                    />
+                  );
+                })}
               </div>
             );
           }}
