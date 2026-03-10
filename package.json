@@ -10,6 +10,7 @@
     "lint:fix": "eslint . --ext .ts,.tsx,.js,.jsx --fix && prettier \"**/*.{ts,tsx,js,jsx,json,md,css}\" --write",
     "prisma:generate": "prisma generate --no-engine",
     "prisma:seed": "prisma db seed",
+    "prisma:seed:city-boundaries": "tsx prisma/reseed-city-boundaries.ts",
     "postinstall": "prisma generate"
   },
   "dependencies": {
@@ -21,6 +22,7 @@
     "@prisma/client": "^6.19.0",
     "@prisma/extension-accelerate": "^2.0.2",
     "@supabase/supabase-js": "^2.97.0",
+    "@tabler/icons-react": "^3.40.0",
     "@types/geojson": "^7946.0.16",
     "@types/papaparse": "^5.5.1",
     "d3": "^7.9.0",

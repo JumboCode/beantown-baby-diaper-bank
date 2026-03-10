@@ -208,7 +208,8 @@ export default function DistributionsTable({
             console.log("Month Data:", monthData);
             const rowsForMonth = monthData
               .filter(
-                (dist) => dist.month === date.month && dist.year === date.year,
+                (dist) =>
+                  dist.month === date.month && dist.year === date.year,
               )
               .sort((a, b) =>
                 (a.partner?.name ?? "").localeCompare(b.partner?.name ?? ""),

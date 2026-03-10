@@ -318,7 +318,7 @@ export default function ColinMadelineAryaaHotmap() {
     "south-end":
       '"When I lost my job during the winter, I had to make impossible choices—diapers or dinner. The South End Diaper Bank gave me relief I didn\'t even know I needed. For the first time in months, I could tuck my baby in at night without counting how many diapers I had left for tomorrow." - Jane',
     cambridgeport:
-      "\“Twins mean double the joy—and double the diapers. When prices skyrocketed, the Downtown Diaper Bank became our lifeline. They reminded us that community still exists in this city. We’ll never forget that.\” - Eric",
+      '"Twins mean double the joy—and double the diapers. When prices skyrocketed, the Downtown Diaper Bank became our lifeline. They reminded us that community still exists in this city. We’ll never forget that." - Eric',
   };
 
   const hoveredRegionStory =
