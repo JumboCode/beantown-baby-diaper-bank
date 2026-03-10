@@ -93,9 +93,58 @@ type MapTimelineSlider = {
   value: string | number;
 };
 
+function useCountUp(target?: number, duration = 700) {
+  const [value, setValue] = useState(0);
+
+  useEffect(() => {
+    if (target == null) {
+      setValue(0);
+      return;
+    }
+
+    const startValue = value;
+    const delta = target - startValue;
+
+    if (delta === 0) {
+      return;
+    }
+
+    const startTime = performance.now();
+    let frameId = 0;
+
+    const tick = (now: number) => {
+      const progress = Math.min((now - startTime) / duration, 1);
+      const eased = 1 - Math.pow(1 - progress, 3);
+      setValue(Math.round(startValue + delta * eased));
+
+      if (progress < 1) {
+        frameId = window.requestAnimationFrame(tick);
+      }
+    };
+
+    frameId = window.requestAnimationFrame(tick);
+
+    return () => window.cancelAnimationFrame(frameId);
+  }, [target, duration]);
+
+  return value;
+}
+
 // --- 3. Main HeatMap Component ---
 
-export default function Map({ mapData, timelineSlider }: { mapData: MapData, timelineSlider: MapTimelineSlider }) {
+export default function Map({
+  mapData,
+  timelineSlider,
+  totalDiapersForYear,
+  yearlyDistributed,
+  selectedYear,
+}: {
+  mapData: MapData;
+  timelineSlider: MapTimelineSlider;
+  totalDiapersForYear?: number;
+  yearlyDistributed?: number;
+  selectedYear?: string;
+}) {
   const { mapConfig } = useLeafletMap();
   const { style: mapStyle, ...mapOptions } = mapConfig;
   const { tileLayerProps } = useBaseTileLayer();
@@ -104,6 +153,8 @@ export default function Map({ mapData, timelineSlider }: { mapData: MapData, tim
   const [selectedPartnerId, setSelectedPartnerId] = useState<number | null>(
     null,
   );
+  const animatedRunningTotal = useCountUp(totalDiapersForYear);
+  const animatedYearlyTotal = useCountUp(yearlyDistributed);
 
   const cities = useMemo(() => mapData?.cities.data ?? [], [mapData]);
 
@@ -232,6 +283,43 @@ export default function Map({ mapData, timelineSlider }: { mapData: MapData, tim
           );
         })}
       </MapContainer>
+
+      <Box
+        style={{
+          position: "absolute",
+          top: 16,
+          right: 16,
+          zIndex: 1000,
+          pointerEvents: "none",
+          minWidth: 220,
+          maxWidth: 280,
+          background: "rgba(255, 255, 255, 0.96)",
+          border: "1px solid #E4E7EC",
+          borderRadius: 12,
+          boxShadow: "0 8px 24px rgba(16, 24, 40, 0.12)",
+          padding: "12px 14px",
+          backdropFilter: "blur(8px)",
+        }}
+      >
+        <Text fz="11px" fw={700} c="#475467" tt="uppercase">
+          {selectedYear
+            ? `Running total through ${selectedYear}`
+            : "Running total"}
+        </Text>
+        <Group justify="space-between" align="flex-end" mt={4} gap="sm" wrap="nowrap">
+          <Text fz="30px" fw={800} c="#101828" lh={1.1}>
+            {totalDiapersForYear != null
+              ? animatedRunningTotal.toLocaleString()
+              : "--"}
+          </Text>
+          <Text fz="15px" fw={700} c="#16A34A" lh={1.2} ta="right">
+            {yearlyDistributed != null
+              ? `+${animatedYearlyTotal.toLocaleString()}`
+              : "--"}
+            {selectedYear ? ` in ${selectedYear}` : ""}
+          </Text>
+        </Group>
+      </Box>
 
       <PartnerIconDrawer
         partnerId={selectedPartnerId}

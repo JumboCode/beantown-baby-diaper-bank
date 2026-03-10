@@ -27,7 +27,7 @@ const MONTH_NAMES = Object.values(month) as month[];
 function normalizeName(name: string) {
   return name.trim().toLowerCase();
 }
-
+// Todo: remove num babies column from upload
 export async function POST(request: Request) {
   try {
     const body = (await request.json()) as UploadRequestBody;

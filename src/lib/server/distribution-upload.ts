@@ -46,6 +46,7 @@ function parseNumericCell(cell: string | undefined): number | null {
   return Number.isFinite(value) ? value : null;
 }
 
+// Todo: remove num babies column from parsing logic
 export function parsePartnerRows(csv: string): {
   parsed: ParsedPartnerRow[];
 } {

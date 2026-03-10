@@ -5,7 +5,7 @@ import { Box, Stack, Title, Text, Paper, Skeleton, Group } from "@mantine/core";
 import TimelineSliderControls from "@/components/map/TimelineSliderControls";
 import { useTimelinePeriod } from "@/components/map/useTimelinePeriod";
 import TotalDiapersDistributed from "@/components/map/TotalDiapersDistributed";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import ImpactModal from "@/components/map/ImpactModal";
 import { FeatureCollection, MultiPolygon, Polygon } from "geojson";
 import { City, Distribution } from "@/generated/prisma/client";
@@ -76,6 +76,9 @@ export default function Page() {
   const timeline = useTimelinePeriod();
   const [mapData, setMapData] = useState<MapData | null>(null);
   const [totalDiapers, setTotalDiapers] = useState<number>();
+  const [cumulativeTotalDiapers, setCumulativeTotalDiapers] = useState<number>();
+  const [yearlyTotalDiapers, setYearlyTotalDiapers] = useState<number>();
+  const [selectedYear, setSelectedYear] = useState<string>();
   const [cachedBoundaries, setCachedBoundaries] =
     useState<FeatureCollection<Polygon | MultiPolygon> | null>(null);
 
@@ -96,11 +99,14 @@ export default function Page() {
             .then((res) => res.json())
             .then(flipBoundaries);
 
-        const [cities, boundaries] = await Promise.all([
+        const [cities, boundaries, totalDiapersResponse] = await Promise.all([
           fetch(`/api/cities?${queryParams.toString()}`).then((res) =>
             res.json(),
           ),
           boundariesPromise,
+          fetch(`/api/total-diapers?year=${encodeURIComponent(params.year)}`).then(
+            (res) => res.json(),
+          ),
         ]);
 
         if (!cachedBoundaries) {
@@ -108,30 +114,31 @@ export default function Page() {
         }
 
         setMapData({ cities, boundaries });
+        setSelectedYear(params.year);
+        setCumulativeTotalDiapers(totalDiapersResponse.totalDiapers ?? 0);
+        setYearlyTotalDiapers(totalDiapersResponse.yearlyTotalDiapers ?? 0);
       } catch (error) {
         console.error("Error fetching map data:", error);
+        setCumulativeTotalDiapers(0);
+        setYearlyTotalDiapers(0);
       }
     },
     [cachedBoundaries],
   );
 
   useEffect(() => {
-    // fetch data for total diapers distributed
-    const fetchTotalDiapers = async () => {
+    const fetchAllTimeTotalDiapers = async () => {
       try {
-        const url = `/api/total-diapers`;
-
-        const response = await fetch(url);
+        const response = await fetch("/api/total-diapers");
         const data = await response.json();
-        const total = data.totalDiapers;
-
-        setTotalDiapers(total);
+        setTotalDiapers(data.totalDiapers ?? 0);
       } catch (error) {
         console.error("Error fetching total diapers:", error);
         setTotalDiapers(0);
       }
     };
-    fetchTotalDiapers();
+
+    fetchAllTimeTotalDiapers();
   }, []);
 
   return (
@@ -175,6 +182,9 @@ export default function Page() {
               <LeafletMap
                 mapData={mapData}
                 timelineSlider={timeline}
+                totalDiapersForYear={cumulativeTotalDiapers}
+                yearlyDistributed={yearlyTotalDiapers}
+                selectedYear={selectedYear}
               />
             ) : (
               <Skeleton h="60vh" mb="md" />
