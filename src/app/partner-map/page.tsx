@@ -5,15 +5,24 @@ import { useEffect, useState } from "react";
 import { useLeafletMap } from "@/components/map/useLeafletMap";
 import { useBaseTileLayer } from "@/components/map/useBaseTileLayer";
 import { Box, Title, Loader, Center, Stack, Text, Divider, Group, Paper } from "@mantine/core";
-import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
-import L from "leaflet";
-import "leaflet/dist/leaflet.css";
 
-const createPartnerIcon = (url: string | null) => {
+import dynamic from "next/dynamic";
+
+const MapContainer = dynamic(() => import("react-leaflet").then((m) => m.MapContainer), {
+  ssr: false,
+  loading: () => <Center h={600}><Loader color="#51A3CC" size="xl" /></Center>
+});
+const TileLayer = dynamic(() => import("react-leaflet").then((m) => m.TileLayer), { ssr: false });
+const Marker = dynamic(() => import("react-leaflet").then((m) => m.Marker), { ssr: false });
+const Popup = dynamic(() => import("react-leaflet").then((m) => m.Popup), { ssr: false });
+const createPartnerIcon = (
+  leaflet: typeof import("leaflet"),
+  url: string | null,
+) => {
   // Fallback to a clear placeholder if URL is missing to avoid white circles
   const validUrl = url && url.trim() !== "" ? url : "https://placehold.co/400x400?text=Logo";
-  
-  return L.divIcon({
+
+  return leaflet.divIcon({
     className: "custom-partner-icon",
     html: `
       <div style="
@@ -35,11 +44,18 @@ const createPartnerIcon = (url: string | null) => {
 
 export default function PartnerMap() {
   const { mapConfig } = useLeafletMap();
-  const { style: mapStyle, ...mapOptions } = mapConfig;
+  const mapOptions = mapConfig;
   const { tileLayerProps } = useBaseTileLayer();
-  
+
   const [partners, setPartners] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [leaflet, setLeaflet] = useState<typeof import("leaflet") | null>(null);
+
+  useEffect(() => {
+    import("leaflet").then((module) => {
+      setLeaflet(module);
+    });
+  }, []);
 
   useEffect(() => {
     fetch("/api/partners")
@@ -68,17 +84,17 @@ export default function PartnerMap() {
         <MapContainer {...mapOptions} style={{ height: "100%", width: "100%" }}>
           <TileLayer {...tileLayerProps} />
 
-          {partners.map((p) => (
+          {leaflet && partners.map((p) => (
             <Marker
               key={p.id}
               position={[p.coords.lat, p.coords.lng]}
               // Try both possible naming conventions for the logo
-              icon={createPartnerIcon(p.logo_url || p.logoUrl)}
+              icon={createPartnerIcon(leaflet, p.logo_url || p.logoUrl)}
             >
               <Popup>
                 <Stack gap={4} align="center">
                   <Text fw={700} size="sm">{p.name}</Text>
-                  <Text size="xs" c="dimmed" textAlign="center">{p.address}</Text>
+                  <Text size="xs" c="dimmed" ta="center">{p.address}</Text>
                 </Stack>
               </Popup>
             </Marker>
@@ -91,13 +107,13 @@ export default function PartnerMap() {
         <Divider my="xs" label={<Text fw={600}>Active Mapped Partners ({partners.length})</Text>} labelPosition="left" />
         <Group gap="sm" mt="sm">
           {partners.map((p) => (
-            <Box 
-              key={p.id} 
-              style={{ 
+            <Box
+              key={p.id}
+              style={{
                 width: 35, height: 35, borderRadius: "50%", border: "1px solid #eee",
                 backgroundImage: `url(${p.logo_url || p.logoUrl})`,
                 backgroundSize: 'contain', backgroundPosition: 'center', backgroundColor: 'white'
-              }} 
+              }}
             />
           ))}
         </Group>

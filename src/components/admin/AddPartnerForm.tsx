@@ -541,7 +541,7 @@ export default function AddPartnerForm({
               <MonthPickerInput
                 placeholder="Pick date"
                 value={form.values.time}
-                onChange={(val) => form.setFieldValue("time", val)}
+                onChange={(val) => form.setFieldValue("time", val as Date | null)}
                 error={form.errors.time}
                 required
                 w={526}
