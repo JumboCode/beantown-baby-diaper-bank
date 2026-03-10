@@ -3,7 +3,7 @@
 import dynamic from "next/dynamic";
 import { useLeafletMap } from "./useLeafletMap";
 import { useBaseTileLayer } from "./useBaseTileLayer";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { City, Distribution, status } from "@/generated/prisma/client";
 import {
   Popup,
@@ -24,6 +24,8 @@ import {
   Avatar,
   Tooltip as MantineTooltip,
   Divider,
+  Box,
+  Badge,
 } from "@mantine/core";
 import PartnerIconDrawer from "./PartnerIconDrawer";
 import PartnerAvatar from "./PartnerAvatar";
@@ -87,9 +89,62 @@ type CityMapInfo = City & {
   partners: PartnerInfoType[];
 };
 
+type MapTimelineSlider = {
+  value: string | number;
+};
+
+function useCountUp(target?: number, duration = 700) {
+  const [value, setValue] = useState(0);
+
+  useEffect(() => {
+    if (target == null) {
+      setValue(0);
+      return;
+    }
+
+    const startValue = value;
+    const delta = target - startValue;
+
+    if (delta === 0) {
+      return;
+    }
+
+    const startTime = performance.now();
+    let frameId = 0;
+
+    const tick = (now: number) => {
+      const progress = Math.min((now - startTime) / duration, 1);
+      const eased = 1 - Math.pow(1 - progress, 3);
+      setValue(Math.round(startValue + delta * eased));
+
+      if (progress < 1) {
+        frameId = window.requestAnimationFrame(tick);
+      }
+    };
+
+    frameId = window.requestAnimationFrame(tick);
+
+    return () => window.cancelAnimationFrame(frameId);
+  }, [target, duration]);
+
+  return value;
+}
+
 // --- 3. Main HeatMap Component ---
 
-export default function Map({ mapData }: { mapData: MapData }) {
+export default function Map({
+  mapData,
+  timelineSlider,
+  totalDiapersForYear,
+  yearlyDistributed,
+  selectedYear,
+}: {
+  mapData: MapData;
+  timelineSlider: MapTimelineSlider;
+  totalDiapersForYear?: number;
+  yearlyDistributed?: number;
+  selectedYear?: string;
+}) {
   const { mapConfig } = useLeafletMap();
   const { style: mapStyle, ...mapOptions } = mapConfig;
   const { tileLayerProps } = useBaseTileLayer();
@@ -98,6 +153,8 @@ export default function Map({ mapData }: { mapData: MapData }) {
   const [selectedPartnerId, setSelectedPartnerId] = useState<number | null>(
     null,
   );
+  const animatedRunningTotal = useCountUp(totalDiapersForYear);
+  const animatedYearlyTotal = useCountUp(yearlyDistributed);
 
   const cities = useMemo(() => mapData?.cities.data ?? [], [mapData]);
 
@@ -131,72 +188,167 @@ export default function Map({ mapData }: { mapData: MapData }) {
     });
   }, [mapData, cities]);
 
+  const visibleBoundaries = useMemo(
+    () => boundaryPolygons.filter((boundary) => boundary.totalDiapers > 0),
+    [boundaryPolygons],
+  );
+
+  const previousVisibleIdsRef = useRef<Set<string>>(new Set());
+
+  const enteringBoundaryIds = useMemo(() => {
+    const previous = previousVisibleIdsRef.current;
+    const entering = new Set<string>();
+
+    visibleBoundaries.forEach((boundary, index) => {
+      const boundaryId = String(boundary.id || index);
+      if (!previous.has(boundaryId)) entering.add(boundaryId);
+    });
+
+    return entering;
+  }, [visibleBoundaries]);
+
+  useEffect(() => {
+    previousVisibleIdsRef.current = new Set(
+      visibleBoundaries.map((boundary, index) => String(boundary.id || index)),
+    );
+  }, [visibleBoundaries]);
+
   return (
     <div
       style={{ position: "relative", height: "100%", width: "100%", zIndex: 0 }}
     >
       <MapContainer {...mapOptions} style={mapStyle}>
         <TileLayer {...tileLayerProps} />
-        {boundaryPolygons.map((boundary, index) => (
+        {visibleBoundaries.map((boundary, index) => {
+          const boundaryId = String(boundary.id || index);
+          const isEntering = enteringBoundaryIds.has(boundaryId);
+
+          return (
           <Polygon
-            key={boundary.id || index}
+            key={boundaryId}
             pathOptions={{
+              className: isEntering
+                ? "city-boundary city-boundary-enter"
+                : "city-boundary",
               weight:
                 activeId === boundary.id || hoveredId === boundary.id
                   ? 1.5
                   : 0.5,
-              color:
-                activeId === boundary.id || hoveredId === boundary.id
-                  ? "#0F4F78"
-                  : "#5A7687",
-              fillColor: boundary.fillColor,
-              fillOpacity:
-                activeId === boundary.id
-                  ? 0.65
-                  : hoveredId === boundary.id
-                    ? 0.5
-                    : 0.35,
-            }}
-            positions={boundary.positions}
-            eventHandlers={{
-              mouseover: () => setHoveredId(boundary.id),
-              mouseout: () =>
-                setHoveredId((current) =>
-                  current === boundary.id ? null : current,
-                ),
-              click: () => setActiveId(boundary.id),
-              popupclose: () =>
-                setActiveId((current) =>
-                  current === boundary.id ? null : current,
-                ),
-            }}
-          >
-            {boundary.name && (
-              <Tooltip sticky direction="top" offset={[0, -4]}>
-                <Text fw={700} fz="sm" c="#0F4F78">
-                  {boundary.name}
-                </Text>
-              </Tooltip>
-            )}
-            {boundary.name &&
-              cities.map(
-                (city) =>
-                  city.name === boundary.name && (
-                    <PopupContent
-                      key={city.id.toString()}
-                      city={city}
-                      onPartnerSelect={setSelectedPartnerId}
-                    />
+                color:
+                  activeId === boundary.id || hoveredId === boundary.id
+                    ? "#0F4F78"
+                    : "#5A7687",
+                fillColor: boundary.fillColor,
+                fillOpacity:
+                  activeId === boundary.id
+                    ? 0.65
+                    : hoveredId === boundary.id
+                      ? 0.5
+                      : 0.35,
+              }}
+              positions={boundary.positions}
+              eventHandlers={{
+                mouseover: () => setHoveredId(boundary.id),
+                mouseout: () =>
+                  setHoveredId((current) =>
+                    current === boundary.id ? null : current,
                   ),
+                click: () => setActiveId(boundary.id),
+                popupclose: () =>
+                  setActiveId((current) =>
+                    current === boundary.id ? null : current,
+                  ),
+              }}
+            >
+              {boundary.name && (
+                <Tooltip sticky direction="top" offset={[0, -4]}>
+                  <Text fw={700} fz="sm" c="#0F4F78">
+                    {boundary.name}
+                  </Text>
+                </Tooltip>
               )}
+              {boundary.name &&
+                cities.map(
+                  (city) =>
+                    city.name === boundary.name && (
+                      <PopupContent
+                        key={city.id.toString()}
+                        city={city}
+                        timelineSlider={timelineSlider}
+                        onPartnerSelect={setSelectedPartnerId}
+                      />
+                    ),
+                )}
           </Polygon>
-        ))}
+          );
+        })}
       </MapContainer>
+
+      <Box
+        style={{
+          position: "absolute",
+          top: 16,
+          right: 16,
+          zIndex: 1000,
+          pointerEvents: "none",
+          minWidth: 220,
+          maxWidth: 280,
+          background: "rgba(255, 255, 255, 0.96)",
+          border: "1px solid #E4E7EC",
+          borderRadius: 12,
+          boxShadow: "0 8px 24px rgba(16, 24, 40, 0.12)",
+          padding: "12px 14px",
+          backdropFilter: "blur(8px)",
+        }}
+      >
+        <Text fz="11px" fw={700} c="#475467" tt="uppercase">
+          {selectedYear
+            ? `Running total through ${selectedYear}`
+            : "Running total"}
+        </Text>
+        <Group justify="space-between" align="flex-end" mt={4} gap="sm" wrap="nowrap">
+          <Text fz="30px" fw={800} c="#101828" lh={1.1}>
+            {totalDiapersForYear != null
+              ? animatedRunningTotal.toLocaleString()
+              : "--"}
+          </Text>
+          <Text fz="15px" fw={700} c="#16A34A" lh={1.2} ta="right">
+            {yearlyDistributed != null
+              ? `+${animatedYearlyTotal.toLocaleString()}`
+              : "--"}
+            {selectedYear ? ` in ${selectedYear}` : ""}
+          </Text>
+        </Group>
+      </Box>
 
       <PartnerIconDrawer
         partnerId={selectedPartnerId}
         onClose={() => setSelectedPartnerId(null)}
       />
+
+      <style jsx global>{`
+        @keyframes cityBoundaryFadeIn {
+          from {
+            opacity: 0;
+          }
+          to {
+            opacity: 1;
+          }
+        }
+
+        .city-boundary-enter {
+          animation: cityBoundaryFadeIn 700ms ease-out;
+        }
+
+        .city-boundary {
+          transition:
+            fill 700ms ease-out,
+            fill-opacity 700ms ease-out,
+            stroke 700ms ease-out,
+            stroke-opacity 700ms ease-out;
+        }
+
+      `}</style>
     </div>
   );
 }
@@ -205,9 +357,11 @@ export default function Map({ mapData }: { mapData: MapData }) {
 
 function PopupContent({
   city,
+  timelineSlider,
   onPartnerSelect,
 }: {
   city: CityMapInfo;
+  timelineSlider: MapTimelineSlider;
   onPartnerSelect: (id: number) => void;
 }) {
   // ROBUST FILTER: Detects waitlisted by string or boolean
@@ -231,28 +385,38 @@ function PopupContent({
   const totalDiapers =
     city.distributions.reduce((sum, d) => sum + Number(d.numberDiapers), 0) ??
     0;
-  const totalChildren =
-    city.distributions.reduce((sum, d) => sum + Number(d.numberChildren), 0) ??
-    0;
-
   return (
-    <Popup minWidth={280}>
-      <Stack gap="xs">
-        <Title order={3} fz="18px" c="#101828">
-          {city.name}
-        </Title>
+    <Popup minWidth={280} maxWidth={320}>
+      <Stack gap={6}>
+        <Group justify="space-between" align="flex-start" wrap="nowrap">
+          <Title order={3} fz="19px" c="#101828" lh={1.1}>
+            {city.name}
+          </Title>
+          <Badge color="blue" variant="light" radius="sm" fw={700}>
+            Year: {timelineSlider.value}
+          </Badge>
+        </Group>
 
-        <Stack gap={0}>
-          <Text fz="14px" c="#344054">
-            Diapers Distributed: <b>{totalDiapers.toLocaleString()}</b>
+        <Box
+          style={{
+            background: "#F8FAFC",
+            border: "1px solid #E4E7EC",
+            borderRadius: 8,
+            padding: "7px 10px",
+          }}
+        >
+          <Text fz="12px" c="#475467" tt="uppercase" fw={600}>
+            Total Diapers Distributed in {timelineSlider.value}
           </Text>
-          <Text fz="14px" c="#344054">
-            Children helped: <b>{totalChildren.toLocaleString()}</b>
+          <Text fz="34px" fw={800} c="#0F6B99" lh={1} mt={2}>
+            {totalDiapers.toLocaleString()}
           </Text>
-        </Stack>
+        </Box>
 
-        {/* --- Active Partners --- */}
-        <Divider my="xs" label="Active Partners" labelPosition="left" />
+        <Divider my={2} />
+        <Text fz="12px" fw={600} c="#344054">
+          Active Partners ({activePartners.length})
+        </Text>
         <Group gap="xs" wrap="wrap">
           {activePartners.length > 0 ? (
             activePartners.map((p) => (
@@ -273,33 +437,29 @@ function PopupContent({
         </Group>
 
         {/* --- Waitlisted Partners --- */}
-        <Divider
-          my="xs"
-          label={`Waitlisted (${waitlistedPartners.length})`}
-          labelPosition="left"
-        />
-        <Group gap="xs" wrap="wrap">
-          {waitlistedPartners.length > 0 ? (
-            waitlistedPartners.map((p) => (
-              <MantineTooltip key={p.id} label={p.name} withArrow>
-                <Avatar
-                  src={p.logo_url || p.logoUrl}
-                  size="sm"
-                  radius="xl"
-                  color="gray"
-                  variant="outline"
-                  style={{ opacity: 0.8, cursor: "pointer" }}
-                >
-                  {p.name.substring(0, 2).toUpperCase()}
-                </Avatar>
-              </MantineTooltip>
-            ))
-          ) : (
-            <Text fz="xs" c="dimmed" fs="italic">
-              No waitlisted partners found
+        {waitlistedPartners.length > 0 && (
+          <>
+            <Text fz="12px" fw={600} c="#667085">
+              Waitlisted ({waitlistedPartners.length})
             </Text>
-          )}
-        </Group>
+            <Group gap="xs" wrap="wrap">
+              {waitlistedPartners.map((p) => (
+                <MantineTooltip key={p.id} label={p.name} withArrow>
+                  <Avatar
+                    src={p.logo_url || p.logoUrl}
+                    size="md"
+                    radius="xl"
+                    color="gray"
+                    variant="outline"
+                    style={{ opacity: 0.8, cursor: "pointer" }}
+                  >
+                    {p.name.substring(0, 2).toUpperCase()}
+                  </Avatar>
+                </MantineTooltip>
+              ))}
+            </Group>
+          </>
+        )}
       </Stack>
     </Popup>
   );

@@ -1,7 +1,16 @@
 "use client";
 
 import { useState } from "react";
-import { Table, Modal, Pill, Mark, Text, Button, Loader, Center } from "@mantine/core";
+import {
+  Table,
+  Modal,
+  Pill,
+  Mark,
+  Text,
+  Button,
+  Loader,
+  Center,
+} from "@mantine/core";
 import EditPartnerForm from "./EditPartnerForm";
 import { useDisclosure } from "@mantine/hooks";
 import { status } from "@/generated/prisma/enums";
@@ -122,123 +131,124 @@ export default function PartnerTable({
                 </Table.Tr>
               ) : (
                 partners.map((partner) => (
-                <Table.Tr key={partner.id}>
-                  <Table.Td>
-                    <div className="flex items-center gap-3">
-                      {partner.logo_url && (
-                        <img
-                          src={partner.logo_url}
-                          alt={partner.name}
-                          className="h-10 w-10 object-contain"
-                          onError={(e) => {
-                            e.currentTarget.style.display = "none";
-                          }}
-                        />
+                  <Table.Tr key={partner.id}>
+                    <Table.Td>
+                      <div className="flex items-center gap-3">
+                        {partner.logo_url && (
+                          <img
+                            src={partner.logo_url}
+                            alt={partner.name}
+                            className="h-10 w-10 object-contain"
+                            onError={(e) => {
+                              e.currentTarget.style.display = "none";
+                            }}
+                          />
+                        )}
+                        <Text c="#101828" fw={600} fz={"16px"}>
+                          {partner.name}
+                        </Text>
+                      </div>
+                    </Table.Td>
+                    <Table.Td className="text-sm text-gray-600">
+                      {partner.description || (
+                        <span className="text-gray-400 italic">
+                          No description
+                        </span>
                       )}
-                      <Text c="#101828" fw={600} fz={"16px"}>
-                        {partner.name}
-                      </Text>
-                    </div>
-                  </Table.Td>
-                  <Table.Td className="text-sm text-gray-600">
-                    {partner.description || (
-                      <span className="text-gray-400 italic">
-                        No description
-                      </span>
-                    )}
-                  </Table.Td>
-                  <Table.Td className="text-sm text-gray-600">
-                    {partner.start_partner ? (
-                      formatDate(partner.start_partner)
-                    ) : (
-                      <span className="text-gray-400 italic">N/A</span>
-                    )}
-                  </Table.Td>
-                  <Table.Td>
-                    <span key={partner.id} className="text-sm text-gray-600">
-                      <span>
-                        {/* percentages for waitlisted orgs are optional and 
+                    </Table.Td>
+                    <Table.Td className="text-sm text-gray-600">
+                      {partner.start_partner ? (
+                        formatDate(partner.start_partner)
+                      ) : (
+                        <span className="text-gray-400 italic">N/A</span>
+                      )}
+                    </Table.Td>
+                    <Table.Td>
+                      <span key={partner.id} className="text-sm text-gray-600">
+                        <span>
+                          {/* percentages for waitlisted orgs are optional and 
                           won't be displayed for now */}
-                        {percentages
-                          .filter(
-                            (percentage) =>
-                              Number(percentage.partnerId) === partner.id,
-                          )
-                          .map((p) =>
-                            partner.status !== "waitlisted"
-                              ? `${p.city.name} (${formatPercentDisplay(p.percentage)})`
-                              : p.city.name,
-                          )
-                          .join(", ")}
+                          {percentages
+                            .filter(
+                              (percentage) =>
+                                Number(percentage.partnerId) === partner.id,
+                            )
+                            .map((p) =>
+                              partner.status !== "waitlisted"
+                                ? `${p.city.name} (${formatPercentDisplay(p.percentage)})`
+                                : p.city.name,
+                            )
+                            .join(", ")}
+                        </span>
                       </span>
-                    </span>
-                  </Table.Td>
-                  <Table.Td align="center">
-                    <Pill
-                      // Fix me: colors
-                      ta="center"
-                      px="sm"
-                      radius="sm"
-                      fw="bold"
-                      c="white"
-                      fz="10px"
-                      bg={
-                        partner.status === "active"
-                          ? "#558D22"
-                          : partner.status === "inactive"
-                            ? "#E2383F"
-                            : "#98A2B3"
-                      }
-                    >
-                      {partner.status.charAt(0).toUpperCase() +
-                        partner.status.slice(1)}
-                    </Pill>
-                  </Table.Td>
-                  <Table.Td className="text-sm text-gray-600">
-                    {partner.coords ? (
-                      joinCoords(partner.coords)
-                    ) : (
-                      <span className="text-gray-400 italic">N/A</span>
-                    )}
-                  </Table.Td>
-                  <Table.Td className="text-sm text-gray-600">
-                    {partner.address || (
-                      <span className="text-gray-400 italic">N/A</span>
-                    )}
-                  </Table.Td>
+                    </Table.Td>
+                    <Table.Td align="center">
+                      <Pill
+                        // Fix me: colors
+                        ta="center"
+                        px="sm"
+                        radius="sm"
+                        fw="bold"
+                        c="white"
+                        fz="10px"
+                        bg={
+                          partner.status === "active"
+                            ? "#558D22"
+                            : partner.status === "inactive"
+                              ? "#E2383F"
+                              : "#98A2B3"
+                        }
+                      >
+                        {partner.status.charAt(0).toUpperCase() +
+                          partner.status.slice(1)}
+                      </Pill>
+                    </Table.Td>
+                    <Table.Td className="text-sm text-gray-600">
+                      {partner.coords ? (
+                        joinCoords(partner.coords)
+                      ) : (
+                        <span className="text-gray-400 italic">N/A</span>
+                      )}
+                    </Table.Td>
+                    <Table.Td className="text-sm text-gray-600">
+                      {partner.address || (
+                        <span className="text-gray-400 italic">N/A</span>
+                      )}
+                    </Table.Td>
 
-                  <Table.Td style={{ verticalAlign: "middle" }}>
-                    <Button
-                      variant="transparent"
-                      // size="14px"
-                      fz="14px"
-                      c="#14215A"
-                      onClick={() => {
-                        setPartner(partner);
-                        open();
-                      }}
-                      w="100px"
-                      rightSection={
-                        <Image
-                          src="/admin_view/pen.svg"
-                          alt="Edit"
-                          width={20}
-                          height={20}
-                        />
-                      }
-                    >
-                      Edit
-                    </Button>
-                    {/* <ActionIcon
+                    <Table.Td style={{ verticalAlign: "middle" }}>
+                      <Button
+                        variant="transparent"
+                        // size="14px"
+                        fz="14px"
+                        c="#14215A"
+                        onClick={() => {
+                          setPartner(partner);
+                          open();
+                        }}
+                        w="100px"
+                        rightSection={
+                          <Image
+                            src="/admin_view/pen.svg"
+                            alt="Edit"
+                            width={20}
+                            height={20}
+                          />
+                        }
+                      >
+                        Edit
+                      </Button>
+                      {/* <ActionIcon
                       variant="light"
                       onClick={() => {
                         setPartner(partner);
                         open();
                       }}
                       size="lg"></ActionIcon> */}
-                  </Table.Td>
-                </Table.Tr>
-              )))}
+                    </Table.Td>
+                  </Table.Tr>
+                ))
+              )}
             </Table.Tbody>
           </Table>
         </div>

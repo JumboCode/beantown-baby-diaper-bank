@@ -1,16 +1,14 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { Box, Stack, Title, Text, Paper, Skeleton } from "@mantine/core";
+import { Box, Stack, Title, Text, Paper, Skeleton, Group } from "@mantine/core";
 import TimelineSliderControls from "@/components/map/TimelineSliderControls";
 import { useTimelinePeriod } from "@/components/map/useTimelinePeriod";
 import TotalDiapersDistributed from "@/components/map/TotalDiapersDistributed";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import ImpactModal from "@/components/map/ImpactModal";
-import { FeatureCollection, Polygon } from "geojson";
+import { FeatureCollection, MultiPolygon, Polygon } from "geojson";
 import { City, Distribution } from "@/generated/prisma/client";
-import { SimpleGrid } from "@mantine/core";
-import YearlyMonthlySwitch from "@/components/sprint2/YearlyMonthlySwitch";
 
 // hex values: 1(#B2E5FF) 2(#7EC3E5) 3(#51A3CC) 4(#2C85B2) 5(#0F6B99)
 
@@ -30,21 +28,42 @@ type CityMapInfo = City & {
 };
 
 export type MapData = {
-  boundaries: FeatureCollection<Polygon>;
+  boundaries: FeatureCollection<Polygon | MultiPolygon>;
   cities: { data: CityMapInfo[] };
 };
 
 const flipBoundaries = (
-  data: FeatureCollection<Polygon>,
-): FeatureCollection<Polygon> => {
+  data: FeatureCollection<Polygon | MultiPolygon>,
+): FeatureCollection<Polygon | MultiPolygon> => {
+  const swapLngLat = (coords: unknown): unknown => {
+    if (!Array.isArray(coords)) {
+      return coords;
+    }
+
+    if (
+      coords.length >= 2 &&
+      typeof coords[0] === "number" &&
+      typeof coords[1] === "number"
+    ) {
+      const [lng, lat, ...rest] = coords;
+      return [lat, lng, ...rest];
+    }
+
+    return coords.map(swapLngLat);
+  };
+
   const flippedFeatures = data.features.map((feature) => ({
     ...feature,
-    geometry: {
-      ...feature.geometry,
-      coordinates: feature.geometry.coordinates.map(
-        (ring) => ring.map((coord) => [coord[1], coord[0]]), // Swap index 0 and 1
-      ),
-    },
+    geometry:
+      feature.geometry.type === "Polygon"
+        ? {
+            ...feature.geometry,
+            coordinates: swapLngLat(feature.geometry.coordinates) as Polygon["coordinates"],
+          }
+        : {
+            ...feature.geometry,
+            coordinates: swapLngLat(feature.geometry.coordinates) as MultiPolygon["coordinates"],
+          },
   }));
 
   return {
@@ -57,8 +76,11 @@ export default function Page() {
   const timeline = useTimelinePeriod();
   const [mapData, setMapData] = useState<MapData | null>(null);
   const [totalDiapers, setTotalDiapers] = useState<number>();
+  const [cumulativeTotalDiapers, setCumulativeTotalDiapers] = useState<number>();
+  const [yearlyTotalDiapers, setYearlyTotalDiapers] = useState<number>();
+  const [selectedYear, setSelectedYear] = useState<string>();
   const [cachedBoundaries, setCachedBoundaries] =
-    useState<FeatureCollection<Polygon> | null>(null);
+    useState<FeatureCollection<Polygon | MultiPolygon> | null>(null);
 
   const handleTimelineChange = useCallback(
     async (params: { month?: string; year: string }) => {
@@ -74,14 +96,17 @@ export default function Page() {
         const boundariesPromise = cachedBoundaries
           ? Promise.resolve(cachedBoundaries)
           : fetch(`/api/cities/boundaries`)
-              .then((res) => res.json())
-              .then(flipBoundaries);
+            .then((res) => res.json())
+            .then(flipBoundaries);
 
-        const [cities, boundaries] = await Promise.all([
+        const [cities, boundaries, totalDiapersResponse] = await Promise.all([
           fetch(`/api/cities?${queryParams.toString()}`).then((res) =>
             res.json(),
           ),
           boundariesPromise,
+          fetch(`/api/total-diapers?year=${encodeURIComponent(params.year)}`).then(
+            (res) => res.json(),
+          ),
         ]);
 
         if (!cachedBoundaries) {
@@ -89,30 +114,31 @@ export default function Page() {
         }
 
         setMapData({ cities, boundaries });
+        setSelectedYear(params.year);
+        setCumulativeTotalDiapers(totalDiapersResponse.totalDiapers ?? 0);
+        setYearlyTotalDiapers(totalDiapersResponse.yearlyTotalDiapers ?? 0);
       } catch (error) {
         console.error("Error fetching map data:", error);
+        setCumulativeTotalDiapers(0);
+        setYearlyTotalDiapers(0);
       }
     },
     [cachedBoundaries],
   );
 
   useEffect(() => {
-    // fetch data for total diapers distributed
-    const fetchTotalDiapers = async () => {
+    const fetchAllTimeTotalDiapers = async () => {
       try {
-        const url = `/api/total-diapers`;
-
-        const response = await fetch(url);
+        const response = await fetch("/api/total-diapers");
         const data = await response.json();
-        const total = data.totalDiapers;
-
-        setTotalDiapers(total);
+        setTotalDiapers(data.totalDiapers ?? 0);
       } catch (error) {
         console.error("Error fetching total diapers:", error);
         setTotalDiapers(0);
       }
     };
-    fetchTotalDiapers();
+
+    fetchAllTimeTotalDiapers();
   }, []);
 
   return (
@@ -144,61 +170,36 @@ export default function Page() {
         <TotalDiapersDistributed totalDiapers={totalDiapers} />
 
         {/* Map Section with Timeline and Impact Modal - Two Column Layout */}
-        <Title
-          fz={24}
-          c="#101728"
-          // mb="md"
-          mt="md"
-          fw={600}
-        >
-          Distribution Heat Map
-        </Title>
-        <SimpleGrid
-          cols={{ base: 1, sm: 3 }}
-          spacing={{ base: 0, sm: "3%" }}
-          verticalSpacing={{ base: "3%", sm: 0 }}
-        >
-          {/* Left Column: Map */}
-          <div style={{ gridColumn: "span 2" }}>
-            <Paper shadow="sm" p="md" radius="md" withBorder>
-              <Box mb="md">
-                <YearlyMonthlySwitch
-                  value={timeline.view}
-                  onChange={timeline.toggleView}
-                />
-              </Box>
-              <Box h="60vh" pos="relative" mb="md">
-                {mapData ? (
-                  <LeafletMap mapData={mapData} />
-                ) : (
-                  <Skeleton h="60vh" mb="md" />
-                )}
-              </Box>
-
-              {/* Timeline Slider below map */}
-
-              <TimelineSliderControls
-                view={timeline.view}
-                index={timeline.index}
-                setIndex={timeline.setIndex}
-                move={timeline.move}
-                labels={timeline.labels}
-                onTimelineChange={handleTimelineChange}
+        <Group justify="space-between" align="center" mt="md">
+          <Title fz={24} c="#101728" fw={600}>
+            Distribution Heat Map
+          </Title>
+          <ImpactModal />
+        </Group>
+        <Paper shadow="sm" p="md" radius="md" withBorder>
+          <Box h="60vh" pos="relative" mb="md">
+            {mapData ? (
+              <LeafletMap
+                mapData={mapData}
+                timelineSlider={timeline}
+                totalDiapersForYear={cumulativeTotalDiapers}
+                yearlyDistributed={yearlyTotalDiapers}
+                selectedYear={selectedYear}
               />
-            </Paper>
-          </div>
+            ) : (
+              <Skeleton h="60vh" mb="md" />
+            )}
+          </Box>
 
-          {/* Right Column: Impact Modal */}
-          <div
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              justifyContent: "flex-center",
-            }}
-          >
-            <ImpactModal />
-          </div>
-        </SimpleGrid>
+          <TimelineSliderControls
+            view={timeline.view}
+            index={timeline.index}
+            setIndex={timeline.setIndex}
+            move={timeline.move}
+            labels={timeline.labels}
+            onTimelineChange={handleTimelineChange}
+          />
+        </Paper>
       </Stack>
     </Box>
   );

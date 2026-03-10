@@ -34,11 +34,56 @@ const countries = ["United States", "Canada"];
 const DEFAULT_COUNTRY = "United States";
 
 const US_STATES = [
-  "AL", "AK", "AZ", "AR", "CA", "CO", "CT", "DE", "FL", "GA",
-  "HI", "ID", "IL", "IN", "IA", "KS", "KY", "LA", "ME", "MD",
-  "MA", "MI", "MN", "MS", "MO", "MT", "NE", "NV", "NH", "NJ",
-  "NM", "NY", "NC", "ND", "OH", "OK", "OR", "PA", "RI", "SC",
-  "SD", "TN", "TX", "UT", "VT", "VA", "WA", "WV", "WI", "WY",
+  "AL",
+  "AK",
+  "AZ",
+  "AR",
+  "CA",
+  "CO",
+  "CT",
+  "DE",
+  "FL",
+  "GA",
+  "HI",
+  "ID",
+  "IL",
+  "IN",
+  "IA",
+  "KS",
+  "KY",
+  "LA",
+  "ME",
+  "MD",
+  "MA",
+  "MI",
+  "MN",
+  "MS",
+  "MO",
+  "MT",
+  "NE",
+  "NV",
+  "NH",
+  "NJ",
+  "NM",
+  "NY",
+  "NC",
+  "ND",
+  "OH",
+  "OK",
+  "OR",
+  "PA",
+  "RI",
+  "SC",
+  "SD",
+  "TN",
+  "TX",
+  "UT",
+  "VT",
+  "VA",
+  "WA",
+  "WV",
+  "WI",
+  "WY",
 ];
 
 type AddressFields = {
@@ -59,7 +104,10 @@ const parseAddressFields = (address: string | null): AddressFields => {
   };
   if (!address) return defaults;
 
-  const parts = address.split(",").map((p) => p.trim()).filter(Boolean);
+  const parts = address
+    .split(",")
+    .map((p) => p.trim())
+    .filter(Boolean);
   return {
     addressLine: parts[0] || "",
     city: parts[1] || "",
@@ -80,43 +128,117 @@ const buildAddressString = ({
     .filter((part) => Boolean(part))
     .join(", ");
 
-const fetchCoordsFromAddress = async (address: string) => {
+const requiredNumber = (label: string) => (value: unknown) => {
+  const v = (value === 0 ? "0" : (value ?? "")).toString().trim();
+  if (v === "") return `${label} is required`;
+  return /^-?\d+(\.\d+)?$/.test(v) ? null : `${label} must be a number`;
+};
+
+const requiredInteger = (label: string) => (value: unknown) => {
+  const v = (value === 0 ? "0" : (value ?? "")).toString().trim();
+  if (v === "") return `${label} is required`;
+  return /^\d+$/.test(v) ? null : `${label} must be a number`;
+};
+
+const requiredInput = (label: string) => (value: unknown) => {
+  const v = (value === 0 ? "0" : (value ?? "")).toString().trim();
+  if (v === "") return `${label} is required`;
+  return /.+/.test(v) ? null : `${label} must be filled out`;
+};
+
+type UpdatePercentagesOptions = "one-time" | "continuous";
+
+async function fetchCoordsFromAddress(address: string) {
   const apiKey = "580b89e66bc6968ea58bac6909e6598c898970a";
   try {
     const response = await fetch(
-      `https://api.geocod.io/v1.9/geocode?q=${encodeURIComponent(address)}&api_key=${apiKey}`
+      `https://api.geocod.io/v1.9/geocode?q=${encodeURIComponent(address)}&api_key=${apiKey}`,
     );
     const data = await response.json();
-    return data.results?.[0]?.location;
+    return data.results?.[0]?.location as
+      | { lat: number; lng: number }
+      | null
+      | undefined;
   } catch (error) {
     console.error("Geocoding failed:", error);
     return null;
   }
-};
+}
 
-const parseMonthDateForPicker = (rawDate: string | null | undefined): Date | null => {
+const parseMonthDateForPicker = (
+  rawDate: string | null | undefined,
+): Date | null => {
   if (!rawDate) return null;
-  const parsed = new Date(rawDate);
-  return Number.isNaN(parsed.getTime()) ? null : parsed;
+  const monthMatch = rawDate.match(/^(\d{4})-(\d{2})/);
+  if (!monthMatch) {
+    const parsed = new Date(rawDate);
+    return Number.isNaN(parsed.getTime()) ? null : parsed;
+  }
+
+  const year = Number(monthMatch[1]);
+  const monthIndex = Number(monthMatch[2]) - 1;
+  return new Date(Date.UTC(year, monthIndex, 1, 12));
 };
 
-const formatMonthDateForApi = (date: Date | null): string | null => {
+const formatMonthDateForApi = (date: Date | string | null): string | null => {
   if (!date) return null;
-  const year = date.getUTCFullYear();
-  const month = String(date.getUTCMonth() + 1).padStart(2, "0");
+
+  if (typeof date === "string") {
+    const monthMatch = date.match(/^(\d{4})-(\d{2})/);
+    if (monthMatch) {
+      return `${monthMatch[1]}-${monthMatch[2]}-01`;
+    }
+  }
+
+  const parsed = date instanceof Date ? date : new Date(date);
+  if (Number.isNaN(parsed.getTime())) return null;
+
+  const year = parsed.getUTCFullYear();
+  const month = String(parsed.getUTCMonth() + 1).padStart(2, "0");
   return `${year}-${month}-01`;
 };
 
-export default function EditPartnerForm({ partner, onClose }: EditPartnerFormProps) {
+export default function EditPartnerForm({
+  partner,
+  onClose,
+}: EditPartnerFormProps) {
   const [loading, setLoading] = useState(false);
   const [initialLogoUrl] = useState<string>(partner.logo_url || "");
-  const [activePercentTab, setActivePercentTab] = useState<"one-time" | "continuous">("one-time");
-  const [cityPercentages, setCityPercentages] = useState<any[]>([]);
+  const [activePercentTab, setActivePercentTab] =
+    useState<UpdatePercentagesOptions>("one-time");
+  const [cityPercentages, setCityPercentages] = useState<
+    {
+      city: { id: number; name: string };
+      percentage: number;
+    }[]
+  >([]);
+
+  useEffect(() => {
+    fetch(`/api/partners/percentages?partnerId=${partner.id}`)
+      .then((res) => res.json())
+      .then((data) => {
+        setCityPercentages(data.data);
+      })
+      .catch((error) => {
+        console.error("Error fetching partner percentages:", error);
+      });
+  }, [partner.id]);
+
+  const initialCityPercentEntries: CityPercentage[] =
+    cityPercentages.length > 0
+      ? cityPercentages.map((entry, idx) => ({
+          id: `${entry.city.name}-${idx}`,
+          city: entry.city.name,
+          percent: Math.round((entry.percentage ?? 0) * 100),
+        }))
+      : [];
 
   const addressFields = parseAddressFields(partner.address);
 
   const form = useForm({
     mode: "controlled",
+    validateInputOnChange: true,
+    validateInputOnBlur: true,
     initialValues: {
       organization: partner.name,
       description: partner.description || "",
@@ -132,50 +254,108 @@ export default function EditPartnerForm({ partner, onClose }: EditPartnerFormPro
       country: addressFields.country,
       logoFile: null as File | null,
       logoUrl: partner.logo_url || "",
+      updatePercentagesType: "one-time" as UpdatePercentagesOptions,
+    },
+    validate: {
+      organization: requiredInput("Name of Organization"),
+      time: (value, values) =>
+        values.status === "waitlisted" || value ? null : "Select a start time",
+      endTime: (value, values) =>
+        values.status === "inactive" && !value ? "Select an end time" : null,
+      latitude: requiredNumber("Latitude"),
+      longitude: requiredNumber("Longitude"),
+      state: (value) => (value ? null : "Select a state"),
+      city: requiredInput("City"),
+      addressLine: requiredInput("Address Line"),
+      zipCode: requiredInteger("Zip Code"),
+      country: (value) => (value ? null : "Select a country"),
+      status: (value) => (value ? null : "Select a status"),
+      description: requiredInput("Description"),
+      logoUrl: (value, values) => {
+        if (!value.trim() && !values.logoFile) return null;
+        return typeof value === "string" ? null : "Enter a valid URL";
+      },
     },
   });
 
-  // Auto-populate Coordinates Logic
   useEffect(() => {
-    const { addressLine, city, state, zipCode } = form.values;
-    if (addressLine && city && state && zipCode) {
-      const fullAddress = `${addressLine}, ${city}, ${state} ${zipCode}`;
-      fetchCoordsFromAddress(fullAddress).then((location) => {
-        if (location) {
-          form.setFieldValue("latitude", String(location.lat));
-          form.setFieldValue("longitude", String(location.lng));
-        }
-      });
-    }
-  }, [form.values.addressLine, form.values.city, form.values.state, form.values.zipCode]);
+    const { addressLine, city, state, zipCode, country } = form.values;
+    if (!addressLine || !city || !state || !zipCode) return;
+
+    const fullAddress = buildAddressString({
+      addressLine,
+      city,
+      state,
+      zipCode,
+      country,
+    });
+
+    fetchCoordsFromAddress(fullAddress).then((location) => {
+      if (!location) return;
+      form.setFieldValue("latitude", String(location.lat));
+      form.setFieldValue("longitude", String(location.lng));
+    });
+  }, [
+    form.values.addressLine,
+    form.values.city,
+    form.values.state,
+    form.values.zipCode,
+    form.values.country,
+  ]);
 
   async function submitEditPartner(values: typeof form.values) {
     setLoading(true);
+
     const formData = {
       id: partner.id,
       name: values.organization,
       description: values.description,
-      start_partner: values.status !== "waitlisted" ? formatMonthDateForApi(values.time) : null,
-      end_partner: values.status === "inactive" ? formatMonthDateForApi(values.endTime) : null,
+      start_partner:
+        values.status !== "waitlisted"
+          ? formatMonthDateForApi(values.time)
+          : null,
+      end_partner:
+        values.status === "inactive"
+          ? formatMonthDateForApi(values.endTime)
+          : null,
       status: values.status,
-      coordinates: { lat: Number(values.latitude), lng: Number(values.longitude) },
+      coordinates: {
+        lat: Number(values.latitude),
+        lng: Number(values.longitude),
+      },
       address: buildAddressString(values),
       logo: values.logoUrl,
     };
 
-    const logoAction = values.logoFile ? "replace" : (initialLogoUrl && !values.logoUrl ? "remove" : "keep");
+    const logoAction = values.logoFile
+      ? "replace"
+      : initialLogoUrl && values.logoUrl.trim() === ""
+        ? "remove"
+        : "keep";
 
     try {
-      const body = new FormData();
-      body.append("partner", JSON.stringify(formData));
-      body.append("logoAction", logoAction);
-      if (values.logoFile) body.append("file", values.logoFile);
-
-      const res = await fetch("/api/partners", { method: "POST", body });
-      if (res.ok) {
-        window.dispatchEvent(new Event("partners:refresh"));
-        onClose();
+      const requestBody = new FormData();
+      requestBody.append("partner", JSON.stringify(formData));
+      requestBody.append("logoAction", logoAction);
+      if (values.logoFile) {
+        requestBody.append("file", values.logoFile);
       }
+
+      const response = await fetch("/api/partners", {
+        method: "POST",
+        body: requestBody,
+      });
+
+      if (!response.ok) {
+        const err = await response.json();
+        form.setFieldError("logoFile", err.error);
+        return;
+      }
+
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new Event("partners:refresh"));
+      }
+      onClose();
     } finally {
       setLoading(false);
     }
@@ -183,56 +363,337 @@ export default function EditPartnerForm({ partner, onClose }: EditPartnerFormPro
 
   return (
     <Box pos="relative">
-      <LoadingOverlay visible={loading} />
-      <form onSubmit={form.onSubmit(submitEditPartner)} className="flex flex-col gap-5 mx-8">
-        <Group justify="space-between">
-          <Text fw={600}>Status *</Text>
-          <Radio.Group {...form.getInputProps("status")} w={526}>
-            <Group grow>
-              <Radio value="active" label="Active" />
-              <Radio value="inactive" label="Inactive" />
-              <Radio value="waitlisted" label="Waitlisted" />
-            </Group>
-          </Radio.Group>
-        </Group>
+      <LoadingOverlay
+        visible={loading}
+        zIndex={1000}
+        overlayProps={{ radius: "sm", blur: 2 }}
+      />
 
-        <Group justify="space-between">
-          <Text fw={600}>Organization Name *</Text>
-          <TextInput {...form.getInputProps("organization")} w={526} radius="md" />
-        </Group>
-
-        <Group justify="space-between">
-          <Text fw={600}>Description *</Text>
-          <Textarea {...form.getInputProps("description")} w={526} radius="md" autosize />
-        </Group>
-
-        {/* REORDERED: Address Fields above Coords */}
-        <Group justify="space-between" align="flex-start">
-          <Text fw={600}>Address *</Text>
-          <Stack w={526}>
-            <TextInput placeholder="Address Line" {...form.getInputProps("addressLine")} radius="md" />
-            <SimpleGrid cols={2}>
-              <TextInput placeholder="City" {...form.getInputProps("city")} radius="md" />
-              <Select placeholder="State" data={US_STATES} {...form.getInputProps("state")} radius="md" />
-              <TextInput placeholder="Zip Code" {...form.getInputProps("zipCode")} radius="md" />
-              <Select placeholder="Country" data={countries} {...form.getInputProps("country")} radius="md" />
-            </SimpleGrid>
-          </Stack>
-        </Group>
-
-        <Group justify="space-between">
-          <Text fw={600}>Coordinates *</Text>
-          <Group w={526} grow>
-            <NumberInput placeholder="Latitude" {...form.getInputProps("latitude")} hideControls radius="md" />
-            <NumberInput placeholder="Longitude" {...form.getInputProps("longitude")} hideControls radius="md" />
+      <div className="mx-8">
+        <h2 className="text-lg text-gray-500" style={{ marginBottom: "24px" }}>
+          Change your partner data
+        </h2>
+        <form
+          onSubmit={form.onSubmit(submitEditPartner)}
+          className="flex flex-col gap-5"
+        >
+          <Group justify="space-between" align="flex-start">
+            <Text fw={600} c="#344054">
+              Name of Organization <span className="text-red-600">*</span>
+            </Text>
+            <TextInput
+              placeholder="Name"
+              {...form.getInputProps("organization")}
+              size="md"
+              className="min-w-170"
+              radius="md"
+            />
           </Group>
-        </Group>
 
-        <Group justify="flex-end" mt="md">
-          <Button variant="outline" onClick={onClose}>Cancel</Button>
-          <Button type="submit" color="#053766">Submit</Button>
-        </Group>
-      </form>
+          <Group justify="space-between" align="flex-start">
+            <Text fw={600} c="#344054">
+              Description <span className="text-red-600">*</span>
+            </Text>
+            <Textarea
+              {...form.getInputProps("description")}
+              size="md"
+              className="min-w-170"
+              radius="md"
+              autosize
+              maxRows={6}
+            />
+          </Group>
+
+          <Group justify="space-between" align="flex-start" w="100%">
+            <Text fw={600} c="#344054" className="w-40">
+              Status <span className="text-red-600">*</span>
+            </Text>
+
+            <Radio.Group
+              value={form.values.status}
+              onChange={(val) => form.setFieldValue("status", val as status)}
+              className="min-w-170 w-full max-w-[600px]"
+            >
+              <Group gap="md" grow>
+                {[
+                  {
+                    value: "active",
+                    title: "Active",
+                    description: "Currently active",
+                  },
+                  {
+                    value: "inactive",
+                    title: "Inactive",
+                    description: "No longer active",
+                  },
+                  {
+                    value: "waitlisted",
+                    title: "Waitlisted",
+                    description: "On the waitlist",
+                  },
+                ].map((option) => (
+                  <Radio.Card
+                    key={option.value}
+                    value={option.value}
+                    radius="md"
+                    p="md"
+                    className="border border-gray-200 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md data-[checked=true]:border-[#053766] data-[checked=true]:bg-blue-50 h-full"
+                  >
+                    <Group wrap="nowrap" align="flex-start" gap="sm">
+                      <Radio.Indicator />
+                      <Stack gap={4}>
+                        <Text fw={700}>{option.title}</Text>
+                        <Text size="xs" c="dimmed">
+                          {option.description}
+                        </Text>
+                      </Stack>
+                    </Group>
+                  </Radio.Card>
+                ))}
+              </Group>
+              {form.errors.status && (
+                <Text c="red" size="sm" mt="xs">
+                  {form.errors.status}
+                </Text>
+              )}
+            </Radio.Group>
+          </Group>
+
+          {form.values.status !== "waitlisted" && (
+            <Group justify="space-between" align="flex-start">
+              <Text fw={600} c="#344054">
+                Time it started <span className="text-red-600">*</span>
+              </Text>
+              <MonthPickerInput
+                placeholder="Pick date"
+                {...form.getInputProps("time")}
+                required
+                className="min-w-170 w-full max-w-[600px]"
+              />
+            </Group>
+          )}
+
+          {form.values.status === "inactive" && (
+            <Group justify="space-between" align="flex-start">
+              <Text fw={600} c="#344054">
+                Time it ended <span className="text-red-600">*</span>
+              </Text>
+              <MonthPickerInput
+                placeholder="Pick end date"
+                {...form.getInputProps("endTime")}
+                required
+                className="min-w-170 w-full max-w-[600px]"
+              />
+            </Group>
+          )}
+
+          <Group justify="space-between" align="flex-start" w="100%">
+            <Text fw={600} c="#344054">
+              Address <span className="text-red-600">*</span>
+            </Text>
+            <Stack className="min-w-170 w-full max-w-[600px]">
+              <TextInput
+                placeholder="Address Line"
+                {...form.getInputProps("addressLine")}
+                size="md"
+                radius="md"
+              />
+              <SimpleGrid cols={2}>
+                <TextInput
+                  placeholder="City"
+                  {...form.getInputProps("city")}
+                  size="md"
+                  radius="md"
+                />
+                <Select
+                  placeholder="State"
+                  data={US_STATES}
+                  searchable
+                  value={form.values.state || null}
+                  onChange={(val) => form.setFieldValue("state", val || "")}
+                  error={form.errors.state}
+                  size="md"
+                  radius="md"
+                />
+                <TextInput
+                  placeholder="Zip Code"
+                  {...form.getInputProps("zipCode")}
+                  size="md"
+                  radius="md"
+                />
+                <Select
+                  placeholder="Country"
+                  data={countries}
+                  value={form.values.country || null}
+                  onChange={(val) => form.setFieldValue("country", val || "")}
+                  error={form.errors.country}
+                  size="md"
+                  radius="md"
+                />
+              </SimpleGrid>
+            </Stack>
+          </Group>
+
+          <Group justify="space-between" align="flex-start">
+            <Text fw={600} c="#344054">
+              Coords <span className="text-red-600">*</span>
+            </Text>
+            <div className="gap-4 flex">
+              <NumberInput
+                placeholder="Latitude"
+                {...form.getInputProps("latitude")}
+                size="md"
+                className="min-w-83"
+                radius="md"
+                hideControls
+              />
+              <NumberInput
+                placeholder="Longitude"
+                {...form.getInputProps("longitude")}
+                size="md"
+                className="min-w-83"
+                radius="md"
+                hideControls
+              />
+            </div>
+          </Group>
+
+          <Group justify="space-between" align="flex-start">
+            <Text c="#344054" fw={600}>
+              Logo file or link
+            </Text>
+            <div className="gap-4 flex">
+              <FileInput
+                accept="image/png,image/jpeg"
+                placeholder="Upload image file"
+                radius="md"
+                clearable
+                onChange={(file) => {
+                  form.setFieldValue("logoFile", file);
+                  if (!file) {
+                    form.setFieldValue("logoUrl", "");
+                    form.clearFieldError("logoFile");
+                  }
+                }}
+                error={form.errors.logoFile || form.errors.logoUrl}
+                className="min-w-83"
+              />
+              <TextInput
+                placeholder="Logo URL"
+                key={form.key("logoUrl")}
+                {...form.getInputProps("logoUrl")}
+                radius="md"
+                className="min-w-83"
+              />
+            </div>
+          </Group>
+
+          {form.values.status !== "waitlisted" && (
+            <Group justify="space-between" align="flex-start">
+              <Text fw={600} c="#344054">
+                City Distribution Percentages
+              </Text>
+              <Tabs
+                value={activePercentTab}
+                onChange={(val) => {
+                  if (!val) return;
+                  setActivePercentTab(val as UpdatePercentagesOptions);
+                  form.setFieldValue(
+                    "updatePercentagesType",
+                    val as UpdatePercentagesOptions,
+                  );
+                }}
+                className="min-w-170 w-full max-w-[600px]"
+              >
+                <Tabs.List grow mb="xl">
+                  {[
+                    {
+                      value: "one-time",
+                      title: "One-Time Update",
+                      description: "Update a specific month only",
+                      icon: <RiCalendarEventLine size={22} />,
+                    },
+                    {
+                      value: "continuous",
+                      title: "Continuous Update",
+                      description: "Apply to all future distributions",
+                      icon: <RiLineChartLine size={22} />,
+                    },
+                  ].map((option) => (
+                    <Tabs.Tab
+                      key={option.value}
+                      value={option.value}
+                      className="px-0"
+                    >
+                      {(() => {
+                        const isActive = activePercentTab === option.value;
+                        return (
+                          <div
+                            className={`rounded-xl shadow-sm transition hover:-translate-y-0.5 hover:shadow-md h-full border ${
+                              isActive
+                                ? "border-[#1D3A8A] bg-[#EEF2FF]"
+                                : "border-gray-300 bg-white"
+                            }`}
+                            style={{ borderWidth: isActive ? 2 : 1 }}
+                          >
+                            <Stack gap="xs" align="center" p="md">
+                              <div
+                                className={`${
+                                  isActive ? "text-[#1D3A8A]" : "text-gray-500"
+                                } opacity-80`}
+                              >
+                                {option.icon}
+                              </div>
+                              <Text
+                                fw={700}
+                                size="md"
+                                className={isActive ? "text-[#1D3A8A]" : ""}
+                              >
+                                {option.title}
+                              </Text>
+                              <Text
+                                size="sm"
+                                c={isActive ? "gray.6" : "dimmed"}
+                                ta="center"
+                              >
+                                {option.description}
+                              </Text>
+                            </Stack>
+                          </div>
+                        );
+                      })()}
+                    </Tabs.Tab>
+                  ))}
+                </Tabs.List>
+                <Tabs.Panel value="one-time">
+                  <OneTimeUpdateForm
+                    initialCityPercentages={initialCityPercentEntries}
+                  />
+                </Tabs.Panel>
+                <Tabs.Panel value="continuous">
+                  <ContinuousUpdateForm
+                    initialCityPercentages={initialCityPercentEntries}
+                  />
+                </Tabs.Panel>
+              </Tabs>
+            </Group>
+          )}
+
+          <Group justify="flex-end" mt="md">
+            <Button
+              variant="outline"
+              color="#053766"
+              radius="md"
+              onClick={onClose}
+            >
+              Cancel
+            </Button>
+            <Button variant="filled" color="#053766" radius="md" type="submit">
+              Submit
+            </Button>
+          </Group>
+        </form>
+      </div>
     </Box>
   );
 }

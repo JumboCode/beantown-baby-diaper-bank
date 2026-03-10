@@ -45,15 +45,20 @@ export async function GET(
       number_diapers: Number(aggregate._sum.numberDiapers),
     };
 
-    return NextResponse.json({ data: JSON.parse(stringifyWithBigInt(dataToReturn)) });
+    return NextResponse.json({
+      data: JSON.parse(stringifyWithBigInt(dataToReturn)),
+    });
   } catch (error) {
-    return NextResponse.json({ error: "Unable to load partner" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Unable to load partner" },
+      { status: 500 },
+    );
   }
 }
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   const { id } = await params;
   const body = await request.json();
@@ -83,8 +88,13 @@ export async function POST(
       data: updateData,
     });
 
-    return NextResponse.json({ data: JSON.parse(stringifyWithBigInt(updatedPartner)) });
+    return NextResponse.json({
+      data: JSON.parse(stringifyWithBigInt(updatedPartner)),
+    });
   } catch (error) {
-    return NextResponse.json({ error: "Failed to update partner" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Failed to update partner" },
+      { status: 500 },
+    );
   }
 }
