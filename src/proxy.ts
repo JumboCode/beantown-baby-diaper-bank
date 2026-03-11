@@ -6,6 +6,7 @@ const isAdminApiRoute = createRouteMatcher([
   "/api/partners",
   "/api/partners/percentages(.*)",
   "/api/distributions(.*)",
+  "/api/geocode(.*)",
 ]);
 
 export default clerkMiddleware(async (auth, req) => {
