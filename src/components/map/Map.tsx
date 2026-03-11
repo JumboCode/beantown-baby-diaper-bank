@@ -401,7 +401,7 @@ export default function Map({
           zIndex: 1000,
           pointerEvents: "none",
           minWidth: 220,
-          maxWidth: 280,
+          maxWidth: 300,
           background: "rgba(255, 255, 255, 0.96)",
           border: "1px solid #E4E7EC",
           borderRadius: 12,
@@ -411,9 +411,7 @@ export default function Map({
         }}
       >
         <Text fz="11px" fw={700} c="#475467" tt="uppercase">
-          {selectedYear
-            ? `Running total through ${selectedYear}`
-            : "Running total"}
+          Total Diapers Distributed
         </Text>
         <Group justify="space-between" align="flex-end" mt={4} gap="sm" wrap="nowrap">
           <Text fz="30px" fw={800} c="#101828" lh={1.1}>
