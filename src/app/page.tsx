@@ -14,6 +14,11 @@ const LeafletMap = dynamic(() => import("@/components/map/Map"), {
   ssr: false,
 });
 
+const MapSkeleton = dynamic(() => import("@/components/map/MapSkeleton"), {
+  ssr: false,
+  loading: () => <Skeleton h="100%" w="100%" radius="md" />,
+});
+
 type PartnerInfoType = {
   id: number;
   name: string;
@@ -25,6 +30,7 @@ type CityMapInfo = City & {
   distributions: Distribution[];
   partners: PartnerInfoType[];
   historicalStats?: { median: number; p25: number; p75: number } | null;
+  runningTotal?: number;
 };
 
 export type MapData = {
@@ -186,7 +192,7 @@ export default function Page() {
                 selectedYear={selectedYear}
               />
             ) : (
-              <Skeleton h="60vh" mb="md" />
+              <MapSkeleton />
             )}
           </Box>
 

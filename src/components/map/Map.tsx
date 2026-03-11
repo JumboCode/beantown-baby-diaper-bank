@@ -88,6 +88,11 @@ export const Marker = dynamic(
   { ssr: false },
 );
 
+export const ZoomControl = dynamic(
+  () => import("react-leaflet").then((module) => module.ZoomControl),
+  { ssr: false },
+);
+
 type PartnerInfoType = {
   id: number;
   name: string;
@@ -95,12 +100,14 @@ type PartnerInfoType = {
   logoUrl?: string | null; // Camel case used in route.ts API
   status?: string | null; // Can be "active", "waitlisted", etc.
   waitlisted?: boolean | string; // Can be true/false from DB
+  startPartner?: string | null;
 };
 
 type CityMapInfo = City & {
   distributions: Distribution[];
   partners: PartnerInfoType[];
   historicalStats?: { median: number; p25: number; p75: number } | null;
+  runningTotal?: number;
 };
 
 type MapTimelineSlider = {
@@ -243,7 +250,8 @@ export default function Map({
     <div
       style={{ position: "relative", height: "100%", width: "100%", zIndex: 0 }}
     >
-      <MapContainer {...mapOptions} style={mapStyle}>
+      <MapContainer {...mapOptions} zoomControl={false} style={mapStyle}>
+        <ZoomControl position="bottomleft" />
         <TileLayer {...tileLayerProps} />
         {visibleBoundaries.map((boundary, index) => {
           const boundaryId = String(boundary.id || index);
@@ -257,19 +265,23 @@ export default function Map({
                   ? "city-boundary city-boundary-enter"
                   : "city-boundary",
                 weight:
-                  activeId === boundary.id || hoveredId === boundary.id
-                    ? 1.5
-                    : 0.5,
+                  activeId === boundary.id
+                    ? 2
+                    : hoveredId === boundary.id
+                      ? 2.5
+                      : 0.5,
                 color:
-                  activeId === boundary.id || hoveredId === boundary.id
+                  activeId === boundary.id
                     ? "#0F4F78"
-                    : "#5A7687",
+                    : hoveredId === boundary.id
+                      ? "#F97316" // Vibrant orange
+                      : "#5A7687",
                 fillColor: boundary.fillColor,
                 fillOpacity:
                   activeId === boundary.id
-                    ? 0.65
+                    ? 0.75
                     : hoveredId === boundary.id
-                      ? 0.5
+                      ? 0.65
                       : 0.35,
               }}
               positions={boundary.positions}
@@ -286,13 +298,84 @@ export default function Map({
                   ),
               }}
             >
-              {boundary.name && (
-                <Tooltip sticky direction="top" offset={[0, -4]}>
-                  <Text fw={700} fz="sm" c="#0F4F78">
-                    {boundary.name}
-                  </Text>
-                </Tooltip>
-              )}
+              {boundary.name && (() => {
+                const city = cities.find(c => c.name === boundary.name);
+                if (!city) {
+                  return (
+                    <Tooltip sticky direction="top" offset={[0, -4]}>
+                      <Text fw={700} fz="sm" c="#0F4F78">
+                        {boundary.name}
+                      </Text>
+                    </Tooltip>
+                  );
+                }
+
+                const totalDiapers = city.distributions.reduce((sum, d) => sum + Number(d.numberDiapers), 0) ?? 0;
+
+                const selectedYear = Number(timelineSlider.value);
+                const activePartners = city.partners.filter((p) => {
+                  const isWaitlisted = p.status === "waitlisted" || (p as any).waitlisted === true || (p as any).waitlisted === "true";
+                  const isInactive = p.status === "inactive";
+                  let startedOnOrBeforeYear = true;
+                  if ((p as any).startPartner) {
+                    startedOnOrBeforeYear = new Date((p as any).startPartner).getUTCFullYear() <= selectedYear;
+                  }
+                  return !isWaitlisted && !isInactive && startedOnOrBeforeYear;
+                });
+
+                return (
+                  <Tooltip
+                    sticky
+                    direction="top"
+                    offset={[0, -10]}
+                    opacity={1}
+                    className="custom-map-tooltip"
+                  >
+                    <Box
+                      style={{
+                        background: "rgba(255, 255, 255, 0.96)",
+                        border: "1px solid #E4E7EC",
+                        borderRadius: 12,
+                        boxShadow: "0 8px 24px rgba(16, 24, 40, 0.12)",
+                        padding: "10px 14px",
+                        backdropFilter: "blur(8px)",
+                        minWidth: 160,
+                        textAlign: "left",
+                      }}
+                    >
+                      <Group gap={6} mb={4} wrap="nowrap">
+                        <ThemeIcon size={20} radius="xl" variant="light" color="cyan" styles={{ root: { backgroundColor: "#E0F2FE", color: "#0F6B99" } }}>
+                          <IconMapPin size={12} />
+                        </ThemeIcon>
+                        <Text fw={800} fz="15px" c="#101828" lh={1}>{boundary.name}</Text>
+                      </Group>
+
+                      {totalDiapers === 0 ? (
+                        <Text fz="12px" c="#667085" fw={500} mt={6}>
+                          0 diapers distributed this year
+                        </Text>
+                      ) : (
+                        <Stack gap={4} mt={6}>
+                          <Group justify="space-between" wrap="nowrap">
+                            <Text fz="11px" fw={700} c="#475467" tt="uppercase">Yearly</Text>
+                            <Text fz="13px" fw={800} c="#16A34A">+{totalDiapers.toLocaleString()}</Text>
+                          </Group>
+                          <Group justify="space-between" wrap="nowrap">
+                            <Text fz="11px" fw={700} c="#475467" tt="uppercase">Total</Text>
+                            <Text fz="13px" fw={800} c="#0F6B99">{city.runningTotal?.toLocaleString() ?? 0}</Text>
+                          </Group>
+                          <Group justify="space-between" wrap="nowrap" mt={2}>
+                            <Text fz="11px" fw={700} c="#475467" tt="uppercase">Partners</Text>
+                            <Badge variant="light" color="blue" size="sm" radius="xl" fw={700}>
+                              {activePartners.length}
+                            </Badge>
+                          </Group>
+                        </Stack>
+                      )}
+                    </Box>
+                  </Tooltip>
+                );
+              })()}
               {boundary.name &&
                 cities.map(
                   (city) =>
@@ -352,7 +435,56 @@ export default function Map({
         onClose={() => setSelectedPartnerId(null)}
       />
 
+      <Box
+        style={{
+          position: "absolute",
+          bottom: 16,
+          right: 16,
+          zIndex: 1000,
+          pointerEvents: "none",
+          background: "rgba(255, 255, 255, 0.96)",
+          border: "1px solid #E4E7EC",
+          borderRadius: 12,
+          boxShadow: "0 8px 24px rgba(16, 24, 40, 0.12)",
+          padding: "12px 14px",
+          backdropFilter: "blur(8px)",
+          minWidth: 220,
+          maxWidth: 280,
+        }}
+      >
+        <Text fz="11px" fw={800} c="#475467" tt="uppercase" mb={8} lts="0.05em">
+          Relative Distribution Volume
+        </Text>
+        <Box
+          style={{
+            height: 8,
+            borderRadius: 4,
+            width: "100%",
+            background: `linear-gradient(to right, ${LEVEL_COLORS.join(", ")})`,
+            marginBottom: 6,
+          }}
+        />
+        <Group justify="space-between">
+          <Text fz="10px" fw={700} c="#667085" tt="uppercase">Below Avg</Text>
+          <Text fz="10px" fw={700} c="#667085" tt="uppercase">Above Avg</Text>
+        </Group>
+      </Box>
+
       <style jsx global>{`
+        .custom-map-tooltip {
+          background: transparent !important;
+          border: none !important;
+          box-shadow: none !important;
+          padding: 0 !important;
+        }
+
+        .custom-map-tooltip .leaflet-tooltip-left::before,
+        .custom-map-tooltip .leaflet-tooltip-right::before,
+        .custom-map-tooltip .leaflet-tooltip-top::before,
+        .custom-map-tooltip .leaflet-tooltip-bottom::before {
+          display: none !important;
+        }
+
         @keyframes cityBoundaryFadeIn {
           from {
             opacity: 0;
@@ -368,10 +500,17 @@ export default function Map({
 
         .city-boundary {
           transition:
-            fill 700ms ease-out,
-            fill-opacity 700ms ease-out,
-            stroke 700ms ease-out,
-            stroke-opacity 700ms ease-out;
+            fill 300ms ease-out,
+            fill-opacity 300ms ease-out,
+            stroke 300ms ease-out,
+            stroke-width 300ms ease-out,
+            stroke-opacity 300ms ease-out,
+            filter 300ms ease-out;
+        }
+
+        .city-boundary:hover {
+          filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.4));
+          z-index: 1000;
         }
 
       `}</style>
@@ -399,14 +538,23 @@ function PopupContent({
       p.waitlisted === "true",
   );
 
-  // ACTIVE FILTER: Everyone who isn't waitlisted or inactive
+  // ACTIVE FILTER: Everyone who isn't waitlisted or inactive, AND started on or before the current selected year
   const activePartners = city.partners.filter((p) => {
     const isWaitlisted =
       p.status === "waitlisted" ||
       p.waitlisted === true ||
       p.waitlisted === "true";
     const isInactive = p.status === "inactive";
-    return !isWaitlisted && !isInactive;
+
+    // Check start year
+    const selectedYear = Number(timelineSlider.value);
+    let startedOnOrBeforeYear = true;
+    if (p.startPartner) {
+      const partnerStartYear = new Date(p.startPartner).getUTCFullYear();
+      startedOnOrBeforeYear = partnerStartYear <= selectedYear;
+    }
+
+    return !isWaitlisted && !isInactive && startedOnOrBeforeYear;
   });
 
   const totalDiapers =
@@ -467,14 +615,14 @@ function PopupContent({
           }}
         >
           <Text fz="11px" c="#5B6B7A" tt="uppercase" fw={800} lts="0.06em">
-            Total diapers distributed
+            Running total through {timelineSlider.value}
           </Text>
-          <Group justify="space-between" align="flex-end" wrap="nowrap">
-            <Text fz="32px" fw={900} c="#0F6B99" >
-              {totalDiapers.toLocaleString()}
+          <Group justify="space-between" align="flex-end" mt={4} wrap="nowrap">
+            <Text fz="32px" fw={900} c="#0F6B99" lh={1.1}>
+              {city.runningTotal?.toLocaleString() ?? 0}
             </Text>
-            <Text fz="12px" c="#667085" fw={600}>
-              in {timelineSlider.value}
+            <Text fz="14px" fw={700} c="#16A34A" lh={1.2} ta="right" mb={4}>
+              +{totalDiapers.toLocaleString()} in {timelineSlider.value}
             </Text>
           </Group>
         </Box>
@@ -499,7 +647,7 @@ function PopupContent({
                 <IconUsersGroup size={14} />
               </ThemeIcon>
               <Text fz="12px" fw={800} c="#344054" tt="uppercase" lts="0.05em">
-                Active Partners
+                {city.name} Partners
               </Text>
             </Group>
             <Badge variant="light" color="blue" radius="xl" fw={700}>
@@ -508,16 +656,44 @@ function PopupContent({
           </Group>
           <Group gap={6} wrap="wrap">
             {activePartners.length > 0 ? (
-              activePartners.map((p) => (
-                <PartnerAvatar
-                  key={p.id}
-                  id={p.id}
-                  name={p.name}
-                  url={p.logoUrl || p.logo_url}
-                  status={p.status as status}
-                  onClick={() => onPartnerSelect(p.id)}
-                />
-              ))
+              activePartners.map((p) => {
+                const selectedYear = Number(timelineSlider.value);
+                let isNew = false;
+                if (p.startPartner) {
+                  const partnerStartYear = new Date(p.startPartner).getUTCFullYear();
+                  isNew = partnerStartYear === selectedYear;
+                }
+
+                return (
+                  <Box key={p.id} style={{ position: "relative" }}>
+                    <PartnerAvatar
+                      id={p.id}
+                      name={p.name}
+                      url={p.logoUrl || p.logo_url}
+                      status={p.status as status}
+                      onClick={() => onPartnerSelect(p.id)}
+                    />
+                    {isNew && (
+                      <Badge
+                        size="xs"
+                        variant="filled"
+                        color="red"
+                        style={{
+                          position: "absolute",
+                          top: -6,
+                          right: -6,
+                          padding: "2px 4px",
+                          fontSize: "8px",
+                          pointerEvents: "none",
+                          zIndex: 2,
+                        }}
+                      >
+                        NEW
+                      </Badge>
+                    )}
+                  </Box>
+                );
+              })
             ) : (
               <Text fz="xs" c="dimmed" fs="italic">
                 No active partners

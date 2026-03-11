@@ -48,6 +48,21 @@ const getCities = unstable_cache(
       ])
     );
 
+    let cumulativeTotalsMap = new Map<number, number>();
+    if (year) {
+      const cumulativeQuery = await prisma.yearlyData.groupBy({
+        by: ["cityId"],
+        where: { year: { lte: year } },
+        _sum: { numDiapers: true },
+      });
+      cumulativeTotalsMap = new Map(
+        cumulativeQuery.map((row) => [
+          Number(row.cityId),
+          Number(row._sum.numDiapers || 0),
+        ])
+      );
+    }
+
     if (year && !month) {
       const cities = await prisma.city.findMany({
         where,
@@ -70,6 +85,7 @@ const getCities = unstable_cache(
         id: Number(city.id),
         name: city.name,
         historicalStats: statsMap.get(Number(city.id)) || null,
+        runningTotal: cumulativeTotalsMap.get(Number(city.id)) || 0,
         distributions: city.Yearly_Data.map((yd) => ({
           id: yd.id,
           year: yd.year,
@@ -84,6 +100,7 @@ const getCities = unstable_cache(
           name: partnerRegion.partner.name,
           logo_url: partnerRegion.partner.logoUrl,
           status: partnerRegion.partner.status,
+          startPartner: partnerRegion.partner.startPartner?.toISOString() || null,
         })),
       }));
     }
@@ -126,6 +143,7 @@ const getCities = unstable_cache(
       id: Number(city.id),
       name: city.name,
       historicalStats: statsMap.get(Number(city.id)) || null,
+      runningTotal: cumulativeTotalsMap.get(Number(city.id)) || 0,
       distributions: city.distributions.map((distribution) => ({
         id: Number(distribution.id),
         year: distribution.year,
@@ -143,6 +161,7 @@ const getCities = unstable_cache(
         name: partnerRegion.partner.name,
         logo_url: partnerRegion.partner.logoUrl,
         status: partnerRegion.partner.status,
+        startPartner: partnerRegion.partner.startPartner?.toISOString() || null,
       })),
     }));
 
