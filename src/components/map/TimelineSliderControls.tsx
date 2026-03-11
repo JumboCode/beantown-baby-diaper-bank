@@ -96,10 +96,10 @@ export default function TimelineSliderControls({
             </Badge>
           </Group>
           <Text fz="18px" fw={700} c="#101828">
-            Scrub distribution data by year
+            Choose a year directly from the timeline
           </Text>
           <Text fz="13px" c="#667085">
-            Move year by year or play the timeline to see distribution growth over time.
+            Jump to any point in the story, or play forward to show how distribution coverage grows.
           </Text>
         </Box>
 
@@ -169,7 +169,8 @@ export default function TimelineSliderControls({
           borderRadius: 18,
           background:
             "linear-gradient(180deg, #F8FBFF 0%, #FFFFFF 100%)",
-          boxShadow: "inset 0 1px 0 rgba(255,255,255,0.9)",
+          boxShadow:
+            "inset 0 1px 0 rgba(255,255,255,0.9), 0 12px 30px rgba(16, 24, 40, 0.06)",
         }}
       >
         <Box style={{ width: "100%" }}>
