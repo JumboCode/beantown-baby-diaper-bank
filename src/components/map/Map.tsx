@@ -23,12 +23,13 @@ import {
   Group,
   Avatar,
   Tooltip as MantineTooltip,
-  Divider,
   Box,
   Badge,
+  ThemeIcon,
 } from "@mantine/core";
 import PartnerIconDrawer from "./PartnerIconDrawer";
 import PartnerAvatar from "./PartnerAvatar";
+import { IconMapPin, IconUsersGroup } from "@tabler/icons-react";
 
 // --- 1. Helper Functions ---
 
@@ -392,63 +393,130 @@ function PopupContent({
   const hasMoreWaitlistedPartners = waitlistedPartners.length > 5;
 
   return (
-    <Popup minWidth={280} maxWidth={320}>
-      <Stack gap={6}>
+    <Popup minWidth={292} maxWidth={328} className="city-popup">
+      <Stack gap="sm">
         <Group justify="space-between" align="flex-start" wrap="nowrap">
-          <Title order={3} fz="19px" c="#101828" lh={1.1}>
-            {city.name}
-          </Title>
-          <Badge color="blue" variant="light" radius="sm" fw={700}>
-            Year: {timelineSlider.value}
+          <Stack gap={4}>
+            <Group gap={8} wrap="nowrap">
+              <ThemeIcon
+                size={30}
+                radius="xl"
+                variant="light"
+                color="cyan"
+                styles={{ root: { backgroundColor: "#E0F2FE", color: "#0F6B99" } }}
+              >
+                <IconMapPin size={16} />
+              </ThemeIcon>
+              <Title order={3} fz="21px" c="#101828" lh={1}>
+                {city.name}
+              </Title>
+            </Group>
+            <Text fz="12px" c="#667085" fw={500}>
+              Local partner snapshot for {timelineSlider.value}
+            </Text>
+          </Stack>
+          <Badge
+            radius="xl"
+            fw={800}
+            variant="filled"
+            styles={{
+              root: {
+                background:
+                  "linear-gradient(135deg, #2C85B2 0%, #0F6B99 100%)",
+                letterSpacing: "0.03em",
+              },
+            }}
+          >
+            {timelineSlider.value}
           </Badge>
         </Group>
 
         <Box
           style={{
-            background: "#F8FAFC",
-            border: "1px solid #E4E7EC",
-            borderRadius: 8,
-            padding: "7px 10px",
+            background:
+              "linear-gradient(180deg, #F8FBFF 0%, #EEF6FB 100%)",
+            border: "1px solid #D5E7F2",
+            borderRadius: 14,
+            padding: "10px 12px",
+            boxShadow: "inset 0 1px 0 rgba(255,255,255,0.8)",
           }}
         >
-          <Text fz="12px" c="#475467" tt="uppercase" fw={600}>
-            Total Diapers Distributed in {timelineSlider.value}
+          <Text fz="11px" c="#5B6B7A" tt="uppercase" fw={800} lts="0.06em">
+            Total diapers distributed
           </Text>
-          <Text fz="34px" fw={800} c="#0F6B99" lh={1} mt={2}>
-            {totalDiapers.toLocaleString()}
-          </Text>
+          <Group justify="space-between" align="flex-end" wrap="nowrap">
+            <Text fz="32px" fw={900} c="#0F6B99" >
+              {totalDiapers.toLocaleString()}
+            </Text>
+            <Text fz="12px" c="#667085" fw={600}>
+              in {timelineSlider.value}
+            </Text>
+          </Group>
         </Box>
 
-        <Divider my={2} />
-        <Text fz="12px" fw={600} c="#344054">
-          Active Partners ({activePartners.length})
-        </Text>
-        <Group gap="xs" wrap="wrap">
-          {activePartners.length > 0 ? (
-            activePartners.map((p) => (
-              <PartnerAvatar
-                key={p.id}
-                id={p.id}
-                name={p.name}
-                url={p.logoUrl || p.logo_url}
-                status={p.status as status}
-                onClick={() => onPartnerSelect(p.id)}
-              />
-            ))
-          ) : (
-            <Text fz="xs" c="dimmed" fs="italic">
-              No active partners
-            </Text>
-          )}
-        </Group>
+        <Box
+          style={{
+            border: "1px solid #EAECF0",
+            borderRadius: 12,
+            padding: "10px 12px",
+            background: "#FFFFFF",
+          }}
+        >
+          <Group justify="space-between" align="center" mb="xs">
+            <Group gap={8}>
+              <ThemeIcon
+                size={24}
+                radius="xl"
+                variant="light"
+                color="blue"
+                styles={{ root: { backgroundColor: "#EAF2FF", color: "#1D4ED8" } }}
+              >
+                <IconUsersGroup size={14} />
+              </ThemeIcon>
+              <Text fz="12px" fw={800} c="#344054" tt="uppercase" lts="0.05em">
+                Active Partners
+              </Text>
+            </Group>
+            <Badge variant="light" color="blue" radius="xl" fw={700}>
+              {activePartners.length}
+            </Badge>
+          </Group>
+          <Group gap={6} wrap="wrap">
+            {activePartners.length > 0 ? (
+              activePartners.map((p) => (
+                <PartnerAvatar
+                  key={p.id}
+                  id={p.id}
+                  name={p.name}
+                  url={p.logoUrl || p.logo_url}
+                  status={p.status as status}
+                  onClick={() => onPartnerSelect(p.id)}
+                />
+              ))
+            ) : (
+              <Text fz="xs" c="dimmed" fs="italic">
+                No active partners
+              </Text>
+            )}
+          </Group>
+        </Box>
 
-        {/* --- Waitlisted Partners --- */}
         {waitlistedPartners.length > 0 && (
-          <>
-            <Text fz="12px" fw={600} c="#667085">
-              Waitlisted ({waitlistedPartners.length})
-            </Text>
-            <Group gap="xs" wrap="wrap">
+          <Box
+            style={{
+              borderTop: "1px solid #EAECF0",
+              paddingTop: 10,
+            }}
+          >
+            <Group justify="space-between" align="center" mb={6}>
+              <Text fz="12px" fw={800} c="#667085" tt="uppercase" lts="0.05em">
+                Waitlisted
+              </Text>
+              <Badge variant="dot" color="gray" radius="xl" fw={700}>
+                {waitlistedPartners.length}
+              </Badge>
+            </Group>
+            <Group gap={6} wrap="wrap">
               {visibleWaitlistedPartners.map((p) => (
                 <MantineTooltip key={p.id} label={p.name} withArrow>
                   <Avatar
@@ -457,7 +525,12 @@ function PopupContent({
                     radius="xl"
                     color="gray"
                     variant="outline"
-                    style={{ opacity: 0.8, cursor: "pointer" }}
+                    style={{
+                      opacity: 0.9,
+                      cursor: "pointer",
+                      border: "1px solid #D0D5DD",
+                      background: "#F9FAFB",
+                    }}
                   >
                     {p.name.substring(0, 2).toUpperCase()}
                   </Avatar>
@@ -467,23 +540,24 @@ function PopupContent({
                 <Text
                   component="button"
                   type="button"
-                  fz="md"
-                  fw={700}
+                  fz="12px"
+                  fw={800}
                   c="#0F6B99"
                   style={{
-                    background: "transparent",
-                    border: "none",
+                    background: "#EFF8FF",
+                    border: "1px solid #B2DDFF",
+                    borderRadius: 999,
                     cursor: "pointer",
-                    padding: 0,
-                    lineHeight: 1,
+                    padding: "4px 10px",
+                    lineHeight: 1.2,
                   }}
                   onClick={() => setShowAllWaitlisted(true)}
                 >
-                  ...
+                  Show more
                 </Text>
               )}
             </Group>
-          </>
+          </Box>
         )}
       </Stack>
     </Popup>
