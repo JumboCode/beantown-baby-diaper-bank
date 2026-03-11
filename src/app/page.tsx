@@ -24,6 +24,7 @@ type PartnerInfoType = {
 type CityMapInfo = City & {
   distributions: Distribution[];
   partners: PartnerInfoType[];
+  historicalStats?: { median: number; p25: number; p75: number } | null;
 };
 
 export type MapData = {
@@ -56,17 +57,17 @@ const flipBoundaries = (
     geometry:
       feature.geometry.type === "Polygon"
         ? {
-            ...feature.geometry,
-            coordinates: swapLngLat(
-              feature.geometry.coordinates,
-            ) as Polygon["coordinates"],
-          }
+          ...feature.geometry,
+          coordinates: swapLngLat(
+            feature.geometry.coordinates,
+          ) as Polygon["coordinates"],
+        }
         : {
-            ...feature.geometry,
-            coordinates: swapLngLat(
-              feature.geometry.coordinates,
-            ) as MultiPolygon["coordinates"],
-          },
+          ...feature.geometry,
+          coordinates: swapLngLat(
+            feature.geometry.coordinates,
+          ) as MultiPolygon["coordinates"],
+        },
   }));
 
   return {
@@ -100,8 +101,8 @@ export default function Page() {
         const boundariesPromise = cachedBoundaries
           ? Promise.resolve(cachedBoundaries)
           : fetch(`/api/cities/boundaries`)
-              .then((res) => res.json())
-              .then(flipBoundaries);
+            .then((res) => res.json())
+            .then(flipBoundaries);
 
         const [cities, boundaries, totalDiapersResponse] = await Promise.all([
           fetch(`/api/cities?${queryParams.toString()}`).then((res) =>

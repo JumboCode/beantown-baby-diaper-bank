@@ -50,11 +50,23 @@ const componentToHex = (c: number) => {
 const rgbToHex = (r: number, g: number, b: number) =>
   `#${componentToHex(r)}${componentToHex(g)}${componentToHex(b)}`;
 
-const getColor = (value: number, max: number) => {
-  if (value <= 0 || max <= 0) return LEVEL_COLORS[0];
-  const ratio = Math.min(1, value / max);
+function clamp01(x: number) {
+  return Math.max(0, Math.min(1, x));
+}
+
+function sigmoid(z: number) {
+  return 1 / (1 + Math.exp(-z));
+}
+
+function cityScore(value: number, median: number, p25: number, p75: number) {
+  const iqr = Math.max(p75 - p25, 1);
+  const k = 4 / iqr;
+  return clamp01(sigmoid(k * (value - median)));
+}
+
+const getScoreColor = (score: number) => {
   const stops = LEVEL_COLORS.length - 1;
-  const scaled = ratio * stops;
+  const scaled = score * stops;
   const lower = Math.floor(scaled);
   const upper = Math.min(stops, Math.ceil(scaled));
   const t = scaled - lower;
@@ -88,6 +100,7 @@ type PartnerInfoType = {
 type CityMapInfo = City & {
   distributions: Distribution[];
   partners: PartnerInfoType[];
+  historicalStats?: { median: number; p25: number; p75: number } | null;
 };
 
 type MapTimelineSlider = {
@@ -162,28 +175,40 @@ export default function Map({
   const boundaryPolygons = useMemo(() => {
     if (!mapData?.boundaries || cities.length === 0) return [];
 
-    let maxDiapers = 0;
     const cityTotals: Record<string, number> = {};
+    const cityStats: Record<string, { median: number; p25: number; p75: number } | null | undefined> = {};
 
     cities.forEach((city) => {
       const total = city.distributions.reduce(
         (sum, d) => sum + Number(d.numberDiapers),
         0,
       );
-      if (city.name) cityTotals[city.name] = total;
-      if (total > maxDiapers) maxDiapers = total;
+      if (city.name) {
+        cityTotals[city.name] = total;
+        cityStats[city.name] = city.historicalStats;
+      }
     });
 
     return mapData.boundaries.features.map((feature) => {
       const name = feature.properties?.name;
       const total = name ? cityTotals[name] || 0 : 0;
+      const stats = name ? cityStats[name] : null;
+
+      let fillColor = "#E4E7EC"; // Gray for no data
+      if (total > 0 && stats) {
+        const score = cityScore(total, stats.median, stats.p25, stats.p75);
+        fillColor = getScoreColor(score);
+      } else if (total > 0 && !stats) {
+        // Fallback for missing stats
+        fillColor = LEVEL_COLORS[0];
+      }
 
       return {
         id: name || Math.random(),
         positions: feature.geometry
           .coordinates as unknown as LatLngExpression[][],
         name: name,
-        fillColor: getColor(total, maxDiapers),
+        fillColor,
         totalDiapers: total,
       };
     });

@@ -17,7 +17,6 @@ const getCities = unstable_cache(
       throw new Error("Year must be provided if month is provided.");
     }
 
-    /* build filters based on city name */
     const where: PrismaTypes.CityWhereInput = {};
     if (cityName) {
       where.name = {
@@ -25,6 +24,29 @@ const getCities = unstable_cache(
         mode: "insensitive",
       };
     }
+
+    const statsQuery = await prisma.$queryRaw<
+      { city_id: bigint; median: number; p25: number; p75: number }[]
+    >`
+      SELECT 
+        "city_id",
+        COALESCE(percentile_cont(0.5) WITHIN GROUP (ORDER BY "num_diapers"), 0) as median,
+        COALESCE(percentile_cont(0.25) WITHIN GROUP (ORDER BY "num_diapers"), 0) as p25,
+        COALESCE(percentile_cont(0.75) WITHIN GROUP (ORDER BY "num_diapers"), 0) as p75
+      FROM "Yearly Data"
+      GROUP BY "city_id"
+    `;
+
+    const statsMap = new Map(
+      statsQuery.map((row) => [
+        Number(row.city_id),
+        {
+          median: Number(row.median),
+          p25: Number(row.p25),
+          p75: Number(row.p75),
+        },
+      ])
+    );
 
     if (year && !month) {
       const cities = await prisma.city.findMany({
@@ -47,6 +69,7 @@ const getCities = unstable_cache(
       return cities.map((city) => ({
         id: Number(city.id),
         name: city.name,
+        historicalStats: statsMap.get(Number(city.id)) || null,
         distributions: city.Yearly_Data.map((yd) => ({
           id: yd.id,
           year: yd.year,
@@ -102,6 +125,7 @@ const getCities = unstable_cache(
     const dataToReturn = cities.map((city) => ({
       id: Number(city.id),
       name: city.name,
+      historicalStats: statsMap.get(Number(city.id)) || null,
       distributions: city.distributions.map((distribution) => ({
         id: Number(distribution.id),
         year: distribution.year,
