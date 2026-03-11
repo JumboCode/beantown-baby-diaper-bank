@@ -80,10 +80,6 @@ export default function TimelineSlider({
             top: "50%",
             transform: "translateY(-50%)",
           },
-          markFilled: {
-            backgroundColor: "#0F6B99",
-            borderColor: "#FFFFFF",
-          },
           markLabel: {
             marginTop: 10,
             fontSize: 12,
