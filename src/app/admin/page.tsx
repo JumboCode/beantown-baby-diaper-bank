@@ -100,7 +100,6 @@ const monthMap: Record<string, string> = {
   December: "12",
 };
 
-const years: Array<string> = ["All", "2023", "2024", "2025"];
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
 const statuses = (Object.values(status) as string[]).map((s) => ({
@@ -213,12 +212,16 @@ export default function Page() {
 
     const [uploadedMonths, setUploadedMonths] = useState<number[]>([]);
     const [lastUploaded, setLastUploaded] = useState<string | null>(null);
+    const [years, setYears] = useState<string[]>(["All"]);
     const currentYear = new Date().getFullYear();
   
     const fetchTimelineData = useCallback(async () => {
   try {
     const res = await fetch(`/api/timeline-slider?year=${currentYear}`);
     const data = await res.json();
+    if (data.years) {
+      setYears(["All", ...data.years.map(String)]);
+    }
     if (data.months) {
       const currentYearMonths = data.months.filter(
         (d: { Month: string; Year: string }) => d.Year === String(currentYear)
