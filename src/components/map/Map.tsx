@@ -396,6 +396,29 @@ export default function Map({
       <Box
         style={{
           position: "absolute",
+          top: 18,
+          left: 18,
+          zIndex: 1000,
+          pointerEvents: "none",
+        }}
+      >
+        <Text
+          fw={800}
+          fz="clamp(36px, 6vw, 76px)"
+          lh={0.95}
+          c="rgba(16, 24, 40, 0.72)"
+          style={{
+            letterSpacing: "-0.05em",
+            textShadow: "0 4px 14px rgba(255,255,255,0.42)",
+          }}
+        >
+          {selectedYear ?? timelineSlider.value}
+        </Text>
+      </Box>
+
+      <Box
+        style={{
+          position: "absolute",
           top: 16,
           right: 16,
           zIndex: 1000,
