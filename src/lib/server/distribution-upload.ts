@@ -4,7 +4,6 @@ import { prisma } from "@/lib/prisma";
 
 type ParsedPartnerRow = {
   partnerName: string;
-  totalChildren: string | undefined;
   totalDiapers: string | undefined;
 };
 
@@ -57,8 +56,7 @@ export function parsePartnerRows(csv: string): {
   const parsed = rows.map((row) => {
     return {
       partnerName: row[0]?.trim() || "",
-      totalChildren: row[1],
-      totalDiapers: row[2],
+      totalDiapers: row[1],
     };
   });
 
@@ -133,10 +131,9 @@ export async function processDistributionUpload(input: {
       continue;
     }
 
-    const totalChildren = parseNumericCell(row.totalChildren);
     const totalDiapers = parseNumericCell(row.totalDiapers);
 
-    if (totalChildren === null || totalDiapers === null) {
+    if (totalDiapers === null) {
       throw new Error(
         `Invalid numeric values for partner "${row.partnerName}" in uploaded CSV.`,
       );
@@ -148,7 +145,6 @@ export async function processDistributionUpload(input: {
       year: targetYear,
       month: targetMonth,
       numDiapers: BigInt(Math.round(totalDiapers)),
-      numBabies: BigInt(Math.round(totalChildren)),
     });
 
     for (const partnerRegion of partner.partnerRegions) {
@@ -160,7 +156,6 @@ export async function processDistributionUpload(input: {
         month: targetMonth,
         percentage,
         numberDiapers: BigInt(Math.round(totalDiapers * percentage)),
-        numberChildren: BigInt(Math.round(totalChildren * percentage)),
       });
     }
   }
