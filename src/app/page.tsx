@@ -153,59 +153,40 @@ export default function Page() {
   }, []);
 
   return (
-    <Box
-      style={{
-        backgroundColor: "#FFFFFF",
-        minHeight: "100vh",
-        paddingRight: "8%",
-        paddingLeft: "8%",
-        paddingTop: "3%",
-        paddingBottom: "3%",
-      }}
-    >
-      <Stack gap="sm" mx="auto">
-        <Box>
-          <Title order={1} fz="30px" fw={500} mb="xs" c="#101828">
-            See where diapers are distributed
-          </Title>
-          <Text fz="18px" c="#667085">
-            Last updated: Sep 9th, 2025.
-          </Text>
+    <Stack gap="xs" mx="auto">
+      <Title order={1} fz="30px" fw={500} mb="xs" c="#101828">
+        See where diapers are distributed
+      </Title>
+      <Title order={2} fz="18px" c="#667085">
+        Interactive map of diaper distribution
+      </Title>
+
+      <TotalDiapersDistributed totalDiapers={totalDiapers} />
+      <Paper p="md" radius="md" withBorder shadow="md">
+        <Box h="60vh" pos="relative" mb="md">
+          {mapData ? (
+            <LeafletMap
+              mapData={mapData}
+              timelineSlider={timeline}
+              totalDiapersForYear={cumulativeTotalDiapers}
+              yearlyDistributed={yearlyTotalDiapers}
+              selectedYear={selectedYear}
+            />
+
+          ) : (
+            <MapSkeleton />
+          )}
         </Box>
 
-        <TotalDiapersDistributed totalDiapers={totalDiapers} />
-
-        <Group justify="space-between" align="center" mt="md">
-          <Title fz={24} c="#101728" fw={600}>
-            Distribution Heat Map
-          </Title>
-          <ImpactModal />
-        </Group>
-        <Paper shadow="sm" p="md" radius="md" withBorder>
-          <Box h="60vh" pos="relative" mb="md">
-            {mapData ? (
-              <LeafletMap
-                mapData={mapData}
-                timelineSlider={timeline}
-                totalDiapersForYear={cumulativeTotalDiapers}
-                yearlyDistributed={yearlyTotalDiapers}
-                selectedYear={selectedYear}
-              />
-            ) : (
-              <MapSkeleton />
-            )}
-          </Box>
-
-          <TimelineSliderControls
-            view={timeline.view}
-            index={timeline.index}
-            setIndex={timeline.setIndex}
-            move={timeline.move}
-            labels={timeline.labels}
-            onTimelineChange={handleTimelineChange}
-          />
-        </Paper>
-      </Stack>
-    </Box>
+        <TimelineSliderControls
+          view={timeline.view}
+          index={timeline.index}
+          setIndex={timeline.setIndex}
+          move={timeline.move}
+          labels={timeline.labels}
+          onTimelineChange={handleTimelineChange}
+        />
+      </Paper>
+    </Stack>
   );
 }

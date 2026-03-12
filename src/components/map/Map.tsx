@@ -30,6 +30,7 @@ import {
 import PartnerIconDrawer from "./PartnerIconDrawer";
 import PartnerAvatar from "./PartnerAvatar";
 import { IconMapPin, IconUsersGroup } from "@tabler/icons-react";
+import ImpactModal from "./ImpactModal";
 
 // --- 1. Helper Functions ---
 
@@ -449,6 +450,16 @@ export default function Map({
             {selectedYear ? ` in ${selectedYear}` : ""}
           </Text>
         </Group>
+      </Box>
+      <Box
+        style={{
+          position: "absolute",
+          top: 120,
+          right: 16,
+          zIndex: 1200,
+        }}
+      >
+        <ImpactModal />
       </Box>
 
       <PartnerIconDrawer

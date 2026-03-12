@@ -14,10 +14,10 @@ export default function TotalDiapersDistributed({
 }: TotalDiapersDistributedProps) {
   return (
     <Paper
-      shadow="md"
       p="md"
       radius="md"
-      style={{ backgroundColor: "#FFFFFF", border: "1px solid #F2F4F7" }}
+      withBorder
+      shadow="md"
     >
       <Group justify="space-between" align="center">
         <Stack gap="xs">
