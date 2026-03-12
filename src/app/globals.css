@@ -34,21 +34,15 @@ body {
   display: none !important;
 }
 
-@keyframes cityBoundaryFadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
-
-.city-boundary-enter {
-  animation: cityBoundaryFadeIn 700ms ease-out;
-}
-
 .city-boundary {
-  transition: fill 300ms ease-out, fill-opacity 300ms ease-out, stroke 300ms ease-out, stroke-width 300ms ease-out, stroke-opacity 300ms ease-out, filter 300ms ease-out;
+  transition:
+    fill 700ms ease-in-out,
+    fill-opacity 900ms ease-in-out,
+    stroke 700ms ease-in-out,
+    stroke-width 250ms ease-out,
+    stroke-opacity 900ms ease-in-out,
+    opacity 900ms ease-in-out,
+    filter 250ms ease-out;
 }
 
 .city-boundary:hover {

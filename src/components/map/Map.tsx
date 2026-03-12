@@ -115,6 +115,20 @@ type MapTimelineSlider = {
   value: string | number;
 };
 
+type BoundaryPolygon = {
+  id: string | number;
+  positions: LatLngExpression[][];
+  name?: string;
+  fillColor: string;
+  totalDiapers: number;
+};
+
+type AnimatedBoundary = BoundaryPolygon & {
+  isVisible: boolean;
+};
+
+const BOUNDARY_FADE_MS = 900;
+
 function useCountUp(target?: number, duration = 1400) {
   const [value, setValue] = useState(0);
 
@@ -175,12 +189,16 @@ export default function Map({
   const [selectedPartnerId, setSelectedPartnerId] = useState<number | null>(
     null,
   );
+  const [animatedBoundaries, setAnimatedBoundaries] = useState<
+    Record<string, AnimatedBoundary>
+  >({});
+  const removalTimeoutsRef = useRef<Record<string, number>>({});
   const animatedRunningTotal = useCountUp(totalDiapersForYear, 1400);
   const animatedYearlyTotal = useCountUp(yearlyDistributed, 700);
 
   const cities = useMemo(() => mapData?.cities.data ?? [], [mapData]);
 
-  const boundaryPolygons = useMemo(() => {
+  const boundaryPolygons = useMemo<BoundaryPolygon[]>(() => {
     if (!mapData?.boundaries || cities.length === 0) return [];
 
     const cityTotals: Record<string, number> = {};
@@ -222,30 +240,93 @@ export default function Map({
     });
   }, [mapData, cities]);
 
-  const visibleBoundaries = useMemo(
-    () => boundaryPolygons.filter((boundary) => boundary.totalDiapers > 0),
-    [boundaryPolygons],
-  );
+  useEffect(() => {
+    const nextVisibleById = new globalThis.Map(
+      boundaryPolygons
+        .filter((boundary) => boundary.totalDiapers > 0)
+        .map((boundary) => [String(boundary.id), boundary]),
+    );
 
-  const previousVisibleIdsRef = useRef<Set<string>>(new Set());
+    setAnimatedBoundaries((current) => {
+      const nextState: Record<string, AnimatedBoundary> = { ...current };
 
-  const enteringBoundaryIds = useMemo(() => {
-    const previous = previousVisibleIdsRef.current;
-    const entering = new Set<string>();
+      nextVisibleById.forEach((boundary, boundaryId) => {
+        const pendingRemoval = removalTimeoutsRef.current[boundaryId];
+        if (pendingRemoval) {
+          clearTimeout(pendingRemoval);
+          delete removalTimeoutsRef.current[boundaryId];
+        }
 
-    visibleBoundaries.forEach((boundary, index) => {
-      const boundaryId = String(boundary.id || index);
-      if (!previous.has(boundaryId)) entering.add(boundaryId);
+        const existing = current[boundaryId];
+        nextState[boundaryId] = {
+          ...boundary,
+          isVisible: existing?.isVisible ?? false,
+        };
+      });
+
+      Object.entries(current).forEach(([boundaryId, boundary]) => {
+        if (nextVisibleById.has(boundaryId)) {
+          return;
+        }
+
+        nextState[boundaryId] = {
+          ...boundary,
+          isVisible: false,
+        };
+
+        if (!removalTimeoutsRef.current[boundaryId]) {
+          removalTimeoutsRef.current[boundaryId] = window.setTimeout(() => {
+            setAnimatedBoundaries((latest) => {
+              const updated = { ...latest };
+              delete updated[boundaryId];
+              return updated;
+            });
+            delete removalTimeoutsRef.current[boundaryId];
+          }, BOUNDARY_FADE_MS);
+        }
+      });
+
+      return nextState;
     });
 
-    return entering;
-  }, [visibleBoundaries]);
+    const frameId = window.requestAnimationFrame(() => {
+      setAnimatedBoundaries((current) => {
+        const nextState: Record<string, AnimatedBoundary> = { ...current };
+
+        nextVisibleById.forEach((boundary, boundaryId) => {
+          nextState[boundaryId] = {
+            ...boundary,
+            isVisible: true,
+          };
+        });
+
+        return nextState;
+      });
+    });
+
+    return () => window.cancelAnimationFrame(frameId);
+  }, [boundaryPolygons]);
 
   useEffect(() => {
-    previousVisibleIdsRef.current = new Set(
-      visibleBoundaries.map((boundary, index) => String(boundary.id || index)),
-    );
-  }, [visibleBoundaries]);
+    return () => {
+      Object.values(removalTimeoutsRef.current).forEach(clearTimeout);
+      removalTimeoutsRef.current = {};
+    };
+  }, []);
+
+  const renderedBoundaries = useMemo(
+    () =>
+      Object.values(animatedBoundaries).sort((left, right) => {
+        if (left.isVisible === right.isVisible) {
+          return String(left.name ?? left.id).localeCompare(
+            String(right.name ?? right.id),
+          );
+        }
+
+        return left.isVisible ? 1 : -1;
+      }),
+    [animatedBoundaries],
+  );
 
   return (
     <div
@@ -254,17 +335,22 @@ export default function Map({
       <MapContainer {...mapOptions} zoomControl={false} style={mapStyle}>
         <ZoomControl position="bottomleft" />
         <TileLayer {...tileLayerProps} />
-        {visibleBoundaries.map((boundary, index) => {
+        {renderedBoundaries.map((boundary, index) => {
           const boundaryId = String(boundary.id || index);
-          const isEntering = enteringBoundaryIds.has(boundaryId);
+          const strokeOpacity = boundary.isVisible ? 1 : 0;
+          const fillOpacity = !boundary.isVisible
+            ? 0
+            : activeId === boundary.id
+              ? 0.75
+              : hoveredId === boundary.id
+                ? 0.65
+                : 0.35;
 
           return (
             <Polygon
               key={boundaryId}
               pathOptions={{
-                className: isEntering
-                  ? "city-boundary city-boundary-enter"
-                  : "city-boundary",
+                className: "city-boundary",
                 weight:
                   activeId === boundary.id
                     ? 2
@@ -277,13 +363,9 @@ export default function Map({
                     : hoveredId === boundary.id
                       ? "#F97316" // Vibrant orange
                       : "#5A7687",
+                opacity: strokeOpacity,
                 fillColor: boundary.fillColor,
-                fillOpacity:
-                  activeId === boundary.id
-                    ? 0.75
-                    : hoveredId === boundary.id
-                      ? 0.65
-                      : 0.35,
+                fillOpacity,
               }}
               positions={boundary.positions}
               eventHandlers={{
