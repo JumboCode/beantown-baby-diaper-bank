@@ -19,7 +19,7 @@ export default function RootLayout({
   return (
     <ClerkProvider>
       <html lang="en">
-        <body style={{ backgroundColor: "#FFFFFF", minHeight: "100vh", padding: "2%" }}>
+        <body style={{ backgroundColor: "#FFFFFF", minHeight: "100vh" }}>
           <MantineProvider>
             <ModalsProvider>{children}</ModalsProvider>
           </MantineProvider>

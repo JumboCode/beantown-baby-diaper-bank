@@ -1,12 +1,11 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { Box, Stack, Title, Text, Paper, Skeleton, Group } from "@mantine/core";
+import { Box, Stack, Title, Paper, Skeleton } from "@mantine/core";
 import TimelineSliderControls from "@/components/map/TimelineSliderControls";
 import { useTimelinePeriod } from "@/components/map/useTimelinePeriod";
 import TotalDiapersDistributed from "@/components/map/TotalDiapersDistributed";
 import { useState, useCallback, useEffect } from "react";
-import ImpactModal from "@/components/map/ImpactModal";
 import { FeatureCollection, MultiPolygon, Polygon } from "geojson";
 import { City, Distribution } from "@/generated/prisma/client";
 
@@ -153,40 +152,42 @@ export default function Page() {
   }, []);
 
   return (
-    <Stack gap="xs" mx="auto">
-      <Title order={1} fz="30px" fw={500} mb="xs" c="#101828">
-        See where diapers are distributed
-      </Title>
-      <Title order={2} fz="18px" c="#667085">
-        Interactive map of diaper distribution
-      </Title>
+    <Box mx="auto" px="2%">
+      <Stack gap="xs" mx="auto">
+        <Title order={1} fz="30px" fw={500} mb="xs" c="#101828">
+          See where diapers are distributed
+        </Title>
+        <Title order={2} fz="18px" c="#667085">
+          Interactive map of diaper distribution
+        </Title>
 
-      <TotalDiapersDistributed totalDiapers={totalDiapers} />
-      <Paper p="md" radius="md" withBorder shadow="md">
-        <Box h="60vh" pos="relative" mb="md">
-          {mapData ? (
-            <LeafletMap
-              mapData={mapData}
-              timelineSlider={timeline}
-              totalDiapersForYear={cumulativeTotalDiapers}
-              yearlyDistributed={yearlyTotalDiapers}
-              selectedYear={selectedYear}
-            />
+        <TotalDiapersDistributed totalDiapers={totalDiapers} />
+        <Paper p="md" radius="md" withBorder shadow="md">
+          <Box h="60vh" pos="relative" mb="md">
+            {mapData ? (
+              <LeafletMap
+                mapData={mapData}
+                timelineSlider={timeline}
+                totalDiapersForYear={cumulativeTotalDiapers}
+                yearlyDistributed={yearlyTotalDiapers}
+                selectedYear={selectedYear}
+              />
 
-          ) : (
-            <MapSkeleton />
-          )}
-        </Box>
+            ) : (
+              <MapSkeleton />
+            )}
+          </Box>
 
-        <TimelineSliderControls
-          view={timeline.view}
-          index={timeline.index}
-          setIndex={timeline.setIndex}
-          move={timeline.move}
-          labels={timeline.labels}
-          onTimelineChange={handleTimelineChange}
-        />
-      </Paper>
-    </Stack>
+          <TimelineSliderControls
+            view={timeline.view}
+            index={timeline.index}
+            setIndex={timeline.setIndex}
+            move={timeline.move}
+            labels={timeline.labels}
+            onTimelineChange={handleTimelineChange}
+          />
+        </Paper>
+      </Stack>
+    </Box>
   );
 }

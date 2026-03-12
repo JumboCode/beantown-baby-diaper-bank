@@ -256,6 +256,8 @@ export default function PartnerIconDrawer({
       onClose={onClose}
       padding="xl"
       size="30%"
+      offset={0}
+      radius={0}
       title={
         loading ? (
           <Group gap="md">
