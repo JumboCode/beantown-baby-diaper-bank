@@ -35,7 +35,7 @@ export default function TimelineSlider({
       style={{
         position: "relative",
         width: "100%",
-        paddingTop: "30px",
+        paddingTop: "10px",
         paddingBottom: "12px",
       }}
     >
@@ -71,6 +71,7 @@ export default function TimelineSlider({
           bar: {
             background:
               "linear-gradient(90deg, #143E6E 0%, #0F6B99 100%)",
+            transition: "width 220ms ease",
           },
           mark: {
             width: 8,
@@ -92,6 +93,8 @@ export default function TimelineSlider({
             padding: 0,
             border: "2px solid #FFFFFF",
             boxShadow: "0 4px 12px rgba(5, 55, 102, 0.22)",
+            transition:
+              "left 220ms ease, transform 220ms ease, box-shadow 220ms ease",
           },
           label: {
             backgroundColor: "#FFFFFF",
@@ -101,6 +104,8 @@ export default function TimelineSlider({
             fontWeight: 800,
             padding: "6px 10px",
             boxShadow: "0 6px 18px rgba(16, 24, 40, 0.12)",
+            transition:
+              "left 220ms ease, transform 220ms ease, opacity 180ms ease",
           },
         }}
       />

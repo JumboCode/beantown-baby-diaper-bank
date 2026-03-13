@@ -1,12 +1,11 @@
 import { useEffect, useState } from "react";
 import TimelineSlider from "./TimelineSlider";
-import { Group, Stack, ActionIcon, Box, Text, Badge, Tooltip } from "@mantine/core";
+import { Group, Stack, ActionIcon, Box, Text, Tooltip } from "@mantine/core";
 import {
   IconPlayerPlayFilled,
   IconPlayerPauseFilled,
   IconChevronLeft,
   IconChevronRight,
-  IconClockPlay,
 } from "@tabler/icons-react";
 
 export default function TimelineSliderControls({
@@ -25,7 +24,6 @@ export default function TimelineSliderControls({
   onTimelineChange?: (params: { month?: string; year: string }) => void;
 }) {
   const [isPlaying, setIsPlaying] = useState(false);
-  const currentLabel = labels[index]?.toString() || "";
 
   // Handle Play logic
   useEffect(() => {
@@ -64,42 +62,11 @@ export default function TimelineSliderControls({
     <Stack gap="sm" mb="xs">
       <Group justify="space-between" align="flex-end" gap="md" wrap="wrap">
         <Box>
-          <Group gap={8} mb={4}>
-            <Badge
-              radius="sm"
-              variant="light"
-              color="blue"
-              leftSection={<IconClockPlay size={12} />}
-              styles={{
-                root: {
-                  textTransform: "uppercase",
-                  letterSpacing: "0.06em",
-                  fontWeight: 800,
-                },
-              }}
-            >
-              Timeline
-            </Badge>
-            <Badge
-              radius="xl"
-              variant="filled"
-              styles={{
-                root: {
-                  background:
-                    "linear-gradient(135deg, #143E6E 0%, #0F6B99 100%)",
-                  fontWeight: 800,
-                  letterSpacing: "0.03em",
-                },
-              }}
-            >
-              {currentLabel}
-            </Badge>
-          </Group>
           <Text fz="18px" fw={700} c="#101828">
-            Scrub distribution data by year
+            Explore distribution data by year
           </Text>
           <Text fz="13px" c="#667085">
-            Move year by year or play the timeline to see distribution growth over time.
+            Step through each year or play the timeline to follow distribution growth over time.
           </Text>
         </Box>
 
@@ -129,7 +96,7 @@ export default function TimelineSliderControls({
 
           <Tooltip label={isPlaying ? "Pause timeline" : "Play timeline"} withArrow>
             <ActionIcon
-              color={isPlaying ? "red" : "#053766"}
+              color={isPlaying ? "#e3393e" : "#053766"}
               variant="filled"
               radius="xl"
               size="lg"
