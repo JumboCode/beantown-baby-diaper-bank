@@ -13,6 +13,7 @@ import {
 import Image from "next/image";
 import { Poppins } from "next/font/google";
 import AddNewAdminForm from "@/components/admin/AddNewAdminForm";
+import EditAdminPasswordForm from "@/components/admin/EditAdminPasswordForm";
 import { useEffect, useState } from "react";
 
 const poppins = Poppins({
@@ -66,6 +67,9 @@ export default function AdminControlsPage() {
       <Table.Td>{element.email}</Table.Td>
       <Table.Td>{element.level}</Table.Td>
       <Table.Td>
+        <EditAdminPasswordForm admin={element} />
+      </Table.Td>
+      <Table.Td>
         {/* Delete button with requested SVG */}
         <ActionIcon variant="subtle" color="red">
           <Image
@@ -96,6 +100,7 @@ export default function AdminControlsPage() {
                 <Table.Th>Name</Table.Th>
                 <Table.Th>Email</Table.Th>
                 <Table.Th>Access Level</Table.Th>
+                <Table.Th>Edit Password</Table.Th>
                 <Table.Th>Delete</Table.Th>
               </Table.Tr>
             </Table.Thead>
