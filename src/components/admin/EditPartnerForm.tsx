@@ -1,835 +1,297 @@
+import { useState, useEffect, useMemo } from "react";
+import { DateValue, MonthPickerInput } from "@mantine/dates";
+import { useDisclosure } from "@mantine/hooks";
 import {
+  Modal,
   Button,
-  Group,
-  TextInput,
   Text,
-  Textarea,
-  NumberInput,
   Radio,
-  FileInput,
-  Select,
+  Group,
+  Table,
   Stack,
-  LoadingOverlay,
-  Box,
-  Tabs,
-  SimpleGrid,
+  Loader,
+  Center,
+  Title,
 } from "@mantine/core";
-import { useForm } from "@mantine/form";
-import { MonthPickerInput } from "@mantine/dates";
-import { Partner } from "./PartnerTable";
-import { useEffect, useState } from "react";
-import { status } from "@/generated/prisma/enums";
-import OneTimeUpdateForm from "./OneTimeUpdateForm";
-import ContinuousUpdateForm from "./ContinuousUpdateForm";
-import type { CityPercentage } from "./CityPercentagesForm";
-import "@mantine/dates/styles.css";
-import { RiCalendarEventLine, RiLineChartLine } from "react-icons/ri";
-import { fetchCoordsFromAddress } from "@/lib/server/util";
+import { ConfirmDeletion } from "./ConfirmDeleteDistModal";
+import { Distribution } from "@/lib/types";
 
-interface EditPartnerFormProps {
-  partner: Partner;
-  onClose: () => void;
+export interface MonthSelectionData {
+  mode: "one_month" | "range";
+  start: { month: number; year: number };
+  end: { month: number; year: number } | null;
 }
 
-const countries = ["United States", "Canada"];
-const DEFAULT_COUNTRY = "United States";
+interface MonthSelectionModalProps {
+  onSuccess?: () => void;
+}
 
-const US_STATES = [
-  "AL",
-  "AK",
-  "AZ",
-  "AR",
-  "CA",
-  "CO",
-  "CT",
-  "DE",
-  "FL",
-  "GA",
-  "HI",
-  "ID",
-  "IL",
-  "IN",
-  "IA",
-  "KS",
-  "KY",
-  "LA",
-  "ME",
-  "MD",
-  "MA",
-  "MI",
-  "MN",
-  "MS",
-  "MO",
-  "MT",
-  "NE",
-  "NV",
-  "NH",
-  "NJ",
-  "NM",
-  "NY",
-  "NC",
-  "ND",
-  "OH",
-  "OK",
-  "OR",
-  "PA",
-  "RI",
-  "SC",
-  "SD",
-  "TN",
-  "TX",
-  "UT",
-  "VT",
-  "VA",
-  "WA",
-  "WV",
-  "WI",
-  "WY",
+const MONTH_NAMES = [
+  "January",
+  "February",
+  "March",
+  "April",
+  "May",
+  "June",
+  "July",
+  "August",
+  "September",
+  "October",
+  "November",
+  "December",
 ];
 
-type AddressFields = {
-  addressLine: string;
-  city: string;
-  state: string;
-  zipCode: string;
-  country: string;
+// Helper for sorting months chronologically
+const MONTH_ORDER: Record<string, number> = {
+  January: 1,
+  February: 2,
+  March: 3,
+  April: 4,
+  May: 5,
+  June: 6,
+  July: 7,
+  August: 8,
+  September: 9,
+  October: 10,
+  November: 11,
+  December: 12,
 };
 
-const parseAddressFields = (address: string | null): AddressFields => {
-  const defaults: AddressFields = {
-    addressLine: "",
-    city: "",
-    state: "",
-    zipCode: "",
-    country: DEFAULT_COUNTRY,
-  };
-  if (!address) return defaults;
+export default function DeleteDistributionDataButton({
+  onSuccess,
+}: MonthSelectionModalProps) {
+  const [opened, { open, close }] = useDisclosure(false);
+  const [numMonths, setNumMonths] = useState<string | null>("one_month");
+  const [monthsRange, setMonthsRange] = useState<
+    [DateValue | null, DateValue | null]
+  >([null, null]);
+  const [loadingDistributions, setLoadingDistributions] = useState(false);
+  const [oneMonth, setOneMonth] = useState<Date | null>(null);
+  const [previewData, setPreviewData] = useState<Distribution[]>([]);
+  const [isPreviewMode, setIsPreviewMode] = useState(false);
 
-  const parts = address
-    .split(",")
-    .map((p) => p.trim())
-    .filter(Boolean);
-  return {
-    addressLine: parts[0] || "",
-    city: parts[1] || "",
-    state: parts[2] || "",
-    zipCode: parts[3] || "",
-    country: parts[4] || DEFAULT_COUNTRY,
-  };
-};
+  // FIX 2: Sorting logic for the preview table
+  const sortedPreviewData = useMemo(() => {
+    return [...previewData].sort((a, b) => {
+      // 1. Sort by Organization (Partner) Name
+      const nameA = a.partner?.name || "";
+      const nameB = b.partner?.name || "";
+      const nameCompare = nameA.localeCompare(nameB);
+      if (nameCompare !== 0) return nameCompare;
 
-const buildAddressString = ({
-  addressLine,
-  city,
-  state,
-  zipCode,
-  country,
-}: AddressFields) =>
-  [addressLine, city, state, zipCode, country || DEFAULT_COUNTRY]
-    .filter((part) => Boolean(part))
-    .join(", ");
+      // 2. Sort by Year
+      if (a.year !== b.year) {
+        return Number(a.year) - Number(b.year);
+      }
 
-const requiredNumber = (label: string) => (value: unknown) => {
-  const v = (value === 0 ? "0" : (value ?? "")).toString().trim();
-  if (v === "") return `${label} is required`;
-  return /^-?\d+(\.\d+)?$/.test(v) ? null : `${label} must be a number`;
-};
+      // 3. Sort by Month
+      return (MONTH_ORDER[a.month] || 0) - (MONTH_ORDER[b.month] || 0);
+    });
+  }, [previewData]);
 
-const requiredInteger = (label: string) => (value: unknown) => {
-  const v = (value === 0 ? "0" : (value ?? "")).toString().trim();
-  if (v === "") return `${label} is required`;
-  return /^\d+$/.test(v) ? null : `${label} must be a number`;
-};
+  async function fetchPreviewMonthSelection(selection: MonthSelectionData) {
+    setLoadingDistributions(true);
+    const { mode, start, end } = selection;
+    let url = "";
 
-const requiredInput = (label: string) => (value: unknown) => {
-  const v = (value === 0 ? "0" : (value ?? "")).toString().trim();
-  if (v === "") return `${label} is required`;
-  return /.+/.test(v) ? null : `${label} must be filled out`;
-};
-
-type UpdatePercentagesOptions = "one-time" | "continuous";
-
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
-const parseMonthDateForPicker = (rawDate: string | null | undefined): Date | null => {
-=======
-
-const parseMonthDateForPicker = (
-  rawDate: string | null | undefined,
-): Date | null => {
->>>>>>> 61053fdb2145dc7a616d1e1160299d4ad1a719ca
-  if (!rawDate) return null;
-  const monthMatch = rawDate.match(/^(\d{4})-(\d{2})/);
-  if (!monthMatch) {
-    const parsed = new Date(rawDate);
-    return Number.isNaN(parsed.getTime()) ? null : parsed;
-  }
-
-  const year = Number(monthMatch[1]);
-  const monthIndex = Number(monthMatch[2]) - 1;
-  return new Date(Date.UTC(year, monthIndex, 1, 12));
-};
-
-const formatMonthDateForApi = (date: Date | string | null): string | null => {
-  if (!date) return null;
-
-  if (typeof date === "string") {
-    const monthMatch = date.match(/^(\d{4})-(\d{2})/);
-    if (monthMatch) {
-      return `${monthMatch[1]}-${monthMatch[2]}-01`;
+    if (mode === "one_month") {
+      const monthName = MONTH_NAMES[start.month];
+      url = `/api/distributions/preview-delete?month=${monthName}&year=${start.year}`;
+    } else if (mode === "range" && end) {
+      const startMonthName = MONTH_NAMES[start.month];
+      const endMonthName = MONTH_NAMES[end.month];
+      url = `/api/distributions/preview-delete?mode=range&startMonth=${startMonthName}&startYear=${start.year}&endMonth=${endMonthName}&endYear=${end.year}`;
     }
-  }
 
-  const parsed = date instanceof Date ? date : new Date(date);
-  if (Number.isNaN(parsed.getTime())) return null;
-
-  const year = parsed.getUTCFullYear();
-  const month = String(parsed.getUTCMonth() + 1).padStart(2, "0");
-  return `${year}-${month}-01`;
-};
-
->>>>>>> 64f60fec961c236a5a7b032abae5565eb4d78132
-export default function EditPartnerForm({
-  partner,
-  onClose,
-}: EditPartnerFormProps) {
-  const [loading, setLoading] = useState(false);
-  const [initialLogoUrl] = useState<string>(partner.logo_url || "");
-  const [activePercentTab, setActivePercentTab] =
-    useState<UpdatePercentagesOptions>("one-time");
-  const [cityPercentages, setCityPercentages] = useState<
-    {
-      city: { id: number; name: string };
-      percentage: number;
-    }[]
-  >([]);
-
-  useEffect(() => {
-    fetch(`/api/partners/percentages?partnerId=${partner.id}`)
-      .then((res) => res.json())
-      .then((data) => {
-        setCityPercentages(data.data);
-      })
-      .catch((error) => {
-        console.error("Error fetching partner percentages:", error);
-      });
-  }, [partner.id]);
-
-  const initialCityPercentEntries: CityPercentage[] =
-    cityPercentages.length > 0
-      ? cityPercentages.map((entry, idx) => ({
-        id: `${entry.city.name}-${idx}`,
-        city: entry.city.name,
-        percent: Math.round((entry.percentage ?? 0) * 100),
-      }))
-      : [];
-
-  const addressFields = parseAddressFields(partner.address);
-
-  const form = useForm({
-    mode: "controlled",
-    validateInputOnChange: true,
-    validateInputOnBlur: true,
-    initialValues: {
-      organization: partner.name,
-      description: partner.description || "",
-<<<<<<< HEAD
-      time: partner.start_partner ? new Date(partner.start_partner) : null,
-      endTime: partner.end_partner ? new Date(partner.end_partner) : null,
-=======
-      time: parseMonthDateForPicker(partner.start_partner),
-      endTime: parseMonthDateForPicker(partner.end_partner),
->>>>>>> 64f60fec961c236a5a7b032abae5565eb4d78132
-      status: partner.status,
-      latitude: partner.coords ? String(partner.coords.lat) : "",
-      longitude: partner.coords ? String(partner.coords.lng) : "",
-      addressLine: addressFields.addressLine,
-      city: addressFields.city,
-      state: addressFields.state,
-      zipCode: addressFields.zipCode,
-      country: addressFields.country,
-      logoFile: null as File | null,
-      logoUrl: partner.logo_url || "",
-      updatePercentagesType: "one-time" as UpdatePercentagesOptions,
-    },
-    validate: {
-      organization: requiredInput("Name of Organization"),
-      time: (value, values) =>
-        values.status === "waitlisted" || value ? null : "Select a start time",
-      endTime: (value, values) =>
-        values.status === "inactive" && !value ? "Select an end time" : null,
-      latitude: requiredNumber("Latitude"),
-      longitude: requiredNumber("Longitude"),
-      state: (value) => (value ? null : "Select a state"),
-      city: requiredInput("City"),
-      addressLine: requiredInput("Address Line"),
-      zipCode: requiredInteger("Zip Code"),
-      country: (value) => (value ? null : "Select a country"),
-      status: (value) => (value ? null : "Select a status"),
-      description: requiredInput("Description"),
-      logoUrl: (value, values) => {
-        if (!value.trim() && !values.logoFile) return null;
-        return typeof value === "string" ? null : "Enter a valid URL";
-      },
-    },
-  });
-
-  useEffect(() => {
-    const { addressLine, city, state, zipCode, country } = form.values;
-    if (!addressLine || !city || !state || !zipCode) return;
-
-    const fullAddress = buildAddressString({
-      addressLine,
-      city,
-      state,
-      zipCode,
-      country,
-    });
-
-    fetchCoordsFromAddress(fullAddress).then((location) => {
-      if (!location) return;
-      form.setFieldValue("latitude", String(location.lat));
-      form.setFieldValue("longitude", String(location.lng));
-    });
-  }, [
-    form.values.addressLine,
-    form.values.city,
-    form.values.state,
-    form.values.zipCode,
-    form.values.country,
-  ]);
-
-  async function submitEditPartner(values: typeof form.values) {
-    setLoading(true);
-
-<<<<<<< HEAD
-    const formatDate = (date: Date | null) => {
-      if (!date) return null;
-      const d = new Date(date);
-      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-01`;
-    };
-
-=======
->>>>>>> 64f60fec961c236a5a7b032abae5565eb4d78132
-    const formData = {
-      id: partner.id,
-      name: values.organization,
-      description: values.description,
-<<<<<<< HEAD
-      // Clear start date if waitlisted
-<<<<<<< HEAD
-      start_partner: values.status !== "waitlisted" ? formatDate(values.time) : null,
-      // Include end date only for inactive status
-      end_partner: values.status === "inactive" ? formatDate(values.endTime) : null,
-=======
-=======
->>>>>>> 61053fdb2145dc7a616d1e1160299d4ad1a719ca
-      start_partner:
-        values.status !== "waitlisted"
-          ? formatMonthDateForApi(values.time)
-          : null,
-      end_partner:
-<<<<<<< HEAD
-        values.status === "inactive" ? formatMonthDateForApi(values.endTime) : null,
->>>>>>> 64f60fec961c236a5a7b032abae5565eb4d78132
-=======
-        values.status === "inactive"
-          ? formatMonthDateForApi(values.endTime)
-          : null,
->>>>>>> 61053fdb2145dc7a616d1e1160299d4ad1a719ca
-      status: values.status,
-      coordinates: {
-        lat: Number(values.latitude),
-        lng: Number(values.longitude),
-      },
-      address: buildAddressString(values),
-      logo: values.logoUrl,
-    };
-
-    const logoAction = values.logoFile
-      ? "replace"
-      : initialLogoUrl && values.logoUrl.trim() === ""
-        ? "remove"
-        : "keep";
-
-<<<<<<< HEAD
-    const response = await fetch("/api/partners", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(formData),
-    });
-
-    if (!response.ok) {
-      console.error("Failed to update partner data");
-=======
     try {
-      const requestBody = new FormData();
-      requestBody.append("partner", JSON.stringify(formData));
-      requestBody.append("logoAction", logoAction);
-      if (values.logoFile) {
-        requestBody.append("file", values.logoFile);
+      const response = await fetch(url);
+      if (response.ok) {
+        const data = await response.json();
+        setPreviewData(data);
+        setIsPreviewMode(true);
       }
-
-      const response = await fetch("/api/partners", {
-        method: "POST",
-        body: requestBody,
-      });
-
-      if (!response.ok) {
-        const err = await response.json();
-        form.setFieldError("logoFile", err.error);
-        return;
-      }
-
-      if (typeof window !== "undefined") {
-        window.dispatchEvent(new Event("partners:refresh"));
-      }
-      onClose();
+    } catch (error) {
+      console.error("Error fetching preview data:", error);
     } finally {
->>>>>>> 64f60fec961c236a5a7b032abae5565eb4d78132
-      setLoading(false);
+      setLoadingDistributions(false);
     }
   }
+
+  const deletePreviewedDistributions = async () => {
+    try {
+      const idsToDelete = previewData.map((d) => d.id);
+      const response = await fetch("/api/distributions/delete-records", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ids: idsToDelete }),
+      });
+
+      if (response.ok) {
+        setIsPreviewMode(false);
+        setPreviewData([]);
+        close();
+        onSuccess?.();
+      }
+    } catch (error) {
+      console.error("Deletion failed", error);
+    }
+  };
+
+  const handlePreviewClick = () => {
+    if (numMonths === "one_month" && oneMonth) {
+      fetchPreviewMonthSelection({
+        mode: "one_month",
+        start: { month: oneMonth.getMonth(), year: oneMonth.getFullYear() },
+        end: null,
+      });
+    } else if (numMonths === "range" && monthsRange[0] && monthsRange[1]) {
+      fetchPreviewMonthSelection({
+        mode: "range",
+        start: {
+          month: monthsRange[0].getMonth(),
+          year: monthsRange[0].getFullYear(),
+        },
+        end: {
+          month: monthsRange[1].getMonth(),
+          year: monthsRange[1].getFullYear(),
+        },
+      });
+    }
+  };
 
   return (
-    <Box pos="relative">
-      <LoadingOverlay
-        visible={loading}
-        zIndex={1000}
-        overlayProps={{ radius: "sm", blur: 2 }}
-      />
-
-      <div className="mx-8">
-        <h2 className="text-lg text-gray-500" style={{ marginBottom: "24px" }}>
-          Change your partner data
-        </h2>
-        <form
-          onSubmit={form.onSubmit(submitEditPartner)}
-          className="flex flex-col gap-5"
-        >
-          <Group justify="space-between" align="flex-start">
-            <Text fw={600} c="#344054">
-              Name of Organization <span className="text-red-600">*</span>
-            </Text>
-            <TextInput
-              placeholder="Name"
-              {...form.getInputProps("organization")}
-              size="md"
-              className="min-w-170"
-              radius="md"
-            />
-          </Group>
-
-          <Group justify="space-between" align="flex-start">
-            <Text fw={600} c="#344054">
-              Description <span className="text-red-600">*</span>
-            </Text>
-            <Textarea
-              {...form.getInputProps("description")}
-              size="md"
-              className="min-w-170"
-              radius="md"
-              autosize
-              maxRows={6}
-            />
-          </Group>
-
-          <Group justify="space-between" align="flex-start" w="100%">
-            <Text fw={600} c="#344054" className="w-40">
-              Status <span className="text-red-600">*</span>
-            </Text>
-
-            <Radio.Group
-              value={form.values.status}
-              onChange={(val) => form.setFieldValue("status", val as status)}
-              className="min-w-170 w-full max-w-[600px]"
-            >
-              <Group gap="md" grow>
-                {[
-                  {
-                    value: "active",
-                    title: "Active",
-                    description: "Currently active",
-                  },
-                  {
-                    value: "inactive",
-                    title: "Inactive",
-                    description: "No longer active",
-                  },
-                  {
-                    value: "waitlisted",
-                    title: "Waitlisted",
-                    description: "On the waitlist",
-                  },
-                ].map((option) => (
-                  <Radio.Card
-                    key={option.value}
-                    value={option.value}
-                    radius="md"
-                    p="md"
-                    className="border border-gray-200 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md data-[checked=true]:border-[#053766] data-[checked=true]:bg-blue-50 h-full"
-                  >
-                    <Group wrap="nowrap" align="flex-start" gap="sm">
-                      <Radio.Indicator />
-                      <Stack gap={4}>
-                        <Text fw={700}>{option.title}</Text>
-                        <Text size="xs" c="dimmed">
-                          {option.description}
-                        </Text>
-                      </Stack>
-                    </Group>
-                  </Radio.Card>
-                ))}
-              </Group>
-              {form.errors.status && (
-                <Text c="red" size="sm" mt="xs">
-                  {form.errors.status}
-                </Text>
-              )}
-            </Radio.Group>
-          </Group>
-
-          {form.values.status !== "waitlisted" && (
-            <Group justify="space-between" align="flex-start">
-              <Text fw={600} c="#344054">
-                Time it started <span className="text-red-600">*</span>
-              </Text>
-              <MonthPickerInput
-                placeholder="Pick date"
-                {...form.getInputProps("time")}
-                required
-                className="min-w-170 w-full max-w-[600px]"
-              />
+    <>
+      <Modal
+        opened={opened}
+        onClose={() => {
+          setIsPreviewMode(false);
+          setPreviewData([]);
+          close();
+        }}
+        title={<Title order={3}>Delete Records</Title>}
+        size="70%"
+        centered
+      >
+        <Stack gap="md">
+          <Radio.Group
+            value={numMonths}
+            onChange={(val) => {
+              setNumMonths(val);
+              setIsPreviewMode(false);
+              setPreviewData([]);
+            }}
+            label="Select deletion type"
+          >
+            <Group mt="xs">
+              <Radio value="one_month" label="One Month" color="#053766" />
+              <Radio value="range" label="Range of Months" color="#053766" />
             </Group>
-          )}
+          </Radio.Group>
 
-          {form.values.status === "inactive" && (
-            <Group justify="space-between" align="flex-start">
-              <Text fw={600} c="#344054">
-                Time it ended <span className="text-red-600">*</span>
-              </Text>
-              <MonthPickerInput
-                placeholder="Pick end date"
-                {...form.getInputProps("endTime")}
-                required
-                className="min-w-170 w-full max-w-[600px]"
-              />
-            </Group>
-          )}
-
-          <Group justify="space-between" align="flex-start" w="100%">
-            <Text fw={600} c="#344054">
-              Address <span className="text-red-600">*</span>
-            </Text>
-            <Stack className="min-w-170 w-full max-w-[600px]">
-              <TextInput
-                placeholder="Address Line"
-                {...form.getInputProps("addressLine")}
-                size="md"
-                radius="md"
-              />
-              <SimpleGrid cols={2}>
-                <TextInput
-                  placeholder="City"
-                  {...form.getInputProps("city")}
-                  size="md"
-                  radius="md"
-                />
-                <Select
-                  placeholder="State"
-                  data={US_STATES}
-                  searchable
-                  value={form.values.state || null}
-                  onChange={(val) => form.setFieldValue("state", val || "")}
-                  error={form.errors.state}
-                  size="md"
-                  radius="md"
-                />
-                <TextInput
-                  placeholder="Zip Code"
-                  {...form.getInputProps("zipCode")}
-                  size="md"
-                  radius="md"
-                />
-                <Select
-                  placeholder="Country"
-                  data={countries}
-                  value={form.values.country || null}
-                  onChange={(val) => form.setFieldValue("country", val || "")}
-                  error={form.errors.country}
-                  size="md"
-                  radius="md"
-                />
-              </SimpleGrid>
-            </Stack>
-          </Group>
-
-          <Group justify="space-between" align="flex-start">
-            <Text fw={600} c="#344054">
-              Coords <span className="text-red-600">*</span>
-            </Text>
-            <div className="gap-4 flex">
-              <NumberInput
-                placeholder="Latitude"
-                {...form.getInputProps("latitude")}
-                size="md"
-                className="min-w-83"
-                radius="md"
-                hideControls
-              />
-              <NumberInput
-                placeholder="Longitude"
-                {...form.getInputProps("longitude")}
-                size="md"
-                className="min-w-83"
-                radius="md"
-                hideControls
-              />
-            </div>
-          </Group>
-
-          <Group justify="space-between" align="flex-start">
-            <Text c="#344054" fw={600}>
-              Logo file or link
-            </Text>
-            <div className="gap-4 flex">
-<<<<<<< HEAD
-              <FileInput accept="image/png,image/jpeg" placeholder="Upload file" radius="md" clearable onChange={(f) => form.setFieldValue("logoFile", f)} className="min-w-83" />
-              <TextInput placeholder="Logo URL" {...form.getInputProps("logoUrl")} radius="md" className="min-w-83" />
-=======
-              <FileInput
-                accept="image/png,image/jpeg"
-                placeholder="Upload image file"
-                radius="md"
-                clearable
-                onChange={(file) => {
-                  form.setFieldValue("logoFile", file);
-                  if (!file) {
-                    form.setFieldValue("logoUrl", "");
-                    form.clearFieldError("logoFile");
-                  }
-                }}
-                error={form.errors.logoFile || form.errors.logoUrl}
-                className="min-w-83"
-              />
-              <TextInput
-                placeholder="Logo URL"
-                key={form.key("logoUrl")}
-                {...form.getInputProps("logoUrl")}
-                radius="md"
-                className="min-w-83"
-              />
->>>>>>> 64f60fec961c236a5a7b032abae5565eb4d78132
-            </div>
-          </Group>
-
-          {form.values.status !== "waitlisted" && (
-            <Group justify="space-between" align="flex-start">
-<<<<<<< HEAD
-              <Text fw={600} c="#344054">City Distribution Percentages</Text>
-<<<<<<< HEAD
-              <Tabs
-                value={activePercentTab}
-                onChange={(v) => { if (v) setActivePercentTab(v as UpdatePercentagesOptions); }}
-                className="min-w-170 w-full max-w-[600px]"
-              >
-                <Tabs.List grow mb="xl">
-                  <Tabs.Tab value="one-time">One-Time Update</Tabs.Tab>
-                  <Tabs.Tab value="continuous">Continuous Update</Tabs.Tab>
-                </Tabs.List>
-                <Tabs.Panel value="one-time"><OneTimeUpdateForm initialCityPercentages={initialCityPercentEntries} /></Tabs.Panel>
-                <Tabs.Panel value="continuous"><ContinuousUpdateForm initialCityPercentages={initialCityPercentEntries} /></Tabs.Panel>
-              </Tabs>
-=======
-                         <Tabs
-              value={activePercentTab}
+          {numMonths === "one_month" ? (
+            <MonthPickerInput
+              label="Select Month"
+              placeholder="Pick a month"
+              value={oneMonth}
               onChange={(val) => {
-                if (!val) return;
-                setActivePercentTab(val as UpdatePercentagesOptions);
-                form.setFieldValue(
-                  "updatePercentagesType",
-                  val as UpdatePercentagesOptions,
-                );
+                setOneMonth(val);
+                setIsPreviewMode(false);
               }}
-              className="min-w-170 w-full max-w-[600px]"
-            >
-              <Tabs.List grow mb="xl">
-                {[
-                  {
-                    value: "one-time",
-                    title: "One-Time Update",
-                    description: "Update a specific month only",
-                    icon: <RiCalendarEventLine size={22} />,
-                  },
-                  {
-                    value: "continuous",
-                    title: "Continuous Update",
-                    description: "Apply to all future distributions",
-                    icon: <RiLineChartLine size={22} />,
-                  },
-                ].map((option) => (
-                  <Tabs.Tab
-                    key={option.value}
-                    value={option.value}
-                    className="px-0"
-                  >
-                    {(() => {
-                      const isActive = activePercentTab === option.value;
-                      return (
-                        <div
-                          className={`rounded-xl shadow-sm transition hover:-translate-y-0.5 hover:shadow-md h-full border ${
-                            isActive
-                              ? "border-[#1D3A8A] bg-[#EEF2FF]"
-                              : "border-gray-300 bg-white"
-                          }`}
-                          style={{ borderWidth: isActive ? 2 : 1 }}
-                        >
-                          <Stack gap="xs" align="center" p="md">
-                            <div
-                              className={`${
-                                isActive ? "text-[#1D3A8A]" : "text-gray-500"
-                              } opacity-80`}
-                            >
-                              {option.icon}
-                            </div>
-                            <Text
-                              fw={700}
-                              size="md"
-                              className={isActive ? "text-[#1D3A8A]" : ""}
-                            >
-                              {option.title}
-                            </Text>
-                            <Text
-                              size="sm"
-                              c={isActive ? "gray.6" : "dimmed"}
-                              ta="center"
-                            >
-                              {option.description}
-                            </Text>
-                          </Stack>
-                        </div>
-                      );
-                    })()}
-                  </Tabs.Tab>
-                ))}
-              </Tabs.List>
-              <Tabs.Panel value="one-time">
-                <OneTimeUpdateForm
-                  initialCityPercentages={initialCityPercentEntries}
-                />
-              </Tabs.Panel>
-              <Tabs.Panel value="continuous">
-                <ContinuousUpdateForm
-                  initialCityPercentages={initialCityPercentEntries}
-                />
-              </Tabs.Panel>
-            </Tabs>
->>>>>>> 64f60fec961c236a5a7b032abae5565eb4d78132
-=======
-              <Text fw={600} c="#344054">
-                City Distribution Percentages
-              </Text>
-              <Tabs
-                value={activePercentTab}
-                onChange={(val) => {
-                  if (!val) return;
-                  setActivePercentTab(val as UpdatePercentagesOptions);
-                  form.setFieldValue(
-                    "updatePercentagesType",
-                    val as UpdatePercentagesOptions,
-                  );
-                }}
-                className="min-w-170 w-full max-w-[600px]"
-              >
-                <Tabs.List grow mb="xl">
-                  {[
-                    {
-                      value: "one-time",
-                      title: "One-Time Update",
-                      description: "Update a specific month only",
-                      icon: <RiCalendarEventLine size={22} />,
-                    },
-                    {
-                      value: "continuous",
-                      title: "Continuous Update",
-                      description: "Apply to all future distributions",
-                      icon: <RiLineChartLine size={22} />,
-                    },
-                  ].map((option) => (
-                    <Tabs.Tab
-                      key={option.value}
-                      value={option.value}
-                      className="px-0"
-                    >
-                      {(() => {
-                        const isActive = activePercentTab === option.value;
-                        return (
-                          <div
-                            className={`rounded-xl shadow-sm transition hover:-translate-y-0.5 hover:shadow-md h-full border ${isActive
-                              ? "border-[#1D3A8A] bg-[#EEF2FF]"
-                              : "border-gray-300 bg-white"
-                              }`}
-                            style={{ borderWidth: isActive ? 2 : 1 }}
-                          >
-                            <Stack gap="xs" align="center" p="md">
-                              <div
-                                className={`${isActive ? "text-[#1D3A8A]" : "text-gray-500"
-                                  } opacity-80`}
-                              >
-                                {option.icon}
-                              </div>
-                              <Text
-                                fw={700}
-                                size="md"
-                                className={isActive ? "text-[#1D3A8A]" : ""}
-                              >
-                                {option.title}
-                              </Text>
-                              <Text
-                                size="sm"
-                                c={isActive ? "gray.6" : "dimmed"}
-                                ta="center"
-                              >
-                                {option.description}
-                              </Text>
-                            </Stack>
-                          </div>
-                        );
-                      })()}
-                    </Tabs.Tab>
-                  ))}
-                </Tabs.List>
-                <Tabs.Panel value="one-time">
-                  <OneTimeUpdateForm
-                    initialCityPercentages={initialCityPercentEntries}
-                  />
-                </Tabs.Panel>
-                <Tabs.Panel value="continuous">
-                  <ContinuousUpdateForm
-                    initialCityPercentages={initialCityPercentEntries}
-                  />
-                </Tabs.Panel>
-              </Tabs>
->>>>>>> 61053fdb2145dc7a616d1e1160299d4ad1a719ca
-            </Group>
+              clearable
+              // FIX 1: shouldDisableDate removed to allow all dates
+            />
+          ) : (
+            <MonthPickerInput
+              type="range"
+              label="Select Range"
+              placeholder="Pick a range"
+              value={monthsRange}
+              onChange={(val) => {
+                setMonthsRange(val);
+                setIsPreviewMode(false);
+              }}
+              clearable
+              // FIX 1: shouldDisableDate removed to allow all dates
+            />
           )}
 
-          <Group justify="flex-end" mt="md">
-            <Button
-              variant="outline"
-              color="#053766"
-              radius="md"
-              onClick={onClose}
-            >
-              Cancel
-            </Button>
-            <Button variant="filled" color="#053766" radius="md" type="submit">
-              Submit
-            </Button>
-          </Group>
-        </form>
-      </div>
-    </Box>
+          <Button
+            onClick={handlePreviewClick}
+            disabled={
+              numMonths === "one_month"
+                ? !oneMonth
+                : !monthsRange[0] || !monthsRange[1]
+            }
+            color="#053766"
+          >
+            Show Preview
+          </Button>
+
+          {loadingDistributions ? (
+            <Center py="xl">
+              <Loader color="#053766" />
+            </Center>
+          ) : isPreviewMode ? (
+            <Stack>
+              <Title order={4}>Preview</Title>
+              {previewData.length > 0 ? (
+                <>
+                  <div
+                    style={{
+                      maxHeight: "300px",
+                      overflowY: "auto",
+                      border: "1px solid #eee",
+                      borderRadius: "8px",
+                    }}
+                  >
+                    <Table stickyHeader verticalSpacing="sm">
+                      <Table.Thead>
+                        <Table.Tr>
+                          <Table.Th>Organization</Table.Th>
+                          <Table.Th>City</Table.Th>
+                          <Table.Th>Diapers</Table.Th>
+                          <Table.Th>Children</Table.Th>
+                          <Table.Th>Month</Table.Th>
+                          <Table.Th>Year</Table.Th>
+                        </Table.Tr>
+                      </Table.Thead>
+
+                      <Table.Tbody>
+                        {/* FIX 2: Using the sorted data array */}
+                        {sortedPreviewData.map((dist) => (
+                          <Table.Tr
+                            key={`${dist.id}-${dist.month}-${dist.year}-${dist.createdAt}`}
+                          >
+                            <Table.Td>{dist.partner?.name}</Table.Td>
+                            <Table.Td>{dist.city?.name}</Table.Td>
+                            <Table.Td>{dist.numberDiapers}</Table.Td>
+                            <Table.Td>{dist.numberChildren}</Table.Td>
+                            <Table.Td>{dist.month}</Table.Td>
+                            <Table.Td>{dist.year}</Table.Td>
+                          </Table.Tr>
+                        ))}
+                      </Table.Tbody>
+                    </Table>
+                  </div>
+                  <ConfirmDeletion
+                    count={previewData.length}
+                    onConfirm={deletePreviewedDistributions}
+                  />
+                </>
+              ) : (
+                <Text c="dimmed">No records found for this selection.</Text>
+              )}
+            </Stack>
+          ) : (
+            <Text c="dimmed" size="sm">
+              Select a date range and click "Show Preview" to see records.
+            </Text>
+          )}
+        </Stack>
+      </Modal>
+      <Button variant="default" radius={5} onClick={open}>
+        Delete
+      </Button>
+    </>
   );
 }
