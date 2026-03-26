@@ -9,11 +9,13 @@ import {
   ActionIcon,
   Stack,
   Alert,
+  Button,
 } from "@mantine/core";
 import Image from "next/image";
 import { Poppins } from "next/font/google";
 import AddNewAdminForm from "@/components/admin/AddNewAdminForm";
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 
 const poppins = Poppins({
   subsets: ["latin"],
@@ -29,6 +31,8 @@ interface Admin {
 }
 
 export default function AdminControlsPage() {
+  const router = useRouter();
+
   const [adminList, setAdminList] = useState<Admin[]>([]);
 
   const [error, setError] = useState<string | null>(null);
@@ -83,9 +87,14 @@ export default function AdminControlsPage() {
     <Container size="xl" py="xl" className={poppins.className}>
       <Stack gap="lg">
         <Group justify="space-between">
-          <Title order={2} fw={700}>
+          <Group gap="sm">
+            <Button variant="subtle" onClick={() => router.back()}>
+              Back
+            </Button>
+            <Title order={2} fw={700}>
             Manage Admin
-          </Title>
+            </Title>
+          </Group>
           <AddNewAdminForm onAdminAdded={fetchAdmins} />
         </Group>
 
