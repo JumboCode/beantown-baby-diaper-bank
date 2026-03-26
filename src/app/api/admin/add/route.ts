@@ -46,3 +46,28 @@ export async function POST(request: Request) {
     );
   }
 }
+
+export async function DELETE(request: Request) {
+  try {
+    const { id } = await request.json();
+
+    if (!id) {
+      return NextResponse.json(
+        { message: "Missing required field: id" },
+        { status: 400 }
+      );
+    }
+
+    const client = await clerkClient();
+    
+    await client.users.deleteUser(id);
+
+    return NextResponse.json({ message: "Admin deleted successfully" });
+  } catch (err: any) {
+    console.error("Error deleting user:", err);
+    return NextResponse.json(
+      { message: "Error deleting admin", error: err?.message || "Unknown error" },
+      { status: 500 }
+    );
+  }
+}

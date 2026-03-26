@@ -56,6 +56,33 @@ export default function AdminControlsPage() {
     fetchAdmins();
   }, []);
 
+  const handleDelete = async (adminId: string) => {
+    const confirmed = window.confirm("Are you sure you want to delete this admin? This action cannot be undone.");
+
+    if (!confirmed) return;
+
+    try {
+      const response = await fetch("/api/admin/add", {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ id: adminId }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.message || "Failed to delete admin");
+      }
+
+      setAdminList((prevAdmins) => prevAdmins.filter((admin) => admin.id !== adminId));
+      
+    } catch (err: any) {
+      console.error(err);
+      alert(err.message || "An error occurred while trying to delete the admin.");
+    }
+  };
+
   if (error) {
     return (
       <Container size="xl" py="xl" className={poppins.className}>
@@ -71,7 +98,7 @@ export default function AdminControlsPage() {
       <Table.Td>{element.level}</Table.Td>
       <Table.Td>
         {/* Delete button with requested SVG */}
-        <ActionIcon variant="subtle" color="red">
+        <ActionIcon variant="subtle" color="red" onClick={() => handleDelete(element.id)}>
           <Image
             src="/admin_view/delete.svg"
             alt="delete icon"
