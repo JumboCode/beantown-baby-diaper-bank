@@ -14,19 +14,53 @@ const getCities = unstable_cache(
     year: string | null,
   ) => {
     if (month && !year) {
-      return NextResponse.json(
-        { error: "Year must be provided if month is provided." },
-        { status: 400 },
-      );
+      throw new Error("Year must be provided if month is provided.");
     }
 
-    /* build filters based on city name */
     const where: PrismaTypes.CityWhereInput = {};
     if (cityName) {
       where.name = {
         contains: cityName,
         mode: "insensitive",
       };
+    }
+
+    const statsQuery = await prisma.$queryRaw<
+      { city_id: bigint; median: number; p25: number; p75: number }[]
+    >`
+      SELECT 
+        "city_id",
+        COALESCE(percentile_cont(0.5) WITHIN GROUP (ORDER BY "num_diapers"), 0) as median,
+        COALESCE(percentile_cont(0.25) WITHIN GROUP (ORDER BY "num_diapers"), 0) as p25,
+        COALESCE(percentile_cont(0.75) WITHIN GROUP (ORDER BY "num_diapers"), 0) as p75
+      FROM "Yearly Data"
+      GROUP BY "city_id"
+    `;
+
+    const statsMap = new Map(
+      statsQuery.map((row) => [
+        Number(row.city_id),
+        {
+          median: Number(row.median),
+          p25: Number(row.p25),
+          p75: Number(row.p75),
+        },
+      ])
+    );
+
+    let cumulativeTotalsMap = new Map<number, number>();
+    if (year) {
+      const cumulativeQuery = await prisma.yearlyData.groupBy({
+        by: ["cityId"],
+        where: { year: { lte: year } },
+        _sum: { numDiapers: true },
+      });
+      cumulativeTotalsMap = new Map(
+        cumulativeQuery.map((row) => [
+          Number(row.cityId),
+          Number(row._sum.numDiapers || 0),
+        ])
+      );
     }
 
     if (year && !month) {
@@ -50,6 +84,8 @@ const getCities = unstable_cache(
       return cities.map((city) => ({
         id: Number(city.id),
         name: city.name,
+        historicalStats: statsMap.get(Number(city.id)) || null,
+        runningTotal: cumulativeTotalsMap.get(Number(city.id)) || 0,
         distributions: city.Yearly_Data.map((yd) => ({
           id: yd.id,
           year: yd.year,
@@ -64,6 +100,7 @@ const getCities = unstable_cache(
           name: partnerRegion.partner.name,
           logo_url: partnerRegion.partner.logoUrl,
           status: partnerRegion.partner.status,
+          startPartner: partnerRegion.partner.startPartner?.toISOString() || null,
         })),
       }));
     }
@@ -105,6 +142,8 @@ const getCities = unstable_cache(
     const dataToReturn = cities.map((city) => ({
       id: Number(city.id),
       name: city.name,
+      historicalStats: statsMap.get(Number(city.id)) || null,
+      runningTotal: cumulativeTotalsMap.get(Number(city.id)) || 0,
       distributions: city.distributions.map((distribution) => ({
         id: Number(distribution.id),
         year: distribution.year,
@@ -122,6 +161,7 @@ const getCities = unstable_cache(
         name: partnerRegion.partner.name,
         logo_url: partnerRegion.partner.logoUrl,
         status: partnerRegion.partner.status,
+        startPartner: partnerRegion.partner.startPartner?.toISOString() || null,
       })),
     }));
 

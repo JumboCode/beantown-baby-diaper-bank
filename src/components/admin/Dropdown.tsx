@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
+import { ChevronDown } from "lucide-react";
 
 type FetchState<T> =
   | { status: "idle"; data: null; error: null }
@@ -21,6 +22,7 @@ export type CollapsibleDropdownProps<T> = {
   titleClassName?: string;
   className?: string;
   defaultOpen?: boolean;
+  refreshKey?: number | string;
 };
 
 export function CollapsibleDropdown<T>({
@@ -36,6 +38,7 @@ export function CollapsibleDropdown<T>({
   titleClassName = "text-[18px] font-semibold",
   className = "",
   defaultOpen = false, //
+  refreshKey,
 }: CollapsibleDropdownProps<T>) {
   const [open, setOpen] = useState(defaultOpen);
   const [state, setState] = useState<FetchState<T>>({
@@ -89,33 +92,38 @@ export function CollapsibleDropdown<T>({
     }
   }, [open, fetchPolicy]);
 
+  useEffect(() => {
+    hasFetchedOnceRef.current = false;
+
+    if (open && fetchPolicy !== "never") {
+      void fetchData();
+    }
+  }, [refreshKey]);
+
   // styling of dropdown (open and closed)
   return (
     <div
       className={`w-full rounded-xl border border-gray-200 bg-white ${className}`}
     >
-      <div className="flex items-center justify-between gap-3 p-4">
+      <div className="flex items-center justify-between gap-3 p-3">
         <button
           type="button"
           onClick={() => setOpen((v) => !v)}
           className="flex flex-1 cursor-pointer select-none items-center gap-2 text-left"
           aria-expanded={open}
         >
-          <span
-            className={`inline-block transition-transform duration-150 ${
-              open ? "rotate-180" : "rotate-0"
-            }`}
+          <ChevronDown
+            size={18}
+            className={`shrink-0 transition-transform duration-150 ${open ? "rotate-180" : "rotate-0"}`}
             aria-hidden
-          >
-            ▼
-          </span>
+          />
           <div className={`${titleClassName} text-gray-900`}>{title}</div>
         </button>
         {right ? <div className="shrink-0">{right}</div> : null}
       </div>
 
       {open ? (
-        <div className="border-t border-gray-100 p-4">
+        <div className="border-t border-gray-100 p-3">
           {state.status === "loading" ? (
             <div className="text-sm text-gray-600">Loading...</div>
           ) : null}
@@ -134,17 +142,8 @@ export function CollapsibleDropdown<T>({
           ) : null}
 
           {state.status === "success" ? (
-            <div className="space-y-3">
+            <div className="space-y-2">
               {render(state.data)}
-              <div className="pt-2">
-                <button
-                  type="button"
-                  onClick={() => void fetchData()}
-                  className="rounded-md border border-gray-300 px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-50"
-                >
-                  Refresh
-                </button>
-              </div>
             </div>
           ) : null}
         </div>

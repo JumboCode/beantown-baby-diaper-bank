@@ -12,6 +12,7 @@ import {
   LoadingOverlay,
   Box,
   Tabs,
+  SimpleGrid,
 } from "@mantine/core";
 import { useForm } from "@mantine/form";
 import { MonthPickerInput } from "@mantine/dates";
@@ -23,6 +24,7 @@ import ContinuousUpdateForm from "./ContinuousUpdateForm";
 import type { CityPercentage } from "./CityPercentagesForm";
 import "@mantine/dates/styles.css";
 import { RiCalendarEventLine, RiLineChartLine } from "react-icons/ri";
+import { fetchCoordsFromAddress } from "@/lib/server/util";
 
 interface EditPartnerFormProps {
   partner: Partner;
@@ -31,6 +33,59 @@ interface EditPartnerFormProps {
 
 const countries = ["United States", "Canada"];
 const DEFAULT_COUNTRY = "United States";
+
+const US_STATES = [
+  "AL",
+  "AK",
+  "AZ",
+  "AR",
+  "CA",
+  "CO",
+  "CT",
+  "DE",
+  "FL",
+  "GA",
+  "HI",
+  "ID",
+  "IL",
+  "IN",
+  "IA",
+  "KS",
+  "KY",
+  "LA",
+  "ME",
+  "MD",
+  "MA",
+  "MI",
+  "MN",
+  "MS",
+  "MO",
+  "MT",
+  "NE",
+  "NV",
+  "NH",
+  "NJ",
+  "NM",
+  "NY",
+  "NC",
+  "ND",
+  "OH",
+  "OK",
+  "OR",
+  "PA",
+  "RI",
+  "SC",
+  "SD",
+  "TN",
+  "TX",
+  "UT",
+  "VT",
+  "VA",
+  "WA",
+  "WV",
+  "WI",
+  "WY",
+];
 
 type AddressFields = {
   addressLine: string;
@@ -92,17 +147,18 @@ const requiredInput = (label: string) => (value: unknown) => {
   return /.+/.test(v) ? null : `${label} must be filled out`;
 };
 
-const requiredState = (label: string) => (value: unknown) => {
-  const v = (value === 0 ? "0" : (value ?? "")).toString().trim();
-  if (v === "") return `${label} is required`;
-  return /.*\D.*/.test(v) ? null : `${label} must be filled out`;
-};
-
 type UpdatePercentagesOptions = "one-time" | "continuous";
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 const parseMonthDateForPicker = (rawDate: string | null | undefined): Date | null => {
+=======
+
+const parseMonthDateForPicker = (
+  rawDate: string | null | undefined,
+): Date | null => {
+>>>>>>> 61053fdb2145dc7a616d1e1160299d4ad1a719ca
   if (!rawDate) return null;
   const monthMatch = rawDate.match(/^(\d{4})-(\d{2})/);
   if (!monthMatch) {
@@ -142,7 +198,6 @@ export default function EditPartnerForm({
   const [initialLogoUrl] = useState<string>(partner.logo_url || "");
   const [activePercentTab, setActivePercentTab] =
     useState<UpdatePercentagesOptions>("one-time");
-
   const [cityPercentages, setCityPercentages] = useState<
     {
       city: { id: number; name: string };
@@ -164,10 +219,10 @@ export default function EditPartnerForm({
   const initialCityPercentEntries: CityPercentage[] =
     cityPercentages.length > 0
       ? cityPercentages.map((entry, idx) => ({
-          id: `${entry.city.name}-${idx}`,
-          city: entry.city.name,
-          percent: Math.round((entry.percentage ?? 0) * 100),
-        }))
+        id: `${entry.city.name}-${idx}`,
+        city: entry.city.name,
+        percent: Math.round((entry.percentage ?? 0) * 100),
+      }))
       : [];
 
   const addressFields = parseAddressFields(partner.address);
@@ -187,8 +242,8 @@ export default function EditPartnerForm({
       endTime: parseMonthDateForPicker(partner.end_partner),
 >>>>>>> 64f60fec961c236a5a7b032abae5565eb4d78132
       status: partner.status,
-      latitude: partner.coords ? partner.coords.lat : "",
-      longitude: partner.coords ? partner.coords.lng : "",
+      latitude: partner.coords ? String(partner.coords.lat) : "",
+      longitude: partner.coords ? String(partner.coords.lng) : "",
       addressLine: addressFields.addressLine,
       city: addressFields.city,
       state: addressFields.state,
@@ -200,15 +255,13 @@ export default function EditPartnerForm({
     },
     validate: {
       organization: requiredInput("Name of Organization"),
-      // Start date required unless waitlisted
-      time: (value, values) => 
-        (values.status === "waitlisted" || value ? null : "Select a start time"),
-      // End date required only if inactive
-      endTime: (value, values) => 
-        (values.status === "inactive" && !value ? "Select an end time" : null),
+      time: (value, values) =>
+        values.status === "waitlisted" || value ? null : "Select a start time",
+      endTime: (value, values) =>
+        values.status === "inactive" && !value ? "Select an end time" : null,
       latitude: requiredNumber("Latitude"),
       longitude: requiredNumber("Longitude"),
-      state: requiredState("State"),
+      state: (value) => (value ? null : "Select a state"),
       city: requiredInput("City"),
       addressLine: requiredInput("Address Line"),
       zipCode: requiredInteger("Zip Code"),
@@ -216,11 +269,36 @@ export default function EditPartnerForm({
       status: (value) => (value ? null : "Select a status"),
       description: requiredInput("Description"),
       logoUrl: (value, values) => {
-        if (!value.trim() && !values.logoFile) return;
+        if (!value.trim() && !values.logoFile) return null;
         return typeof value === "string" ? null : "Enter a valid URL";
       },
     },
   });
+
+  useEffect(() => {
+    const { addressLine, city, state, zipCode, country } = form.values;
+    if (!addressLine || !city || !state || !zipCode) return;
+
+    const fullAddress = buildAddressString({
+      addressLine,
+      city,
+      state,
+      zipCode,
+      country,
+    });
+
+    fetchCoordsFromAddress(fullAddress).then((location) => {
+      if (!location) return;
+      form.setFieldValue("latitude", String(location.lat));
+      form.setFieldValue("longitude", String(location.lng));
+    });
+  }, [
+    form.values.addressLine,
+    form.values.city,
+    form.values.state,
+    form.values.zipCode,
+    form.values.country,
+  ]);
 
   async function submitEditPartner(values: typeof form.values) {
     setLoading(true);
@@ -238,32 +316,37 @@ export default function EditPartnerForm({
       id: partner.id,
       name: values.organization,
       description: values.description,
+<<<<<<< HEAD
       // Clear start date if waitlisted
 <<<<<<< HEAD
       start_partner: values.status !== "waitlisted" ? formatDate(values.time) : null,
       // Include end date only for inactive status
       end_partner: values.status === "inactive" ? formatDate(values.endTime) : null,
 =======
+=======
+>>>>>>> 61053fdb2145dc7a616d1e1160299d4ad1a719ca
       start_partner:
-        values.status !== "waitlisted" ? formatMonthDateForApi(values.time) : null,
-      // Include end date only for inactive status
+        values.status !== "waitlisted"
+          ? formatMonthDateForApi(values.time)
+          : null,
       end_partner:
+<<<<<<< HEAD
         values.status === "inactive" ? formatMonthDateForApi(values.endTime) : null,
 >>>>>>> 64f60fec961c236a5a7b032abae5565eb4d78132
+=======
+        values.status === "inactive"
+          ? formatMonthDateForApi(values.endTime)
+          : null,
+>>>>>>> 61053fdb2145dc7a616d1e1160299d4ad1a719ca
       status: values.status,
       coordinates: {
-        lat: values.latitude,
-        lng: values.longitude,
+        lat: Number(values.latitude),
+        lng: Number(values.longitude),
       },
-      address: buildAddressString({
-        addressLine: values.addressLine,
-        city: values.city,
-        state: values.state,
-        zipCode: values.zipCode,
-        country: values.country,
-      }),
+      address: buildAddressString(values),
       logo: values.logoUrl,
     };
+
     const logoAction = values.logoFile
       ? "replace"
       : initialLogoUrl && values.logoUrl.trim() === ""
@@ -295,11 +378,10 @@ export default function EditPartnerForm({
 
       if (!response.ok) {
         const err = await response.json();
-
         form.setFieldError("logoFile", err.error);
-
         return;
       }
+
       if (typeof window !== "undefined") {
         window.dispatchEvent(new Event("partners:refresh"));
       }
@@ -312,19 +394,20 @@ export default function EditPartnerForm({
 
   return (
     <Box pos="relative">
-      <LoadingOverlay visible={loading} zIndex={1000} overlayProps={{ radius: "sm", blur: 2 }} />
+      <LoadingOverlay
+        visible={loading}
+        zIndex={1000}
+        overlayProps={{ radius: "sm", blur: 2 }}
+      />
 
       <div className="mx-8">
         <h2 className="text-lg text-gray-500" style={{ marginBottom: "24px" }}>
           Change your partner data
         </h2>
         <form
-          onSubmit={form.onSubmit((values) => {
-            submitEditPartner(values);
-          })}
+          onSubmit={form.onSubmit(submitEditPartner)}
           className="flex flex-col gap-5"
         >
-          {/* Name of Organization */}
           <Group justify="space-between" align="flex-start">
             <Text fw={600} c="#344054">
               Name of Organization <span className="text-red-600">*</span>
@@ -338,7 +421,6 @@ export default function EditPartnerForm({
             />
           </Group>
 
-          {/* Description */}
           <Group justify="space-between" align="flex-start">
             <Text fw={600} c="#344054">
               Description <span className="text-red-600">*</span>
@@ -353,7 +435,6 @@ export default function EditPartnerForm({
             />
           </Group>
 
-          {/* Status Radio Group */}
           <Group justify="space-between" align="flex-start" w="100%">
             <Text fw={600} c="#344054" className="w-40">
               Status <span className="text-red-600">*</span>
@@ -366,9 +447,21 @@ export default function EditPartnerForm({
             >
               <Group gap="md" grow>
                 {[
-                  { value: "active", title: "Active", description: "Currently active" },
-                  { value: "inactive", title: "Inactive", description: "No longer active" },
-                  { value: "waitlisted", title: "Waitlisted", description: "On the waitlist" },
+                  {
+                    value: "active",
+                    title: "Active",
+                    description: "Currently active",
+                  },
+                  {
+                    value: "inactive",
+                    title: "Inactive",
+                    description: "No longer active",
+                  },
+                  {
+                    value: "waitlisted",
+                    title: "Waitlisted",
+                    description: "On the waitlist",
+                  },
                 ].map((option) => (
                   <Radio.Card
                     key={option.value}
@@ -381,17 +474,22 @@ export default function EditPartnerForm({
                       <Radio.Indicator />
                       <Stack gap={4}>
                         <Text fw={700}>{option.title}</Text>
-                        <Text size="xs" c="dimmed">{option.description}</Text>
+                        <Text size="xs" c="dimmed">
+                          {option.description}
+                        </Text>
                       </Stack>
                     </Group>
                   </Radio.Card>
                 ))}
               </Group>
-              {form.errors.status && <Text c="red" size="sm" mt="xs">{form.errors.status}</Text>}
+              {form.errors.status && (
+                <Text c="red" size="sm" mt="xs">
+                  {form.errors.status}
+                </Text>
+              )}
             </Radio.Group>
           </Group>
 
-          {/* Conditional Start Date: Hidden if waitlisted */}
           {form.values.status !== "waitlisted" && (
             <Group justify="space-between" align="flex-start">
               <Text fw={600} c="#344054">
@@ -406,7 +504,6 @@ export default function EditPartnerForm({
             </Group>
           )}
 
-          {/* Conditional End Date: Shown only if inactive */}
           {form.values.status === "inactive" && (
             <Group justify="space-between" align="flex-start">
               <Text fw={600} c="#344054">
@@ -421,9 +518,57 @@ export default function EditPartnerForm({
             </Group>
           )}
 
-          {/* Latitude and Longitude */}
+          <Group justify="space-between" align="flex-start" w="100%">
+            <Text fw={600} c="#344054">
+              Address <span className="text-red-600">*</span>
+            </Text>
+            <Stack className="min-w-170 w-full max-w-[600px]">
+              <TextInput
+                placeholder="Address Line"
+                {...form.getInputProps("addressLine")}
+                size="md"
+                radius="md"
+              />
+              <SimpleGrid cols={2}>
+                <TextInput
+                  placeholder="City"
+                  {...form.getInputProps("city")}
+                  size="md"
+                  radius="md"
+                />
+                <Select
+                  placeholder="State"
+                  data={US_STATES}
+                  searchable
+                  value={form.values.state || null}
+                  onChange={(val) => form.setFieldValue("state", val || "")}
+                  error={form.errors.state}
+                  size="md"
+                  radius="md"
+                />
+                <TextInput
+                  placeholder="Zip Code"
+                  {...form.getInputProps("zipCode")}
+                  size="md"
+                  radius="md"
+                />
+                <Select
+                  placeholder="Country"
+                  data={countries}
+                  value={form.values.country || null}
+                  onChange={(val) => form.setFieldValue("country", val || "")}
+                  error={form.errors.country}
+                  size="md"
+                  radius="md"
+                />
+              </SimpleGrid>
+            </Stack>
+          </Group>
+
           <Group justify="space-between" align="flex-start">
-            <Text fw={600} c="#344054">Coords <span className="text-red-600">*</span></Text>
+            <Text fw={600} c="#344054">
+              Coords <span className="text-red-600">*</span>
+            </Text>
             <div className="gap-4 flex">
               <NumberInput
                 placeholder="Latitude"
@@ -444,25 +589,10 @@ export default function EditPartnerForm({
             </div>
           </Group>
 
-          {/* Address Fields */}
-          <Group justify="space-between" align="flex-start" w="100%">
-            <Text fw={600} c="#344054">Address <span className="text-red-600">*</span></Text>
-            <div className="flex flex-col gap-4 min-w-170 w-full max-w-[600px]">
-              <TextInput placeholder="Address Line" {...form.getInputProps("addressLine")} size="md" radius="md" />
-              <div className="flex gap-4 w-full">
-                <TextInput placeholder="City" {...form.getInputProps("city")} size="md" className="flex-1" radius="md" />
-                <TextInput placeholder="State" {...form.getInputProps("state")} size="md" className="w-[120px]" radius="md" />
-              </div>
-              <div className="flex gap-4 w-full">
-                <TextInput placeholder="Zip Code" {...form.getInputProps("zipCode")} size="md" className="w-[120px]" radius="md" />
-                <Select placeholder="Country" data={countries} {...form.getInputProps("country")} size="md" className="flex-1" radius="md" />
-              </div>
-            </div>
-          </Group>
-
-          {/* Logo Section */}
           <Group justify="space-between" align="flex-start">
-            <Text c="#344054" fw={600}>Logo file or link</Text>
+            <Text c="#344054" fw={600}>
+              Logo file or link
+            </Text>
             <div className="gap-4 flex">
 <<<<<<< HEAD
               <FileInput accept="image/png,image/jpeg" placeholder="Upload file" radius="md" clearable onChange={(f) => form.setFieldValue("logoFile", f)} className="min-w-83" />
@@ -477,8 +607,6 @@ export default function EditPartnerForm({
                   form.setFieldValue("logoFile", file);
                   if (!file) {
                     form.setFieldValue("logoUrl", "");
-                  }
-                  if (!file) {
                     form.clearFieldError("logoFile");
                   }
                 }}
@@ -496,9 +624,9 @@ export default function EditPartnerForm({
             </div>
           </Group>
 
-          {/* Percentages: Hidden if waitlisted */}
           {form.values.status !== "waitlisted" && (
             <Group justify="space-between" align="flex-start">
+<<<<<<< HEAD
               <Text fw={600} c="#344054">City Distribution Percentages</Text>
 <<<<<<< HEAD
               <Tabs
@@ -598,12 +726,107 @@ export default function EditPartnerForm({
               </Tabs.Panel>
             </Tabs>
 >>>>>>> 64f60fec961c236a5a7b032abae5565eb4d78132
+=======
+              <Text fw={600} c="#344054">
+                City Distribution Percentages
+              </Text>
+              <Tabs
+                value={activePercentTab}
+                onChange={(val) => {
+                  if (!val) return;
+                  setActivePercentTab(val as UpdatePercentagesOptions);
+                  form.setFieldValue(
+                    "updatePercentagesType",
+                    val as UpdatePercentagesOptions,
+                  );
+                }}
+                className="min-w-170 w-full max-w-[600px]"
+              >
+                <Tabs.List grow mb="xl">
+                  {[
+                    {
+                      value: "one-time",
+                      title: "One-Time Update",
+                      description: "Update a specific month only",
+                      icon: <RiCalendarEventLine size={22} />,
+                    },
+                    {
+                      value: "continuous",
+                      title: "Continuous Update",
+                      description: "Apply to all future distributions",
+                      icon: <RiLineChartLine size={22} />,
+                    },
+                  ].map((option) => (
+                    <Tabs.Tab
+                      key={option.value}
+                      value={option.value}
+                      className="px-0"
+                    >
+                      {(() => {
+                        const isActive = activePercentTab === option.value;
+                        return (
+                          <div
+                            className={`rounded-xl shadow-sm transition hover:-translate-y-0.5 hover:shadow-md h-full border ${isActive
+                              ? "border-[#1D3A8A] bg-[#EEF2FF]"
+                              : "border-gray-300 bg-white"
+                              }`}
+                            style={{ borderWidth: isActive ? 2 : 1 }}
+                          >
+                            <Stack gap="xs" align="center" p="md">
+                              <div
+                                className={`${isActive ? "text-[#1D3A8A]" : "text-gray-500"
+                                  } opacity-80`}
+                              >
+                                {option.icon}
+                              </div>
+                              <Text
+                                fw={700}
+                                size="md"
+                                className={isActive ? "text-[#1D3A8A]" : ""}
+                              >
+                                {option.title}
+                              </Text>
+                              <Text
+                                size="sm"
+                                c={isActive ? "gray.6" : "dimmed"}
+                                ta="center"
+                              >
+                                {option.description}
+                              </Text>
+                            </Stack>
+                          </div>
+                        );
+                      })()}
+                    </Tabs.Tab>
+                  ))}
+                </Tabs.List>
+                <Tabs.Panel value="one-time">
+                  <OneTimeUpdateForm
+                    initialCityPercentages={initialCityPercentEntries}
+                  />
+                </Tabs.Panel>
+                <Tabs.Panel value="continuous">
+                  <ContinuousUpdateForm
+                    initialCityPercentages={initialCityPercentEntries}
+                  />
+                </Tabs.Panel>
+              </Tabs>
+>>>>>>> 61053fdb2145dc7a616d1e1160299d4ad1a719ca
             </Group>
           )}
 
           <Group justify="flex-end" mt="md">
-            <Button variant="outline" color="#053766" radius="md" onClick={onClose}>Cancel</Button>
-            <Button variant="filled" color="#053766" radius="md" type="submit">Submit</Button>
+            <Button
+              variant="outline"
+              color="#053766"
+              radius="md"
+              onClick={onClose}
+            >
+              Cancel
+            </Button>
+            <Button variant="filled" color="#053766" radius="md" type="submit">
+              Submit
+            </Button>
           </Group>
         </form>
       </div>

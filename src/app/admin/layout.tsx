@@ -7,6 +7,7 @@ import {
   Text,
 } from "@mantine/core";
 import SettingsButton from "@/components/admin/AdminSettingsButton";
+import Link from "next/link";
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   return (
@@ -18,6 +19,9 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           </Text>
 
           <Group gap="xs">
+            <Link href="/">
+              View Map
+            </Link>
             <Profile />
             <SettingsButton />
           </Group>
