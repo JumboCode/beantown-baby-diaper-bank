@@ -101,6 +101,7 @@ type PartnerInfoType = {
   status?: string | null; // Can be "active", "waitlisted", etc.
   waitlisted?: boolean | string; // Can be true/false from DB
   startPartner?: string | null;
+  endPartner?: string | null;
 };
 
 type CityMapInfo = City & {
@@ -317,12 +318,12 @@ export default function Map({
                 const selectedYear = Number(timelineSlider.value);
                 const activePartners = city.partners.filter((p) => {
                   const isWaitlisted = p.status === "waitlisted" || (p as any).waitlisted === true || (p as any).waitlisted === "true";
-                  const isInactive = p.status === "inactive";
                   let startedOnOrBeforeYear = true;
                   if ((p as any).startPartner) {
                     startedOnOrBeforeYear = new Date((p as any).startPartner).getUTCFullYear() <= selectedYear;
                   }
-                  return !isWaitlisted && !isInactive && startedOnOrBeforeYear;
+                  const endedAfterYear = !(p as any).endPartner || new Date((p as any).endPartner).getUTCFullYear() >= selectedYear;
+                  return !isWaitlisted && startedOnOrBeforeYear && endedAfterYear;
                 });
 
                 return (
@@ -494,23 +495,29 @@ function PopupContent({
       p.waitlisted === "true",
   );
 
-  // ACTIVE FILTER: Everyone who isn't waitlisted or inactive, AND started on or before the current selected year
+  // ACTIVE FILTER: Everyone who isn't waitlisted, started on or before the selected year,
+  // and either has no end date (NULL = still active) or their end year is >= selected year.
   const activePartners = city.partners.filter((p) => {
     const isWaitlisted =
       p.status === "waitlisted" ||
       p.waitlisted === true ||
       p.waitlisted === "true";
-    const isInactive = p.status === "inactive";
 
-    // Check start year
     const selectedYear = Number(timelineSlider.value);
+
     let startedOnOrBeforeYear = true;
     if (p.startPartner) {
       const partnerStartYear = new Date(p.startPartner).getUTCFullYear();
       startedOnOrBeforeYear = partnerStartYear <= selectedYear;
     }
 
-    return !isWaitlisted && !isInactive && startedOnOrBeforeYear;
+    // If end_partner is NULL, show for all years. Otherwise only show if the partner
+    // was still active during the selected year (end year >= selected year).
+    const endedAfterYear =
+      !p.endPartner ||
+      new Date(p.endPartner).getUTCFullYear() >= selectedYear;
+
+    return !isWaitlisted && startedOnOrBeforeYear && endedAfterYear;
   });
 
   const totalDiapers =

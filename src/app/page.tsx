@@ -24,6 +24,8 @@ type PartnerInfoType = {
   name: string;
   logo_url?: string | null;
   status: "active" | "inactive" | "waitlisted" | null;
+  startPartner?: string | null;
+  endPartner?: string | null;
 };
 
 type CityMapInfo = City & {

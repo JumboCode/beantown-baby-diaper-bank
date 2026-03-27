@@ -101,6 +101,7 @@ const getCities = unstable_cache(
           logo_url: partnerRegion.partner.logoUrl,
           status: partnerRegion.partner.status,
           startPartner: partnerRegion.partner.startPartner?.toISOString() || null,
+          endPartner: partnerRegion.partner.endPartner?.toISOString() || null,
         })),
       }));
     }
@@ -162,6 +163,7 @@ const getCities = unstable_cache(
         logo_url: partnerRegion.partner.logoUrl,
         status: partnerRegion.partner.status,
         startPartner: partnerRegion.partner.startPartner?.toISOString() || null,
+        endPartner: partnerRegion.partner.endPartner?.toISOString() || null,
       })),
     }));
 

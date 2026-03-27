@@ -136,7 +136,7 @@ export default function ChoroplethMap({
           <div
             style={{
               position: "absolute",
-              left: popOverPosition ? `${popOverPosition.x - 30}px` : 0,
+              left: popOverinaPosition ? `${popOverPosition.x - 30}px` : 0,
               top: popOverPosition ? `${popOverPosition.y + 100}px` : 0,
               width: 0,
               height: 0,
