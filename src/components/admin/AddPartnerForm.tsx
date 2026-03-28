@@ -17,13 +17,13 @@ import {
   Title,
   Stack,
   SimpleGrid,
-  Box,
   LoadingOverlay,
 } from "@mantine/core";
 import { useForm } from "@mantine/form";
 import { MonthPickerInput } from "@mantine/dates";
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import "@mantine/dates/styles.css";
+import { fetchCoordsFromAddress } from "@/lib/util";
 
 const countries = ["United States", "Canada"];
 const DEFAULT_COUNTRY = "United States";
@@ -100,13 +100,12 @@ const buildAddressString = ({
     .filter((part) => Boolean(part))
     .join(", ");
 
-// Checks if input is a number (can be decimal)
 const requiredNumber = (label: string) => (value: unknown) => {
   const v = (value === 0 ? "0" : (value ?? "")).toString().trim();
   if (v === "") return `${label} is required`;
   return /^-?\d+(\.\d+)?$/.test(v) ? null : `${label} must be a number`;
 };
-// Checks if input is an integer
+
 const requiredInteger = (label: string) => (value: unknown) => {
   const v = (value === 0 ? "0" : (value ?? "")).toString().trim();
   if (v === "") return `${label} is required`;
@@ -124,7 +123,7 @@ export default function AddPartnerForm({
   const [citiesAPI, setCitiesAPI] = useState<string[]>([]);
   const [isLoadingCities, setIsLoadingCities] = useState<boolean>(false);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
-  const [isUploadingFile, setIsUploadingFile] = useState<boolean>(false);
+  const [submitWarning, setSubmitWarning] = useState<string>("");
 
   useEffect(() => {
     const fetchCities = async () => {
@@ -148,6 +147,7 @@ export default function AddPartnerForm({
         setIsLoadingCities(false);
       }
     };
+
     fetchCities();
   }, []);
 
@@ -158,7 +158,7 @@ export default function AddPartnerForm({
     initialValues: {
       organization: "",
       description: "",
-      time: null as string | null,
+      time: null as Date | null,
       cities: [] as string[],
       status: "",
       latitude: "",
@@ -167,24 +167,23 @@ export default function AddPartnerForm({
       city: "",
       state: "",
       zipCode: "",
-      country: "",
+      country: DEFAULT_COUNTRY,
       logoFile: null as File | null,
       logoUrl: "",
     },
     validate: {
       organization: (value) =>
-        typeof value === "string" ? null : "Organization name must be a string",
+        typeof value === "string" && value.trim()
+          ? null
+          : "Organization name is required",
       time: (value, values) => {
         if (values.status === "waitlisted") return null;
         return value ? null : "Select a start time";
       },
       cities: (value, values) => {
         if (value.length === 0) return "Pick at least one city";
-        console.log(values.status);
         if (values.status && values.status !== "waitlisted") {
-          const total = value.reduce((sum, city) => {
-            return sum + (percentages[city] || 0);
-          }, 0);
+          const total = value.reduce((sum, city) => sum + (percentages[city] || 0), 0);
           const roundedTotal = Math.round(total * 100) / 100;
           if (Math.abs(roundedTotal - 100) > 0.01) {
             return `Percentages must add up to 100% (currently ${roundedTotal.toFixed(2)}%)`;
@@ -195,21 +194,43 @@ export default function AddPartnerForm({
       latitude: requiredNumber("Latitude"),
       longitude: requiredNumber("Longitude"),
       state: (value) => (value ? null : "Select a state"),
+      city: (value) => (value.trim() ? null : "City is required"),
+      addressLine: (value) =>
+        value.trim() ? null : "Address Line is required",
       zipCode: requiredInteger("Zip Code"),
       country: (value) => (value ? null : "Select a country"),
       status: (value) => (value ? null : "Select a status"),
-      // logoFile: (_value, values) =>
-      //   !values.logoFile && !values.logoUrl.trim()
-      //     ? "Provide a file or a link"
-      //     : null,
-      //
-      // logos are optional according to the figma?
       logoUrl: (value, values) => {
-        if (!value.trim() && !values.logoFile) return;
+        if (!value.trim() && !values.logoFile) return null;
         return typeof value === "string" ? null : "Enter a valid URL";
       },
     },
   });
+
+  useEffect(() => {
+    const { addressLine, city, state, zipCode, country } = form.values;
+    if (!addressLine || !city || !state || !zipCode) return;
+
+    const fullAddress = buildAddressString({
+      addressLine,
+      city,
+      state,
+      zipCode,
+      country,
+    });
+
+    fetchCoordsFromAddress(fullAddress).then((location) => {
+      if (!location) return;
+      form.setFieldValue("latitude", String(location.lat));
+      form.setFieldValue("longitude", String(location.lng));
+    });
+  }, [
+    form.values.addressLine,
+    form.values.city,
+    form.values.state,
+    form.values.zipCode,
+    form.values.country,
+  ]);
 
   const handleFileChange = (file: File | null) => {
     if (!file) {
@@ -229,8 +250,9 @@ export default function AddPartnerForm({
 
   async function submitPartner(values: typeof form.values) {
     setIsSubmitting(true);
+    setSubmitWarning("");
 
-    // Check for duplicate partner name before submitting
+    // Check for duplicate partner name before submitting.
     try {
       const trimmedName = values.organization.trim();
       const checkRes = await fetch(
@@ -243,21 +265,19 @@ export default function AddPartnerForm({
             p.name.trim().toLowerCase() === trimmedName.toLowerCase(),
         );
         if (duplicate) {
-          form.setFieldError(
-            "organization",
-            `The partner ${trimmedName} already exists.`,
-          );
+          const duplicateWarning = `The partner ${trimmedName} already exists.`;
+          form.setFieldError("organization", duplicateWarning);
+          setSubmitWarning(duplicateWarning);
           setIsSubmitting(false);
           return;
         }
       }
     } catch {
-      // If the check fails, allow the submission to proceed
+      // If the check fails, allow the submission to proceed.
     }
 
     const cityPercentages = values.cities.map((city) => {
       const raw = Number(percentages[city] ?? 0);
-      // rounds percentages to avoid floating-point errors
       const normalized = Number.isFinite(raw)
         ? Number((raw / 100).toFixed(4))
         : 0;
@@ -267,19 +287,13 @@ export default function AddPartnerForm({
     const partnerPayload = {
       name: values.organization,
       description: values.description,
-      start_partner: values.time,
+      start_partner: values.time ? values.time.toISOString() : null,
       status: values.status,
       coordinates: {
         lat: Number(values.latitude),
         lng: Number(values.longitude),
       },
-      address: buildAddressString({
-        addressLine: values.addressLine,
-        city: values.city,
-        state: values.state,
-        zipCode: values.zipCode,
-        country: values.country,
-      }),
+      address: buildAddressString(values),
       logo: values.logoUrl || "",
       cities: cityPercentages,
     };
@@ -299,12 +313,28 @@ export default function AddPartnerForm({
 
       if (!response.ok) {
         const err = await response.json();
-        form.setFieldError("logoFile", err.error);
+        const warning =
+          typeof err?.error === "string"
+            ? err.error
+            : "Unable to submit partner.";
+        if (
+          response.status === 422 ||
+          warning === "Please check the entered cities."
+        ) {
+          const cityWarning = "Please check the entered cities.";
+          form.setFieldError("cities", cityWarning);
+          setSubmitWarning(cityWarning);
+          return;
+        }
+        form.setFieldError("logoFile", warning);
+        setSubmitWarning(warning);
         return;
       }
 
       form.reset();
+      form.setFieldValue("country", DEFAULT_COUNTRY);
       setPercentages({});
+      setSubmitWarning("");
       onClose();
 
       if (typeof window !== "undefined") {
@@ -327,7 +357,7 @@ export default function AddPartnerForm({
         </Text>
       }
     >
-      <Title order={2} c="#667085" fw="normal" fz={18} mb={"md"}>
+      <Title order={2} c="#667085" fw="normal" fz={18} mb="md">
         Add your new partner data
       </Title>
       <LoadingOverlay
@@ -336,13 +366,8 @@ export default function AddPartnerForm({
         overlayProps={{ radius: "sm", blur: 2 }}
       />
 
-      <form
-        onSubmit={form.onSubmit((values) => {
-          submitPartner(values);
-        })}
-      >
+      <form onSubmit={form.onSubmit(submitPartner)}>
         <Stack>
-          {/* Status */}
           <Group justify="space-between" align="flex-start" w="100%">
             <Text c="#344054" fz={16} fw={600}>
               Status <span className="text-red-600">*</span>
@@ -393,7 +418,6 @@ export default function AddPartnerForm({
             </Radio.Group>
           </Group>
 
-          {/* Name of Organization */}
           <Group justify="space-between" align="flex-start">
             <Text c="#344054" fz={16} fw={600}>
               Name of Organization <span className="text-red-600">*</span>
@@ -409,7 +433,6 @@ export default function AddPartnerForm({
             />
           </Group>
 
-          {/* Description */}
           <Group justify="space-between" align="flex-start">
             <Text c="#344054" fz={16} fw={600}>
               Description <span className="text-red-600">*</span>
@@ -427,9 +450,7 @@ export default function AddPartnerForm({
             />
           </Group>
 
-          {/* Cities Served */}
           <Group align="right" justify="space-between">
-            {/* Selected Cities MultiSelect */}
             <Text c="#344054" fz={16} fw={600}>
               Cities Served <span className="text-red-600">*</span>
             </Text>
@@ -463,64 +484,63 @@ export default function AddPartnerForm({
                 );
               }}
               error={form.errors.cities}
+              styles={{
+                input: form.errors.cities
+                  ? { borderColor: "var(--mantine-color-red-6)" }
+                  : undefined,
+              }}
               size="md"
               w={526}
               radius="md"
             />
           </Group>
 
-          {/* Selected Cities Table with Percentages, sorry this looks digusting */}
           <Group w={526} ml="auto" justify="flex-end">
-            {/* Selected Cities Table */}
             {form.values.cities.length > 0 &&
               form.values.status !== "waitlisted" && (
-                <>
-                  <Table w="100%" striped highlightOnHover withTableBorder>
-                    <Table.Thead>
-                      <Table.Tr>
-                        <Table.Th>Cities</Table.Th>
-                        <Table.Th>Percentage</Table.Th>
-                      </Table.Tr>
-                    </Table.Thead>
-                    <Table.Tbody>
-                      {form.values.cities.map((city) => (
-                        <Table.Tr key={city}>
-                          <Table.Td>{city}</Table.Td>
-                          <Table.Td>
-                            <NumberInput
-                              placeholder="Enter %"
-                              min={0}
-                              max={100}
-                              suffix="%"
-                              value={percentages[city] || ""}
-                              onChange={(value) => {
-                                let res = 0;
-                                /* decimal percentages can have up to 2 decimal places */
-                                if (typeof value === "number") {
-                                  res = value;
-                                  const decimalPart = value
-                                    .toString()
-                                    .split(".")[1];
-                                  if (decimalPart && decimalPart.length > 2) {
-                                    res = Math.round(value * 100) / 100;
-                                  }
+                <Table w="100%" striped highlightOnHover withTableBorder>
+                  <Table.Thead>
+                    <Table.Tr>
+                      <Table.Th>Cities</Table.Th>
+                      <Table.Th>Percentage</Table.Th>
+                    </Table.Tr>
+                  </Table.Thead>
+                  <Table.Tbody>
+                    {form.values.cities.map((city) => (
+                      <Table.Tr key={city}>
+                        <Table.Td>{city}</Table.Td>
+                        <Table.Td>
+                          <NumberInput
+                            placeholder="Enter %"
+                            min={0}
+                            max={100}
+                            suffix="%"
+                            value={percentages[city] || ""}
+                            onChange={(value) => {
+                              let result = 0;
+                              if (typeof value === "number") {
+                                result = value;
+                                const decimalPart = value
+                                  .toString()
+                                  .split(".")[1];
+                                if (decimalPart && decimalPart.length > 2) {
+                                  result = Math.round(value * 100) / 100;
                                 }
-                                setPercentages((prev) => ({
-                                  ...prev,
-                                  [city]: res,
-                                }));
-                              }}
-                            />
-                          </Table.Td>
-                        </Table.Tr>
-                      ))}
-                    </Table.Tbody>
-                  </Table>
-                </>
+                              }
+                              setPercentages((prev) => ({
+                                ...prev,
+                                [city]: result,
+                              }));
+                            }}
+                          />
+                        </Table.Td>
+                      </Table.Tr>
+                    ))}
+                  </Table.Tbody>
+                </Table>
               )}
           </Group>
 
-          {/* Time Started*/}
           {form.values.status !== "waitlisted" && (
             <Group justify="space-between" align="flex-start">
               <Text c="#344054" fz={16} fw={600}>
@@ -529,7 +549,7 @@ export default function AddPartnerForm({
               <MonthPickerInput
                 placeholder="Pick date"
                 value={form.values.time}
-                onChange={(val) => form.setFieldValue("time", val)}
+                onChange={(val) => form.setFieldValue("time", val as Date | null)}
                 error={form.errors.time}
                 required
                 w={526}
@@ -537,36 +557,6 @@ export default function AddPartnerForm({
             </Group>
           )}
 
-          {/* Latitude and Longitude */}
-          <Group justify="space-between" align="flex-start">
-            <Text c="#344054" fz={16} fw={600}>
-              Coords <span className="text-red-600">*</span>
-            </Text>
-            <Group w={526} grow>
-              <NumberInput
-                placeholder="Latitude"
-                key={form.key("latitude")}
-                value={form.values.latitude}
-                onChange={(val) => form.setFieldValue("latitude", String(val))}
-                error={form.errors.latitude}
-                size="md"
-                radius="md"
-                hideControls
-              />
-              <NumberInput
-                placeholder="Longitude"
-                key={form.key("longitude")}
-                value={form.values.longitude}
-                onChange={(val) => form.setFieldValue("longitude", String(val))}
-                error={form.errors.longitude}
-                size="md"
-                radius="md"
-                hideControls
-              />
-            </Group>
-          </Group>
-
-          {/* Address */}
           <Group justify="space-between" align="flex-start">
             <Text c="#344054" fz={16} fw={600}>
               Address <span className="text-red-600">*</span>
@@ -603,7 +593,6 @@ export default function AddPartnerForm({
                   radius="md"
                   required
                 />
-
                 <TextInput
                   placeholder="Zip Code"
                   key={form.key("zipCode")}
@@ -622,9 +611,7 @@ export default function AddPartnerForm({
                   nothingFoundMessage="Nothing found..."
                   key={form.key("country")}
                   value={form.values.country || null}
-                  onChange={(val) => {
-                    form.setFieldValue("country", val || "");
-                  }}
+                  onChange={(val) => form.setFieldValue("country", val || "")}
                   error={form.errors.country}
                   size="md"
                   radius="md"
@@ -633,7 +620,36 @@ export default function AddPartnerForm({
             </Stack>
           </Group>
 
-          {/* Logo File Upload */}
+          <Group justify="space-between" align="flex-start">
+            <Text c="#344054" fz={16} fw={600}>
+              Coords <span className="text-red-600">*</span>
+            </Text>
+            <Group w={526} grow>
+              <NumberInput
+                placeholder="Latitude"
+                key={form.key("latitude")}
+                value={form.values.latitude}
+                onChange={(val) => form.setFieldValue("latitude", String(val))}
+                error={form.errors.latitude}
+                size="md"
+                radius="md"
+                hideControls
+              />
+              <NumberInput
+                placeholder="Longitude"
+                key={form.key("longitude")}
+                value={form.values.longitude}
+                onChange={(val) =>
+                  form.setFieldValue("longitude", String(val))
+                }
+                error={form.errors.longitude}
+                size="md"
+                radius="md"
+                hideControls
+              />
+            </Group>
+          </Group>
+
           <Group justify="space-between" align="flex-start">
             <Text c="#344054" fz={16} fw={600}>
               Logo file or link
@@ -658,7 +674,13 @@ export default function AddPartnerForm({
             </Group>
           </Group>
 
-          {/* Submit and Cancel Buttons */}
+          {submitWarning ? (
+            <Group justify="flex-end" mt="xs">
+              <Text c="red" size="sm">
+                {submitWarning}
+              </Text>
+            </Group>
+          ) : null}
           <Group justify="flex-end" mt="md">
             <Button
               variant="outline"
@@ -668,6 +690,7 @@ export default function AddPartnerForm({
               disabled={isSubmitting}
               onClick={() => {
                 form.reset();
+                form.setFieldValue("country", DEFAULT_COUNTRY);
                 setPercentages({});
                 onClose();
               }}
@@ -680,7 +703,6 @@ export default function AddPartnerForm({
               radius="md"
               type="submit"
               loading={isSubmitting}
-              disabled={isUploadingFile}
             >
               Submit
             </Button>

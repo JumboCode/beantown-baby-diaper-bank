@@ -12,11 +12,22 @@ import {
   validateLogoFile,
 } from "@/lib/server/logoUpload";
 
+const NOMINATIM_BASE_URL = "https://nominatim.openstreetmap.org/search";
+
 type LogoAction = "keep" | "replace" | "remove";
+
 type CityPercentage = {
   city: string;
   percentage: number;
+  id?: string;
 };
+
+type CityGeoData = {
+  centroidGeoJson: string;
+  boundaryGeoJson: string;
+  addressType: string;
+};
+
 type CreatePartnerPayload = {
   name: string;
   description: string;
@@ -28,6 +39,7 @@ type CreatePartnerPayload = {
   logo?: string;
   cities: CityPercentage[];
 };
+
 type UpdatePartnerPayload = {
   id: number;
   name: string;
@@ -38,108 +50,123 @@ type UpdatePartnerPayload = {
   coordinates: PrismaTypes.InputJsonValue;
   address: string;
   logo?: string;
+  cities?: CityPercentage[];
 };
+
+function normalizeCityName(value: string): string {
+  return value.trim().toLowerCase();
+}
 
 class PartnerRequestError extends Error {
   status: number;
+
   constructor(message: string, status = 400) {
     super(message);
     this.status = status;
   }
 }
 
-/**
- * GET /api/partners
- *
- * Lists diaper bank partners from the Partners table. Supports optional
- * filtering by name search and waitlist status.
- *
- * Query params:
- *   - search: partial or case-insensitive match against the partner name.
- *   - waitlisted: "true" or "false" to filter by waitlist status.
- *
- * Example request:
- *  /api/partners?search=arlington&waitlisted=false
- *
- * Example response:
- * ```json{
- *   "data": [
- *    {
- *       "id": 1,
- *       "created_at": "2023-10-01T12:34:56.789Z",
- *       "name": "Arlington Eats",
- *       "description": "A description of Arlington Eats.",
- *       "start_partner": "2023-11-01T00:00:00.000Z",
- *       "waitlisted": false,
- *       "address": "123 Diaper St, Boston, MA",
- *       "coords": { "type": "Point", "coordinates": [-71.0589, 42.3601] },
- *       "logo_url": "https://example.com/logo.png"
- *    }
- *  ]
- * }```
- */
-export async function GET(request: Request) {
-  // Extract query parameters(checkout dev-example for reference)
-  const { searchParams } = new URL(request.url);
+async function fetchCityGeoDataFromNominatim(
+  cityName: string,
+): Promise<CityGeoData> {
+  const query = new URLSearchParams({
+    q: `${cityName}, Massachusetts, United States`,
+    format: "jsonv2",
+    polygon_geojson: "1",
+    limit: "1",
+    countrycodes: "us",
+  });
 
+  const response = await fetch(`${NOMINATIM_BASE_URL}?${query.toString()}`, {
+    headers: {
+      "User-Agent":
+        "beantown-baby-diaper-bank/1.0 (contact: your-email@domain.com)",
+      Accept: "application/json",
+    },
+  });
+
+  if (!response.ok) {
+    throw new PartnerRequestError("Please check the entered cities.", 422);
+  }
+
+  const result = (await response.json()) as Array<{
+    lat?: string;
+    lon?: string;
+    geojson?: unknown;
+    addresstype?: string;
+  }>;
+
+  const first = result[0];
+  if (!first) {
+    throw new PartnerRequestError("Please check the entered cities.", 422);
+  }
+
+  const lat = first.lat ? Number(first.lat) : NaN;
+  const lon = first.lon ? Number(first.lon) : NaN;
+  const addressType =
+    typeof first.addresstype === "string" ? first.addresstype : "";
+
+  if (
+    (addressType !== "town" && addressType !== "city") ||
+    !Number.isFinite(lat) ||
+    !Number.isFinite(lon) ||
+    !first.geojson
+  ) {
+    throw new PartnerRequestError("Please check the entered cities.", 422);
+  }
+
+  return {
+    centroidGeoJson: JSON.stringify({
+      type: "Point",
+      coordinates: [lon, lat],
+    }),
+    addressType,
+    boundaryGeoJson: JSON.stringify(first.geojson),
+  };
+}
+
+export async function GET(request: Request) {
+  const { searchParams } = new URL(request.url);
   const search = searchParams.get("search");
   const waitlisted = searchParams.get("waitlisted");
 
-  // Build the Prisma query filters based on provided params
-  // WhereInput type helps ensure we build valid queries
   const where: PrismaTypes.PartnerWhereInput = {};
 
   if (search) {
-    // Case-insensitive partial match on name
     where.name = {
       contains: search,
       mode: "insensitive",
     };
   }
 
-  // Filter by waitlist status if provided (use status, not legacy waitlisted flag)
   if (waitlisted === "true" || waitlisted === "false") {
-    if (waitlisted === "true") {
-      where.status = "waitlisted";
-    } else {
-      where.status = { not: "waitlisted" };
-    }
+    where.status = waitlisted === "true" ? "waitlisted" : { not: "waitlisted" };
   }
 
   try {
-    // Query the database for partners matching the filters
-    // prisma handles reaching out to the DB and executing the query
     const partners: Partner[] = await prisma.partner.findMany({
       where,
       orderBy: { name: "asc" },
     });
 
-    // Format the partners for the response
-    // everything needs to be serializable to JSON
-    // Date objects are converted to ISO strings
-    // BigInt fields (like IDs) are converted to numbers or strings
-    const dataToReturn = partners.map((partner) => ({
-      id: Number(partner.id),
-      created_at: partner.createdAt.toISOString(),
-      name: partner.name,
-      description: partner.description,
-      start_partner: partner.startPartner
-        ? partner.startPartner.toISOString()
-        : null,
-      end_partner: partner.endPartner ? partner.endPartner.toISOString() : null,
-      status: partner.status,
-      waitlisted: partner.status === "waitlisted",
-      address: partner.address,
-      coords: partner.coords,
-      logo_url: partner.logoUrl,
-    }));
-
-    //return the partners as a JSON response
     return NextResponse.json({
-      data: dataToReturn,
+      data: partners.map((partner) => ({
+        id: Number(partner.id),
+        created_at: partner.createdAt.toISOString(),
+        name: partner.name,
+        description: partner.description,
+        start_partner: partner.startPartner
+          ? partner.startPartner.toISOString()
+          : null,
+        end_partner: partner.endPartner ? partner.endPartner.toISOString() : null,
+        status: partner.status,
+        waitlisted: partner.status === "waitlisted",
+        address: partner.address,
+        coords: partner.coords,
+        logo_url: partner.logoUrl,
+      })),
     });
   } catch (error) {
-    // Handle any errors that occur during the process
     const message =
       error instanceof Error
         ? error.message
@@ -148,7 +175,7 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }
-// Create put for new partner
+
 export async function PUT(request: Request) {
   let payload: CreatePartnerPayload;
   let logoAction: LogoAction;
@@ -159,6 +186,14 @@ export async function PUT(request: Request) {
     payload = parsed.payload;
     logoAction = parsed.logoAction;
     logoFile = parsed.logoFile;
+
+    if (logoAction === "replace") {
+      if (!logoFile) {
+        return NextResponse.json({ error: "File required" }, { status: 400 });
+      }
+      validateLogoFile(logoFile);
+      await validateImageSignature(logoFile);
+    }
   } catch (error) {
     if (error instanceof PartnerRequestError) {
       return NextResponse.json(
@@ -172,113 +207,196 @@ export async function PUT(request: Request) {
     );
   }
 
-  const cities = payload.cities;
-  const cityNames = cities.map((city: { city: string }) => city.city);
+  const cityNames = Array.from(
+    new Set(
+      payload.cities
+        .map((city) => city.city.trim())
+        .filter((cityName): cityName is string => cityName.length > 0),
+    ),
+  );
 
-  const newPartnerRequest = {
-    data: {
-      name: payload.name,
-      description: payload.description,
-      startPartner: normalizeStartPartner(payload.start_partner),
-      status: payload.status as status,
-      coords: payload.coordinates,
-      address: payload.address,
-      logoUrl: logoAction === "replace" ? "" : (payload.logo ?? ""),
-    },
-  } as PrismaTypes.PartnerCreateArgs;
+  let cityIdByName: Map<string, bigint>;
 
-  let partner: Partner;
   try {
-    partner = await prisma.partner.create(newPartnerRequest);
-  } catch (error) {
-    const message =
-      error instanceof Error
-        ? error.message
-        : "Unable to insert partner into database.";
+    const cityWhere: PrismaTypes.CityWhereInput = {
+      OR: cityNames.map((name) => ({
+        name: {
+          equals: name,
+          mode: "insensitive",
+        },
+      })),
+    };
 
-    return NextResponse.json({ error: message }, { status: 500 });
-  }
-
-  const partnerId = Number(partner.id);
-  const cityIds: City[] = await prisma.city.findMany({
-    where: {
-      name: {
-        in: cityNames,
-      },
-    },
-  });
-
-  const cityIdByName = new Map(cityIds.map((city) => [city.name, city.id]));
-  const missingCities = cityNames.filter((name) => !cityIdByName.has(name));
-  if (missingCities.length > 0) {
-    return NextResponse.json(
-      { error: `Unknown cities: ${missingCities.join(", ")}` },
-      { status: 400 },
+    const existingCities: City[] = cityNames.length
+      ? await prisma.city.findMany({ where: cityWhere })
+      : [];
+    const existingCityNames = new Set(
+      existingCities
+        .map((city) => city.name)
+        .filter((name): name is string => Boolean(name))
+        .map((name) => normalizeCityName(name)),
     );
-  }
 
-  const newPartnerRegionsRequest = {
-    data: payload.cities.map((city: CityPercentage) => ({
-      partnerId: partnerId,
-      cityId: cityIdByName.get(city.city)!,
-      percentage: city.percentage,
-    })),
-  } satisfies PrismaTypes.PartnerRegionCreateManyArgs;
-
-  console.log("Received partner data:", payload);
-  let uploadedObjectKey: string | undefined;
-  try {
-    // update partner region table
-    const partnerRegion = await prisma.partnerRegion.createMany(
-      newPartnerRegionsRequest,
+    const missingCityNames = cityNames.filter(
+      (name) => !existingCityNames.has(normalizeCityName(name)),
     );
-    console.log("created partner regions");
-    console.log(logoAction);
+    const cityGeoByName = new Map<string, CityGeoData>();
 
-    let partnerToReturn = partner;
-
-    if (logoAction === "replace") {
-      if (!logoFile) {
-        throw new PartnerRequestError(
-          "File is required when logoAction is replace",
-          400,
-        );
-      }
-
-      validateLogoFile(logoFile);
-      await validateImageSignature(logoFile);
-      const uploadResult = await uploadLogoForPartner(partnerId, logoFile);
-      uploadedObjectKey = uploadResult.objectKey;
-
-      partnerToReturn = await prisma.partner.update({
-        where: { id: partnerId },
-        data: { logoUrl: uploadResult.publicUrl },
-      });
+    for (const cityName of missingCityNames) {
+      const geo = await fetchCityGeoDataFromNominatim(cityName);
+      cityGeoByName.set(normalizeCityName(cityName), geo);
     }
 
-    console.log("Created partner regions:", partnerRegion);
+    cityIdByName = await prisma.$transaction(async (tx) => {
+      if (missingCityNames.length > 0) {
+        await tx.city.createMany({
+          data: missingCityNames.map((name) => ({ name })),
+          skipDuplicates: true,
+        });
 
-    return NextResponse.json({
-      data: stringifyWithBigInt(partnerToReturn),
+        const insertedCities = await tx.city.findMany({
+          where: {
+            OR: missingCityNames.map((name) => ({
+              name: {
+                equals: name,
+                mode: "insensitive",
+              },
+            })),
+          },
+          select: {
+            id: true,
+            name: true,
+          },
+        });
+
+        for (const city of insertedCities) {
+          if (!city.name) continue;
+          const geoData = cityGeoByName.get(normalizeCityName(city.name));
+          if (!geoData) continue;
+
+          await tx.$executeRaw`
+            UPDATE "Cities"
+            SET
+              "centroid" = ST_SetSRID(ST_GeomFromGeoJSON(${geoData.centroidGeoJson}), 4326),
+              "boundary" = ST_SetSRID(ST_GeomFromGeoJSON(${geoData.boundaryGeoJson}), 4326)::geography
+            WHERE id = ${city.id}
+          `;
+        }
+      }
+
+      const allCities = cityNames.length
+        ? await tx.city.findMany({ where: cityWhere })
+        : [];
+
+      return new Map(
+        allCities
+          .map((city) => [
+            city.name ? normalizeCityName(city.name) : null,
+            city.id,
+          ])
+          .filter(([name]) => name !== null) as Array<[string, bigint]>,
+      );
     });
   } catch (error) {
-    try {
-      await cleanupPartnerCreate(partnerId, uploadedObjectKey);
-    } catch (cleanupError) {
-      console.error(
-        "Failed to clean up create partner operation:",
-        cleanupError,
+    if (error instanceof PartnerRequestError) {
+      return NextResponse.json(
+        { error: error.message },
+        { status: error.status },
       );
     }
 
     const message =
-      error instanceof Error ? error.message : "Unable to create partner.";
-    const statusCode =
-      error instanceof PartnerRequestError || error instanceof FileUploadError
-        ? error.status
-        : 500;
-    return NextResponse.json({ error: message }, { status: statusCode });
+      error instanceof Error ? error.message : "Failed to prepare cities";
+    return NextResponse.json({ error: message }, { status: 500 });
   }
+
+  let partner: Partner;
+  try {
+    partner = await prisma.$transaction(async (tx) => {
+      const newPartner = await tx.partner.create({
+        data: {
+          name: payload.name,
+          description: payload.description,
+          startPartner: normalizeMonthDate(payload.start_partner),
+          status: payload.status,
+          coords: payload.coordinates,
+          address: payload.address,
+          logoUrl: logoAction === "replace" ? "" : (payload.logo ?? ""),
+        },
+      });
+
+      const partnerId = Number(newPartner.id);
+      const partnerRegionRows = payload.cities.map((city) => {
+        const cityId = cityIdByName.get(normalizeCityName(city.city));
+        if (!cityId) {
+          throw new PartnerRequestError("Please check the entered cities.", 422);
+        }
+
+        return {
+          partnerId,
+          cityId,
+          percentage: city.percentage,
+        };
+      });
+
+      if (partnerRegionRows.length > 0) {
+        await tx.partnerRegion.createMany({
+          data: partnerRegionRows,
+        });
+      }
+
+      return newPartner;
+    });
+  } catch (error) {
+    if (error instanceof PartnerRequestError) {
+      return NextResponse.json(
+        { error: error.message },
+        { status: error.status },
+      );
+    }
+
+    const message =
+      error instanceof Error
+        ? error.message
+        : "Unable to create partner in database";
+    return NextResponse.json({ error: message }, { status: 500 });
+  }
+
+  if (logoAction === "replace") {
+    let uploadedObjectKey: string | undefined;
+    const partnerId = Number(partner.id);
+
+    try {
+      const uploadResult = await uploadLogoForPartner(partnerId, logoFile!);
+      uploadedObjectKey = uploadResult.objectKey;
+
+      partner = await prisma.partner.update({
+        where: { id: partner.id },
+        data: { logoUrl: uploadResult.publicUrl },
+      });
+    } catch (error) {
+      try {
+        await cleanupPartnerCreate(partnerId, uploadedObjectKey);
+      } catch (cleanupError) {
+        console.error(
+          "Failed to clean up partner after logo upload failure:",
+          cleanupError,
+        );
+      }
+
+      const message =
+        error instanceof Error ? error.message : "Unable to create partner.";
+      const statusCode =
+        error instanceof PartnerRequestError || error instanceof FileUploadError
+          ? error.status
+          : 500;
+      return NextResponse.json({ error: message }, { status: statusCode });
+    }
+  }
+
+  return NextResponse.json({
+    data: stringifyWithBigInt(partner),
+  });
 }
 
 export async function POST(request: Request) {
@@ -304,10 +422,122 @@ export async function POST(request: Request) {
     );
   }
 
-  console.log("Received partner data:", payload);
+  const partnerId = Number(payload.id);
+  const submittedCities = Array.isArray(payload.cities) ? payload.cities : [];
+  const shouldSyncPartnerRegions = submittedCities.length > 0;
+  let cityIdByName = new Map<string, bigint>();
+
+  if (shouldSyncPartnerRegions) {
+    const cityNames = Array.from(
+      new Set(
+        submittedCities
+          .map((city) => city.city.trim())
+          .filter((cityName): cityName is string => cityName.length > 0),
+      ),
+    );
+
+    if (cityNames.length === 0) {
+      return NextResponse.json(
+        { error: "Please check the entered cities." },
+        { status: 422 },
+      );
+    }
+
+    try {
+      const cityWhere: PrismaTypes.CityWhereInput = {
+        OR: cityNames.map((name) => ({
+          name: {
+            equals: name,
+            mode: "insensitive",
+          },
+        })),
+      };
+
+      const existingCities: City[] = await prisma.city.findMany({
+        where: cityWhere,
+      });
+      const existingCityNames = new Set(
+        existingCities
+          .map((city) => city.name)
+          .filter((name): name is string => Boolean(name))
+          .map((name) => normalizeCityName(name)),
+      );
+
+      const missingCityNames = cityNames.filter(
+        (name) => !existingCityNames.has(normalizeCityName(name)),
+      );
+      const cityGeoByName = new Map<string, CityGeoData>();
+
+      for (const cityName of missingCityNames) {
+        const geo = await fetchCityGeoDataFromNominatim(cityName);
+        cityGeoByName.set(normalizeCityName(cityName), geo);
+      }
+
+      cityIdByName = await prisma.$transaction(async (tx) => {
+        if (missingCityNames.length > 0) {
+          await tx.city.createMany({
+            data: missingCityNames.map((name) => ({ name })),
+            skipDuplicates: true,
+          });
+
+          const insertedCities = await tx.city.findMany({
+            where: {
+              OR: missingCityNames.map((name) => ({
+                name: {
+                  equals: name,
+                  mode: "insensitive",
+                },
+              })),
+            },
+            select: {
+              id: true,
+              name: true,
+            },
+          });
+
+          for (const city of insertedCities) {
+            if (!city.name) continue;
+            const geoData = cityGeoByName.get(normalizeCityName(city.name));
+            if (!geoData) continue;
+
+            await tx.$executeRaw`
+              UPDATE "Cities"
+              SET
+                "centroid" = ST_SetSRID(ST_GeomFromGeoJSON(${geoData.centroidGeoJson}), 4326),
+                "boundary" = ST_SetSRID(ST_GeomFromGeoJSON(${geoData.boundaryGeoJson}), 4326)::geography
+              WHERE id = ${city.id}
+            `;
+          }
+        }
+
+        const allCities = await tx.city.findMany({
+          where: cityWhere,
+        });
+
+        return new Map(
+          allCities
+            .map((city) => [
+              city.name ? normalizeCityName(city.name) : null,
+              city.id,
+            ])
+            .filter(([name]) => name !== null) as Array<[string, bigint]>,
+        );
+      });
+    } catch (error) {
+      if (error instanceof PartnerRequestError) {
+        return NextResponse.json(
+          { error: error.message },
+          { status: error.status },
+        );
+      }
+
+      const message =
+        error instanceof Error ? error.message : "Failed to prepare cities";
+      return NextResponse.json({ error: message }, { status: 500 });
+    }
+  }
 
   try {
-    const partnerId = Number(payload.id);
     let uploadedPublicUrl: string | undefined;
 
     if (logoAction === "replace") {
@@ -323,23 +553,88 @@ export async function POST(request: Request) {
       uploadedPublicUrl = uploadResult.publicUrl;
     }
 
-    const partner = await prisma.partner.update({
-      where: { id: partnerId },
-      data: {
-        name: payload.name,
-        description: payload.description,
-        startPartner: normalizeStartPartner(payload.start_partner),
-        endPartner: normalizeMonthDate(payload.end_partner ?? null),
-        status: payload.status as status,
-        coords: payload.coordinates,
-        address: payload.address,
-        logoUrl:
-          logoAction === "replace"
-            ? uploadedPublicUrl!
-            : logoAction === "remove"
-              ? ""
-              : (payload.logo ?? ""),
-      },
+    const partner = await prisma.$transaction(async (tx) => {
+      const updatedPartner = await tx.partner.update({
+        where: { id: partnerId },
+        data: {
+          name: payload.name,
+          description: payload.description,
+          startPartner: normalizeMonthDate(payload.start_partner),
+          endPartner: normalizeMonthDate(payload.end_partner ?? null),
+          status: payload.status,
+          coords: payload.coordinates,
+          address: payload.address,
+          logoUrl:
+            logoAction === "replace"
+              ? uploadedPublicUrl!
+              : logoAction === "remove"
+                ? ""
+                : (payload.logo ?? ""),
+        },
+      });
+
+      if (shouldSyncPartnerRegions) {
+        const percentageByCity = new Map<string, number>();
+
+        for (const city of submittedCities) {
+          if (!city || typeof city.city !== "string") {
+            throw new PartnerRequestError("Please check the entered cities.", 422);
+          }
+
+          const normalizedCityName = normalizeCityName(city.city);
+          if (!normalizedCityName) {
+            throw new PartnerRequestError("Please check the entered cities.", 422);
+          }
+
+          percentageByCity.set(normalizedCityName, city.percentage);
+        }
+
+        const desiredRows = Array.from(percentageByCity.entries()).map(
+          ([normalizedCityName, percentage]) => {
+            const cityId = cityIdByName.get(normalizedCityName);
+            if (!cityId) {
+              throw new PartnerRequestError(
+                "Please check the entered cities.",
+                422,
+              );
+            }
+
+            return {
+              partnerId: BigInt(partnerId),
+              cityId,
+              percentage,
+            };
+          },
+        );
+
+        const desiredCityIds = desiredRows.map((row) => row.cityId);
+
+        await tx.partnerRegion.deleteMany({
+          where: {
+            partnerId: BigInt(partnerId),
+            cityId: {
+              notIn: desiredCityIds,
+            },
+          },
+        });
+
+        for (const row of desiredRows) {
+          await tx.partnerRegion.upsert({
+            where: {
+              partnerId_cityId: {
+                partnerId: row.partnerId,
+                cityId: row.cityId,
+              },
+            },
+            update: {
+              percentage: row.percentage,
+            },
+            create: row,
+          });
+        }
+      }
+
+      return updatedPartner;
     });
 
     if (logoAction === "remove") {
@@ -353,7 +648,7 @@ export async function POST(request: Request) {
     });
   } catch (error) {
     if (logoAction === "replace") {
-      await deleteLogoObject(getLogoObjectKey(Number(payload.id))).catch(
+      await deleteLogoObject(getLogoObjectKey(partnerId)).catch(
         () => undefined,
       );
     }
@@ -361,17 +656,13 @@ export async function POST(request: Request) {
     const message =
       error instanceof Error
         ? error.message
-        : "Unable to insert partner into database.";
+        : "Unable to update partner in database.";
     const statusCode =
       error instanceof PartnerRequestError || error instanceof FileUploadError
         ? error.status
         : 500;
     return NextResponse.json({ error: message }, { status: statusCode });
   }
-}
-
-function normalizeStartPartner(value: string | null): string | null {
-  return normalizeMonthDate(value);
 }
 
 function normalizeMonthDate(value: string | null): string | null {
@@ -416,6 +707,7 @@ function assertCreatePayload(
   if (!payload || typeof payload !== "object") {
     throw new PartnerRequestError("Invalid partner payload", 400);
   }
+
   const candidate = payload as Partial<CreatePartnerPayload>;
   if (
     !candidate.name ||
@@ -447,6 +739,7 @@ async function parseCreatePartnerRequest(request: Request): Promise<{
     } catch {
       throw new PartnerRequestError("partner must be valid JSON", 400);
     }
+
     assertCreatePayload(parsed);
 
     const logoAction = parseLogoAction(formData.get("logoAction"));
@@ -456,6 +749,7 @@ async function parseCreatePartnerRequest(request: Request): Promise<{
         400,
       );
     }
+
     const fileRaw = formData.get("file");
     const logoFile = fileRaw instanceof File ? fileRaw : null;
     if (logoAction === "replace" && !logoFile) {
@@ -479,6 +773,7 @@ function assertUpdatePayload(
   if (!payload || typeof payload !== "object") {
     throw new PartnerRequestError("Invalid partner payload", 400);
   }
+
   const candidate = payload as Partial<UpdatePartnerPayload>;
   if (
     typeof candidate.id !== "number" ||
@@ -510,6 +805,7 @@ async function parseUpdatePartnerRequest(request: Request): Promise<{
     } catch {
       throw new PartnerRequestError("partner must be valid JSON", 400);
     }
+
     assertUpdatePayload(parsed);
 
     const logoAction = parseLogoAction(formData.get("logoAction"));
@@ -521,6 +817,7 @@ async function parseUpdatePartnerRequest(request: Request): Promise<{
         400,
       );
     }
+
     return { payload: parsed, logoAction, logoFile };
   }
 

@@ -663,7 +663,10 @@ export default function Page() {
               />
             </Tabs.Panel>
             <Tabs.Panel value="Diapers">
-              <DistributionsTable distributionData={filteredDistributions} />
+              <DistributionsTable
+                distributionData={filteredDistributions}
+                onDataUpdated={fetchDistributions}
+              />
             </Tabs.Panel>
           </Tabs>
         </>

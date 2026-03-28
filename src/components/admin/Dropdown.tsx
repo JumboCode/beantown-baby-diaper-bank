@@ -22,6 +22,7 @@ export type CollapsibleDropdownProps<T> = {
   titleClassName?: string;
   className?: string;
   defaultOpen?: boolean;
+  refreshKey?: number | string;
 };
 
 export function CollapsibleDropdown<T>({
@@ -37,6 +38,7 @@ export function CollapsibleDropdown<T>({
   titleClassName = "text-[18px] font-semibold",
   className = "",
   defaultOpen = false, //
+  refreshKey,
 }: CollapsibleDropdownProps<T>) {
   const [open, setOpen] = useState(defaultOpen);
   const [state, setState] = useState<FetchState<T>>({
@@ -89,6 +91,14 @@ export function CollapsibleDropdown<T>({
       void fetchData();
     }
   }, [open, fetchPolicy]);
+
+  useEffect(() => {
+    hasFetchedOnceRef.current = false;
+
+    if (open && fetchPolicy !== "never") {
+      void fetchData();
+    }
+  }, [refreshKey]);
 
   // styling of dropdown (open and closed)
   return (

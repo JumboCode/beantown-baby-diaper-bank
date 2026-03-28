@@ -1,4 +1,5 @@
-import { Slider } from "@mantine/core";
+import { Slider, Box } from "@mantine/core";
+import Image from "next/image";
 
 export interface TimelineSliderProps {
   labels: (string | number)[];
@@ -11,32 +12,103 @@ export default function TimelineSlider({
   value,
   setValue,
 }: TimelineSliderProps) {
-  return (
-    <div>
-      {/* This displays the selected month/year at the top-left of the slider */}
-      <div style={{ fontWeight: 600, marginBottom: "8px" }}>
-        {labels[value]}
-      </div>
+  // If no labels, just render an empty box to preserve layout
+  if (!labels || labels.length === 0) {
+    return <Box h={50} />;
+  }
 
+  const maxPoints = Math.max(0, labels.length - 1);
+  const markStep =
+    labels.length <= 8 ? 1 : labels.length <= 12 ? 2 : Math.ceil(labels.length / 6);
+  const marks = labels.map((label, idx) => {
+    const shouldLabel =
+      idx === 0 || idx === maxPoints || idx === value || idx % markStep === 0;
+
+    return {
+      value: idx,
+      label: shouldLabel ? label.toString() : undefined,
+    };
+  });
+
+  return (
+    <Box
+      style={{
+        position: "relative",
+        width: "100%",
+        paddingTop: "10px",
+        paddingBottom: "12px",
+      }}
+    >
       <Slider
-        restrictToMarks
         min={0}
-        max={Math.max(0, labels.length - 1)}
+        max={maxPoints}
         value={value}
         onChange={setValue}
         step={1}
-        // Removed 'label' from the mark objects to stop them from appearing under the slider
-        marks={labels.map((_, idx) => ({
-          value: idx,
-        }))}
-        // label={null} removes the floating tooltip (1, 2, 3...) that appears while dragging
-        label={null}
+        size={"lg"}
+        label={(val) => labels[val]?.toString() || ""}
+        labelAlwaysOn
+        marks={marks}
+        color="#053766"
+        thumbSize={36}
+        thumbChildren={
+          <Image
+            src="/bbdb.jpg"
+            alt="Timeline marker"
+            width={36}
+            height={36}
+            style={{ borderRadius: "50%", objectFit: "cover" }}
+          />
+        }
         styles={{
-          root: { width: "100%" },
-          // Ensuring the track looks clean without labels
-          mark: { display: "block" },
+          root: {
+            paddingLeft: 6,
+            paddingRight: 6,
+          },
+          track: {
+            height: 8,
+          },
+          bar: {
+            background:
+              "linear-gradient(90deg, #143E6E 0%, #0F6B99 100%)",
+            transition: "width 220ms ease",
+          },
+          mark: {
+            width: 8,
+            height: 8,
+            border: "2px solid #FFFFFF",
+            backgroundColor: "#D0D5DD",
+            top: "50%",
+            transform: "translateY(-50%)",
+          },
+          markLabel: {
+            marginTop: 10,
+            fontSize: 12,
+            fontWeight: 700,
+            color: "#667085",
+          },
+          thumb: {
+            borderRadius: "50%",
+            overflow: "hidden",
+            padding: 0,
+            border: "2px solid #FFFFFF",
+            boxShadow: "0 4px 12px rgba(5, 55, 102, 0.22)",
+            transition:
+              "left 220ms ease, transform 220ms ease, box-shadow 220ms ease",
+          },
+          label: {
+            backgroundColor: "#FFFFFF",
+            border: "1px solid #D0D5DD",
+            borderRadius: 999,
+            color: "#053766",
+            fontWeight: 800,
+            padding: "6px 10px",
+            boxShadow: "0 6px 18px rgba(16, 24, 40, 0.12)",
+            transition:
+              "left 220ms ease, transform 220ms ease, opacity 180ms ease",
+          },
         }}
       />
-    </div>
+    </Box>
   );
 }

@@ -1,11 +1,42 @@
 import type { Partner } from "@/generated/prisma/client";
-import { Drawer, Text, Title, Skeleton, Stack, Group } from "@mantine/core";
+import {
+  Center,
+  Drawer,
+  Loader,
+  Skeleton,
+  Stack,
+  Group,
+  Text,
+  Title,
+} from "@mantine/core";
+import dynamic from "next/dynamic";
 import { useEffect, useState } from "react";
+import { useBaseTileLayer } from "./useBaseTileLayer";
 
 export interface PartnerIconDrawerProps {
   partnerId: number | null;
   onClose: () => void;
 }
+
+const MapContainer = dynamic(
+  () => import("react-leaflet").then((module) => module.MapContainer),
+  {
+    ssr: false,
+    loading: () => (
+      <Center h={180}>
+        <Loader color="#51A3CC" size="sm" />
+      </Center>
+    ),
+  },
+);
+const TileLayer = dynamic(
+  () => import("react-leaflet").then((module) => module.TileLayer),
+  { ssr: false },
+);
+const Marker = dynamic(
+  () => import("react-leaflet").then((module) => module.Marker),
+  { ssr: false },
+);
 
 const infoCardStyle = {
   border: "1px solid #F2F4F7",
@@ -73,11 +104,118 @@ const statusDisplay = (status: Partner["status"]) => {
   };
 };
 
+type PartnerCoordinates = {
+  lat: number;
+  lng: number;
+};
+
+interface PartnerWithStats
+  extends Omit<Partner, "coords" | "startPartner" | "endPartner"> {
+  partner_id: number;
+  logoUrl: string | null;
+  coordinates?: PartnerCoordinates | null;
+  coords?: PartnerCoordinates | null;
+  startPartner: Date | null;
+  endPartner: Date | null;
+  number_babies_helped: number;
+  number_diapers: number;
+}
+
+function createPartnerIcon(
+  leaflet: typeof import("leaflet"),
+  url: string | null,
+) {
+  const validUrl =
+    url && url.trim() !== "" ? url : "https://placehold.co/400x400?text=Logo";
+
+  return leaflet.divIcon({
+    className: "custom-partner-icon",
+    html: `
+      <div style="
+        width: 34px;
+        height: 34px;
+        border-radius: 50%;
+        background-image: url('${validUrl}');
+        background-size: contain;
+        background-repeat: no-repeat;
+        background-position: center;
+        border: 2px solid #51A3CC;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        background-color: white;
+      "></div>`,
+    iconSize: [34, 34],
+    iconAnchor: [17, 17],
+  });
+}
+
+function PartnerMiniMap({
+  partner,
+}: {
+  partner: PartnerWithStats;
+}) {
+  const coords = partner.coords ?? partner.coordinates ?? null;
+  const { tileLayerProps } = useBaseTileLayer();
+  const [leaflet, setLeaflet] = useState<typeof import("leaflet") | null>(null);
+
+  useEffect(() => {
+    import("leaflet").then((module) => {
+      setLeaflet(module);
+    });
+  }, []);
+
+  if (!coords) {
+    return null;
+  }
+
+  return (
+    <div style={infoCardStyle}>
+      <div style={infoLabelStyle}>Location</div>
+      <div
+        style={{
+          marginTop: "0.75rem",
+          height: 180,
+          overflow: "hidden",
+          borderRadius: 12,
+          border: "1px solid #E5E7EB",
+        }}
+      >
+        {leaflet ? (
+          <MapContainer
+            center={[coords.lat, coords.lng]}
+            zoom={13}
+            scrollWheelZoom={true}
+            dragging={true}
+            doubleClickZoom={true}
+            touchZoom={true}
+            boxZoom={true}
+            keyboard={true}
+            zoomControl={false}
+            attributionControl={false}
+            style={{ height: "100%", width: "100%" }}
+          >
+            <TileLayer {...tileLayerProps} />
+            <Marker
+              position={[coords.lat, coords.lng]}
+              icon={createPartnerIcon(leaflet, partner.logoUrl)}
+            />
+          </MapContainer>
+        ) : (
+          <Center h="100%">
+            <Loader color="#51A3CC" size="sm" />
+          </Center>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export default function PartnerIconDrawer({
   partnerId,
   onClose,
 }: PartnerIconDrawerProps) {
-  const [selectedPartner, setSelectedPartner] = useState<Partner | null>(null);
+  const [selectedPartner, setSelectedPartner] = useState<PartnerWithStats | null>(
+    null,
+  );
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -101,17 +239,16 @@ export default function PartnerIconDrawer({
   async function fetchPartnerDetails(id: number) {
     const response = await fetch(`/api/partners/${id}`);
     const result = await response.json();
-    const partner = result.data;
-    partner.startPartner = new Date(result.data.startPartner);
+    const partner = result.data as PartnerWithStats;
+    partner.startPartner = partner.startPartner
+      ? new Date(partner.startPartner)
+      : null;
+    partner.endPartner = partner.endPartner ? new Date(partner.endPartner) : null;
+    partner.coords = partner.coordinates ?? null;
     return partner;
   }
 
-  interface PartnerWithStats extends Partner {
-    number_babies_helped: number;
-    number_diapers: number;
-  }
-
-  const partner = selectedPartner as PartnerWithStats | null;
+  const partner = selectedPartner;
 
   return (
     <Drawer
@@ -220,6 +357,8 @@ export default function PartnerIconDrawer({
                 </Text>
               </div>
             )}
+
+            <PartnerMiniMap partner={partner} />
 
             <div
               style={{
