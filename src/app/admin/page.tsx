@@ -210,41 +210,48 @@ export default function Page() {
     };
   }, [fetchPartners, fetchPercentages]);
 
-    const [uploadedMonths, setUploadedMonths] = useState<number[]>([]);
-    const [lastUploaded, setLastUploaded] = useState<string | null>(null);
-    const [years, setYears] = useState<string[]>(["All"]);
-    const currentYear = new Date().getFullYear();
-  
-    const fetchTimelineData = useCallback(async () => {
-  try {
-    const res = await fetch(`/api/timeline-slider?year=${currentYear}`);
-    const data = await res.json();
-    if (data.years) {
-      setYears(["All", ...data.years.map(String)]);
-    }
-    if (data.months) {
-      const currentYearMonths = data.months.filter(
-        (d: { Month: string; Year: string }) => d.Year === String(currentYear)
-      );
-      const indices = currentYearMonths.map(
-        (d: { Month: string; Year: string }) =>
-          MONTHS.findIndex((m) => d.Month.startsWith(m))
-      );
-      setUploadedMonths(indices);
+  const [uploadedMonths, setUploadedMonths] = useState<number[]>([]);
+  const [lastUploaded, setLastUploaded] = useState<string | null>(null);
+  const [years, setYears] = useState<string[]>(["All"]);
+  const currentYear = new Date().getFullYear();
 
-      if (data.months.length > 0) {
-        const last = data.months[data.months.length - 1];
-        setLastUploaded(`${last.Month} ${last.Year}`);
+  const fetchTimelineData = useCallback(async () => {
+    try {
+      const res = await fetch(`/api/timeline-slider?year=${currentYear}`);
+      const data = await res.json();
+      if (data.years) {
+        setYears(["All", ...data.years.map(String)]);
       }
-    }
-  } catch (err) {
-    console.error("Failed to fetch timeline data:", err);
-  }
-}, [currentYear]);
+      if (data.months) {
+        const validMonths = data.months.filter(
+          (d: { Month: string | null; Year: string | null }) =>
+            typeof d.Month === "string" && typeof d.Year === "string"
+        );
+        const currentYearMonths = validMonths.filter(
+          (d: { Month: string; Year: string }) => d.Year === String(currentYear)
+        );
+        const indices = currentYearMonths
+          .map((d: { Month: string; Year: string }) =>
+            MONTHS.findIndex((m) => d.Month.startsWith(m))
+          )
+          .filter((index: number) => index >= 0);
+        setUploadedMonths(indices);
 
-useEffect(() => {
-  fetchTimelineData();
-}, [fetchTimelineData]);
+        if (validMonths.length > 0) {
+          const last = validMonths[validMonths.length - 1];
+          setLastUploaded(`${last.Month} ${last.Year}`);
+        } else {
+          setLastUploaded(null);
+        }
+      }
+    } catch (err) {
+      console.error("Failed to fetch timeline data:", err);
+    }
+  }, [currentYear]);
+
+  useEffect(() => {
+    fetchTimelineData();
+  }, [fetchTimelineData]);
 
   const formatMonthKeyFromDate = (date: Date) =>
     `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, "0")}`;

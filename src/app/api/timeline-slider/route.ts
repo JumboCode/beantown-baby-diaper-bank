@@ -3,6 +3,26 @@ import { prisma } from "@/lib/prisma";
 
 export const revalidate = 2592000;
 
+const MONTH_ORDER: Record<string, number> = {
+  January: 0,
+  February: 1,
+  March: 2,
+  April: 3,
+  May: 4,
+  June: 5,
+  July: 6,
+  August: 7,
+  September: 8,
+  October: 9,
+  November: 10,
+  December: 11,
+};
+
+type TimelineMonthRow = {
+  year: string;
+  month: string;
+};
+
 export async function GET() {
   try {
     const yearly_data = await prisma.yearlyData.findMany({
@@ -16,12 +36,41 @@ export async function GET() {
 
     const distributions = await prisma.distribution.findMany({
       distinct: ["year", "month"],
+      select: {
+        year: true,
+        month: true,
+      },
     });
 
-    const months = distributions.map((distribution) => ({
-      Month: distribution.month,
-      Year: distribution.year,
-    }));
+    const validDistributions = distributions.reduce<TimelineMonthRow[]>(
+      (acc, distribution) => {
+        if (
+          distribution.month !== null &&
+          distribution.year !== null &&
+          distribution.month in MONTH_ORDER
+        ) {
+          acc.push({
+            month: distribution.month,
+            year: distribution.year,
+          });
+        }
+
+        return acc;
+      },
+      [],
+    );
+
+    const months = validDistributions
+      .map((distribution) => ({
+        Month: distribution.month,
+        Year: distribution.year,
+      }))
+      .sort((a, b) => {
+        const yearDiff = Number(a.Year) - Number(b.Year);
+        if (yearDiff !== 0) return yearDiff;
+
+        return MONTH_ORDER[a.Month] - MONTH_ORDER[b.Month];
+      });
 
     return NextResponse.json({ years, months });
   } catch (error) {
