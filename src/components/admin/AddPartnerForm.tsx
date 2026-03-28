@@ -263,7 +263,7 @@ export default function AddPartnerForm({
     const partnerPayload = {
       name: values.organization,
       description: values.description,
-      start_partner: values.time ? values.time.toISOString() : null,
+      start_partner: values.time,
       status: values.status,
       coordinates: {
         lat: Number(values.latitude),
