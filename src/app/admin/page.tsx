@@ -14,6 +14,7 @@ import {
   Popover,
   Checkbox,
   TextInput,
+  Stepper,
 } from "@mantine/core";
 import { MonthPickerInput } from "@mantine/dates";
 import { useState, useEffect, useCallback, useMemo } from "react";
@@ -99,7 +100,7 @@ const monthMap: Record<string, string> = {
   December: "12",
 };
 
-const years: Array<string> = ["All", "2023", "2024", "2025"];
+const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
 const statuses = (Object.values(status) as string[]).map((s) => ({
   value: s,
@@ -208,6 +209,49 @@ export default function Page() {
       window.removeEventListener("partners:refresh", handlePartnersRefresh);
     };
   }, [fetchPartners, fetchPercentages]);
+
+  const [uploadedMonths, setUploadedMonths] = useState<number[]>([]);
+  const [lastUploaded, setLastUploaded] = useState<string | null>(null);
+  const [years, setYears] = useState<string[]>(["All"]);
+  const currentYear = new Date().getFullYear();
+
+  const fetchTimelineData = useCallback(async () => {
+    try {
+      const res = await fetch(`/api/timeline-slider?year=${currentYear}`);
+      const data = await res.json();
+      if (data.years) {
+        setYears(["All", ...data.years.map(String)]);
+      }
+      if (data.months) {
+        const validMonths = data.months.filter(
+          (d: { Month: string | null; Year: string | null }) =>
+            typeof d.Month === "string" && typeof d.Year === "string"
+        );
+        const currentYearMonths = validMonths.filter(
+          (d: { Month: string; Year: string }) => d.Year === String(currentYear)
+        );
+        const indices = currentYearMonths
+          .map((d: { Month: string; Year: string }) =>
+            MONTHS.findIndex((m) => d.Month.startsWith(m))
+          )
+          .filter((index: number) => index >= 0);
+        setUploadedMonths(indices);
+
+        if (validMonths.length > 0) {
+          const last = validMonths[validMonths.length - 1];
+          setLastUploaded(`${last.Month} ${last.Year}`);
+        } else {
+          setLastUploaded(null);
+        }
+      }
+    } catch (err) {
+      console.error("Failed to fetch timeline data:", err);
+    }
+  }, [currentYear]);
+
+  useEffect(() => {
+    fetchTimelineData();
+  }, [fetchTimelineData]);
 
   const formatMonthKeyFromDate = (date: Date) =>
     `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, "0")}`;
@@ -401,10 +445,7 @@ export default function Page() {
                 <Title order={2}>Hello, Rachel 👋</Title>
                 <Group gap="xl" wrap="wrap">
                   <Text size="sm" c="dimmed">
-                    Last data uploaded: Monday, 30 Aug, 2025
-                  </Text>
-                  <Text size="sm" c="dimmed">
-                    Last updated: Friday, 2 Sep, 2025
+                    Last data uploaded: {lastUploaded ?? "N/A"}
                   </Text>
                 </Group>
               </Stack>
@@ -412,6 +453,7 @@ export default function Page() {
                 opened={openedUploadDataForm}
                 onClose={closeUploadDataForm}
                 onUploaded={fetchDistributions}
+                uploadedMonths={uploadedMonths}
               />
               <AddPartnerForm
                 opened={openedPartnerForm}
