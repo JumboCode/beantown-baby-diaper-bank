@@ -1,7 +1,18 @@
-import { clerkClient } from "@clerk/nextjs/server";
+import { auth, clerkClient } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 
 export async function POST(request: Request) {
+  const { userId, sessionClaims } = await auth();
+  const requesterRole = sessionClaims?.metadata?.role;
+
+  if (!userId) {
+    return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+  }
+
+  if (!["admin", "superadmin"].includes(requesterRole ?? "")) {
+    return NextResponse.json({ message: "Forbidden" }, { status: 403 });
+  }
+
   const { firstName, lastName, email, level, password } = await request.json();
 
   if (!firstName || !lastName || !email || !level) {
@@ -43,6 +54,45 @@ export async function POST(request: Request) {
     return NextResponse.json(
       { message: "Error adding admin", error: err?.message || "Unknown error" },
       { status: 500 },
+    );
+  }
+}
+
+export async function DELETE(request: Request) {
+  try {
+    const { userId, sessionClaims } = await auth();
+    const requesterRole = sessionClaims?.metadata?.role;
+
+    if (!userId) {
+      return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+    }
+
+    if (requesterRole !== "superadmin") {
+      return NextResponse.json(
+        { message: "Only superadmin users can delete admin accounts" },
+        { status: 403 }
+      );
+    }
+
+    const { id } = await request.json();
+
+    if (!id) {
+      return NextResponse.json(
+        { message: "Missing required field: id" },
+        { status: 400 }
+      );
+    }
+
+    const client = await clerkClient();
+    
+    await client.users.deleteUser(id);
+
+    return NextResponse.json({ message: "Admin deleted successfully" });
+  } catch (err: any) {
+    console.error("Error deleting user:", err);
+    return NextResponse.json(
+      { message: "Error deleting admin", error: err?.message || "Unknown error" },
+      { status: 500 }
     );
   }
 }
