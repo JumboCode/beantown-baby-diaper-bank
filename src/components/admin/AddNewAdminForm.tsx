@@ -30,7 +30,7 @@ export default function AddNewAdminForm({
       last: (value) => (value ? null : "Last name is required"),
       email: (value) => (/^\S+@\S+$/.test(value) ? null : "Invalid email"),
       password: (value) =>
-        value.length >= 6 ? null : "Password must be at least 6 characters",
+        value.length >=  8? null : "Password must be at least 8 characters",
     },
   });
 
