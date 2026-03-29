@@ -42,8 +42,8 @@ const MONTH_NAMES = [
 ];
 
 interface TimelineSliderMonth {
-  Month: string;
-  Year: string;
+  Month: string | null;
+  Year: string | null;
 }
 
 // export default function MonthSelectionModal({opened, onClose, onSubmit} : MonthSelectionModalProps) {
@@ -69,11 +69,16 @@ export default function DeleteDistributionDataButton({
         const response = await fetch("/api/timeline-slider");
         if (response.ok) {
           const data = await response.json();
-          // Map to lowercase month for easier matching
-          const months = data.months.map((m: TimelineSliderMonth) => ({
-            month: m.Month.toLowerCase(),
-            year: Number(m.Year),
-          }));
+          const months = (Array.isArray(data.months) ? data.months : [])
+            .filter(
+              (m: TimelineSliderMonth) =>
+                typeof m.Month === "string" && typeof m.Year === "string",
+            )
+            .map((m: TimelineSliderMonth) => ({
+              month: m.Month!.toLowerCase(),
+              year: Number(m.Year),
+            }))
+            .filter((m: { month: string; year: number }) => !Number.isNaN(m.year));
           setAvailableMonths(months);
         }
       } catch (error) {

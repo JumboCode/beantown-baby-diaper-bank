@@ -24,7 +24,7 @@ import ContinuousUpdateForm from "./ContinuousUpdateForm";
 import type { CityPercentage } from "./CityPercentagesForm";
 import "@mantine/dates/styles.css";
 import { RiCalendarEventLine, RiLineChartLine } from "react-icons/ri";
-import { fetchCoordsFromAddress } from "@/lib/util";
+import { fetchCoordsFromAddress } from "@/lib/server/util";
 
 interface EditPartnerFormProps {
   partner: Partner;

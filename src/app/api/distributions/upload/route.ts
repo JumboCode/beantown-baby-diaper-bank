@@ -88,20 +88,18 @@ export async function POST(request: Request) {
 
     for (const row of partnerRows) {
       const name = row.partnerName?.trim();
-      const totalChildrenStr = String(row.totalChildren ?? "").replace(/,/g, "").trim();
       const totalDiapersStr = String(row.totalDiapers ?? "").replace(/,/g, "").trim();
 
       // Check for missing fields
-      if (!name || totalChildrenStr === "" || totalDiapersStr === "") {
+      if (!name || totalDiapersStr === "") {
         errors.add("There are missing fields in the spreadsheet. Please fix and reupload.");
         if (!name) continue;
       }
 
       // Check for invalid characters
-      const isInvalidChildren = totalChildrenStr !== "" && !/^\d+$/.test(totalChildrenStr);
       const isInvalidDiapers = totalDiapersStr !== "" && !/^\d+$/.test(totalDiapersStr);
 
-      if (isInvalidChildren || isInvalidDiapers) {
+      if (isInvalidDiapers) {
         errors.add("There are non-numeric or negative values for number of diapers in the spreadsheet. Please fix and reupload.");
       }
 

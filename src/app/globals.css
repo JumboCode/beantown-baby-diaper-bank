@@ -15,3 +15,50 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+.leaflet-container .leaflet-popup-content p {
+  margin: 0 !important;
+}
+
+.custom-map-tooltip {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+}
+
+.custom-map-tooltip .leaflet-tooltip-left::before,
+.custom-map-tooltip .leaflet-tooltip-right::before,
+.custom-map-tooltip .leaflet-tooltip-top::before,
+.custom-map-tooltip .leaflet-tooltip-bottom::before {
+  display: none !important;
+}
+
+@keyframes cityBoundaryFadeIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+.city-boundary-enter {
+  animation: cityBoundaryFadeIn 700ms ease-out;
+}
+
+.city-boundary {
+  transition:
+    fill 300ms ease-out,
+    fill-opacity 300ms ease-out,
+    stroke 300ms ease-out,
+    stroke-width 300ms ease-out,
+    stroke-opacity 300ms ease-out,
+    filter 300ms ease-out;
+}
+
+.city-boundary:hover {
+  filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.4));
+  z-index: 1000;
+}

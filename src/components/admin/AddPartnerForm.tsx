@@ -252,6 +252,30 @@ export default function AddPartnerForm({
     setIsSubmitting(true);
     setSubmitWarning("");
 
+    // Check for duplicate partner name before submitting.
+    try {
+      const trimmedName = values.organization.trim();
+      const checkRes = await fetch(
+        `/api/partners?search=${encodeURIComponent(trimmedName)}`,
+      );
+      if (checkRes.ok) {
+        const checkData = await checkRes.json();
+        const duplicate = checkData.data?.find(
+          (p: { name: string }) =>
+            p.name.trim().toLowerCase() === trimmedName.toLowerCase(),
+        );
+        if (duplicate) {
+          const duplicateWarning = `The partner ${trimmedName} already exists.`;
+          form.setFieldError("organization", duplicateWarning);
+          setSubmitWarning(duplicateWarning);
+          setIsSubmitting(false);
+          return;
+        }
+      }
+    } catch {
+      // If the check fails, allow the submission to proceed.
+    }
+
     const cityPercentages = values.cities.map((city) => {
       const raw = Number(percentages[city] ?? 0);
       const normalized = Number.isFinite(raw)

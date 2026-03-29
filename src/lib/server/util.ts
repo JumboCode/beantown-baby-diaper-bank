@@ -1,5 +1,3 @@
-import "server-only";
-
 const GEOCODIO_API_KEY = process.env.GEOCODIO_API_KEY;
 
 /**
