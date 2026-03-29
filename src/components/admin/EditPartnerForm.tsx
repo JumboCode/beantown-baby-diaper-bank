@@ -277,7 +277,7 @@ export default function EditPartnerForm({
 
     fetchCoordsFromAddress(fullAddress).then((location) => {
       if (!location) return;
-      form.setFieldValue("latitude", String(location.lat));
+      form.setFieldValue("latitude", String(location.lat)); 
       form.setFieldValue("longitude", String(location.lng));
     });
   }, [
