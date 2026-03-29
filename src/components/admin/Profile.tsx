@@ -14,12 +14,18 @@ export default function Profile() {
     (typeof user?.publicMetadata?.role === "string" &&
       user.publicMetadata.role) ||
     "member";
+  const adminTypeLabel =
+    role === "superadmin"
+      ? "Super Admin"
+      : role === "admin"
+        ? "Admin"
+        : "Member";
 
   return (
     <Group gap="xs" wrap="nowrap">
       <UserButton afterSignOutUrl="/" />
       <Text size="xs" c="dimmed" tt="uppercase" fw={600}>
-        {role}
+        {adminTypeLabel}
       </Text>
     </Group>
   );

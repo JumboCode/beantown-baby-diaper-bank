@@ -41,121 +41,262 @@ const MONTH_NAMES = [
   "December",
 ];
 
-// Helper for sorting months chronologically
-const MONTH_ORDER: Record<string, number> = {
-  January: 1,
-  February: 2,
-  March: 3,
-  April: 4,
-  May: 5,
-  June: 6,
-  July: 7,
-  August: 8,
-  September: 9,
-  October: 10,
-  November: 11,
-  December: 12,
+type AddressFields = {
+  addressLine: string;
+  city: string;
+  state: string;
+  zipCode: string;
+  country: string;
 };
 
-export default function DeleteDistributionDataButton({
-  onSuccess,
-}: MonthSelectionModalProps) {
-  const [opened, { open, close }] = useDisclosure(false);
-  const [numMonths, setNumMonths] = useState<string | null>("one_month");
-  const [monthsRange, setMonthsRange] = useState<
-    [DateValue | null, DateValue | null]
-  >([null, null]);
-  const [loadingDistributions, setLoadingDistributions] = useState(false);
-  const [oneMonth, setOneMonth] = useState<Date | null>(null);
-  const [previewData, setPreviewData] = useState<Distribution[]>([]);
-  const [isPreviewMode, setIsPreviewMode] = useState(false);
+const parseAddressFields = (address: string | null): AddressFields => {
+  const defaults: AddressFields = {
+    addressLine: "",
+    city: "",
+    state: "",
+    zipCode: "",
+    country: DEFAULT_COUNTRY,
+  };
+  if (!address) return defaults;
 
-  // FIX 2: Sorting logic for the preview table
-  const sortedPreviewData = useMemo(() => {
-    return [...previewData].sort((a, b) => {
-      // 1. Sort by Organization (Partner) Name
-      const nameA = a.partner?.name || "";
-      const nameB = b.partner?.name || "";
-      const nameCompare = nameA.localeCompare(nameB);
-      if (nameCompare !== 0) return nameCompare;
+  const parts = address
+    .split(",")
+    .map((p) => p.trim())
+    .filter(Boolean);
+  return {
+    addressLine: parts[0] || "",
+    city: parts[1] || "",
+    state: parts[2] || "",
+    zipCode: parts[3] || "",
+    country: parts[4] || DEFAULT_COUNTRY,
+  };
+};
 
-      // 2. Sort by Year
-      if (a.year !== b.year) {
-        return Number(a.year) - Number(b.year);
-      }
+const buildAddressString = ({
+  addressLine,
+  city,
+  state,
+  zipCode,
+  country,
+}: AddressFields) =>
+  [addressLine, city, state, zipCode, country || DEFAULT_COUNTRY]
+    .filter((part) => Boolean(part))
+    .join(", ");
 
-      // 3. Sort by Month
-      return (MONTH_ORDER[a.month] || 0) - (MONTH_ORDER[b.month] || 0);
-    });
-  }, [previewData]);
+const requiredNumber = (label: string) => (value: unknown) => {
+  const v = (value === 0 ? "0" : (value ?? "")).toString().trim();
+  if (v === "") return `${label} is required`;
+  return /^-?\d+(\.\d+)?$/.test(v) ? null : `${label} must be a number`;
+};
 
-  async function fetchPreviewMonthSelection(selection: MonthSelectionData) {
-    setLoadingDistributions(true);
-    const { mode, start, end } = selection;
-    let url = "";
+const requiredInteger = (label: string) => (value: unknown) => {
+  const v = (value === 0 ? "0" : (value ?? "")).toString().trim();
+  if (v === "") return `${label} is required`;
+  return /^\d+$/.test(v) ? null : `${label} must be a number`;
+};
 
-    if (mode === "one_month") {
-      const monthName = MONTH_NAMES[start.month];
-      url = `/api/distributions/preview-delete?month=${monthName}&year=${start.year}`;
-    } else if (mode === "range" && end) {
-      const startMonthName = MONTH_NAMES[start.month];
-      const endMonthName = MONTH_NAMES[end.month];
-      url = `/api/distributions/preview-delete?mode=range&startMonth=${startMonthName}&startYear=${start.year}&endMonth=${endMonthName}&endYear=${end.year}`;
-    }
+const requiredInput = (label: string) => (value: unknown) => {
+  const v = (value === 0 ? "0" : (value ?? "")).toString().trim();
+  if (v === "") return `${label} is required`;
+  return /.+/.test(v) ? null : `${label} must be filled out`;
+};
 
-    try {
-      const response = await fetch(url);
-      if (response.ok) {
-        const data = await response.json();
-        setPreviewData(data);
-        setIsPreviewMode(true);
-      }
-    } catch (error) {
-      console.error("Error fetching preview data:", error);
-    } finally {
-      setLoadingDistributions(false);
+type UpdatePercentagesOptions = "one-time" | "continuous";
+
+
+const parseMonthDateForPicker = (
+  rawDate: string | null | undefined,
+): Date | null => {
+  if (!rawDate) return null;
+  const monthMatch = rawDate.match(/^(\d{4})-(\d{2})/);
+  if (!monthMatch) {
+    const parsed = new Date(rawDate);
+    return Number.isNaN(parsed.getTime()) ? null : parsed;
+  }
+
+  const year = Number(monthMatch[1]);
+  const monthIndex = Number(monthMatch[2]) - 1;
+  return new Date(Date.UTC(year, monthIndex, 1, 12));
+};
+
+const formatMonthDateForApi = (date: Date | string | null): string | null => {
+  if (!date) return null;
+
+  if (typeof date === "string") {
+    const monthMatch = date.match(/^(\d{4})-(\d{2})/);
+    if (monthMatch) {
+      return `${monthMatch[1]}-${monthMatch[2]}-01`;
     }
   }
 
-  const deletePreviewedDistributions = async () => {
+  const parsed = date instanceof Date ? date : new Date(date);
+  if (Number.isNaN(parsed.getTime())) return null;
+
+  const year = parsed.getUTCFullYear();
+  const month = String(parsed.getUTCMonth() + 1).padStart(2, "0");
+  return `${year}-${month}-01`;
+};
+
+export default function EditPartnerForm({
+  partner,
+  onClose,
+}: EditPartnerFormProps) {
+  const [loading, setLoading] = useState(false);
+  const [initialLogoUrl] = useState<string>(partner.logo_url || "");
+  const [activePercentTab, setActivePercentTab] =
+    useState<UpdatePercentagesOptions>("one-time");
+  const [cityPercentages, setCityPercentages] = useState<
+    {
+      city: { id: number; name: string };
+      percentage: number;
+    }[]
+  >([]);
+
+  useEffect(() => {
+    fetch(`/api/partners/percentages?partnerId=${partner.id}`)
+      .then((res) => res.json())
+      .then((data) => {
+        setCityPercentages(data.data);
+      })
+      .catch((error) => {
+        console.error("Error fetching partner percentages:", error);
+      });
+  }, [partner.id]);
+
+  const initialCityPercentEntries: CityPercentage[] =
+    cityPercentages.length > 0
+      ? cityPercentages.map((entry, idx) => ({
+        id: `${entry.city.name}-${idx}`,
+        city: entry.city.name,
+        percent: Math.round((entry.percentage ?? 0) * 100),
+      }))
+      : [];
+
+  const addressFields = parseAddressFields(partner.address);
+
+  const form = useForm({
+    mode: "controlled",
+    validateInputOnChange: true,
+    validateInputOnBlur: true,
+    initialValues: {
+      organization: partner.name,
+      description: partner.description || "",
+      time: parseMonthDateForPicker(partner.start_partner),
+      endTime: parseMonthDateForPicker(partner.end_partner),
+      status: partner.status,
+      latitude: partner.coords ? String(partner.coords.lat) : "",
+      longitude: partner.coords ? String(partner.coords.lng) : "",
+      addressLine: addressFields.addressLine,
+      city: addressFields.city,
+      state: addressFields.state,
+      zipCode: addressFields.zipCode,
+      country: addressFields.country,
+      logoFile: null as File | null,
+      logoUrl: partner.logo_url || "",
+      updatePercentagesType: "one-time" as UpdatePercentagesOptions,
+    },
+    validate: {
+      organization: requiredInput("Name of Organization"),
+      time: (value, values) =>
+        values.status === "waitlisted" || value ? null : "Select a start time",
+      endTime: (value, values) =>
+        values.status === "inactive" && !value ? "Select an end time" : null,
+      latitude: requiredNumber("Latitude"),
+      longitude: requiredNumber("Longitude"),
+      state: (value) => (value ? null : "Select a state"),
+      city: requiredInput("City"),
+      addressLine: requiredInput("Address Line"),
+      zipCode: requiredInteger("Zip Code"),
+      country: (value) => (value ? null : "Select a country"),
+      status: (value) => (value ? null : "Select a status"),
+      description: requiredInput("Description"),
+      logoUrl: (value, values) => {
+        if (!value.trim() && !values.logoFile) return null;
+        return typeof value === "string" ? null : "Enter a valid URL";
+      },
+    },
+  });
+
+  useEffect(() => {
+    const { addressLine, city, state, zipCode, country } = form.values;
+    if (!addressLine || !city || !state || !zipCode) return;
+
+    const fullAddress = buildAddressString({
+      addressLine,
+      city,
+      state,
+      zipCode,
+      country,
+    });
+
+    fetchCoordsFromAddress(fullAddress).then((location) => {
+      if (!location) return;
+      form.setFieldValue("latitude", String(location.lat));
+      form.setFieldValue("longitude", String(location.lng));
+    });
+  }, [
+    form.values.addressLine,
+    form.values.city,
+    form.values.state,
+    form.values.zipCode,
+    form.values.country,
+  ]);
+
+  async function submitEditPartner(values: typeof form.values) {
+    setLoading(true);
+
+    const formData = {
+      id: partner.id,
+      name: values.organization,
+      description: values.description,
+      start_partner:
+        values.status !== "waitlisted"
+          ? formatMonthDateForApi(values.time)
+          : null,
+      end_partner:
+        values.status === "inactive"
+          ? formatMonthDateForApi(values.endTime)
+          : null,
+      status: values.status,
+      coordinates: {
+        lat: Number(values.latitude),
+        lng: Number(values.longitude),
+      },
+      address: buildAddressString(values),
+      logo: values.logoUrl,
+    };
+
+    const logoAction = values.logoFile
+      ? "replace"
+      : initialLogoUrl && values.logoUrl.trim() === ""
+        ? "remove"
+        : "keep";
+
     try {
-      const idsToDelete = previewData.map((d) => d.id);
-      const response = await fetch("/api/distributions/delete-records", {
-        method: "DELETE",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ids: idsToDelete }),
-      });
-
-      if (response.ok) {
-        setIsPreviewMode(false);
-        setPreviewData([]);
-        close();
-        onSuccess?.();
+      const requestBody = new FormData();
+      requestBody.append("partner", JSON.stringify(formData));
+      requestBody.append("logoAction", logoAction);
+      if (values.logoFile) {
+        requestBody.append("file", values.logoFile);
       }
-    } catch (error) {
-      console.error("Deletion failed", error);
-    }
-  };
 
-  const handlePreviewClick = () => {
-    if (numMonths === "one_month" && oneMonth) {
-      fetchPreviewMonthSelection({
-        mode: "one_month",
-        start: { month: oneMonth.getMonth(), year: oneMonth.getFullYear() },
-        end: null,
+      const response = await fetch("/api/partners", {
+        method: "POST",
+        body: requestBody,
       });
-    } else if (numMonths === "range" && monthsRange[0] && monthsRange[1]) {
-      fetchPreviewMonthSelection({
-        mode: "range",
-        start: {
-          month: monthsRange[0].getMonth(),
-          year: monthsRange[0].getFullYear(),
-        },
-        end: {
-          month: monthsRange[1].getMonth(),
-          year: monthsRange[1].getFullYear(),
-        },
-      });
+
+      if (!response.ok) {
+        const err = await response.json();
+        form.setFieldError("logoFile", err.error);
+        return;
+      }
+
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new Event("partners:refresh"));
+      }
+      onClose();
+    } finally {
+      setLoading(false);
     }
   };
 

@@ -8,7 +8,7 @@ export default function SettingsButton() {
   return (
     <ActionIcon
       component={Link}
-      href="/admincontrols"
+      href="/admin/controls"
       variant="subtle"
       color="gray"
       size="lg"
