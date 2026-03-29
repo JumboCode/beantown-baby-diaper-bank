@@ -1,7 +1,11 @@
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 
-const isAdminRoute = createRouteMatcher(["/admin(.*)", "/admincontrols(.*)"]);
+const isSuperAdminOnlyRoute = createRouteMatcher([
+  "/admin/controls(.*)",
+]);
+
+const isAdminRoute = createRouteMatcher(["/admin(.*)"]);
 const isAdminApiRoute = createRouteMatcher([
   "/api/admin(.*)",
   "/api/partners",
@@ -11,13 +15,15 @@ const isAdminApiRoute = createRouteMatcher([
 ]);
 
 export default clerkMiddleware(async (auth, req) => {
-  if (!(isAdminRoute(req) || isAdminApiRoute(req))) {
+  if (!(isAdminRoute(req) || isAdminApiRoute(req) || isSuperAdminOnlyRoute(req))) {
     return;
   }
 
   const authState = await auth();
+  const role = authState.sessionClaims?.metadata?.role
+  
   if (!authState.userId) {
-    if (isAdminApiRoute(req)) {
+    if (isAdminApiRoute(req) || isSuperAdminOnlyRoute(req)) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -26,9 +32,17 @@ export default clerkMiddleware(async (auth, req) => {
     return NextResponse.redirect(signInUrl);
   }
 
-  const role = authState.sessionClaims?.metadata?.role;
+  if (isSuperAdminOnlyRoute(req)) {
+    if (role !== "superadmin") {
+      if (req.nextUrl.pathname.startsWith("/api/")) {
+        return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      }
 
-  if (!["admin", "superadmin"].includes(role ?? "")) {
+      return NextResponse.redirect(new URL("/unauthorized", req.url));
+    }
+  }
+
+  if (role !== "admin" && role !== "superadmin") {
     if (isAdminApiRoute(req)) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
