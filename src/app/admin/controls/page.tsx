@@ -25,6 +25,7 @@ import { useRouter } from "next/navigation";
 import { useUser } from "@clerk/nextjs";
 import { Shield, Users, Crown, ChevronLeft } from "lucide-react";
 import classes from "./page.module.css";
+import EditAdminPasswordForm from "@/components/admin/EditAdminPasswordForm";
 
 const poppins = Poppins({
   subsets: ["latin"],
@@ -136,6 +137,9 @@ export default function AdminControlsPage() {
             {element.email}
           </Text>
         </Stack>
+      </Table.Td>
+      <Table.Td>
+        <EditAdminPasswordForm admin={element} />
       </Table.Td>
       <Table.Td>
         {canDeleteAdmins ? (
@@ -255,6 +259,7 @@ export default function AdminControlsPage() {
                   <Table.Tr>
                     <Table.Th>Level</Table.Th>
                     <Table.Th>Administrator</Table.Th>
+                    <Table.Th>Edit Password</Table.Th>
                     <Table.Th>Delete</Table.Th>
                   </Table.Tr>
                 </Table.Thead>

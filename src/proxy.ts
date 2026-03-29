@@ -2,7 +2,7 @@ import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 
 const isSuperAdminOnlyRoute = createRouteMatcher([
-  "/adminControls(.*)",
+  "/admin/controls(.*)",
 ]);
 
 const isAdminRoute = createRouteMatcher(["/admin(.*)"]);
