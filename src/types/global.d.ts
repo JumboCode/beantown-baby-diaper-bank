@@ -6,7 +6,7 @@ declare module "leaflet/dist/leaflet.css";
 export {};
 
 // Create a type for the Roles
-export type Roles = "admin" | "user";
+export type Roles = "superadmin" | "admin" | "user";
 
 declare global {
   interface CustomJwtSessionClaims {

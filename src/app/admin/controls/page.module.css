@@ -1,0 +1,93 @@
+.hero {
+  border: 1px solid rgba(5, 55, 102, 0.1);
+  box-shadow: 0 24px 60px rgba(5, 55, 102, 0.08);
+}
+
+.backButton {
+  align-self: flex-start;
+}
+
+.eyebrow {
+  margin-bottom: 8px;
+  color: #35658f;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.myAccessCard {
+  border: 1px solid rgba(5, 55, 102, 0.08);
+  background: rgba(255, 255, 255, 0.88);
+  backdrop-filter: blur(6px);
+
+}
+
+
+.heroTitle {
+  color: #14324e;
+  line-height: 1.05;
+}
+
+.heroSubtitle {
+  margin-top: 10px;
+  color: #4c647b;
+  font-size: 0.98rem;
+  line-height: 1.6;
+}
+
+.statCard {
+  border: 1px solid rgba(5, 55, 102, 0.08);
+  background: rgba(255, 255, 255, 0.88);
+  backdrop-filter: blur(6px);
+}
+
+.statLabel {
+  color: #5f7286;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.statValue {
+  margin-top: 6px;
+  color: #102a43;
+  font-size: clamp(1.5rem, 3vw, 2.15rem);
+  font-weight: 700;
+  line-height: 1;
+}
+
+.tableCard {
+  border-color: rgba(5, 55, 102, 0.1);
+  box-shadow: 0 16px 38px rgba(17, 24, 39, 0.06);
+}
+
+.sectionTitle {
+  color: #17324d;
+}
+
+.tableWrap {
+  overflow-x: auto;
+  border: 1px solid rgba(5, 55, 102, 0.08);
+  border-radius: 20px;
+}
+
+.tableHead th {
+  background: #f4f8fc;
+  color: #597187;
+  font-size: 0.77rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+@media (max-width: 48em) {
+  .heroTitle {
+    max-width: none;
+  }
+
+  .heroSubtitle {
+    max-width: none;
+  }
+}
