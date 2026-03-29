@@ -7,6 +7,7 @@ const isSuperAdminOnlyRoute = createRouteMatcher([
 
 const isAdminRoute = createRouteMatcher(["/admin(.*)"]);
 const isAdminApiRoute = createRouteMatcher([
+  "/api/admin(.*)",
   "/api/partners",
   "/api/partners/percentages(.*)",
   "/api/distributions(.*)",
