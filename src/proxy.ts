@@ -1,8 +1,9 @@
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 
-const isAdminRoute = createRouteMatcher(["/admin(.*)"]);
+const isAdminRoute = createRouteMatcher(["/admin(.*)", "/admincontrols(.*)"]);
 const isAdminApiRoute = createRouteMatcher([
+  "/api/admin(.*)",
   "/api/partners",
   "/api/partners/percentages(.*)",
   "/api/distributions(.*)",
@@ -25,7 +26,9 @@ export default clerkMiddleware(async (auth, req) => {
     return NextResponse.redirect(signInUrl);
   }
 
-  if (authState.sessionClaims?.metadata?.role !== "admin") {
+  const role = authState.sessionClaims?.metadata?.role;
+
+  if (!["admin", "superadmin"].includes(role ?? "")) {
     if (isAdminApiRoute(req)) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }

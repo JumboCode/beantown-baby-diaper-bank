@@ -1,8 +1,19 @@
-import { clerkClient } from "@clerk/nextjs/server";
+import { auth, clerkClient } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 
 export async function GET() {
   try {
+    const { userId, sessionClaims } = await auth();
+    const role = sessionClaims?.metadata?.role;
+
+    if (!userId) {
+      return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+    }
+
+    if (!["admin", "superadmin"].includes(role ?? "")) {
+      return NextResponse.json({ message: "Forbidden" }, { status: 403 });
+    }
+
     const client = await clerkClient();
     const users = await client.users.getUserList();
 
@@ -11,7 +22,7 @@ export async function GET() {
         const role =
           (u.publicMetadata?.role as string | undefined) ?? "standard";
 
-        const isAdmin = ["admin"].includes(role.toLowerCase());
+        const isAdmin = ["admin", "superadmin"].includes(role.toLowerCase());
 
         return {
           id: u.id,
