@@ -6,7 +6,6 @@ import { useBaseTileLayer } from "./useBaseTileLayer";
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { City, Distribution, status } from "@/generated/prisma/client";
 import {
-  Popup,
   TileLayer,
   Polygon,
   MapContainer,
@@ -29,7 +28,7 @@ import {
 } from "@mantine/core";
 import PartnerIconDrawer from "./PartnerIconDrawer";
 import PartnerAvatar from "./PartnerAvatar";
-import { IconMapPin, IconUsersGroup } from "@tabler/icons-react";
+import { IconMapPin, IconUsersGroup, IconX, IconChartBar, IconCalendarStats } from "@tabler/icons-react";
 
 // --- 1. Helper Functions ---
 
@@ -174,10 +173,16 @@ export default function Map({
   const [selectedPartnerId, setSelectedPartnerId] = useState<number | null>(
     null,
   );
+  const [activeCityName, setActiveCityName] = useState<string | null>(null);
   const animatedRunningTotal = useCountUp(totalDiapersForYear, 1400);
   const animatedYearlyTotal = useCountUp(yearlyDistributed, 700);
 
   const cities = useMemo(() => mapData?.cities.data ?? [], [mapData]);
+
+  const activeCity = useMemo(
+    () => (activeCityName ? cities.find(c => c.name === activeCityName) ?? null : null),
+    [activeCityName, cities],
+  );
 
   const boundaryPolygons = useMemo(() => {
     if (!mapData?.boundaries || cities.length === 0) return [];
@@ -293,11 +298,10 @@ export default function Map({
                   setHoveredId((current) =>
                     current === boundary.id ? null : current,
                   ),
-                click: () => setActiveId(boundary.id),
-                popupclose: () =>
-                  setActiveId((current) =>
-                    current === boundary.id ? null : current,
-                  ),
+                click: () => {
+                  setActiveCityName(prev => prev === boundary.name ? null : (boundary.name ?? null));
+                  setActiveId(prev => prev === boundary.id ? null : boundary.id);
+                },
               }}
             >
               {boundary.name && (() => {
@@ -359,7 +363,7 @@ export default function Map({
                       ) : (
                         <Stack gap={4} mt={6}>
                           <Group justify="space-between" wrap="nowrap">
-                            <Text fz="11px" fw={700} c="#475467" tt="uppercase">Yearly</Text>
+                            <Text fz="11px" fw={700} c="#475467" tt="uppercase">in {String(timelineSlider.value)}</Text>
                             <Text fz="13px" fw={800} c="#16A34A">+{totalDiapers.toLocaleString()}</Text>
                           </Group>
                           <Group justify="space-between" wrap="nowrap">
@@ -367,7 +371,7 @@ export default function Map({
                             <Text fz="13px" fw={800} c="#0F6B99">{city.runningTotal?.toLocaleString() ?? 0}</Text>
                           </Group>
                           <Group justify="space-between" wrap="nowrap" mt={2}>
-                            <Text fz="11px" fw={700} c="#475467" tt="uppercase">Partners</Text>
+                            <Text fz="11px" fw={700} c="#475467" tt="uppercase">Partner Orgs</Text>
                             <Badge variant="light" color="blue" size="sm" radius="xl" fw={700}>
                               {activePartners.length}
                             </Badge>
@@ -378,18 +382,6 @@ export default function Map({
                   </Tooltip>
                 );
               })()}
-              {boundary.name &&
-                cities.map(
-                  (city) =>
-                    city.name === boundary.name && (
-                      <PopupContent
-                        key={city.id.toString()}
-                        city={city}
-                        timelineSlider={timelineSlider}
-                        onPartnerSelect={setSelectedPartnerId}
-                      />
-                    ),
-                )}
             </Polygon>
           );
         })}
@@ -435,11 +427,37 @@ export default function Map({
         onClose={() => setSelectedPartnerId(null)}
       />
 
+      {activeCity && (
+        <Box
+          style={{
+            position: "absolute",
+            top: 110,
+            right: 16,
+            zIndex: 1000,
+            width: 350,
+            maxHeight: "calc(100% - 190px)",
+            overflowY: "auto",
+            background: "rgba(255, 255, 255, 0.97)",
+            border: "1px solid #E4E7EC",
+            borderRadius: 12,
+            boxShadow: "0 8px 24px rgba(16, 24, 40, 0.12)",
+            backdropFilter: "blur(8px)",
+          }}
+        >
+          <PopupContent
+            city={activeCity}
+            timelineSlider={timelineSlider}
+            onPartnerSelect={setSelectedPartnerId}
+            onClose={() => { setActiveCityName(null); setActiveId(null); }}
+          />
+        </Box>
+      )}
+
       <Box
         style={{
           position: "absolute",
-          bottom: 16,
-          right: 16,
+          top: 16,
+          left: 16,
           zIndex: 1000,
           pointerEvents: "none",
           background: "rgba(255, 255, 255, 0.96)",
@@ -474,16 +492,18 @@ export default function Map({
   );
 }
 
-// --- 4. Popup Content (Condensed Styling) ---
+// --- 4. City Side Panel ---
 
 function PopupContent({
   city,
   timelineSlider,
   onPartnerSelect,
+  onClose,
 }: {
   city: CityMapInfo;
   timelineSlider: MapTimelineSlider;
   onPartnerSelect: (id: number) => void;
+  onClose: () => void;
 }) {
   const [showAllWaitlisted, setShowAllWaitlisted] = useState(false);
   // ROBUST FILTER: Detects waitlisted by string or boolean
@@ -516,207 +536,279 @@ function PopupContent({
   const totalDiapers =
     city.distributions.reduce((sum, d) => sum + Number(d.numberDiapers), 0) ??
     0;
+  const totalChildren =
+    city.distributions.reduce((sum, d) => sum + Number(d.numberChildren), 0) ??
+    0;
   const visibleWaitlistedPartners = showAllWaitlisted
     ? waitlistedPartners
     : waitlistedPartners.slice(0, 5);
   const hasMoreWaitlistedPartners = waitlistedPartners.length > 5;
 
   return (
-    <Popup minWidth={292} maxWidth={328} className="city-popup">
-      <Stack gap="sm">
+    <>
+      {/* Gradient header banner */}
+      <Box
+        style={{
+          background: "linear-gradient(135deg, #053766 0%, #1e3a5f 55%, #2c85b2 100%)",
+          borderRadius: "12px 12px 0 0",
+          padding: "16px 16px 14px",
+          position: "sticky",
+          top: 0,
+          zIndex: 1,
+        }}
+      >
         <Group justify="space-between" align="flex-start" wrap="nowrap">
-          <Stack gap={4}>
-            <Group gap={8} wrap="nowrap">
-              <ThemeIcon
-                size={30}
-                radius="xl"
-                variant="light"
-                color="cyan"
-                styles={{ root: { backgroundColor: "#E0F2FE", color: "#0F6B99" } }}
-              >
-                <IconMapPin size={16} />
-              </ThemeIcon>
-              <Title order={3} fz="21px" c="#101828" lh={1}>
+          <Stack gap={3}>
+            <Group gap={8} wrap="nowrap" align="center">
+              <IconMapPin size={15} color="rgba(255,255,255,0.75)" />
+              <Title order={3} fz="20px" fw={800} c="white" lh={1}>
                 {city.name}
               </Title>
             </Group>
-            <Text fz="12px" c="#667085" fw={500}>
-              Local partner snapshot for {timelineSlider.value}
+            <Text fz="11px" c="rgba(255,255,255,0.6)" fw={500} ml={23}>
+              Partner snapshot · {timelineSlider.value}
             </Text>
           </Stack>
-          <Badge
-            radius="xl"
-            fw={800}
-            variant="filled"
-            styles={{
-              root: {
-                background:
-                  "linear-gradient(135deg, #2C85B2 0%, #0F6B99 100%)",
-                letterSpacing: "0.03em",
-              },
+          <Group gap={8} wrap="nowrap" align="center" mt={2}>
+            <Badge
+              radius="xl"
+              fw={700}
+              size="sm"
+              style={{
+                background: "rgba(255,255,255,0.15)",
+                color: "white",
+                border: "1px solid rgba(255,255,255,0.3)",
+                backdropFilter: "blur(4px)",
+              }}
+            >
+              {timelineSlider.value}
+            </Badge>
+            <Box
+              component="button"
+              onClick={onClose}
+              style={{
+                background: "rgba(255,255,255,0.12)",
+                border: "1px solid rgba(255,255,255,0.2)",
+                borderRadius: 6,
+                cursor: "pointer",
+                padding: "3px 4px",
+                color: "rgba(255,255,255,0.8)",
+                display: "flex",
+                alignItems: "center",
+                lineHeight: 0,
+              }}
+            >
+              <IconX size={13} />
+            </Box>
+          </Group>
+        </Group>
+      </Box>
+
+      {/* Stats + partners body */}
+      <Stack gap={10} p={14}>
+        {/* Two stat cells */}
+        <Group grow gap={8}>
+          <Box
+            style={{
+              background: "#f0f6ff",
+              border: "1px solid #c3d9f7",
+              borderLeft: "4px solid #053766",
+              borderRadius: 10,
+              padding: "10px 12px",
             }}
           >
-            {timelineSlider.value}
-          </Badge>
-        </Group>
-
-        <Box
-          style={{
-            background:
-              "linear-gradient(180deg, #F8FBFF 0%, #EEF6FB 100%)",
-            border: "1px solid #D5E7F2",
-            borderRadius: 14,
-            padding: "10px 12px",
-            boxShadow: "inset 0 1px 0 rgba(255,255,255,0.8)",
-          }}
-        >
-          <Text fz="11px" c="#5B6B7A" tt="uppercase" fw={800} lts="0.06em">
-            Running total through {timelineSlider.value}
-          </Text>
-          <Group justify="space-between" align="flex-end" mt={4} wrap="nowrap">
-            <Text fz="32px" fw={900} c="#0F6B99" lh={1.1}>
-              {city.runningTotal?.toLocaleString() ?? 0}
-            </Text>
-            <Text fz="14px" fw={700} c="#16A34A" lh={1.2} ta="right" mb={4}>
-              +{totalDiapers.toLocaleString()} in {timelineSlider.value}
-            </Text>
-          </Group>
-        </Box>
-
-        <Box
-          style={{
-            border: "1px solid #EAECF0",
-            borderRadius: 12,
-            padding: "10px 12px",
-            background: "#FFFFFF",
-          }}
-        >
-          <Group justify="space-between" align="center" mb="xs">
-            <Group gap={8}>
-              <ThemeIcon
-                size={24}
-                radius="xl"
-                variant="light"
-                color="blue"
-                styles={{ root: { backgroundColor: "#EAF2FF", color: "#1D4ED8" } }}
-              >
-                <IconUsersGroup size={14} />
-              </ThemeIcon>
-              <Text fz="12px" fw={800} c="#344054" tt="uppercase" lts="0.05em">
-                {city.name} Partners
+            <Group gap={5} mb={4} align="center">
+              <IconChartBar size={12} color="#053766" />
+              <Text fz="9px" c="#053766" tt="uppercase" fw={800} lts="0.08em">
+                Lifetime Total
               </Text>
             </Group>
-            <Badge variant="light" color="blue" radius="xl" fw={700}>
-              {activePartners.length}
-            </Badge>
-          </Group>
-          <Group gap={6} wrap="wrap">
-            {activePartners.length > 0 ? (
-              activePartners.map((p) => {
-                const selectedYear = Number(timelineSlider.value);
-                let isNew = false;
-                if (p.startPartner) {
-                  const partnerStartYear = new Date(p.startPartner).getUTCFullYear();
-                  isNew = partnerStartYear === selectedYear;
-                }
-
-                return (
-                  <Box key={p.id} style={{ position: "relative" }}>
-                    <PartnerAvatar
-                      id={p.id}
-                      name={p.name}
-                      url={p.logoUrl || p.logo_url}
-                      status={p.status as status}
-                      onClick={() => onPartnerSelect(p.id)}
-                    />
-                    {isNew && (
-                      <Badge
-                        size="xs"
-                        variant="filled"
-                        color="red"
-                        style={{
-                          position: "absolute",
-                          top: -6,
-                          right: -6,
-                          padding: "2px 4px",
-                          fontSize: "8px",
-                          pointerEvents: "none",
-                          zIndex: 2,
-                        }}
-                      >
-                        NEW
-                      </Badge>
-                    )}
-                  </Box>
-                );
-              })
-            ) : (
-              <Text fz="xs" c="dimmed" fs="italic">
-                No active partners
+            <Text fz="24px" fw={900} c="#053766" lh={1}>
+              {city.runningTotal?.toLocaleString() ?? 0}
+            </Text>
+            <Text fz="10px" c="#2c85b2" fw={500} mt={2}>diapers distributed</Text>
+          </Box>
+          <Box
+            style={{
+              background: "#e4effe",
+              border: "1px solid #c3d9f7",
+              borderLeft: "4px solid #2c85b2",
+              borderRadius: 10,
+              padding: "10px 12px",
+            }}
+          >
+            <Group gap={5} mb={4} align="center">
+              <IconCalendarStats size={12} color="#2c85b2" />
+              <Text fz="9px" c="#1e3a5f" tt="uppercase" fw={800} lts="0.08em">
+                {timelineSlider.value} YTD
+              </Text>
+            </Group>
+            <Text fz="24px" fw={900} c="#1e3a5f" lh={1}>
+              +{totalDiapers.toLocaleString()}
+            </Text>
+            <Text fz="10px" c="#2c85b2" fw={500} mt={2}>this year</Text>
+            {totalChildren > 0 && (
+              <Text fz="10px" c="#1e3a5f" fw={600} mt={3}>
+                {totalChildren.toLocaleString()} children helped
               </Text>
             )}
-          </Group>
+          </Box>
+        </Group>
+
+        {/* Partners */}
+        <Box
+          style={{
+            border: "1px solid #E4ECF4",
+            borderRadius: 10,
+            overflow: "hidden",
+          }}
+        >
+          <Box
+            style={{
+              background: "linear-gradient(90deg, #e4effe 0%, #f0f6ff 100%)",
+              borderBottom: activePartners.length > 0 ? "1px solid #c3d9f7" : undefined,
+              padding: "8px 12px",
+            }}
+          >
+            <Group justify="space-between" align="center">
+              <Group gap={7} align="center">
+                <ThemeIcon
+                  size={22}
+                  radius="xl"
+                  styles={{ root: { backgroundColor: "#c3d9f7", color: "#053766" } }}
+                >
+                  <IconUsersGroup size={12} />
+                </ThemeIcon>
+                <Text fz="11px" fw={800} c="#053766" tt="uppercase" lts="0.06em">
+                  Partner Organizations
+                </Text>
+              </Group>
+              <Badge
+                variant="filled"
+                radius="xl"
+                fw={700}
+                size="sm"
+                styles={{ root: { background: "#053766" } }}
+              >
+                {activePartners.length}
+              </Badge>
+            </Group>
+          </Box>
+
+          <Box p={10}>
+            {activePartners.length > 0 ? (
+              <Stack gap={6}>
+                {activePartners.map((p) => {
+                  const selectedYear = Number(timelineSlider.value);
+                  let isNew = false;
+                  if (p.startPartner) {
+                    const partnerStartYear = new Date(p.startPartner).getUTCFullYear();
+                    isNew = partnerStartYear === selectedYear;
+                  }
+                  return (
+                    <Group
+                      key={p.id}
+                      gap={10}
+                      align="center"
+                      wrap="nowrap"
+                      onClick={() => onPartnerSelect(p.id)}
+                      style={{
+                        cursor: "pointer",
+                        padding: "5px 8px",
+                        borderRadius: 8,
+                        transition: "background 0.15s",
+                      }}
+                      onMouseEnter={e => (e.currentTarget.style.background = "#f0f6ff")}
+                      onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
+                    >
+                      <Avatar
+                        src={p.logoUrl || p.logo_url}
+                        size="sm"
+                        radius="xl"
+                        color="blue"
+                        variant="light"
+                        style={{ flexShrink: 0 }}
+                      >
+                        {p.name.substring(0, 2).toUpperCase()}
+                      </Avatar>
+                      <Text fz="13px" fw={600} c="#1e3a5f" style={{ flex: 1, minWidth: 0 }} truncate>
+                        {p.name}
+                      </Text>
+                      {isNew && (
+                        <Badge size="xs" variant="filled" color="red" style={{ fontSize: "8px", flexShrink: 0 }}>
+                          NEW
+                        </Badge>
+                      )}
+                    </Group>
+                  );
+                })}
+              </Stack>
+            ) : (
+              <Text fz="xs" c="dimmed" fs="italic">No active partners</Text>
+            )}
+          </Box>
         </Box>
 
+        {/* Waitlisted */}
         {waitlistedPartners.length > 0 && (
           <Box
             style={{
-              borderTop: "1px solid #EAECF0",
-              paddingTop: 10,
+              border: "1px solid #EAECF0",
+              borderRadius: 10,
+              overflow: "hidden",
             }}
           >
-            <Group justify="space-between" align="center" mb={6}>
-              <Text fz="12px" fw={800} c="#667085" tt="uppercase" lts="0.05em">
-                Waitlisted
-              </Text>
-              <Badge variant="dot" color="gray" radius="xl" fw={700}>
-                {waitlistedPartners.length}
-              </Badge>
-            </Group>
-            <Group gap={6} wrap="wrap">
-              {visibleWaitlistedPartners.map((p) => (
-                <MantineTooltip key={p.id} label={p.name} withArrow>
-                  <Avatar
-                    src={p.logo_url || p.logoUrl}
-                    size="md"
-                    radius="xl"
-                    color="gray"
-                    variant="outline"
-                    style={{
-                      opacity: 0.9,
-                      cursor: "pointer",
-                      border: "1px solid #D0D5DD",
-                      background: "#F9FAFB",
-                    }}
-                  >
-                    {p.name.substring(0, 2).toUpperCase()}
-                  </Avatar>
-                </MantineTooltip>
-              ))}
-              {hasMoreWaitlistedPartners && !showAllWaitlisted && (
-                <Text
-                  component="button"
-                  type="button"
-                  fz="12px"
-                  fw={800}
-                  c="#0F6B99"
-                  style={{
-                    background: "#EFF8FF",
-                    border: "1px solid #B2DDFF",
-                    borderRadius: 999,
-                    cursor: "pointer",
-                    padding: "4px 10px",
-                    lineHeight: 1.2,
-                  }}
-                  onClick={() => setShowAllWaitlisted(true)}
-                >
-                  Show more
+            <Box
+              style={{
+                background: "#f5f8ff",
+                borderBottom: "1px solid #c3d9f7",
+                padding: "8px 12px",
+              }}
+            >
+              <Group justify="space-between" align="center">
+                <Text fz="11px" fw={800} c="#667085" tt="uppercase" lts="0.06em">
+                  Waitlisted
                 </Text>
-              )}
-            </Group>
+                <Badge variant="dot" color="gray" radius="xl" fw={700} size="sm">
+                  {waitlistedPartners.length}
+                </Badge>
+              </Group>
+            </Box>
+            <Box p={10}>
+              <Group gap={6} wrap="wrap">
+                {visibleWaitlistedPartners.map((p) => (
+                  <MantineTooltip key={p.id} label={p.name} withArrow>
+                    <Badge
+                      variant="outline"
+                      color="gray"
+                      radius="xl"
+                      size="sm"
+                      fw={500}
+                      style={{ cursor: "default", maxWidth: 160 }}
+                    >
+                      <Text truncate fz="11px">{p.name}</Text>
+                    </Badge>
+                  </MantineTooltip>
+                ))}
+                {hasMoreWaitlistedPartners && !showAllWaitlisted && (
+                  <Badge
+                    component="button"
+                    variant="light"
+                    color="blue"
+                    radius="xl"
+                    size="sm"
+                    fw={700}
+                    style={{ cursor: "pointer", border: "none" }}
+                    onClick={() => setShowAllWaitlisted(true)}
+                  >
+                    +{waitlistedPartners.length - visibleWaitlistedPartners.length} more
+                  </Badge>
+                )}
+              </Group>
+            </Box>
           </Box>
         )}
       </Stack>
-    </Popup>
+    </>
   );
 }
