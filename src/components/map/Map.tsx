@@ -190,13 +190,23 @@ export default function Map({
     const cityTotals: Record<string, number> = {};
     const cityStats: Record<string, { median: number; p25: number; p75: number } | null | undefined> = {};
 
+    const currentYear = new Date().getFullYear();
+    const currentMonth = new Date().getMonth() + 1; // 1–12
+    const isCurrentYear = selectedYear === String(currentYear);
+
     cities.forEach((city) => {
       const total = city.distributions.reduce(
         (sum, d) => sum + Number(d.numberDiapers),
         0,
       );
+      // Annualize the current year's total so it's comparable to historical
+      // full-year values used in the quartile stats.
+      const scoringTotal =
+        isCurrentYear && currentMonth > 0
+          ? (total / currentMonth) * 12
+          : total;
       if (city.name) {
-        cityTotals[city.name] = total;
+        cityTotals[city.name] = scoringTotal;
         cityStats[city.name] = city.historicalStats;
       }
     });
