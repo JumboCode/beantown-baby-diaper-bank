@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useMemo, useState } from "react";
 import { DateValue, MonthPickerInput } from "@mantine/dates";
 import { useDisclosure } from "@mantine/hooks";
 import {
@@ -11,7 +11,9 @@ import {
   Stack,
   Loader,
   Center,
-  Title,
+  Paper,
+  Badge,
+  Divider,
 } from "@mantine/core";
 import { ConfirmDeletion } from "./ConfirmDeleteDistModal";
 import { Distribution } from "@/lib/types";
@@ -41,12 +43,36 @@ const MONTH_NAMES = [
   "December",
 ];
 
-interface TimelineSliderMonth {
-  Month: string | null;
-  Year: string | null;
+const MONTH_ORDER = Object.fromEntries(
+  MONTH_NAMES.map((month, index) => [month, index]),
+) as Record<string, number>;
+
+const MONTH_PICKER_MIN_DATE = new Date(1900, 0, 1);
+const MONTH_PICKER_MAX_DATE = new Date(2100, 11, 1);
+
+function toDate(value: DateValue | null): Date | null {
+  if (!value) return null;
+  return value instanceof Date ? value : new Date(value);
 }
 
-// export default function MonthSelectionModal({opened, onClose, onSubmit} : MonthSelectionModalProps) {
+function formatSelectionLabel(
+  mode: string | null,
+  oneMonth: DateValue | null,
+  monthsRange: [DateValue | null, DateValue | null],
+) {
+  if (mode === "one_month") {
+    const selected = toDate(oneMonth);
+    if (!selected) return "No month selected";
+    return `${MONTH_NAMES[selected.getUTCMonth()]} ${selected.getUTCFullYear()}`;
+  }
+
+  const start = toDate(monthsRange[0]);
+  const end = toDate(monthsRange[1]);
+  if (!start || !end) return "No range selected";
+
+  return `${MONTH_NAMES[start.getUTCMonth()]} ${start.getUTCFullYear()} to ${MONTH_NAMES[end.getUTCMonth()]} ${end.getUTCFullYear()}`;
+}
+
 export default function DeleteDistributionDataButton({
   onSuccess,
 }: MonthSelectionModalProps) {
@@ -56,37 +82,27 @@ export default function DeleteDistributionDataButton({
     [DateValue | null, DateValue | null]
   >([null, null]);
   const [loadingDistributions, setLoadingDistributions] = useState(false);
-  const [oneMonth, setOneMonth] = useState<Date | null>(null);
+  const [oneMonth, setOneMonth] = useState<DateValue | null>(null);
   const [previewData, setPreviewData] = useState<Distribution[]>([]);
   const [isPreviewMode, setIsPreviewMode] = useState(false);
-  const [availableMonths, setAvailableMonths] = useState<
-    { month: string; year: number }[]
-  >([]);
 
-  useEffect(() => {
-    const fetchAvailableMonths = async () => {
-      try {
-        const response = await fetch("/api/timeline-slider");
-        if (response.ok) {
-          const data = await response.json();
-          const months = (Array.isArray(data.months) ? data.months : [])
-            .filter(
-              (m: TimelineSliderMonth) =>
-                typeof m.Month === "string" && typeof m.Year === "string",
-            )
-            .map((m: TimelineSliderMonth) => ({
-              month: m.Month!.toLowerCase(),
-              year: Number(m.Year),
-            }))
-            .filter((m: { month: string; year: number }) => !Number.isNaN(m.year));
-          setAvailableMonths(months);
-        }
-      } catch (error) {
-        console.error("Error fetching available months:", error);
-      }
-    };
-    fetchAvailableMonths();
-  }, []);
+  const sortedPreviewData = useMemo(() => {
+    return [...previewData].sort((a, b) => {
+      const partnerCompare = (a.partner?.name || "").localeCompare(
+        b.partner?.name || "",
+      );
+      if (partnerCompare !== 0) return partnerCompare;
+
+      const yearCompare = Number(a.year || 0) - Number(b.year || 0);
+      if (yearCompare !== 0) return yearCompare;
+
+      const monthCompare =
+        (MONTH_ORDER[a.month || ""] ?? -1) - (MONTH_ORDER[b.month || ""] ?? -1);
+      if (monthCompare !== 0) return monthCompare;
+
+      return (a.city?.name || "").localeCompare(b.city?.name || "");
+    });
+  }, [previewData]);
 
   async function fetchPreviewMonthSelection(selection: MonthSelectionData) {
     setLoadingDistributions(true);
@@ -125,7 +141,7 @@ export default function DeleteDistributionDataButton({
     if (ids.length === 0) return;
 
     const res = await fetch(`/api/distributions`, {
-      method: "DELETE", // Changed from POST to DELETE
+      method: "DELETE",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ ids }),
     });
@@ -136,56 +152,49 @@ export default function DeleteDistributionDataButton({
       return;
     }
 
-    const data = await res.json();
-    console.log("Deleted:", data.deletedCount);
+    await res.json();
 
     setPreviewData([]);
     setIsPreviewMode(false);
-    onSuccess?.(); // Trigger refresh on success
+    onSuccess?.();
     close();
   }
 
   const handleClick = () => {
     setPreviewData([]);
     setIsPreviewMode(true);
-    console.log(numMonths);
 
     if (numMonths === "one_month") {
-      if (!oneMonth) {
-        return;
-      }
+      const selectedMonth = toDate(oneMonth);
+      if (!selectedMonth) return;
+
       fetchPreviewMonthSelection({
         mode: "one_month",
         start: {
-          month: new Date(oneMonth).getUTCMonth(),
-          year: new Date(oneMonth).getUTCFullYear(),
+          month: selectedMonth.getUTCMonth(),
+          year: selectedMonth.getUTCFullYear(),
         },
         end: null,
       });
-    } else {
-      if (!monthsRange) {
-        return;
-      }
-      const [start, end] = monthsRange;
-      console.log(start, end);
-
-      if (!start || !end) return;
-
-      // if (start instanceof Date && end instanceof Date) {
-      console.log("Fetching preview data for range");
-      fetchPreviewMonthSelection({
-        mode: "range",
-        start: {
-          month: new Date(start).getUTCMonth(),
-          year: new Date(start).getUTCFullYear(),
-        },
-        end: {
-          month: new Date(end).getUTCMonth(),
-          year: new Date(end).getUTCFullYear(),
-        },
-      });
+      return;
     }
-    // }
+
+    const [start, end] = monthsRange;
+    const startDate = toDate(start);
+    const endDate = toDate(end);
+    if (!startDate || !endDate) return;
+
+    fetchPreviewMonthSelection({
+      mode: "range",
+      start: {
+        month: startDate.getUTCMonth(),
+        year: startDate.getUTCFullYear(),
+      },
+      end: {
+        month: endDate.getUTCMonth(),
+        year: endDate.getUTCFullYear(),
+      },
+    });
   };
 
   function handleRadioChange(value: string): void {
@@ -201,102 +210,172 @@ export default function DeleteDistributionDataButton({
         opened={opened}
         onClose={close}
         title={
-          <Text fw={700} size="xl">
+          <Text fw={800} fz={30} c="#101828">
             Delete Records
           </Text>
         }
-        withCloseButton={true}
+        withCloseButton
         centered
+        radius="lg"
+        padding={28}
       >
-        <Stack gap="sm">
-          <Text c="dimmed" size="sm">
-            Select a date range to preview and delete records.
-          </Text>
+        <Stack gap="lg">
+          <Stack gap={4}>
+            <Text fw={600} size="sm" c="#475467" tt="uppercase">
+              Distribution Cleanup
+            </Text>
+            <Text c="#667085" size="sm">
+              Preview exactly what will be removed before confirming the deletion.
+            </Text>
+          </Stack>
 
-          <Radio.Group
-            value={numMonths}
-            onChange={handleRadioChange}
-            required
-            label="Selection Mode"
-            styles={{
-              label: {
-                fontWeight: 700,
-                fontSize: "1rem",
-                marginBottom: "4px",
-              },
+          <Paper
+            withBorder
+            radius="md"
+            p="md"
+            style={{
+              background: "#FCFCFD",
+              borderColor: "#EAECF0",
+              boxShadow: "0 1px 2px rgba(16, 24, 40, 0.04)",
             }}
           >
-            <Group mt="xs">
-              <Radio color="#163663" value="one_month" label="One Month" />
-              <Radio color="#163663" value="range" label="Range of Months" />
-            </Group>
-          </Radio.Group>
-
-          <Group grow mt="md" gap="md" align="flex-end">
-            {numMonths === "one_month" ? (
-              <MonthPickerInput
-                label="Select Date"
-                placeholder="Date"
-                value={oneMonth}
-                onChange={(date) => setOneMonth(date as Date | null)}
-                getMonthControlProps={(date) => {
-                  const d = new Date(date);
-                  const monthName = MONTH_NAMES[d.getUTCMonth()].toLowerCase();
-                  const year = d.getUTCFullYear();
-                  const isAvailable = availableMonths.some(
-                    (m) => m.month === monthName && m.year === year,
-                  );
-                  return { disabled: !isAvailable };
-                }}
+            <Stack gap="sm">
+              <Radio.Group
+                value={numMonths}
+                onChange={handleRadioChange}
+                required
+                label="Selection Mode"
                 styles={{
                   label: {
                     fontWeight: 700,
                     fontSize: "1rem",
+                    marginBottom: "4px",
                   },
                 }}
-              />
-            ) : (
-              <MonthPickerInput
-                type="range"
-                label="Select Date Range"
-                placeholder="Date Range"
-                value={monthsRange}
-                onChange={setMonthsRange}
-                getMonthControlProps={(date) => {
-                  const d = new Date(date);
-                  const monthName = MONTH_NAMES[d.getUTCMonth()].toLowerCase();
-                  const year = d.getUTCFullYear();
-                  const isAvailable = availableMonths.some(
-                    (m) => m.month === monthName && m.year === year,
-                  );
-                  return { disabled: !isAvailable };
-                }}
-                styles={{
-                  label: {
-                    fontWeight: 700,
-                    fontSize: "1rem",
-                  },
-                }}
-              />
-            )}
+              >
+                <Group mt="xs">
+                  <Radio color="#163663" value="one_month" label="One Month" />
+                  <Radio
+                    color="#163663"
+                    value="range"
+                    label="Range of Months"
+                  />
+                </Group>
+              </Radio.Group>
 
-            <Button onClick={handleClick} color="#163663" mt="md">
-              Apply Selection
-            </Button>
-          </Group>
-          <Title order={5} mt="md">
+              <Group grow mt="xs" gap="sm" align="flex-end">
+                {numMonths === "one_month" ? (
+                  <MonthPickerInput
+                    label="Select Date"
+                    placeholder="Date"
+                    value={oneMonth}
+                    onChange={setOneMonth}
+                    minDate={MONTH_PICKER_MIN_DATE}
+                    maxDate={MONTH_PICKER_MAX_DATE}
+                    styles={{
+                      label: {
+                        fontWeight: 700,
+                        fontSize: "1rem",
+                      },
+                    }}
+                  />
+                ) : (
+                  <MonthPickerInput
+                    type="range"
+                    label="Select Date Range"
+                    placeholder="Date Range"
+                    value={monthsRange}
+                    onChange={setMonthsRange}
+                    minDate={MONTH_PICKER_MIN_DATE}
+                    maxDate={MONTH_PICKER_MAX_DATE}
+                    styles={{
+                      label: {
+                        fontWeight: 700,
+                        fontSize: "1rem",
+                      },
+                    }}
+                  />
+                )}
+
+                <Button
+                  onClick={handleClick}
+                  color="#163663"
+                  mt="md"
+                  radius="md"
+                >
+                  Apply Selection
+                </Button>
+              </Group>
+            </Stack>
+          </Paper>
+
+          <Divider color="#EAECF0" />
+
+          <Text fw={700} size="lg" c="#101828">
             Preview Distributions to Delete
-          </Title>
+          </Text>
 
           {isPreviewMode ? (
-            <Stack gap="xs" mt="md">
+            <Stack gap="sm">
               {loadingDistributions ? (
-                <Center>
+                <Center py="xl">
                   <Loader type="bars" />
                 </Center>
+              ) : previewData.length === 0 ? (
+                <Paper
+                  withBorder
+                  radius="md"
+                  p="xl"
+                  style={{
+                    borderColor: "#EAECF0",
+                    backgroundColor: "#FCFCFD",
+                  }}
+                >
+                  <Stack gap={4} align="center">
+                    <Text fw={700} size="sm" c="#344054">
+                      No records found
+                    </Text>
+                    <Text size="sm" c="dimmed" ta="center">
+                      There are no distribution records for{" "}
+                      {formatSelectionLabel(numMonths, oneMonth, monthsRange)}.
+                    </Text>
+                  </Stack>
+                </Paper>
               ) : (
                 <>
-                  <div style={{ maxHeight: "300px", overflowY: "auto" }}>
+                  <Paper
+                    withBorder
+                    radius="md"
+                    p="md"
+                    style={{
+                      borderColor: "#EAECF0",
+                      backgroundColor: "#F9FAFB",
+                      boxShadow: "0 1px 2px rgba(16, 24, 40, 0.03)",
+                    }}
+                  >
+                    <Group justify="space-between" align="center">
+                      <div>
+                        <Text fw={700} size="sm" c="#344054">
+                          Pending deletion
+                        </Text>
+                        <Text size="sm" c="dimmed">
+                          {formatSelectionLabel(numMonths, oneMonth, monthsRange)}
+                        </Text>
+                      </div>
+                      <Badge color="gray" variant="filled" size="xl" radius="sm">
+                        {previewData.length} record{previewData.length === 1 ? "" : "s"}
+                      </Badge>
+                    </Group>
+                  </Paper>
+                  <div
+                    style={{
+                      maxHeight: "300px",
+                      overflowY: "auto",
+                      border: "1px solid #EAECF0",
+                      borderRadius: "12px",
+                      backgroundColor: "#FFFFFF",
+                    }}
+                  >
                     <Table
                       withTableBorder
                       highlightOnHover
@@ -315,7 +394,7 @@ export default function DeleteDistributionDataButton({
                       </Table.Thead>
 
                       <Table.Tbody>
-                        {previewData.map((dist) => (
+                        {sortedPreviewData.map((dist) => (
                           <Table.Tr
                             key={`${dist.id}-${dist.month}-${dist.year}-${dist.createdAt}`}
                           >
