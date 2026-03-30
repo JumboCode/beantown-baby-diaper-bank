@@ -4,7 +4,7 @@ import dynamic from "next/dynamic";
 import { useLeafletMap } from "./useLeafletMap";
 import { useBaseTileLayer } from "./useBaseTileLayer";
 import { useEffect, useMemo, useRef, useState } from "react";
-import type { City, Distribution, status } from "@/generated/prisma/client";
+import type { City, Distribution } from "@/generated/prisma/client";
 import {
   TileLayer,
   Polygon,
@@ -26,8 +26,8 @@ import {
   Badge,
   ThemeIcon,
 } from "@mantine/core";
+import Image from "next/image";
 import PartnerIconDrawer from "./PartnerIconDrawer";
-import PartnerAvatar from "./PartnerAvatar";
 import { IconMapPin, IconUsersGroup, IconX, IconChartBar, IconCalendarStats } from "@tabler/icons-react";
 
 // --- 1. Helper Functions ---
@@ -404,31 +404,31 @@ export default function Map({
           right: 16,
           zIndex: 1000,
           pointerEvents: "none",
-          minWidth: 220,
-          maxWidth: 300,
-          background: "rgba(255, 255, 255, 0.96)",
-          border: "1px solid #E4E7EC",
-          borderRadius: 12,
-          boxShadow: "0 8px 24px rgba(16, 24, 40, 0.12)",
-          padding: "12px 14px",
-          backdropFilter: "blur(8px)",
+          minWidth: 240,
+          background: "#053766",
+          borderRadius: 14,
+          boxShadow: "0 8px 32px rgba(5, 55, 102, 0.4)",
+          padding: "14px 18px",
         }}
       >
-        <Text fz="11px" fw={700} c="#475467" tt="uppercase">
-          Total Diapers Distributed
-        </Text>
-        <Group justify="space-between" align="flex-end" mt={4} gap="sm" wrap="nowrap">
-          <Text fz="30px" fw={800} c="#101828" lh={1.1}>
-            {totalDiapersForYear != null
-              ? animatedRunningTotal.toLocaleString()
-              : "--"}
-          </Text>
-          <Text fz="15px" fw={700} c="#16A34A" lh={1.2} ta="right">
-            {yearlyDistributed != null
-              ? `+${animatedYearlyTotal.toLocaleString()}`
-              : "--"}
-            {selectedYear ? ` in ${selectedYear}` : ""}
-          </Text>
+        <Group justify="space-between" align="flex-start" wrap="nowrap">
+          <Stack gap={4}>
+            <Text fz="10px" fw={700} c="rgba(255,255,255,0.55)" tt="uppercase" lts="0.1em">
+              Total Diapers Distributed{selectedYear ? ` Through ${selectedYear}` : ""}
+            </Text>
+            <Text fz="40px" fw={900} c="white" lh={1}>
+              {totalDiapersForYear != null
+                ? animatedRunningTotal.toLocaleString()
+                : "--"}
+            </Text>
+          </Stack>
+          <Image
+            src="/diaper.svg"
+            alt="Diaper icon"
+            width={52}
+            height={42}
+            style={{ filter: "brightness(0) invert(1)", opacity: 0.7, flexShrink: 0, marginTop: 2 }}
+          />
         </Group>
       </Box>
 

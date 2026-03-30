@@ -17,13 +17,15 @@ export function useTimelinePeriod() {
     fetch("/api/timeline-slider")
       .then((r) => r.json())
       .then((data: TimelineResponse) => {
-        setYears((data.years ?? []).map(String));
+        const yearLabels = (data.years ?? []).map(String);
+        setYears(yearLabels);
         const monthLabels = (data.months ?? [])
           .map((m) => ({ ...m, date: new Date(`${m.Month} 1, ${m.Year}`) }))
           .sort((a, b) => a.date.getTime() - b.date.getTime())
           .map((m) => `${m.Month} ${m.Year}`);
         setMonths(monthLabels);
-        setIndex(0); // reset to first item after load
+        const defaultIndex = yearLabels.indexOf("2026");
+        setIndex(defaultIndex !== -1 ? defaultIndex : yearLabels.length - 1);
       })
       .catch((err) => console.error("timeline fetch failed", err));
   }, []);

@@ -83,7 +83,7 @@ export default function TimelineSlider({
           },
           markLabel: {
             marginTop: 10,
-            fontSize: 12,
+            fontSize: 15,
             fontWeight: 700,
             color: "#667085",
           },

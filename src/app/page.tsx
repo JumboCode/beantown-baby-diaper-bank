@@ -1,10 +1,9 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { Box, Stack, Title, Text, Paper, Skeleton, Group } from "@mantine/core";
+import { Box, Skeleton } from "@mantine/core";
 import TimelineSliderControls from "@/components/map/TimelineSliderControls";
 import { useTimelinePeriod } from "@/components/map/useTimelinePeriod";
-import TotalDiapersDistributed from "@/components/map/TotalDiapersDistributed";
 import { useState, useCallback, useEffect } from "react";
 import ImpactModal from "@/components/map/ImpactModal";
 import { FeatureCollection, MultiPolygon, Polygon } from "geojson";
@@ -16,7 +15,7 @@ const LeafletMap = dynamic(() => import("@/components/map/Map"), {
 
 const MapSkeleton = dynamic(() => import("@/components/map/MapSkeleton"), {
   ssr: false,
-  loading: () => <Skeleton h="100%" w="100%" radius="md" />,
+  loading: () => <Skeleton h="100%" w="100%" radius={0} />,
 });
 
 type PartnerInfoType = {
@@ -85,7 +84,6 @@ const flipBoundaries = (
 export default function Page() {
   const timeline = useTimelinePeriod();
   const [mapData, setMapData] = useState<MapData | null>(null);
-  const [totalDiapers, setTotalDiapers] = useState<number>();
   const [cumulativeTotalDiapers, setCumulativeTotalDiapers] =
     useState<number>();
   const [yearlyTotalDiapers, setYearlyTotalDiapers] = useState<number>();
@@ -138,74 +136,55 @@ export default function Page() {
   );
 
   useEffect(() => {
-    const fetchAllTimeTotalDiapers = async () => {
-      try {
-        const response = await fetch("/api/total-diapers");
-        const data = await response.json();
-        setTotalDiapers(data.totalDiapers ?? 0);
-      } catch (error) {
-        console.error("Error fetching total diapers:", error);
-        setTotalDiapers(0);
-      }
-    };
-
-    fetchAllTimeTotalDiapers();
+    // Trigger initial load with the current timeline value
   }, []);
 
   return (
     <Box
       style={{
-        backgroundColor: "#FFFFFF",
-        minHeight: "100vh",
-        paddingRight: "8%",
-        paddingLeft: "8%",
-        paddingTop: "3%",
-        paddingBottom: "3%",
+        height: "100vh",
+        display: "flex",
+        flexDirection: "column",
+        overflow: "hidden",
+        background: "#fff",
       }}
     >
-      <Stack gap="sm" mx="auto">
-        <Box>
-          <Title order={1} fz="30px" fw={500} mb="xs" c="#101828">
-            See where diapers are distributed
-          </Title>
-          <Text fz="18px" c="#667085">
-            Last updated: Sep 9th, 2025.
-          </Text>
-        </Box>
-
-        <TotalDiapersDistributed totalDiapers={totalDiapers} />
-
-        <Group justify="space-between" align="center" mt="md">
-          <Title fz={24} c="#101728" fw={600}>
-            Distribution Heat Map
-          </Title>
-          <ImpactModal />
-        </Group>
-        <Paper shadow="sm" p="md" radius="md" withBorder>
-          <Box h="60vh" pos="relative" mb="md">
-            {mapData ? (
-              <LeafletMap
-                mapData={mapData}
-                timelineSlider={timeline}
-                totalDiapersForYear={cumulativeTotalDiapers}
-                yearlyDistributed={yearlyTotalDiapers}
-                selectedYear={selectedYear}
-              />
-            ) : (
-              <MapSkeleton />
-            )}
-          </Box>
-
-          <TimelineSliderControls
-            view={timeline.view}
-            index={timeline.index}
-            setIndex={timeline.setIndex}
-            move={timeline.move}
-            labels={timeline.labels}
-            onTimelineChange={handleTimelineChange}
+      {/* Map — fills all available height */}
+      <Box style={{ flex: 1, position: "relative", minHeight: 0 }}>
+        {mapData ? (
+          <LeafletMap
+            mapData={mapData}
+            timelineSlider={timeline}
+            totalDiapersForYear={cumulativeTotalDiapers}
+            yearlyDistributed={yearlyTotalDiapers}
+            selectedYear={selectedYear}
           />
-        </Paper>
-      </Stack>
+        ) : (
+          <MapSkeleton />
+        )}
+        <Box style={{ position: "absolute", top: 100, left: 20, zIndex: 1001 }}>
+          <ImpactModal />
+        </Box>
+      </Box>
+
+      {/* Timeline footer */}
+      <Box
+        style={{
+          background: "#ffffff",
+          borderTop: "1px solid #E4E7EC",
+          padding: "10px 24px",
+          flexShrink: 0,
+        }}
+      >
+        <TimelineSliderControls
+          view={timeline.view}
+          index={timeline.index}
+          setIndex={timeline.setIndex}
+          move={timeline.move}
+          labels={timeline.labels}
+          onTimelineChange={handleTimelineChange}
+        />
+      </Box>
     </Box>
   );
 }
