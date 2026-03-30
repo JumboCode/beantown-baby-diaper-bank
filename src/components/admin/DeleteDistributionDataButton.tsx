@@ -139,7 +139,7 @@ export default function DeleteDistributionDataButton({ onSuccess }: { onSuccess?
                     Confirm Deletion of {previewData.length} Records
                   </Button>
                 </>
-              ) : <Text c="dimmed" textAlign="center">No records found for the selected period.</Text>}
+              ) : <Text c="dimmed" ta="center">No records found for the selected period.</Text>}
             </Stack>
           )}
         </Stack>

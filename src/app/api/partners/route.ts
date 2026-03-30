@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { stringifyWithBigInt } from "@/lib/util";
+import { month } from "@/generated/prisma/client";
 
 // Helper to ensure dates are saved as the 1st of the month
 const normalizeDate = (dateString: string | null) => {
@@ -21,19 +22,18 @@ export async function GET(request: NextRequest) {
       let distributions;
 
       if (mode === "range") {
-        const sYear = parseInt(searchParams.get("startYear") || "0");
-        const eYear = parseInt(searchParams.get("endYear") || "9999");
+        const sYear = searchParams.get("startYear") || "0";
+        const eYear = searchParams.get("endYear") || "9999";
 
         distributions = await prisma.distribution.findMany({
           where: { year: { gte: sYear, lte: eYear } },
           include: { partner: true, city: true },
         });
       } else {
-        // Force year to Number to prevent Prisma type mismatch crashes
         distributions = await prisma.distribution.findMany({
           where: {
-            month: month as string,
-            year: yearParam ? parseInt(yearParam) : undefined,
+            month: month as month,
+            year: yearParam || undefined,
           },
           include: { partner: true, city: true },
         });
