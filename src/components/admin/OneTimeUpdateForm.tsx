@@ -37,51 +37,47 @@ export default function OneTimeUpdateForm({
   const [canSave, setCanSave] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
 
-  // Effect to verify if distribution data exists for the selected month
-  useEffect(() => {
+  const checkDistributions = async () => {
     if (!selectedDate) {
       setExists(null);
       setCanSave(false);
       return;
     }
+    setLoading(true);
+    
+    const monthName = MONTH_NAMES[Number(selectedDate.split('-')[1]) - 1];
+    const year = Number(selectedDate.split('-')[0]);
 
-    const checkDistributions = async () => {
-      setLoading(true);
-
-      console.log('selectedDate', selectedDate);
+    try {
+      const res = await fetch(`/api/distributions?month=${monthName}&year=${year}`);
+      const data = await res.json();
       
-      const monthName = MONTH_NAMES[Number(selectedDate.split('-')[1]) - 1];
-      const year = Number(selectedDate.split('-')[0]);
+      // Filter to see if this specific partner has a record in that month's distribution
+      const partnerData = data.filter((d: any) => String(d.partnerId) === String(partnerId));
+      const doesExist = partnerData.length > 0;
+      
+      setExists(doesExist);
+      setCanSave(doesExist);
+    } catch (err) {
+      console.error("Error verifying month:", err);
+      setExists(false);
+      setCanSave(false);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-      try {
-        const res = await fetch(`/api/distributions?month=${monthName}&year=${year}`);
-        const data = await res.json();
-        
-        // Filter to see if this specific partner has a record in that month's distribution
-        const partnerData = data.filter((d: any) => String(d.partnerId) === String(partnerId));
-        const doesExist = partnerData.length > 0;
-        
-        setExists(doesExist);
-        setCanSave(doesExist);
-      } catch (err) {
-        console.error("Error verifying month:", err);
-        setExists(false);
-        setCanSave(false);
-      } finally {
-        setLoading(false);
-      }
-    };
-
+  // Once a new (year, month) combo is selected, check if there's existing data
+  useEffect(() => {
     checkDistributions();
   }, [selectedDate, partnerId]);
 
   // Handler to save the specific monthly distribution
   const handleSaveOneTime = async (entries: CityPercentage[]) => {
-    console.log('inside handleSave');
     if (!selectedDate) return;
     
     setIsSaving(true);
-    const monthName = MONTH_NAMES[Number(selectedDate.split('-')[1])];
+    const monthName = MONTH_NAMES[Number(selectedDate.split('-')[1]) - 1];
     const year = Number(selectedDate.split('-')[0]);
 
     console.log({
