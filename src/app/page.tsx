@@ -5,7 +5,6 @@ import { Box, Skeleton } from "@mantine/core";
 import TimelineSliderControls from "@/components/map/TimelineSliderControls";
 import { useTimelinePeriod } from "@/components/map/useTimelinePeriod";
 import { useState, useCallback, useEffect } from "react";
-import ImpactModal from "@/components/map/ImpactModal";
 import { FeatureCollection, MultiPolygon, Polygon } from "geojson";
 import { City, Distribution } from "@/generated/prisma/client";
 
@@ -162,9 +161,6 @@ export default function Page() {
         ) : (
           <MapSkeleton />
         )}
-        <Box style={{ position: "absolute", top: 100, left: 20, zIndex: 1001 }}>
-          <ImpactModal />
-        </Box>
       </Box>
 
       {/* Timeline footer */}

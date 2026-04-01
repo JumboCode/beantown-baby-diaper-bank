@@ -28,6 +28,7 @@ import {
 } from "@mantine/core";
 import Image from "next/image";
 import PartnerIconDrawer from "./PartnerIconDrawer";
+import ImpactModal from "./ImpactModal";
 import { IconMapPin, IconUsersGroup, IconX, IconChartBar, IconCalendarStats } from "@tabler/icons-react";
 
 // --- 1. Helper Functions ---
@@ -496,6 +497,17 @@ export default function Map({
           <Text fz="10px" fw={700} c="#667085" tt="uppercase">Below Avg</Text>
           <Text fz="10px" fw={700} c="#667085" tt="uppercase">Above Avg</Text>
         </Group>
+      </Box>
+
+      <Box
+        style={{
+          position: "absolute",
+          top: 100,
+          left: 16,
+          zIndex: 1001,
+        }}
+      >
+        <ImpactModal />
       </Box>
 
     </div>
