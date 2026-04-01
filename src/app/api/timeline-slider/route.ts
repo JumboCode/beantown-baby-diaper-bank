@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
-export const revalidate = 2592000;
+// export const revalidate = 2592000;
 
 const MONTH_ORDER: Record<string, number> = {
   January: 0,
