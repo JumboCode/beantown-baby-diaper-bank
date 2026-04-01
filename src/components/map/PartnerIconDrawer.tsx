@@ -1,4 +1,7 @@
 import type { Partner } from "@/generated/prisma/client";
+import type { MapData } from "@/app/page";
+import type { LatLngExpression } from "leaflet";
+
 import {
   Center,
   Drawer,
@@ -16,6 +19,7 @@ import { useBaseTileLayer } from "./useBaseTileLayer";
 export interface PartnerIconDrawerProps {
   partnerId: number | null;
   onClose: () => void;
+  mapData?: MapData | null;
 }
 
 const MapContainer = dynamic(
@@ -35,6 +39,10 @@ const TileLayer = dynamic(
 );
 const Marker = dynamic(
   () => import("react-leaflet").then((module) => module.Marker),
+  { ssr: false },
+);
+const Polygon = dynamic(
+  () => import("react-leaflet").then((module) => module.Polygon),
   { ssr: false },
 );
 
@@ -124,9 +132,10 @@ interface PartnerWithStats
 function createPartnerIcon(
   leaflet: typeof import("leaflet"),
   url: string | null,
+  partner: PartnerWithStats,
 ) {
   const validUrl =
-    url && url.trim() !== "" ? url : "https://placehold.co/400x400?text=Logo";
+    url && url.trim() !== "" ? url : `https://placehold.co/400x400?text=${partner.name.substring(0, 2).toUpperCase()}`;
 
   return leaflet.divIcon({
     className: "custom-partner-icon",
@@ -146,12 +155,15 @@ function createPartnerIcon(
     iconSize: [34, 34],
     iconAnchor: [17, 17],
   });
+  
 }
 
 function PartnerMiniMap({
   partner,
+  mapData,
 }: {
   partner: PartnerWithStats;
+  mapData?: MapData | null;
 }) {
   const coords = partner.coords ?? partner.coordinates ?? null;
   const { tileLayerProps } = useBaseTileLayer();
@@ -162,6 +174,22 @@ function PartnerMiniMap({
       setLeaflet(module);
     });
   }, []);
+
+  // Find city names this partner serves
+  const servedCityNames = new Set(
+    (mapData?.cities.data ?? [])
+      .filter((city) => city.partners.some((p) => p.id === partner.partner_id))
+      .map((city) => city.name)
+      .filter(Boolean),
+  );
+
+  // Extract boundary polygons for served cities
+  const servedBoundaries = (mapData?.boundaries.features ?? [])
+    .filter((f) => servedCityNames.has(f.properties?.name))
+    .map((f) => ({
+      id: f.properties?.name ?? Math.random(),
+      positions: f.geometry.coordinates as unknown as LatLngExpression[][],
+    }));
 
   if (!coords) {
     return null;
@@ -194,9 +222,21 @@ function PartnerMiniMap({
             style={{ height: "100%", width: "100%" }}
           >
             <TileLayer {...tileLayerProps} />
+            {servedBoundaries.map((boundary) => (
+              <Polygon
+                key={String(boundary.id)}
+                positions={boundary.positions}
+                pathOptions={{
+                  color: "#2C85B2",
+                  weight: 1.5,
+                  fillColor: "#B2E5FF",
+                  fillOpacity: 0.35,
+                }}
+              />
+            ))}
             <Marker
               position={[coords.lat, coords.lng]}
-              icon={createPartnerIcon(leaflet, partner.logoUrl)}
+              icon={createPartnerIcon(leaflet, partner.logoUrl, partner)}
             />
           </MapContainer>
         ) : (
@@ -212,6 +252,7 @@ function PartnerMiniMap({
 export default function PartnerIconDrawer({
   partnerId,
   onClose,
+  mapData,
 }: PartnerIconDrawerProps) {
   const [selectedPartner, setSelectedPartner] = useState<PartnerWithStats | null>(
     null,
@@ -318,9 +359,11 @@ export default function PartnerIconDrawer({
                     </span>
                   );
                 })()}
+                { partner.status === "active" && 
                 <Text c="#667085" fw={600} fz="0.9rem">
                   Since {partner.startPartner?.toLocaleDateString()}
                 </Text>
+                }
               </div>
             </div>
           </div>
@@ -349,16 +392,22 @@ export default function PartnerIconDrawer({
               gap: "1.25rem",
             }}
           >
-            {partner.description && (
+            
               <div style={infoCardStyle}>
                 <div style={infoLabelStyle}>Description</div>
-                <Text c="#344054" lh={1.7} fw={500} fz="1rem" mt={6}>
-                  {partner.description}
-                </Text>
+                {partner.description ? (
+                  <Text c="#344054" lh={1.7} fw={500} fz="1rem" mt={6}>
+                    {partner.description}
+                  </Text>
+                ) : (
+                  <Text c="#9ca3af" fs="italic" fz="1rem" mt={6}>
+                    No description
+                  </Text>
+                )}
               </div>
-            )}
+            
 
-            <PartnerMiniMap partner={partner} />
+            <PartnerMiniMap partner={partner} mapData={mapData} />
 
             <div
               style={{
@@ -371,13 +420,15 @@ export default function PartnerIconDrawer({
                 <div style={infoLabelStyle}>Address</div>
                 <div style={infoValueStyle}>{partner.address || "N/A"}</div>
               </div>
+              {partner.status == "active" && (
               <div style={infoCardStyle}>
                 <div style={infoLabelStyle}>Start Year</div>
                 <div style={infoValueStyle}>
                   {partner.startPartner?.getFullYear()}
                 </div>
-              </div>
+              </div>)}
             </div>
+              
 
             {partner.status !== "waitlisted" && (
               <div
