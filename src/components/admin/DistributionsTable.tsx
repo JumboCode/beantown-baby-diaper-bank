@@ -27,6 +27,11 @@ interface DateTotal {
   distributions: Distribution[];
 }
 
+interface YearGroup {
+  year: string;
+  months: DateTotal[]
+}
+
 interface EditInfo {
   name: string;
   year: string;
@@ -66,6 +71,8 @@ export default function DistributionsTable({
   const [monthlyBaseTotals, setMonthlyBaseTotals] = useState<Record<string, number>>({});
   const [distributionOverrides, setDistributionOverrides] = useState<Record<string, Distribution>>({});
   const [distributionRefreshKey, setDistributionRefreshKey] = useState(0);
+
+  const [yearlyBaseTotals, setYearlyBaseTotals] = useState<Record<string, number>>({});
 
   const loadMonthlyTotals = () => {
     fetch("/api/monthly-data")
@@ -158,7 +165,8 @@ export default function DistributionsTable({
       (acc, dist) => {
         if (!dist.month || !dist.year) return acc;
 
-        const key = `${dist.year}-${dist.month}`;
+        const year = dist.year;
+        const key = `${year}-${dist.month}`;
 
         if (!acc[key]) {
           acc[key] = {
@@ -174,6 +182,45 @@ export default function DistributionsTable({
           : 0;
         acc[key].total += diapers;
         acc[key].distributions.push(dist);
+
+        return acc;
+      },
+      {},
+  );
+
+    const yearGroups: YearGroup[] = useMemo(() => {
+    const grouped = distributionData.reduce<Record<string, YearGroup>>(
+      (acc, dist) => {
+        if (!dist.month || !dist.year) return acc;
+
+        const year = dist.year;
+        const month = dist.month;
+        // const key = `${year}-${month}`;
+
+        if (!acc[year]) {
+          acc[year] = {
+            year:year,
+            months:[],
+          };
+        }
+
+        let monthBucket = acc[year].months.find((m) => month === m.month)
+
+        if (!monthBucket) {
+          monthBucket = {
+            month,
+            year,
+            total: 0,
+            distributions: [],
+          };
+          acc[year].months.push(monthBucket);
+        }
+
+        const diapers = dist.numberDiapers
+          ? parseInt(dist.numberDiapers, 10)
+          : 0;
+        monthBucket.total += diapers;
+        monthBucket.distributions.push(dist);
 
         return acc;
       },
@@ -198,6 +245,7 @@ export default function DistributionsTable({
 
   if (error) return <Text c="red">Error: {error}</Text>;
 
+  // render year level dropdown here 
   return (
     <div className="space-y-2">
       {totals.map((date) => (
@@ -205,6 +253,7 @@ export default function DistributionsTable({
           key={`${date.year}-${date.month}`}
           title={
             <span className="flex items-center gap-3">
+              {/* <span>{yearGroup.year}</span> or smth like that instead of the next line*/}
               <span>{`${date.month} ${date.year}`}</span>
               <span className="rounded-full bg-blue-50 px-3 py-1 text-sm font-medium text-[#053766]">
                 {(
