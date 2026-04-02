@@ -93,6 +93,7 @@ export default function Page() {
   const [cachedBoundaries, setCachedBoundaries] =
     useState<FeatureCollection<Polygon | MultiPolygon> | null>(null);
 
+  
   const handleTimelineChange = useCallback(
     async (params: { month?: string; year: string }) => {
       try {
@@ -169,7 +170,7 @@ export default function Page() {
             See where diapers are distributed
           </Title>
           <Text fz="18px" c="#667085">
-            Last updated: Sep 9th, 2025.
+            Last data uploaded: {lastUploaded ?? "N/A"}
           </Text>
         </Box>
 
