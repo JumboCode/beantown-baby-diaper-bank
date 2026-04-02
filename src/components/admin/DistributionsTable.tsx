@@ -29,7 +29,9 @@ interface DateTotal {
 
 interface YearGroup {
   year: string;
-  months: DateTotal[]
+  total: number;
+  months: DateTotal[];
+  yearlyDistributions: Distribution[];
 }
 
 interface EditInfo {
@@ -160,50 +162,34 @@ export default function DistributionsTable({
     }
   };
 
-  const totals: DateTotal[] = useMemo(() => {
-    const grouped = distributionData.reduce<Record<string, DateTotal>>(
+  const yearGroups: YearGroup[] = useMemo(() => {
+    const grouped = distributionData.reduce<Record<string, YearGroup>>(
       (acc, dist) => {
-        if (!dist.month || !dist.year) return acc;
+        if (!dist.year) return acc;
 
         const year = dist.year;
-        const key = `${year}-${dist.month}`;
-
-        if (!acc[key]) {
-          acc[key] = {
-            month: dist.month,
-            year: dist.year,
-            total: 0,
-            distributions: [],
-          };
-        }
-
         const diapers = dist.numberDiapers
           ? parseInt(dist.numberDiapers, 10)
           : 0;
-        acc[key].total += diapers;
-        acc[key].distributions.push(dist);
-
-        return acc;
-      },
-      {},
-  );
-
-    const yearGroups: YearGroup[] = useMemo(() => {
-    const grouped = distributionData.reduce<Record<string, YearGroup>>(
-      (acc, dist) => {
-        if (!dist.month || !dist.year) return acc;
-
-        const year = dist.year;
-        const month = dist.month;
         // const key = `${year}-${month}`;
 
         if (!acc[year]) {
           acc[year] = {
-            year:year,
+            year,
+            total: 0,
             months:[],
+            yearlyDistributions: [],
           };
         }
 
+        acc[year].total += diapers;
+
+        if (!dist.month) {
+          acc[year].yearlyDistributions.push(dist);
+          return acc;
+        }
+
+        const month = dist.month;
         let monthBucket = acc[year].months.find((m) => month === m.month)
 
         if (!monthBucket) {
@@ -216,9 +202,7 @@ export default function DistributionsTable({
           acc[year].months.push(monthBucket);
         }
 
-        const diapers = dist.numberDiapers
-          ? parseInt(dist.numberDiapers, 10)
-          : 0;
+        
         monthBucket.total += diapers;
         monthBucket.distributions.push(dist);
 
@@ -226,43 +210,87 @@ export default function DistributionsTable({
       },
       {},
     );
+    return Object.values(grouped)
+      .map((group) => ({
+        ...group,
+        months: group.months
+          .map((monthGroup) => ({
+            ...monthGroup,
+            distributions: monthGroup.distributions.sort((a, b) => {
+              const nameA = a.partner?.name ?? "";
+              const nameB = b.partner?.name ?? "";
+              return nameA.localeCompare(nameB);
+            }),
+          }))
+          .sort(
+            (a, b) => (MONTH_ORDER[a.month] ?? 99) - (MONTH_ORDER[b.month] ?? 99),
+          ),
+        yearlyDistributions: group.yearlyDistributions.sort((a, b) =>
+          (a.partner?.name ?? "").localeCompare(b.partner?.name ?? ""),
+        ),
+      }))
+      .sort((a, b) => Number(b.year) - Number(a.year));
+    }, [distributionData]);
 
-    const groupedArray = Object.values(grouped).map((group) => ({
-      ...group,
-      distributions: group.distributions.sort((a, b) => {
-        const nameA = a.partner?.name ?? "";
-        const nameB = b.partner?.name ?? "";
-        return nameA.localeCompare(nameB);
-      }),
-    }));
+    const displayedYearTotals = useMemo(() => {
+      const totals: Record<string, number> = {};
 
-    return groupedArray.sort((a, b) => {
-      if (a.year !== b.year) return Number(b.year) - Number(a.year);
-      return (MONTH_ORDER[a.month] ?? 99) - (MONTH_ORDER[b.month] ?? 99);
-    });
-  }, [distributionData]);
+      yearGroups.forEach((yearGroup) => {
+        const monthTotal = yearGroup.months.reduce((sum, monthGroup) => {
+          const key = `${monthGroup.year}-${monthGroup.month}`;
+          return (
+            sum +
+            (monthlyBaseTotals[key] ?? monthGroup.total) +
+            (monthDeltaMap[key] ?? 0)
+          );
+        }, 0);
 
+        const yearlyOnlyTotal = yearGroup.yearlyDistributions.reduce((sum, dist) => {
+          const diapers = dist.numberDiapers ? parseInt(dist.numberDiapers, 10) : 0;
+          return sum + diapers;
+        }, 0);
+
+        totals[yearGroup.year] = monthTotal + yearlyOnlyTotal;
+      });
+
+      return totals;
+    }, [yearGroups, monthlyBaseTotals, monthDeltaMap]);
 
   if (error) return <Text c="red">Error: {error}</Text>;
 
   // render year level dropdown here 
   return (
     <div className="space-y-2">
-      {totals.map((date) => (
-        <CollapsibleDropdown<Distribution[]>
-          key={`${date.year}-${date.month}`}
+      {/* month buckets 2025+ */}
+      {yearGroups.map((yearGroup) => (
+        <CollapsibleDropdown
+          key={yearGroup.year}
           title={
             <span className="flex items-center gap-3">
-              {/* <span>{yearGroup.year}</span> or smth like that instead of the next line*/}
-              <span>{`${date.month} ${date.year}`}</span>
+              <span>{yearGroup.year}</span>
               <span className="rounded-full bg-blue-50 px-3 py-1 text-sm font-medium text-[#053766]">
-                {(
-                  (monthlyBaseTotals[`${date.year}-${date.month}`] ?? date.total) +
-                  (monthDeltaMap[`${date.year}-${date.month}`] ?? 0)
-                ).toLocaleString()} diapers
+                {(displayedYearTotals[yearGroup.year] ?? yearGroup.total).toLocaleString()} diapers
               </span>
             </span>
           }
+          titleClassName="text-[22px] font-bold"
+          render={() => (
+            <div className="space-y-2">
+              {yearGroup.months.map((date) => (
+                <CollapsibleDropdown<Distribution[]>
+                  key={`${date.year}-${date.month}`}
+                  title={
+                    <span className="flex items-center gap-3">
+                      {/* <span>{yearGroup.year}</span> or smth like that instead of the next line*/}
+                      <span>{`${date.month} ${date.year}`}</span>
+                      <span className="rounded-full bg-blue-50 px-3 py-1 text-sm font-medium text-[#053766]">
+                        {(
+                          (monthlyBaseTotals[`${date.year}-${date.month}`] ?? date.total) +
+                          (monthDeltaMap[`${date.year}-${date.month}`] ?? 0)
+                        ).toLocaleString()} diapers
+                      </span>
+                    </span>
+                  }
           titleClassName="text-[22px] font-bold"
           // endpoint={`/api/distributions?month=${date.month}&year=${date.year}`}
           endpoint={`/api/monthly-data?month=${date.month}&year=${date.year}`}

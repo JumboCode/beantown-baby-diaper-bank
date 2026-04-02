@@ -72,11 +72,18 @@ export async function GET(req: Request) {
       };
     }
   } else {
-    // Single month/year filter
-    where = {
-      ...(month ? { month } : {}),
-      ...(year ? { year } : {}),
-    };
+    if (month) {
+      // Single month/year filter
+      where = {
+        ...(month ? { month } : {}),
+        ...(year ? { year } : {}),
+      };
+    } else if (year) {
+      where = {
+        year,
+        month: null,
+      };
+    }
   }
 
   const distributionsQuery = {
