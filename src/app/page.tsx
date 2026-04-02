@@ -93,21 +93,13 @@ export default function Page() {
   const [cachedBoundaries, setCachedBoundaries] =
     useState<FeatureCollection<Polygon | MultiPolygon> | null>(null);
 
-  // directly copied from admin page
-  const [uploadedMonths, setUploadedMonths] = useState<number[]>([]);
   const [lastUploaded, setLastUploaded] = useState<string | null>(null);
-  const [years, setYears] = useState<string[]>(["All"]);
   const currentYear = new Date().getFullYear();
-  // possible extension: refactor code so this logic is shared between admin and app page
-  const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
   const fetchTimelineData = useCallback(async () => {
       try {
         const res = await fetch(`/api/timeline-slider?year=${currentYear}`);
         const data = await res.json();
-        if (data.years) {
-          setYears(["All", ...data.years.map(String)]);
-        }
         if (data.months) {
           const validMonths = data.months.filter(
             (d: { Month: string | null; Year: string | null }) =>
@@ -120,23 +112,6 @@ export default function Page() {
           } else {
             setLastUploaded(null);
           }
-          
-          // const currentYearMonths = validMonths.filter(
-          //   (d: { Month: string; Year: string }) => d.Year === String(currentYear)
-          // );
-          // const indices = currentYearMonths
-          //   .map((d: { Month: string; Year: string }) =>
-          //     MONTHS.findIndex((m) => d.Month.startsWith(m))
-          //   )
-          //   .filter((index: number) => index >= 0);
-          // setUploadedMonths(indices);
-  
-          // if (validMonths.length > 0) {
-          //   const last = validMonths[validMonths.length - 1];
-          //   setLastUploaded(`${last.Month} ${last.Year}`);
-          // } else {
-          //   setLastUploaded(null);
-          // }
         }
       } catch (err) {
         console.error("Failed to fetch timeline data:", err);
