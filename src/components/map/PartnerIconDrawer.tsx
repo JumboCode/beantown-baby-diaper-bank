@@ -134,8 +134,9 @@ function createPartnerIcon(
   url: string | null,
   partner: PartnerWithStats,
 ) {
+  const initials = (partner.name ?? "PN").substring(0, 2).toUpperCase();
   const validUrl =
-    url && url.trim() !== "" ? url : `https://placehold.co/400x400?text=${partner.name.substring(0, 2).toUpperCase()}`;
+    url && url.trim() !== "" ? url : `https://placehold.co/400x400?text=${initials}`;
 
   return leaflet.divIcon({
     className: "custom-partner-icon",
