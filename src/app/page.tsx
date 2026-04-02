@@ -113,22 +113,30 @@ export default function Page() {
             (d: { Month: string | null; Year: string | null }) =>
               typeof d.Month === "string" && typeof d.Year === "string"
           );
-          const currentYearMonths = validMonths.filter(
-            (d: { Month: string; Year: string }) => d.Year === String(currentYear)
-          );
-          const indices = currentYearMonths
-            .map((d: { Month: string; Year: string }) =>
-              MONTHS.findIndex((m) => d.Month.startsWith(m))
-            )
-            .filter((index: number) => index >= 0);
-          setUploadedMonths(indices);
-  
+
           if (validMonths.length > 0) {
             const last = validMonths[validMonths.length - 1];
             setLastUploaded(`${last.Month} ${last.Year}`);
           } else {
             setLastUploaded(null);
           }
+          
+          // const currentYearMonths = validMonths.filter(
+          //   (d: { Month: string; Year: string }) => d.Year === String(currentYear)
+          // );
+          // const indices = currentYearMonths
+          //   .map((d: { Month: string; Year: string }) =>
+          //     MONTHS.findIndex((m) => d.Month.startsWith(m))
+          //   )
+          //   .filter((index: number) => index >= 0);
+          // setUploadedMonths(indices);
+  
+          // if (validMonths.length > 0) {
+          //   const last = validMonths[validMonths.length - 1];
+          //   setLastUploaded(`${last.Month} ${last.Year}`);
+          // } else {
+          //   setLastUploaded(null);
+          // }
         }
       } catch (err) {
         console.error("Failed to fetch timeline data:", err);
