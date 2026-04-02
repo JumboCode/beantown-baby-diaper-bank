@@ -43,11 +43,18 @@ export default function FileUpload({
   return (
     <div>
       <FileInput
+        required
         accept="csv"
-        label={<Text fw={700}>Files</Text>}
+        label="Files"
         onChange={handleFileChange}
         placeholder={<Text size="sm">Click to Upload</Text>}
         description="Upload one or more dataset files"
+        styles={{
+          label: {
+            fontWeight: 700,
+            fontSize: "1rem",
+          },
+        }}
       />
       <div>
         {displayedFileInfo != null && (
