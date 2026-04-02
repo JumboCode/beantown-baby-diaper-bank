@@ -2,6 +2,7 @@
 import { Text, Button, Group, Stack, Divider, Popover } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
 import { IconDiaper, IconHeartHandshake } from "@tabler/icons-react";
+import { useEffect, useRef } from "react";
 
 const tiers = [
   { amount: "$10", diapers: 1, label: "~1 week", sublabel: "of diapers for 1 baby" },
@@ -9,38 +10,47 @@ const tiers = [
   { amount: "$50", diapers: 4, label: "~1 month", sublabel: "of diapers for 1 baby" },
 ];
 
-export default function ImpactModal() {
-  const [opened, { toggle, close }] = useDisclosure(false);
+export default function MakeAnImpact() {
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const prevent = (e: WheelEvent | TouchEvent) => e.preventDefault();
+    el.addEventListener("wheel", prevent, { passive: false });
+    el.addEventListener("touchmove", prevent, { passive: false });
+    return () => {
+      el.removeEventListener("wheel", prevent);
+      el.removeEventListener("touchmove", prevent);
+    };
+  }, []);
 
   return (
-    <>
-      {opened && (
-        <div
-          style={{ position: "fixed", inset: 0, zIndex: 299 }}
-          onClick={close}
-        />
-      )}
+    <div ref={ref}>
       <Popover
-        opened={opened}
-        onClose={close}
-        position="bottom-end"
+        position="bottom"
         withArrow
+        withOverlay
         shadow="lg"
-        width="clamp(260px, 90vw, 340px)"
         radius="md"
+        zIndex={10001}
       >
         <Popover.Target>
           <Button
-            onClick={toggle}
-            leftSection={<IconHeartHandshake size={18} />}
+            leftSection={
+              <IconHeartHandshake size={16} color="white" />
+            }
             styles={{
               root: {
-                backgroundColor: "#1e3a5f",
                 color: "white",
-                fontWeight: 600,
-                borderRadius: "8px",
+                backgroundColor: "#e3393e",
+                border: "none",
+                fontWeight: 700,
+                borderRadius: "6px",
                 fontSize: "14px",
-                "&:hover": { backgroundColor: "#163050" },
+                letterSpacing: "0.02em",
+                boxShadow: "0 2px 6px rgba(0,0,0,0.2)",
+                "&:hover": { backgroundColor: "#c9292e" },
               },
             }}
           >
@@ -50,7 +60,8 @@ export default function ImpactModal() {
 
         <Popover.Dropdown p="lg">
           <Text fw={800} mb={6} style={{ fontSize: "17px", color: "#1e3a5f", lineHeight: 1.3 }}>
-            Help us bring diaper relief to the greater Boston area!        </Text>
+            Help us bring diaper relief to the greater Boston area!
+          </Text>
           <Text size="sm" c="dimmed" mb="md">
             See how far your donation goes.
           </Text>
@@ -124,6 +135,6 @@ export default function ImpactModal() {
           </Button>
         </Popover.Dropdown>
       </Popover>
-    </>
+    </div>
   );
 }

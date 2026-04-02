@@ -2,11 +2,11 @@
 
 import dynamic from "next/dynamic";
 import { Box, Skeleton } from "@mantine/core";
-import TimelineSliderControls from "@/components/map/TimelineSliderControls";
+import TimelineSlider from "@/components/map/TimelineSlider";
 import { useTimelinePeriod } from "@/components/map/useTimelinePeriod";
 import { useState, useCallback, useEffect } from "react";
 import { FeatureCollection, MultiPolygon, Polygon } from "geojson";
-import { City, Distribution } from "@/generated/prisma/client";
+import { GeoJsonBoundaries, CityWithStats } from "@/lib/types";
 
 const LeafletMap = dynamic(() => import("@/components/map/Map"), {
   ssr: false,
@@ -17,25 +17,6 @@ const MapSkeleton = dynamic(() => import("@/components/map/MapSkeleton"), {
   loading: () => <Skeleton h="100%" w="100%" radius={0} />,
 });
 
-type PartnerInfoType = {
-  id: number;
-  name: string;
-  logo_url?: string | null;
-  status: "active" | "inactive" | "waitlisted" | null;
-};
-
-type CityMapInfo = City & {
-  distributions: Distribution[];
-  partners: PartnerInfoType[];
-  historicalStats?: { median: number; p25: number; p75: number } | null;
-  runningTotal?: number;
-};
-
-export type MapData = {
-  boundaries: FeatureCollection<Polygon | MultiPolygon>;
-  cities: { data: CityMapInfo[] };
-};
-
 const flipBoundaries = (
   data: FeatureCollection<Polygon | MultiPolygon>,
 ): FeatureCollection<Polygon | MultiPolygon> => {
@@ -44,11 +25,7 @@ const flipBoundaries = (
       return coords;
     }
 
-    if (
-      coords.length >= 2 &&
-      typeof coords[0] === "number" &&
-      typeof coords[1] === "number"
-    ) {
+    if (coords.length >= 2 && typeof coords[0] === "number" && typeof coords[1] === "number") {
       const [lng, lat, ...rest] = coords;
       return [lat, lng, ...rest];
     }
@@ -61,17 +38,13 @@ const flipBoundaries = (
     geometry:
       feature.geometry.type === "Polygon"
         ? {
-          ...feature.geometry,
-          coordinates: swapLngLat(
-            feature.geometry.coordinates,
-          ) as Polygon["coordinates"],
-        }
+            ...feature.geometry,
+            coordinates: swapLngLat(feature.geometry.coordinates) as Polygon["coordinates"],
+          }
         : {
-          ...feature.geometry,
-          coordinates: swapLngLat(
-            feature.geometry.coordinates,
-          ) as MultiPolygon["coordinates"],
-        },
+            ...feature.geometry,
+            coordinates: swapLngLat(feature.geometry.coordinates) as MultiPolygon["coordinates"],
+          },
   }));
 
   return {
@@ -82,53 +55,40 @@ const flipBoundaries = (
 
 export default function Page() {
   const timeline = useTimelinePeriod();
-  const [mapData, setMapData] = useState<MapData | null>(null);
-  const [cumulativeTotalDiapers, setCumulativeTotalDiapers] =
-    useState<number>();
-  const [yearlyTotalDiapers, setYearlyTotalDiapers] = useState<number>();
+  const [boundaries, setBoundaries] = useState<GeoJsonBoundaries | null>(null);
+  const [cities, setCities] = useState<CityWithStats[]>([]);
+  const [cumulativeTotalDiapers, setCumulativeTotalDiapers] = useState<number>();
   const [selectedYear, setSelectedYear] = useState<string>();
-  const [cachedBoundaries, setCachedBoundaries] =
-    useState<FeatureCollection<Polygon | MultiPolygon> | null>(null);
+  const [cachedBoundaries, setCachedBoundaries] = useState<FeatureCollection<
+    Polygon | MultiPolygon
+  > | null>(null);
 
   const handleTimelineChange = useCallback(
-    async (params: { month?: string; year: string }) => {
+    async (year: string) => {
       try {
-        const queryParams = new URLSearchParams({
-          year: params.year,
-        });
-
-        if (params.month) {
-          queryParams.append("month", params.month);
-        }
-
         const boundariesPromise = cachedBoundaries
           ? Promise.resolve(cachedBoundaries)
           : fetch(`/api/cities/boundaries`)
-            .then((res) => res.json())
-            .then(flipBoundaries);
+              .then((res) => res.json())
+              .then(flipBoundaries);
 
         const [cities, boundaries, totalDiapersResponse] = await Promise.all([
-          fetch(`/api/cities?${queryParams.toString()}`).then((res) =>
-            res.json(),
-          ),
+          fetch(`/api/cities?year=${encodeURIComponent(year)}`).then((res) => res.json()),
           boundariesPromise,
-          fetch(`/api/total-diapers?year=${encodeURIComponent(params.year)}`).then(
-            (res) => res.json(),
-          ),
+          fetch(`/api/total-diapers?year=${encodeURIComponent(year)}`).then((res) => res.json()),
         ]);
 
         if (!cachedBoundaries) {
           setCachedBoundaries(boundaries);
         }
 
-        setMapData({ cities, boundaries });
-        setSelectedYear(params.year);
+        setBoundaries(boundaries);
+        setCities(cities.data);
+        setSelectedYear(year);
         setCumulativeTotalDiapers(totalDiapersResponse.totalDiapers ?? 0);
-        setYearlyTotalDiapers(totalDiapersResponse.yearlyTotalDiapers ?? 0);
       } catch (error) {
         console.error("Error fetching map data:", error);
         setCumulativeTotalDiapers(0);
-        setYearlyTotalDiapers(0);
       }
     },
     [cachedBoundaries],
@@ -150,12 +110,12 @@ export default function Page() {
     >
       {/* Map — fills all available height */}
       <Box style={{ flex: 1, position: "relative", minHeight: 0 }}>
-        {mapData ? (
+        {boundaries && cities ? (
           <LeafletMap
-            mapData={mapData}
-            timelineSlider={timeline}
+            boundaries={boundaries}
+            cities={cities}
+            year={timeline.labels[timeline.index] ?? ""}
             totalDiapersForYear={cumulativeTotalDiapers}
-            yearlyDistributed={yearlyTotalDiapers}
             selectedYear={selectedYear}
           />
         ) : (
@@ -172,8 +132,7 @@ export default function Page() {
           flexShrink: 0,
         }}
       >
-        <TimelineSliderControls
-          view={timeline.view}
+        <TimelineSlider
           index={timeline.index}
           setIndex={timeline.setIndex}
           move={timeline.move}

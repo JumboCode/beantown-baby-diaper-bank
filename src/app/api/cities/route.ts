@@ -8,11 +8,7 @@ export const dynamic = "force-dynamic";
 export const revalidate = 2592000;
 
 const getCities = unstable_cache(
-  async (
-    cityName: string | null,
-    month: string | null,
-    year: string | null,
-  ) => {
+  async (cityName: string | null, month: string | null, year: string | null) => {
     if (month && !year) {
       throw new Error("Year must be provided if month is provided.");
     }
@@ -45,7 +41,7 @@ const getCities = unstable_cache(
           p25: Number(row.p25),
           p75: Number(row.p75),
         },
-      ])
+      ]),
     );
 
     let cumulativeTotalsMap = new Map<number, number>();
@@ -56,10 +52,7 @@ const getCities = unstable_cache(
         _sum: { numDiapers: true },
       });
       cumulativeTotalsMap = new Map(
-        cumulativeQuery.map((row) => [
-          Number(row.cityId),
-          Number(row._sum.numDiapers || 0),
-        ])
+        cumulativeQuery.map((row) => [Number(row.cityId), Number(row._sum.numDiapers || 0)]),
       );
     }
 
@@ -84,8 +77,10 @@ const getCities = unstable_cache(
       return cities.map((city) => ({
         id: Number(city.id),
         name: city.name,
-        historicalStats: statsMap.get(Number(city.id)) || null,
-        runningTotal: cumulativeTotalsMap.get(Number(city.id)) || 0,
+        stats: {
+          historical: statsMap.get(Number(city.id)) || null,
+          runningTotal: cumulativeTotalsMap.get(Number(city.id)) || 0,
+        },
         distributions: city.Yearly_Data.map((yd) => ({
           id: yd.id,
           year: yd.year,
@@ -129,9 +124,7 @@ const getCities = unstable_cache(
       },
     } satisfies PrismaTypes.CityFindManyArgs;
 
-    type CityWithRelations = PrismaTypes.CityGetPayload<
-      typeof cityWithRelationArgs
-    >;
+    type CityWithRelations = PrismaTypes.CityGetPayload<typeof cityWithRelationArgs>;
 
     const cities: CityWithRelations[] = await prisma.city.findMany({
       where,
@@ -142,8 +135,10 @@ const getCities = unstable_cache(
     const dataToReturn = cities.map((city) => ({
       id: Number(city.id),
       name: city.name,
-      historicalStats: statsMap.get(Number(city.id)) || null,
-      runningTotal: cumulativeTotalsMap.get(Number(city.id)) || 0,
+      stats: {
+        historical: statsMap.get(Number(city.id)) || null,
+        runningTotal: cumulativeTotalsMap.get(Number(city.id)) || 0,
+      },
       distributions: city.distributions.map((distribution) => ({
         id: Number(distribution.id),
         year: distribution.year,
@@ -182,8 +177,7 @@ export async function GET(request: Request) {
     { data: dataToReturn },
     {
       headers: {
-        "Cache-Control":
-          "public, s-maxage=2592000, stale-while-revalidate=604800",
+        "Cache-Control": "public, s-maxage=2592000, stale-while-revalidate=604800",
       },
     },
   );

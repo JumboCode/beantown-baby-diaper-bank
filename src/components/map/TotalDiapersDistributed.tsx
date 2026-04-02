@@ -22,7 +22,6 @@ export default function TotalDiapersDistributed({
       <Group justify="space-between" align="center">
         <Stack gap="xs">
           <Text
-            // size="sm"
             fz="16px"
             fw={700}
             c="#344054"
