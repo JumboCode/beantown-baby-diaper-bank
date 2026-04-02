@@ -201,7 +201,9 @@ export default function UploadNewData({
               })}
             </SimpleGrid>
           </Paper>
-
+          <Group>
+               <a href="/MothlyDataTemplate.xlsx" download>See template</a>
+          </Group>
           <Group justify="center" grow>
             <MonthPickerInput
               label="Dataset Information"
@@ -219,7 +221,6 @@ export default function UploadNewData({
               }}
             />
           </Group>
-
           <Group grow>
             <FileUpload fileInfo={fileInfo} onFileChange={setFileInfo} />
           </Group>
