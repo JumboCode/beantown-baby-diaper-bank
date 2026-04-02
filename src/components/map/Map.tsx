@@ -80,7 +80,6 @@ export default function Map({
       // Annualize the current year's total so it's comparable to historical
       // full-year values used in the quartile stats.
       const scoringTotal = isCurrentYear && currentMonth > 0 ? (total / currentMonth) * 12 : total;
-      console.log(city);
       if (city.name) {
         cityTotals[city.name] = scoringTotal;
         cityStats[city.name] = city.stats.historical;

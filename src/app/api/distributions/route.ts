@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { month, Prisma as PrismaTypes } from "@/generated/prisma/client";
+import { revalidateTag } from "next/cache";
 
 const MONTH_NAMES = [
   "January",
@@ -26,9 +27,7 @@ export async function GET(req: Request) {
   const startYear: string | null = searchParams.get("startYear");
   const endYear: string | null = searchParams.get("endYear");
 
-  const startMonth: month | null = searchParams.get(
-    "startMonth",
-  ) as month | null;
+  const startMonth: month | null = searchParams.get("startMonth") as month | null;
   const endMonth: month | null = searchParams.get("endMonth") as month | null;
 
   let where: PrismaTypes.DistributionWhereInput = {};
@@ -40,20 +39,14 @@ export async function GET(req: Request) {
     const eMonthIdx = MONTH_NAMES.indexOf(endMonth);
 
     if (sYear === eYear) {
-      const monthsInRange: month[] = MONTH_NAMES.slice(
-        sMonthIdx,
-        eMonthIdx + 1,
-      ) as month[];
+      const monthsInRange: month[] = MONTH_NAMES.slice(sMonthIdx, eMonthIdx + 1) as month[];
       where = {
         year: startYear,
         month: { in: monthsInRange },
       };
     } else {
       const startYearMonths: month[] = MONTH_NAMES.slice(sMonthIdx) as month[];
-      const endYearMonths: month[] = MONTH_NAMES.slice(
-        0,
-        eMonthIdx + 1,
-      ) as month[];
+      const endYearMonths: month[] = MONTH_NAMES.slice(0, eMonthIdx + 1) as month[];
 
       where = {
         OR: [
@@ -89,8 +82,7 @@ export async function GET(req: Request) {
   } satisfies PrismaTypes.DistributionFindManyArgs;
 
   try {
-    const distributionsArr =
-      await prisma.distribution.findMany(distributionsQuery);
+    const distributionsArr = await prisma.distribution.findMany(distributionsQuery);
 
     const formattedData = distributionsArr.map(
       (dist: {
@@ -123,10 +115,7 @@ export async function GET(req: Request) {
     return NextResponse.json(formattedData);
   } catch (error) {
     console.error("Error fetching distributions:", error);
-    return NextResponse.json(
-      { error: "Failed to fetch distributions" },
-      { status: 500 },
-    );
+    return NextResponse.json({ error: "Failed to fetch distributions" }, { status: 500 });
   }
 }
 
@@ -146,12 +135,10 @@ export async function DELETE(req: Request) {
       where: { id: { in: parsedIds } },
     });
 
+    revalidateTag("cities", "max");
     return NextResponse.json({ deletedCount: result.count });
   } catch (error) {
     console.error("Error deleting distributions:", error);
-    return NextResponse.json(
-      { error: "Failed to delete distributions" },
-      { status: 500 },
-    );
+    return NextResponse.json({ error: "Failed to delete distributions" }, { status: 500 });
   }
 }

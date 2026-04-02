@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-
-// export const revalidate = 2592000;
+import { cacheLife, cacheTag } from "next/cache";
 
 const MONTH_ORDER: Record<string, number> = {
   January: 0,
@@ -23,59 +22,64 @@ type TimelineMonthRow = {
   month: string;
 };
 
+async function getTimelineData() {
+  "use cache";
+  cacheTag("cities");
+  cacheLife("max");
+
+  const yearly_data = await prisma.yearlyData.findMany({
+    distinct: ["year"],
+    orderBy: {
+      year: "asc",
+    },
+  });
+
+  const years = yearly_data.map((yearlyData) => yearlyData.year);
+
+  const distributions = await prisma.distribution.findMany({
+    distinct: ["year", "month"],
+    select: {
+      year: true,
+      month: true,
+    },
+  });
+
+  const validDistributions = distributions.reduce<TimelineMonthRow[]>((acc, distribution) => {
+    if (
+      distribution.month !== null &&
+      distribution.year !== null &&
+      distribution.month in MONTH_ORDER
+    ) {
+      acc.push({
+        month: distribution.month,
+        year: distribution.year,
+      });
+    }
+
+    return acc;
+  }, []);
+
+  const months = validDistributions
+    .map((distribution) => ({
+      Month: distribution.month,
+      Year: distribution.year,
+    }))
+    .sort((a, b) => {
+      const yearDiff = Number(a.Year) - Number(b.Year);
+      if (yearDiff !== 0) return yearDiff;
+
+      return MONTH_ORDER[a.Month] - MONTH_ORDER[b.Month];
+    });
+
+  return { years, months };
+}
+
 export async function GET() {
   try {
-    const yearly_data = await prisma.yearlyData.findMany({
-      distinct: ["year"],
-      orderBy: {
-        year: "asc",
-      },
-    });
-
-    const years = yearly_data.map((yearlyData) => yearlyData.year);
-
-    const distributions = await prisma.distribution.findMany({
-      distinct: ["year", "month"],
-      select: {
-        year: true,
-        month: true,
-      },
-    });
-
-    const validDistributions = distributions.reduce<TimelineMonthRow[]>(
-      (acc, distribution) => {
-        if (
-          distribution.month !== null &&
-          distribution.year !== null &&
-          distribution.month in MONTH_ORDER
-        ) {
-          acc.push({
-            month: distribution.month,
-            year: distribution.year,
-          });
-        }
-
-        return acc;
-      },
-      [],
-    );
-
-    const months = validDistributions
-      .map((distribution) => ({
-        Month: distribution.month,
-        Year: distribution.year,
-      }))
-      .sort((a, b) => {
-        const yearDiff = Number(a.Year) - Number(b.Year);
-        if (yearDiff !== 0) return yearDiff;
-
-        return MONTH_ORDER[a.Month] - MONTH_ORDER[b.Month];
-      });
-
-    return NextResponse.json({ years, months });
+    const data = await getTimelineData();
+    return NextResponse.json(data);
   } catch (error) {
     console.error("Error fetching timeline data:", error);
-    console.log("Unable to load timeline data from the database");
     return NextResponse.json(
       { error: "Unable to load timeline data from the database" },
       { status: 500 },

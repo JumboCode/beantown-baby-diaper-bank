@@ -1,24 +1,18 @@
 import Profile from "@/components/admin/Profile";
 import SettingsButton from "@/components/admin/AdminSettingsButton";
 import { auth } from "@clerk/nextjs/server";
-import {
-  AppShell,
-  AppShellHeader,
-  AppShellMain,
-  Group,
-  Text,
-} from "@mantine/core";
+import { AppShell, AppShellHeader, AppShellMain, Group, Text } from "@mantine/core";
 import Link from "next/link";
+import { Suspense } from "react";
 
-export default async function Layout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+async function canAccessAdminControls() {
   const { sessionClaims } = await auth();
   const role = sessionClaims?.metadata?.role;
   const canAccessAdminControls = role === "superadmin";
+  return canAccessAdminControls;
+}
 
+export default async function Layout({ children }: { children: React.ReactNode }) {
   return (
     <AppShell padding="md" header={{ height: 64 }}>
       <AppShellHeader px="md">
@@ -28,11 +22,9 @@ export default async function Layout({
           </Text>
 
           <Group gap="xs">
-            <Link href="/">
-              View Map
-            </Link>
+            <Link href="/">View Map</Link>
             <Profile />
-            {canAccessAdminControls ? <SettingsButton /> : null}
+            
           </Group>
         </Group>
       </AppShellHeader>

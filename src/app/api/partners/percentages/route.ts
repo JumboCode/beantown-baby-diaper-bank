@@ -1,8 +1,52 @@
 import { NextResponse } from "next/server";
+import { revalidateTag, cacheLife, cacheTag } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { PartnerRegion, Prisma } from "@/generated/prisma/client";
 import { stringifyWithBigInt } from "@/lib/util";
 import { PartnerRegionInclude } from "@/generated/prisma/models";
+
+async function getPartnerPercentages(partnerId: string | null, partnerName: string | null) {
+  "use cache";
+  cacheTag("cities");
+  cacheLife("max");
+
+  const include = {
+    city: {
+      select: {
+        id: true,
+        name: true,
+      },
+    },
+  } satisfies PartnerRegionInclude;
+
+  const where: Prisma.PartnerRegionWhereInput = {};
+
+  if (partnerId) {
+    where.partnerId = BigInt(partnerId);
+  } else if (partnerName) {
+    const partner = await prisma.partner.findFirst({
+      where: { name: partnerName },
+      select: { id: true },
+    });
+
+    if (!partner) {
+      return null;
+    }
+
+    where.partnerId = partner.id;
+  }
+
+  const query: Prisma.PartnerRegionFindManyArgs = {
+    include,
+    where,
+  };
+
+  type returnTy = Prisma.PartnerRegionGetPayload<typeof query>;
+
+  const partnerRegions: returnTy[] = await prisma.partnerRegion.findMany(query);
+
+  return partnerRegions;
+}
 
 export async function GET(request: Request) {
   const url = new URL(request.url);
@@ -10,41 +54,11 @@ export async function GET(request: Request) {
   const partnerName = url.searchParams.get("partnerName");
 
   try {
-    const include = {
-      city: {
-        select: {
-          id: true,
-          name: true,
-        },
-      },
-    } satisfies PartnerRegionInclude;
+    const partnerRegions = await getPartnerPercentages(partnerId, partnerName);
 
-    const where: Prisma.PartnerRegionWhereInput = {};
-
-    if (partnerId) {
-      where.partnerId = BigInt(partnerId);
-    } else if (partnerName) {
-      const partner = await prisma.partner.findFirst({
-        where: { name: partnerName },
-        select: { id: true },
-      });
-
-      if (!partner) {
-        return NextResponse.json({ data: [] }, { status: 200 });
-      }
-
-      where.partnerId = partner.id;
+    if (partnerRegions === null) {
+      return NextResponse.json({ data: [] }, { status: 200 });
     }
-
-    const query: Prisma.PartnerRegionFindManyArgs = {
-      include,
-      where,
-    };
-
-    type returnTy = Prisma.PartnerRegionGetPayload<typeof query>;
-
-    const partnerRegions: returnTy[] =
-      await prisma.partnerRegion.findMany(query);
 
     const data_response = stringifyWithBigInt({ data: partnerRegions });
 
@@ -54,7 +68,6 @@ export async function GET(request: Request) {
     });
   } catch (error) {
     console.error("Error fetching partner regions:", error);
-    console.log("Unable to fetch partner regions");
     return NextResponse.json({ status: 500 });
   }
 }
@@ -86,6 +99,7 @@ export async function POST(request: Request) {
       ),
     );
 
+    revalidateTag("cities", "max");
     const data_response = stringifyWithBigInt({ data: newPercentages });
 
     return new Response(data_response, {

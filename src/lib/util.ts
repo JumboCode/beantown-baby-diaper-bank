@@ -16,13 +16,10 @@ export async function fetchCoordsFromAddress(address: string) {
   if (!address.trim()) return null;
 
   try {
-    const response = await fetch(
-      `/api/geocode?address=${encodeURIComponent(address)}`,
-      {
-        method: "GET",
-        cache: "no-store",
-      },
-    );
+    const response = await fetch(`/api/geocode?address=${encodeURIComponent(address)}`, {
+      method: "GET",
+      cache: "no-store",
+    });
 
     if (!response.ok) {
       return null;

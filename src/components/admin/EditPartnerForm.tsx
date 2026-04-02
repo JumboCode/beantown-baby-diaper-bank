@@ -24,7 +24,7 @@ import ContinuousUpdateForm from "./ContinuousUpdateForm";
 import type { CityPercentage } from "./CityPercentagesForm";
 import "@mantine/dates/styles.css";
 import { RiCalendarEventLine, RiLineChartLine } from "react-icons/ri";
-import { fetchCoordsFromAddress } from "@/lib/server/util";
+import { fetchCoordsFromAddress } from "@/lib/util";
 
 interface EditPartnerFormProps {
   partner: Partner;
@@ -118,13 +118,7 @@ const parseAddressFields = (address: string | null): AddressFields => {
   };
 };
 
-const buildAddressString = ({
-  addressLine,
-  city,
-  state,
-  zipCode,
-  country,
-}: AddressFields) =>
+const buildAddressString = ({ addressLine, city, state, zipCode, country }: AddressFields) =>
   [addressLine, city, state, zipCode, country || DEFAULT_COUNTRY]
     .filter((part) => Boolean(part))
     .join(", ");
@@ -149,10 +143,7 @@ const requiredInput = (label: string) => (value: unknown) => {
 
 type UpdatePercentagesOptions = "one-time" | "continuous";
 
-
-const parseMonthDateForPicker = (
-  rawDate: string | null | undefined,
-): Date | null => {
+const parseMonthDateForPicker = (rawDate: string | null | undefined): Date | null => {
   if (!rawDate) return null;
   const monthMatch = rawDate.match(/^(\d{4})-(\d{2})/);
   if (!monthMatch) {
@@ -183,14 +174,10 @@ const formatMonthDateForApi = (date: Date | string | null): string | null => {
   return `${year}-${month}-01`;
 };
 
-export default function EditPartnerForm({
-  partner,
-  onClose,
-}: EditPartnerFormProps) {
+export default function EditPartnerForm({ partner, onClose }: EditPartnerFormProps) {
   const [loading, setLoading] = useState(false);
   const [initialLogoUrl] = useState<string>(partner.logo_url || "");
-  const [activePercentTab, setActivePercentTab] =
-    useState<UpdatePercentagesOptions>("one-time");
+  const [activePercentTab, setActivePercentTab] = useState<UpdatePercentagesOptions>("one-time");
   const [cityPercentages, setCityPercentages] = useState<
     {
       city: { id: number; name: string };
@@ -212,10 +199,10 @@ export default function EditPartnerForm({
   const initialCityPercentEntries: CityPercentage[] =
     cityPercentages.length > 0
       ? cityPercentages.map((entry, idx) => ({
-        id: `${entry.city.name}-${idx}`,
-        city: entry.city.name,
-        percent: Math.round((entry.percentage ?? 0) * 100),
-      }))
+          id: `${entry.city.name}-${idx}`,
+          city: entry.city.name,
+          percent: Math.round((entry.percentage ?? 0) * 100),
+        }))
       : [];
 
   const addressFields = parseAddressFields(partner.address);
@@ -277,7 +264,7 @@ export default function EditPartnerForm({
 
     fetchCoordsFromAddress(fullAddress).then((location) => {
       if (!location) return;
-      form.setFieldValue("latitude", String(location.lat)); 
+      form.setFieldValue("latitude", String(location.lat));
       form.setFieldValue("longitude", String(location.lng));
     });
   }, [
@@ -295,14 +282,8 @@ export default function EditPartnerForm({
       id: partner.id,
       name: values.organization,
       description: values.description,
-      start_partner:
-        values.status !== "waitlisted"
-          ? formatMonthDateForApi(values.time)
-          : null,
-      end_partner:
-        values.status === "inactive"
-          ? formatMonthDateForApi(values.endTime)
-          : null,
+      start_partner: values.status !== "waitlisted" ? formatMonthDateForApi(values.time) : null,
+      end_partner: values.status === "inactive" ? formatMonthDateForApi(values.endTime) : null,
       status: values.status,
       coordinates: {
         lat: Number(values.latitude),
@@ -348,20 +329,13 @@ export default function EditPartnerForm({
 
   return (
     <Box pos="relative">
-      <LoadingOverlay
-        visible={loading}
-        zIndex={1000}
-        overlayProps={{ radius: "sm", blur: 2 }}
-      />
+      <LoadingOverlay visible={loading} zIndex={1000} overlayProps={{ radius: "sm", blur: 2 }} />
 
       <div className="mx-8">
         <h2 className="text-lg text-gray-500" style={{ marginBottom: "24px" }}>
           Change your partner data
         </h2>
-        <form
-          onSubmit={form.onSubmit(submitEditPartner)}
-          className="flex flex-col gap-5"
-        >
+        <form onSubmit={form.onSubmit(submitEditPartner)} className="flex flex-col gap-5">
           <Group justify="space-between" align="flex-start">
             <Text fw={600} c="#344054">
               Name of Organization <span className="text-red-600">*</span>
@@ -583,10 +557,7 @@ export default function EditPartnerForm({
                 onChange={(val) => {
                   if (!val) return;
                   setActivePercentTab(val as UpdatePercentagesOptions);
-                  form.setFieldValue(
-                    "updatePercentagesType",
-                    val as UpdatePercentagesOptions,
-                  );
+                  form.setFieldValue("updatePercentagesType", val as UpdatePercentagesOptions);
                 }}
                 className="min-w-170 w-full max-w-[600px]"
               >
@@ -605,40 +576,30 @@ export default function EditPartnerForm({
                       icon: <RiLineChartLine size={22} />,
                     },
                   ].map((option) => (
-                    <Tabs.Tab
-                      key={option.value}
-                      value={option.value}
-                      className="px-0"
-                    >
+                    <Tabs.Tab key={option.value} value={option.value} className="px-0">
                       {(() => {
                         const isActive = activePercentTab === option.value;
                         return (
                           <div
-                            className={`rounded-xl shadow-sm transition hover:-translate-y-0.5 hover:shadow-md h-full border ${isActive
-                              ? "border-[#1D3A8A] bg-[#EEF2FF]"
-                              : "border-gray-300 bg-white"
-                              }`}
+                            className={`rounded-xl shadow-sm transition hover:-translate-y-0.5 hover:shadow-md h-full border ${
+                              isActive
+                                ? "border-[#1D3A8A] bg-[#EEF2FF]"
+                                : "border-gray-300 bg-white"
+                            }`}
                             style={{ borderWidth: isActive ? 2 : 1 }}
                           >
                             <Stack gap="xs" align="center" p="md">
                               <div
-                                className={`${isActive ? "text-[#1D3A8A]" : "text-gray-500"
-                                  } opacity-80`}
+                                className={`${
+                                  isActive ? "text-[#1D3A8A]" : "text-gray-500"
+                                } opacity-80`}
                               >
                                 {option.icon}
                               </div>
-                              <Text
-                                fw={700}
-                                size="md"
-                                className={isActive ? "text-[#1D3A8A]" : ""}
-                              >
+                              <Text fw={700} size="md" className={isActive ? "text-[#1D3A8A]" : ""}>
                                 {option.title}
                               </Text>
-                              <Text
-                                size="sm"
-                                c={isActive ? "gray.6" : "dimmed"}
-                                ta="center"
-                              >
+                              <Text size="sm" c={isActive ? "gray.6" : "dimmed"} ta="center">
                                 {option.description}
                               </Text>
                             </Stack>
@@ -649,26 +610,17 @@ export default function EditPartnerForm({
                   ))}
                 </Tabs.List>
                 <Tabs.Panel value="one-time">
-                  <OneTimeUpdateForm
-                    initialCityPercentages={initialCityPercentEntries}
-                  />
+                  <OneTimeUpdateForm initialCityPercentages={initialCityPercentEntries} />
                 </Tabs.Panel>
                 <Tabs.Panel value="continuous">
-                  <ContinuousUpdateForm
-                    initialCityPercentages={initialCityPercentEntries}
-                  />
+                  <ContinuousUpdateForm initialCityPercentages={initialCityPercentEntries} />
                 </Tabs.Panel>
               </Tabs>
             </Group>
           )}
 
           <Group justify="flex-end" mt="md">
-            <Button
-              variant="outline"
-              color="#053766"
-              radius="md"
-              onClick={onClose}
-            >
+            <Button variant="outline" color="#053766" radius="md" onClick={onClose}>
               Cancel
             </Button>
             <Button variant="filled" color="#053766" radius="md" type="submit">

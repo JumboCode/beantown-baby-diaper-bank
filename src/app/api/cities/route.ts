@@ -1,14 +1,12 @@
-import { NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { month, Prisma as PrismaTypes } from "@/generated/prisma/client";
-import { unstable_cache } from "next/cache";
+import { cacheLife, cacheTag } from "next/cache";
 
-export const dynamic = "force-dynamic";
-// need to revalidate only monthly
-export const revalidate = 2592000;
-
-const getCities = unstable_cache(
-  async (cityName: string | null, month: string | null, year: string | null) => {
+async function getCities(cityName: string | null, month: string | null, year: string | null) {
+  "use cache";
+  cacheTag("cities");
+  cacheLife({ revalidate: 2592000, stale: 604800 });
     if (month && !year) {
       throw new Error("Year must be provided if month is provided.");
     }
@@ -160,26 +158,16 @@ const getCities = unstable_cache(
       })),
     }));
 
-    return dataToReturn;
-  },
-  ["cities"],
-  { revalidate, tags: ["cities"] },
-);
-export async function GET(request: Request) {
-  const { searchParams } = new URL(request.url);
+  return dataToReturn;
+}
+
+export async function GET(request: NextRequest) {
+  const { searchParams } = request.nextUrl;
   const cityName = searchParams.get("name");
   const month = searchParams.get("month");
   const year = searchParams.get("year");
 
-  const dataToReturn = await getCities(cityName, month, year);
+  const data = await getCities(cityName, month, year);
 
-  return NextResponse.json(
-    { data: dataToReturn },
-    {
-      headers: {
-        "Cache-Control": "public, s-maxage=2592000, stale-while-revalidate=604800",
-      },
-    },
-  );
+  return Response.json({ data });
 }
-//
