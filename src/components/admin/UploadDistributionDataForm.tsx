@@ -1,17 +1,7 @@
-import {
-  Modal,
-  Button,
-  Group,
-  Text,
-  Stack,
-  SimpleGrid,
-  Paper,
-  Box,
-  Alert,
-} from "@mantine/core";
-import FileUpload, { FileInfo } from "../sprint2/FileUpload";
+import { Modal, Button, Group, Text, Stack, SimpleGrid, Paper, Box, Alert } from "@mantine/core";
 import { MonthPickerInput } from "@mantine/dates";
 import { useState } from "react";
+import FileUpload, { FileInfo } from "./FileUpload";
 
 interface UploadNewDataProps {
   opened: boolean;

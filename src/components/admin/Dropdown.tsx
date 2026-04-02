@@ -102,9 +102,7 @@ export function CollapsibleDropdown<T>({
 
   // styling of dropdown (open and closed)
   return (
-    <div
-      className={`w-full rounded-xl border border-gray-200 bg-white ${className}`}
-    >
+    <div className={`w-full rounded-xl border border-gray-200 bg-white ${className}`}>
       <div className="flex items-center justify-between gap-3 p-3">
         <button
           type="button"
@@ -142,9 +140,7 @@ export function CollapsibleDropdown<T>({
           ) : null}
 
           {state.status === "success" ? (
-            <div className="space-y-2">
-              {render(state.data)}
-            </div>
+            <div className="space-y-2">{render(state.data)}</div>
           ) : null}
         </div>
       ) : null}

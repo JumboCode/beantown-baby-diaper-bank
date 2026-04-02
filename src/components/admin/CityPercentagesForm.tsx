@@ -1,13 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import {
-  Stack,
-  Group,
-  Text,
-  Select,
-  NumberInput,
-  Button,
-  Divider,
-} from "@mantine/core";
+import { Stack, Group, Text, Select, NumberInput, Button, Divider } from "@mantine/core";
 import { RiCloseLine } from "react-icons/ri";
 
 type CityOption = { value: string; label: string };
@@ -92,19 +84,13 @@ export default function CityPercentagesForm({
           <NumberInput
             placeholder="Percentage"
             value={percentage}
-            onChange={(val) =>
-              setPercentage(typeof val === "number" ? val : undefined)
-            }
+            onChange={(val) => setPercentage(typeof val === "number" ? val : undefined)}
             radius="md"
             min={0}
             max={100}
             className="w-[140px]"
           />
-          <Button
-            radius="md"
-            onClick={addEntry}
-            disabled={!city || percentage === undefined}
-          >
+          <Button radius="md" onClick={addEntry} disabled={!city || percentage === undefined}>
             Add
           </Button>
         </Group>

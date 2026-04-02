@@ -58,7 +58,7 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
     return NextResponse.json({
       data: JSON.parse(stringifyWithBigInt(data)),
     });
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: "Unable to load partner" }, { status: 500 });
   }
 }
@@ -96,7 +96,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     return NextResponse.json({
       data: JSON.parse(stringifyWithBigInt(updatedPartner)),
     });
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: "Failed to update partner" }, { status: 500 });
   }
 }

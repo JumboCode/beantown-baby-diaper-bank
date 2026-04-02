@@ -5,8 +5,7 @@ import { prisma } from "../src/lib/prisma";
 
 const GEOJSON_DIR = path.join(process.cwd(), "prisma/data/geojson");
 
-const normalizeName = (value: string) =>
-  value.toLowerCase().replace(/[^a-z0-9]/g, "");
+const normalizeName = (value: string) => value.toLowerCase().replace(/[^a-z0-9]/g, "");
 
 type GeoJsonGeometry = {
   type: string;
@@ -77,9 +76,7 @@ async function main() {
     const key = normalizeName(baseName);
 
     if (fileByNormalizedName.has(key)) {
-      console.warn(
-        `Skipping duplicate normalized key "${key}" for file "${file.name}".`,
-      );
+      console.warn(`Skipping duplicate normalized key "${key}" for file "${file.name}".`);
       continue;
     }
 
@@ -111,9 +108,7 @@ async function main() {
 
     if (!geometry) {
       missingGeometryCount++;
-      console.warn(
-        `No geometry found in ${path.basename(filePath)} for city "${city.name}".`,
-      );
+      console.warn(`No geometry found in ${path.basename(filePath)} for city "${city.name}".`);
       continue;
     }
 

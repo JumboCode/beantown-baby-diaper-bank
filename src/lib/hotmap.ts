@@ -19,17 +19,17 @@ export const rgbToHex = (r: number, g: number, b: number) =>
 
 export const clamp01 = (x: number) => {
   return Math.max(0, Math.min(1, x));
-}
+};
 
 export const sigmoid = (z: number) => {
   return 1 / (1 + Math.exp(-z));
-}
+};
 
 export const cityScore = (value: number, median: number, p25: number, p75: number) => {
   const iqr = Math.max(p75 - p25, 1);
   const k = 4 / iqr;
   return clamp01(sigmoid(k * (value - median)));
-}
+};
 
 export const getScoreColor = (score: number) => {
   const stops = LEVEL_COLORS.length - 1;

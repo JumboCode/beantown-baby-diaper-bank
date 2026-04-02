@@ -64,7 +64,9 @@ export default function DistributionsTable({
   // Keyed by `${year}-${month}`. Falls back to date.total (from Distributions)
   // if the fetch hasn't resolved yet or a month has no MonthlyData records.
   const [monthlyBaseTotals, setMonthlyBaseTotals] = useState<Record<string, number>>({});
-  const [distributionOverrides, setDistributionOverrides] = useState<Record<string, Distribution>>({});
+  const [distributionOverrides, setDistributionOverrides] = useState<Record<string, Distribution>>(
+    {},
+  );
   const [distributionRefreshKey, setDistributionRefreshKey] = useState(0);
 
   const loadMonthlyTotals = () => {
@@ -122,9 +124,7 @@ export default function DistributionsTable({
       console.log("Result:", result);
 
       const key = `${info.partnerId}-${info.month}-${info.year}`;
-      const parsed = result.data.numberDiapers
-        ? parseInt(result.data.numberDiapers, 10)
-        : 0;
+      const parsed = result.data.numberDiapers ? parseInt(result.data.numberDiapers, 10) : 0;
       const oldVal = diapersMap[key] ?? 0;
       const delta = parsed - oldVal;
       const monthKey = `${info.year}-${info.month}`;
@@ -138,9 +138,7 @@ export default function DistributionsTable({
       if (result.distributions) {
         setDistributionOverrides((prev) => ({
           ...prev,
-          ...Object.fromEntries(
-            result.distributions?.map((dist) => [dist.id, dist]) ?? [],
-          ),
+          ...Object.fromEntries(result.distributions?.map((dist) => [dist.id, dist]) ?? []),
         }));
       }
       setDistributionRefreshKey((prev) => prev + 1);
@@ -154,31 +152,26 @@ export default function DistributionsTable({
   };
 
   const totals: DateTotal[] = useMemo(() => {
-    const grouped = distributionData.reduce<Record<string, DateTotal>>(
-      (acc, dist) => {
-        if (!dist.month || !dist.year) return acc;
+    const grouped = distributionData.reduce<Record<string, DateTotal>>((acc, dist) => {
+      if (!dist.month || !dist.year) return acc;
 
-        const key = `${dist.year}-${dist.month}`;
+      const key = `${dist.year}-${dist.month}`;
 
-        if (!acc[key]) {
-          acc[key] = {
-            month: dist.month,
-            year: dist.year,
-            total: 0,
-            distributions: [],
-          };
-        }
+      if (!acc[key]) {
+        acc[key] = {
+          month: dist.month,
+          year: dist.year,
+          total: 0,
+          distributions: [],
+        };
+      }
 
-        const diapers = dist.numberDiapers
-          ? parseInt(dist.numberDiapers, 10)
-          : 0;
-        acc[key].total += diapers;
-        acc[key].distributions.push(dist);
+      const diapers = dist.numberDiapers ? parseInt(dist.numberDiapers, 10) : 0;
+      acc[key].total += diapers;
+      acc[key].distributions.push(dist);
 
-        return acc;
-      },
-      {},
-    );
+      return acc;
+    }, {});
 
     const groupedArray = Object.values(grouped).map((group) => ({
       ...group,
@@ -195,7 +188,6 @@ export default function DistributionsTable({
     });
   }, [distributionData]);
 
-
   if (error) return <Text c="red">Error: {error}</Text>;
 
   return (
@@ -210,7 +202,8 @@ export default function DistributionsTable({
                 {(
                   (monthlyBaseTotals[`${date.year}-${date.month}`] ?? date.total) +
                   (monthDeltaMap[`${date.year}-${date.month}`] ?? 0)
-                ).toLocaleString()} diapers
+                ).toLocaleString()}{" "}
+                diapers
               </span>
             </span>
           }
@@ -221,28 +214,20 @@ export default function DistributionsTable({
           render={(monthData) => {
             console.log("Month Data:", monthData);
             const rowsForMonth = monthData
-              .filter(
-                (dist) =>
-                  dist.month === date.month && dist.year === date.year,
-              )
-              .sort((a, b) =>
-                (a.partner?.name ?? "").localeCompare(b.partner?.name ?? ""),
-              );
+              .filter((dist) => dist.month === date.month && dist.year === date.year)
+              .sort((a, b) => (a.partner?.name ?? "").localeCompare(b.partner?.name ?? ""));
 
             const partnerGroups = rowsForMonth.reduce<
               Record<string, { partnerName: string; totalDiapers: number; partnerId: number }>
             >((acc, dist) => {
-              const partnerName =
-                dist.partner?.name?.trim() || "Unknown Partner";
-              const diapers = dist.numberDiapers
-                ? parseInt(dist.numberDiapers, 10)
-                : 0;
+              const partnerName = dist.partner?.name?.trim() || "Unknown Partner";
+              const diapers = dist.numberDiapers ? parseInt(dist.numberDiapers, 10) : 0;
 
               if (!acc[partnerName]) {
                 acc[partnerName] = {
                   partnerName,
                   totalDiapers: 0,
-                  partnerId: parseInt(dist.partnerId ?? "0", 10) || 0
+                  partnerId: parseInt(dist.partnerId ?? "0", 10) || 0,
                 };
               }
 
@@ -291,7 +276,10 @@ export default function DistributionsTable({
                                   }
                                 }}
                               />
-                              <Button size="xs" onClick={() => void submitEdit(editInfo, inputValue)}>
+                              <Button
+                                size="xs"
+                                onClick={() => void submitEdit(editInfo, inputValue)}
+                              >
                                 Save
                               </Button>
                               <Button
@@ -332,20 +320,14 @@ export default function DistributionsTable({
                             (dist) =>
                               dist.month === date.month &&
                               dist.year === date.year &&
-                              (dist.partner?.name?.trim() ||
-                                "Unknown Partner") === partner.partnerName,
+                              (dist.partner?.name?.trim() || "Unknown Partner") ===
+                                partner.partnerName,
                           )
-                          .sort((a, b) =>
-                            (a.city?.name ?? "").localeCompare(
-                              b.city?.name ?? "",
-                            ),
-                          );
+                          .sort((a, b) => (a.city?.name ?? "").localeCompare(b.city?.name ?? ""));
 
                         if (rowsForPartner.length === 0) {
                           return (
-                            <div className="text-sm text-gray-600">
-                              No distributions found.
-                            </div>
+                            <div className="text-sm text-gray-600">No distributions found.</div>
                           );
                         }
 

@@ -1,6 +1,5 @@
 "use client";
 import { Text, Button, Group, Stack, Divider, Popover } from "@mantine/core";
-import { useDisclosure } from "@mantine/hooks";
 import { IconDiaper, IconHeartHandshake } from "@tabler/icons-react";
 import { useEffect, useRef } from "react";
 
@@ -27,19 +26,10 @@ export default function MakeAnImpact() {
 
   return (
     <div ref={ref}>
-      <Popover
-        position="bottom"
-        withArrow
-        withOverlay
-        shadow="lg"
-        radius="md"
-        zIndex={10001}
-      >
+      <Popover position="bottom" withArrow withOverlay shadow="lg" radius="md" zIndex={10001}>
         <Popover.Target>
           <Button
-            leftSection={
-              <IconHeartHandshake size={16} color="white" />
-            }
+            leftSection={<IconHeartHandshake size={16} color="white" />}
             styles={{
               root: {
                 color: "white",
@@ -104,7 +94,11 @@ export default function MakeAnImpact() {
                 </Group>
 
                 <div style={{ minWidth: 0 }}>
-                  <Text fw={700} c="#1e3a5f" style={{ fontSize: "13px", lineHeight: 1.2, whiteSpace: "nowrap" }}>
+                  <Text
+                    fw={700}
+                    c="#1e3a5f"
+                    style={{ fontSize: "13px", lineHeight: 1.2, whiteSpace: "nowrap" }}
+                  >
                     {tier.label}
                   </Text>
                   <Text size="xs" c="#667085" style={{ whiteSpace: "nowrap" }}>

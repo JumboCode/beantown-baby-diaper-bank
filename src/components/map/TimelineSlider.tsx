@@ -44,14 +44,11 @@ export default function TimelineSlider({
   if (!labels || labels.length === 0) return <Box h={50} />;
 
   const maxPoints = labels.length - 1;
-  const markStep =
-    labels.length <= 8 ? 1 : labels.length <= 12 ? 2 : Math.ceil(labels.length / 6);
+  const markStep = labels.length <= 8 ? 1 : labels.length <= 12 ? 2 : Math.ceil(labels.length / 6);
   const marks = labels.map((label, idx) => ({
     value: idx,
     label:
-      idx === 0 || idx === maxPoints || idx === index || idx % markStep === 0
-        ? label
-        : undefined,
+      idx === 0 || idx === maxPoints || idx === index || idx % markStep === 0 ? label : undefined,
   }));
 
   return (

@@ -14,7 +14,6 @@ import {
   Popover,
   Checkbox,
   TextInput,
-  Stepper,
 } from "@mantine/core";
 import { MonthPickerInput } from "@mantine/dates";
 import { useState, useEffect, useCallback, useMemo } from "react";
@@ -115,9 +114,7 @@ export default function Page() {
   const [error, setError] = useState<string>();
 
   // partner filtering
-  const [partnerYearSince, setPartnerYearSince] = useState<string | null>(
-    "All",
-  );
+  const [partnerYearSince, setPartnerYearSince] = useState<string | null>("All");
   const [partnerStatus, setPartnerStatus] = useState<string[]>([]);
 
   const [partners, setPartners] = useState<Partner[]>([]);
@@ -133,9 +130,7 @@ export default function Page() {
   const [city, setCity] = useState<string | null>(null);
 
   const [distributions, setDistributions] = useState<Distribution[]>([]);
-  const [filteredDistributions, setFilteredDistributions] = useState<
-    Distribution[]
-  >([]);
+  const [filteredDistributions, setFilteredDistributions] = useState<Distribution[]>([]);
 
   const fetchDistributions = useCallback(async () => {
     try {
@@ -143,9 +138,7 @@ export default function Page() {
       if (!response.ok) throw new Error("Failed to fetch distributions");
       const data = await response.json();
       // Handle both array and object responses
-      const distributions = Array.isArray(data)
-        ? data
-        : data.distributions || [];
+      const distributions = Array.isArray(data) ? data : data.distributions || [];
       setDistributions(distributions);
       setFilteredDistributions(distributions);
     } catch (err) {
@@ -172,17 +165,15 @@ export default function Page() {
     try {
       const response = await fetch("/api/partners/percentages");
       const result = await response.json();
-      const normalized = (result.data ?? []).map(
-        (entry: PartnerRegionApiResponse) => ({
-          ...entry,
-          partnerId: Number(entry.partnerId),
-          cityId: Number(entry.cityId),
-          city: {
-            ...entry.city,
-            id: Number(entry.city.id),
-          },
-        }),
-      );
+      const normalized = (result.data ?? []).map((entry: PartnerRegionApiResponse) => ({
+        ...entry,
+        partnerId: Number(entry.partnerId),
+        cityId: Number(entry.cityId),
+        city: {
+          ...entry.city,
+          id: Number(entry.city.id),
+        },
+      }));
       setPercentages(normalized);
     } catch (err) {
       console.log("Error fetching percentages data", err);
@@ -225,14 +216,14 @@ export default function Page() {
       if (data.months) {
         const validMonths = data.months.filter(
           (d: { Month: string | null; Year: string | null }) =>
-            typeof d.Month === "string" && typeof d.Year === "string"
+            typeof d.Month === "string" && typeof d.Year === "string",
         );
         const currentYearMonths = validMonths.filter(
-          (d: { Month: string; Year: string }) => d.Year === String(currentYear)
+          (d: { Month: string; Year: string }) => d.Year === String(currentYear),
         );
         const indices = currentYearMonths
           .map((d: { Month: string; Year: string }) =>
-            MONTHS.findIndex((m) => d.Month.startsWith(m))
+            MONTHS.findIndex((m) => d.Month.startsWith(m)),
           )
           .filter((index: number) => index >= 0);
         setUploadedMonths(indices);
@@ -329,9 +320,7 @@ export default function Page() {
     if (partnerYearSince && partnerYearSince !== "All") {
       filtered = filtered.filter((p) => {
         if (!p.start_partner) return false;
-        return (
-          new Date(p.start_partner).getUTCFullYear() <= Number(partnerYearSince)
-        );
+        return new Date(p.start_partner).getUTCFullYear() <= Number(partnerYearSince);
       });
     }
 
@@ -353,13 +342,7 @@ export default function Page() {
     }
 
     setFilteredPartners(filtered);
-  }, [
-    partners,
-    partnerYearSince,
-    partnerStatus,
-    partnerSearch,
-    partnerCitiesMap,
-  ]);
+  }, [partners, partnerYearSince, partnerStatus, partnerSearch, partnerCitiesMap]);
 
   const refreshTable = useCallback(() => {
     fetchPartners();
@@ -375,15 +358,11 @@ export default function Page() {
     [distributions],
   );
 
-  const [
-    openedUploadDataForm,
-    { open: openUploadDataForm, close: closeUploadDataForm },
-  ] = useDisclosure(false);
+  const [openedUploadDataForm, { open: openUploadDataForm, close: closeUploadDataForm }] =
+    useDisclosure(false);
 
-  const [
-    openedPartnerForm,
-    { open: openPartnerForm, close: closePartnerForm },
-  ] = useDisclosure(false);
+  const [openedPartnerForm, { open: openPartnerForm, close: closePartnerForm }] =
+    useDisclosure(false);
 
   const isPartnersTab = activeTab === "Partners";
 
@@ -423,14 +402,7 @@ export default function Page() {
           ? "/admin_view/diapers_tab_blue.svg"
           : "/admin_view/diapers_tab_gray.svg";
 
-    return (
-      <Image
-        src={icon}
-        alt={`${tab.toLowerCase()} tab icon`}
-        height={16}
-        width={16}
-      />
-    );
+    return <Image src={icon} alt={`${tab.toLowerCase()} tab icon`} height={16} width={16} />;
   };
 
   return (
@@ -455,22 +427,14 @@ export default function Page() {
                 onUploaded={fetchDistributions}
                 uploadedMonths={uploadedMonths}
               />
-              <AddPartnerForm
-                opened={openedPartnerForm}
-                onClose={closePartnerForm}
-              />
+              <AddPartnerForm opened={openedPartnerForm} onClose={closePartnerForm} />
               <Button
                 onClick={handleAddClick}
                 variant="default"
                 radius="md"
                 c="#053766"
                 rightSection={
-                  <Image
-                    src="/admin_view/add_icon.svg"
-                    alt="add button"
-                    width={16}
-                    height={16}
-                  />
+                  <Image src="/admin_view/add_icon.svg" alt="add button" width={16} height={16} />
                 }
               >
                 {isPartnersTab ? "Add A New Partner" : "Upload New Data"}
@@ -489,10 +453,7 @@ export default function Page() {
             }}
           >
             <Tabs.List mb="16px">
-              <Tabs.Tab
-                value="Partners"
-                leftSection={renderTabIcon("Partners")}
-              >
+              <Tabs.Tab value="Partners" leftSection={renderTabIcon("Partners")}>
                 Partners
               </Tabs.Tab>
               <Tabs.Tab value="Diapers" leftSection={renderTabIcon("Diapers")}>
@@ -507,12 +468,9 @@ export default function Page() {
               >
                 <h1 className="font-bold text-gray-900">Filter Data</h1>
                 <p className="text-gray-500 mb-6">
-                  Filter the diaper distribution data by organization, city, and
-                  date range.
+                  Filter the diaper distribution data by organization, city, and date range.
                 </p>
-                <h2 className="text-gray-900 font-semibold">
-                  Organization Name
-                </h2>
+                <h2 className="text-gray-900 font-semibold">Organization Name</h2>
                 <Select
                   data={organizationOptions}
                   value={orgName}

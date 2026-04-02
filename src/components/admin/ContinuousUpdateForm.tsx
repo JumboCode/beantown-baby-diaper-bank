@@ -13,10 +13,7 @@ type ContinuousUpdateFormProps = {
 export default function ContinuousUpdateForm({
   initialCityPercentages,
 }: ContinuousUpdateFormProps) {
-  const [monthRange, setMonthRange] = useState<[Month | null, Month | null]>([
-    null,
-    null,
-  ]);
+  const [monthRange, setMonthRange] = useState<[Month | null, Month | null]>([null, null]);
   const [fromMonth, setFromMonth] = useState<Month | null>(null);
 
   return (

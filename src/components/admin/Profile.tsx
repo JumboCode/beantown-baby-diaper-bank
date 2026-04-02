@@ -1,6 +1,6 @@
 "use client";
 
-import { Group, Loader, Text } from "@mantine/core";
+import { Group, Text } from "@mantine/core";
 import { UserButton, useUser } from "@clerk/nextjs";
 import SettingsButton from "./AdminSettingsButton";
 

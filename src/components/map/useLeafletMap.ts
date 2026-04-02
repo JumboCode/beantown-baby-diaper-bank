@@ -6,7 +6,14 @@ import type { MapContainerProps } from "react-leaflet";
 // Define the configuration type for the Leaflet map
 type MapConfig = Pick<
   MapContainerProps,
-  "center" | "zoom" | "scrollWheelZoom" | "preferCanvas" | "minZoom" | "maxZoom" | "maxBounds" | "maxBoundsViscosity"
+  | "center"
+  | "zoom"
+  | "scrollWheelZoom"
+  | "preferCanvas"
+  | "minZoom"
+  | "maxZoom"
+  | "maxBounds"
+  | "maxBoundsViscosity"
 > & { style: CSSProperties };
 
 // Default to Boston, MA
@@ -14,7 +21,10 @@ const DEFAULT_CENTER: LatLngTuple = [42.3601, -71.0589];
 const DEFAULT_ZOOM = 11;
 
 // Massachusetts bounding box (with padding)
-const MA_BOUNDS: LatLngBoundsExpression = [[41.0, -73.8], [43.2, -69.5]];
+const MA_BOUNDS: LatLngBoundsExpression = [
+  [41.0, -73.8],
+  [43.2, -69.5],
+];
 
 /**
  * Creates and memoized a Leaflet map configuration for use with a MapContainer or similar map component.
