@@ -11,10 +11,12 @@ import {
   Group,
   Text,
   Title,
+  Box,
 } from "@mantine/core";
 import dynamic from "next/dynamic";
 import { useEffect, useState } from "react";
 import { useBaseTileLayer } from "./useBaseTileLayer";
+import { useLeafletMap } from "./useLeafletMap";
 
 export interface PartnerIconDrawerProps {
   partnerId: number | null;
@@ -117,8 +119,10 @@ type PartnerCoordinates = {
   lng: number;
 };
 
-interface PartnerWithStats
-  extends Omit<Partner, "coords" | "startPartner" | "endPartner"> {
+interface PartnerWithStats extends Omit<
+  Partner,
+  "coords" | "startPartner" | "endPartner"
+> {
   partner_id: number;
   logoUrl: string | null;
   coordinates?: PartnerCoordinates | null;
@@ -136,7 +140,9 @@ function createPartnerIcon(
 ) {
   const initials = (partner.name ?? "PN").substring(0, 2).toUpperCase();
   const validUrl =
-    url && url.trim() !== "" ? url : `https://placehold.co/400x400?text=${initials}`;
+    url && url.trim() !== ""
+      ? url
+      : `https://placehold.co/400x400?text=${initials}`;
 
   return leaflet.divIcon({
     className: "custom-partner-icon",
@@ -156,7 +162,6 @@ function createPartnerIcon(
     iconSize: [34, 34],
     iconAnchor: [17, 17],
   });
-  
 }
 
 function PartnerMiniMap({
@@ -169,6 +174,7 @@ function PartnerMiniMap({
   const coords = partner.coords ?? partner.coordinates ?? null;
   const { tileLayerProps } = useBaseTileLayer();
   const [leaflet, setLeaflet] = useState<typeof import("leaflet") | null>(null);
+  const { mapConfig } = useLeafletMap();
 
   useEffect(() => {
     import("leaflet").then((module) => {
@@ -198,7 +204,23 @@ function PartnerMiniMap({
 
   return (
     <div style={infoCardStyle}>
-      <div style={infoLabelStyle}>Location</div>
+      <Group justify="space-between">
+        <Text style={infoLabelStyle}>Location</Text>
+        {/*legend */}
+        <Group gap={6}>
+          <Box
+            style={{
+              width: 12,
+              height: 12,
+              borderRadius: "30%",
+              backgroundColor: "#2C85B2",
+            }}
+          />
+          <Text size="xs" c="dimmed" fw={500}>
+            Served Area
+          </Text>
+        </Group>
+      </Group>
       <div
         style={{
           marginTop: "0.75rem",
@@ -210,14 +232,9 @@ function PartnerMiniMap({
       >
         {leaflet ? (
           <MapContainer
+            {...mapConfig}
             center={[coords.lat, coords.lng]}
-            zoom={13}
-            scrollWheelZoom={true}
-            dragging={true}
-            doubleClickZoom={true}
-            touchZoom={true}
-            boxZoom={true}
-            keyboard={true}
+            zoom={9}
             zoomControl={false}
             attributionControl={false}
             style={{ height: "100%", width: "100%" }}
@@ -255,9 +272,8 @@ export default function PartnerIconDrawer({
   onClose,
   mapData,
 }: PartnerIconDrawerProps) {
-  const [selectedPartner, setSelectedPartner] = useState<PartnerWithStats | null>(
-    null,
-  );
+  const [selectedPartner, setSelectedPartner] =
+    useState<PartnerWithStats | null>(null);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -285,7 +301,9 @@ export default function PartnerIconDrawer({
     partner.startPartner = partner.startPartner
       ? new Date(partner.startPartner)
       : null;
-    partner.endPartner = partner.endPartner ? new Date(partner.endPartner) : null;
+    partner.endPartner = partner.endPartner
+      ? new Date(partner.endPartner)
+      : null;
     partner.coords = partner.coordinates ?? null;
     return partner;
   }
@@ -360,11 +378,11 @@ export default function PartnerIconDrawer({
                     </span>
                   );
                 })()}
-                { partner.status === "active" && 
-                <Text c="#667085" fw={600} fz="0.9rem">
-                  Since {partner.startPartner?.toLocaleDateString()}
-                </Text>
-                }
+                {partner.status === "active" && (
+                  <Text c="#667085" fw={600} fz="0.9rem">
+                    Since {partner.startPartner?.toLocaleDateString()}
+                  </Text>
+                )}
               </div>
             </div>
           </div>
@@ -393,20 +411,18 @@ export default function PartnerIconDrawer({
               gap: "1.25rem",
             }}
           >
-            
-              <div style={infoCardStyle}>
-                <div style={infoLabelStyle}>Description</div>
-                {partner.description ? (
-                  <Text c="#344054" lh={1.7} fw={500} fz="1rem" mt={6}>
-                    {partner.description}
-                  </Text>
-                ) : (
-                  <Text c="#9ca3af" fs="italic" fz="1rem" mt={6}>
-                    No description
-                  </Text>
-                )}
-              </div>
-            
+            <div style={infoCardStyle}>
+              <div style={infoLabelStyle}>Description</div>
+              {partner.description ? (
+                <Text c="#344054" lh={1.7} fw={500} fz="1rem" mt={6}>
+                  {partner.description}
+                </Text>
+              ) : (
+                <Text c="#9ca3af" fs="italic" fz="1rem" mt={6}>
+                  No description
+                </Text>
+              )}
+            </div>
 
             <PartnerMiniMap partner={partner} mapData={mapData} />
 
@@ -422,14 +438,14 @@ export default function PartnerIconDrawer({
                 <div style={infoValueStyle}>{partner.address || "N/A"}</div>
               </div>
               {partner.status == "active" && (
-              <div style={infoCardStyle}>
-                <div style={infoLabelStyle}>Start Year</div>
-                <div style={infoValueStyle}>
-                  {partner.startPartner?.getFullYear()}
+                <div style={infoCardStyle}>
+                  <div style={infoLabelStyle}>Start Year</div>
+                  <div style={infoValueStyle}>
+                    {partner.startPartner?.getFullYear()}
+                  </div>
                 </div>
-              </div>)}
+              )}
             </div>
-              
 
             {partner.status !== "waitlisted" && (
               <div
