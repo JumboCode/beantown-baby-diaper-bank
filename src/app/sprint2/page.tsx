@@ -5,7 +5,7 @@ import ImpactModal from "../../components/map/ImpactModal";
 import OurSlider from "../../components/sprint2/OurSlider";
 import DotPopUps from "@/components/sprint2/DotPopUps";
 import YearlyMonthlySwitch from "@/components/sprint2/YearlyMonthlySwitch";
-import FileUpload from "@/components/sprint2/FileUpload";
+import FileUpload from "@/components/admin/FileUpload";
 import { useTimelinePeriod } from "@/components/map/useTimelinePeriod";
 
 export default function Sprint2Page() {
