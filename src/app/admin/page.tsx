@@ -60,7 +60,7 @@ type Partner = {
   status: status;
   address: string | null;
   coords?: { lat: number; lng: number };
-  logo_url: string | null;
+  logoUrl: string | null;
 };
 
 type PartnerRegionWithCity = {

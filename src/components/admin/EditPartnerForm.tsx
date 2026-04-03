@@ -178,7 +178,7 @@ const formatMonthDateForApi = (date: Date | string | null): string | null => {
 export default function EditPartnerForm({ partner, onClose }: EditPartnerFormProps) {
   const [loading, setLoading] = useState(false);
   const [monthVerificationErrorMsg, setMonthVerificationErrorMsg] = useState<string | null>('');
-  const [initialLogoUrl] = useState<string>(partner.logo_url || "");
+  const [initialLogoUrl] = useState<string>(partner.logoUrl || "");
   const [activePercentTab, setActivePercentTab] = useState<UpdatePercentagesOptions>("one-time");
   const [cityPercentages, setCityPercentages] = useState<
     {
@@ -227,7 +227,7 @@ export default function EditPartnerForm({ partner, onClose }: EditPartnerFormPro
       zipCode: addressFields.zipCode,
       country: addressFields.country,
       logoFile: null as File | null,
-      logoUrl: partner.logo_url || "",
+      logoUrl: partner.logoUrl || "",
       updatePercentagesType: "one-time" as UpdatePercentagesOptions,
     },
     validate: {

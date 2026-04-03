@@ -156,7 +156,7 @@ async function getPartners(search: string | null, waitlisted: string | null) {
     waitlisted: partner.status === "waitlisted",
     address: partner.address,
     coords: partner.coords,
-    logo_url: partner.logoUrl,
+    logoUrl: partner.logoUrl,
   }));
 }
 

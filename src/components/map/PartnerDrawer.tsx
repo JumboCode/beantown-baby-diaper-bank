@@ -1,6 +1,27 @@
 import type { Partner } from "@/generated/prisma/client";
 
-import { Drawer, Skeleton, Stack, Group, Text, Title } from "@mantine/core";
+import {
+  Drawer,
+  Skeleton,
+  Stack,
+  Group,
+  Text,
+  Title,
+  Box,
+  ThemeIcon,
+  Divider,
+  Badge,
+} from "@mantine/core";
+import {
+  IconMapPin,
+  IconBabyCarriage,
+  IconCalendar,
+  IconAlignLeft,
+  IconChartBar,
+  IconUsersGroup,
+  IconX,
+  IconBuildingStore,
+} from "@tabler/icons-react";
 import { useEffect, useState } from "react";
 import { GeoJsonBoundaries } from "@/lib/types";
 import { PartnerMiniMap } from "./PartnerMiniMap";
@@ -9,29 +30,29 @@ const statusDisplay = (status: Partner["status"]) => {
   if (!status)
     return {
       label: "Unknown",
-      bg: "#f3f4f6",
-      color: "#4b5563",
-      border: "#e5e7eb",
+      bg: "rgba(255,255,255,0.15)",
+      color: "white",
+      border: "rgba(255,255,255,0.25)",
     };
   if (status === "active")
     return {
       label: "Active",
-      bg: "#ecfdf3",
-      color: "#027a48",
-      border: "#a7f3d0",
+      bg: "rgba(16,185,129,0.2)",
+      color: "#6ee7b7",
+      border: "rgba(16,185,129,0.4)",
     };
   if (status === "inactive")
     return {
       label: "Inactive",
-      bg: "#fef2f2",
-      color: "#b42318",
-      border: "#fecdca",
+      bg: "rgba(239,68,68,0.2)",
+      color: "#fca5a5",
+      border: "rgba(239,68,68,0.35)",
     };
   return {
     label: "Waitlisted",
-    bg: "#fef2f2",
-    color: "#b42318",
-    border: "#fecdca",
+    bg: "rgba(251,191,36,0.2)",
+    color: "#fde68a",
+    border: "rgba(251,191,36,0.35)",
   };
 };
 
@@ -57,6 +78,7 @@ export interface PartnerDrawerProps {
   onClose: () => void;
   boundaries: GeoJsonBoundaries;
 }
+
 export default function PartnerDrawer({ partnerId, onClose, boundaries }: PartnerDrawerProps) {
   const [partner, setPartner] = useState<PartnerWithStats>();
   const [loading, setLoading] = useState(false);
@@ -87,7 +109,6 @@ export default function PartnerDrawer({ partnerId, onClose, boundaries }: Partne
     partner.endPartner = partner.endPartner ? new Date(partner.endPartner) : null;
     partner.citiesServed = partner.citiesServed.map((c) => String(Object(c).id));
     partner.coords = partner.coordinates ?? null;
-    console.log("Fetched partner details:", partner);
     return partner;
   }
 
@@ -96,159 +117,308 @@ export default function PartnerDrawer({ partnerId, onClose, boundaries }: Partne
       opened={!!partnerId}
       onClose={onClose}
       position="right"
-      padding="xl"
+      padding={0}
       size="30%"
-      title={
-        loading ? (
-          <Group gap="md">
-            <Skeleton height={56} width={56} radius="md" />
-            <Stack gap="xs">
-              <Skeleton height={24} width={150} radius="sm" />
-              <Skeleton height={20} width={100} radius="xl" />
-            </Stack>
+      withCloseButton={false}
+      overlayProps={{ opacity: 0.2 }}
+    >
+      {/* Gradient header */}
+      <Box
+        style={{
+          background: "linear-gradient(135deg, #053766 0%, #1e3a5f 55%, #2c85b2 100%)",
+          borderRadius: "0 0 0 0",
+          padding: "20px 20px 18px",
+          position: "sticky",
+          top: 0,
+          zIndex: 1,
+        }}
+      >
+        {loading ? (
+          <Group justify="space-between" align="flex-start" wrap="nowrap">
+            <Group gap={14} wrap="nowrap" align="center">
+              <Skeleton height={52} width={52} radius="md" />
+              <Stack gap={6}>
+                <Skeleton height={20} width={160} radius="sm" />
+                <Skeleton height={16} width={90} radius="xl" />
+              </Stack>
+            </Group>
+            <Skeleton height={26} width={26} radius="md" />
           </Group>
         ) : partner ? (
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "0.9rem",
-            }}
-          >
-            {partner.logoUrl && (
-              <div
+          <Group justify="space-between" align="flex-start" wrap="nowrap">
+            <Group gap={14} wrap="nowrap" align="center" style={{ minWidth: 0 }}>
+              {/* Logo or fallback avatar */}
+              <Box
                 style={{
-                  width: 56,
-                  height: 56,
-                  background: "#fff",
-                  borderRadius: "12px",
+                  width: 52,
+                  height: 52,
+                  background: "rgba(255,255,255,0.12)",
+                  borderRadius: 10,
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
-                  padding: "0.45rem",
-                  border: "1px solid #F2F4F7",
+                  padding: partner.logoUrl ? "0.4rem" : 0,
+                  border: "1px solid rgba(255,255,255,0.2)",
+                  flexShrink: 0,
+                  backdropFilter: "blur(4px)",
                 }}
               >
-                <img
-                  src={partner.logoUrl}
-                  alt={`${partner.name} logo`}
-                  style={{ maxWidth: "100%", maxHeight: "100%" }}
-                />
-              </div>
-            )}
-
-            <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-              <Title order={3} style={{ color: "#101828", margin: 0 }}>
-                {partner.name}
-              </Title>
-              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                {(() => {
-                  const status = statusDisplay(partner.status);
-                  return (
-                    <span
-                      style={{
-                        background: status.bg,
-                        color: status.color,
-                        borderRadius: "999px",
-                        padding: "0.25rem 0.6rem",
-                        fontWeight: 700,
-                        fontSize: "0.85rem",
-                        border: `1px solid ${status.border}`,
-                      }}
-                    >
-                      {status.label}
-                    </span>
-                  );
-                })()}
-                {partner.status === "active" && (
-                  <Text c="#667085" fw={600} fz="0.9rem">
-                    Since {partner.startPartner?.toLocaleDateString()}
-                  </Text>
+                {partner.logoUrl ? (
+                  <img
+                    src={partner.logoUrl}
+                    alt={`${partner.name} logo`}
+                    style={{ maxWidth: "100%", maxHeight: "100%", borderRadius: 6 }}
+                  />
+                ) : (
+                  <IconBuildingStore size={26} color="rgba(255,255,255,0.7)" />
                 )}
-              </div>
-            </div>
-          </div>
-        ) : null
-      }
-      overlayProps={{ opacity: 0.2 }}
-    >
-      {loading ? (
-        <Stack gap="lg" mt="md">
-          <Skeleton height={100} radius="md" />
-          <Group grow>
-            <Skeleton height={80} radius="md" />
-            <Skeleton height={80} radius="md" />
-          </Group>
-          <Group grow>
-            <Skeleton height={100} radius="md" />
-            <Skeleton height={100} radius="md" />
-          </Group>
-        </Stack>
-      ) : (
-        partner && (
-          <div
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              gap: "1.25rem",
-            }}
-          >
-            <div>
-              <div>Description</div>
-              {partner.description ? (
-                <Text c="#344054" lh={1.7} fw={500} fz="1rem" mt={6}>
-                  {partner.description}
-                </Text>
-              ) : (
-                <Text c="#9ca3af" fs="italic" fz="1rem" mt={6}>
-                  No description
-                </Text>
-              )}
-            </div>
+              </Box>
 
-            <PartnerMiniMap partner={partner} boundaries={boundaries} />
+              {/* Name + status */}
+              <Stack gap={5} style={{ minWidth: 0 }}>
+                <Title
+                  order={3}
+                  fz="18px"
+                  fw={800}
+                  c="white"
+                  lh={1.2}
+                  style={{
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  {partner.name}
+                </Title>
+                <Group gap={8} wrap="nowrap" align="center">
+                  {(() => {
+                    const s = statusDisplay(partner.status);
+                    return (
+                      <Badge
+                        radius="xl"
+                        fw={700}
+                        size="sm"
+                        style={{
+                          background: s.bg,
+                          color: s.color,
+                          border: `1px solid ${s.border}`,
+                          backdropFilter: "blur(4px)",
+                        }}
+                      >
+                        {s.label}
+                      </Badge>
+                    );
+                  })()}
+                  {partner.status === "active" && partner.startPartner && (
+                    <Text fz="11px" c="rgba(255,255,255,0.6)" fw={500}>
+                      Since {partner.startPartner.getFullYear()}
+                    </Text>
+                  )}
+                </Group>
+              </Stack>
+            </Group>
 
-            <div
+            {/* Close button */}
+            <Box
+              component="button"
+              onClick={onClose}
               style={{
-                display: "grid",
-                gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
-                gap: "1rem",
+                background: "rgba(255,255,255,0.12)",
+                border: "1px solid rgba(255,255,255,0.2)",
+                borderRadius: 6,
+                cursor: "pointer",
+                padding: "3px 4px",
+                color: "rgba(255,255,255,0.8)",
+                display: "flex",
+                alignItems: "center",
+                lineHeight: 0,
+                flexShrink: 0,
+                marginTop: 2,
               }}
             >
-              <div>
-                <div>Address</div>
-                <div>{partner.address || "N/A"}</div>
-              </div>
-              {partner.status == "active" && (
-                <div>
-                  <div>Start Year</div>
-                  <div>{partner.startPartner?.getFullYear()}</div>
-                </div>
-              )}
-            </div>
+              <IconX size={13} />
+            </Box>
+          </Group>
+        ) : null}
+      </Box>
 
-            {partner.status !== "waitlisted" && (
-              <div
+      {/* Body */}
+      <Box p="xl">
+        {loading ? (
+          <Stack gap="lg" mt="md">
+            <Skeleton height={100} radius="md" />
+            <Group grow>
+              <Skeleton height={80} radius="md" />
+              <Skeleton height={80} radius="md" />
+            </Group>
+            <Group grow>
+              <Skeleton height={100} radius="md" />
+              <Skeleton height={100} radius="md" />
+            </Group>
+          </Stack>
+        ) : (
+          partner && (
+            <Stack gap="lg" mt="xs">
+              {/* Description */}
+              <Box
                 style={{
-                  display: "grid",
-                  gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
-                  gap: "1rem",
+                  border: "1px solid #E4ECF4",
+                  borderRadius: 10,
+                  overflow: "hidden",
                 }}
               >
-                <div>
-                  <div>Babies Helped</div>
-                  <div>{(partner.number_babies_helped || 0).toLocaleString()}</div>
-                </div>
+                <Box
+                  style={{
+                    background: "linear-gradient(90deg, #e4effe 0%, #f0f6ff 100%)",
+                    borderBottom: "1px solid #c3d9f7",
+                    padding: "8px 12px",
+                  }}
+                >
+                  <Group gap={7} align="center">
+                    <ThemeIcon
+                      size={22}
+                      radius="xl"
+                      styles={{ root: { backgroundColor: "#c3d9f7", color: "#053766" } }}
+                    >
+                      <IconAlignLeft size={12} />
+                    </ThemeIcon>
+                    <Text fz="11px" fw={800} c="#053766" tt="uppercase" lts="0.06em">
+                      About
+                    </Text>
+                  </Group>
+                </Box>
+                <Box p={12}>
+                  {partner.description ? (
+                    <Text c="#344054" lh={1.7} fw={500} fz="0.9rem">
+                      {partner.description}
+                    </Text>
+                  ) : (
+                    <Text c="#9ca3af" fs="italic" fz="0.9rem">
+                      No description available.
+                    </Text>
+                  )}
+                </Box>
+              </Box>
 
-                <div>
-                  <div>Diapers Provided</div>
-                  <div>{(partner.number_diapers || 0).toLocaleString()}</div>
-                </div>
-              </div>
-            )}
-          </div>
-        )
-      )}
+              {/* Mini Map */}
+              <PartnerMiniMap partner={partner} boundaries={boundaries} />
+
+              {/* Stats */}
+              {partner.status !== "waitlisted" && (
+                <Group grow gap={8}>
+                  <Box
+                    style={{
+                      background: "#f0f6ff",
+                      border: "1px solid #c3d9f7",
+                      borderLeft: "4px solid #053766",
+                      borderRadius: 10,
+                      padding: "10px 12px",
+                    }}
+                  >
+                    <Group gap={5} mb={4} align="center">
+                      <IconBabyCarriage size={12} color="#053766" />
+                      <Text fz="9px" c="#053766" tt="uppercase" fw={800} lts="0.08em">
+                        Babies Helped
+                      </Text>
+                    </Group>
+                    <Text fz="24px" fw={900} c="#053766" lh={1}>
+                      {(partner.number_babies_helped || 0).toLocaleString()}
+                    </Text>
+                    <Text fz="10px" c="#2c85b2" fw={500} mt={2}>
+                      children served
+                    </Text>
+                  </Box>
+                  <Box
+                    style={{
+                      background: "#e4effe",
+                      border: "1px solid #c3d9f7",
+                      borderLeft: "4px solid #2c85b2",
+                      borderRadius: 10,
+                      padding: "10px 12px",
+                    }}
+                  >
+                    <Group gap={5} mb={4} align="center">
+                      <IconChartBar size={12} color="#2c85b2" />
+                      <Text fz="9px" c="#1e3a5f" tt="uppercase" fw={800} lts="0.08em">
+                        Diapers
+                      </Text>
+                    </Group>
+                    <Text fz="24px" fw={900} c="#1e3a5f" lh={1}>
+                      {(partner.number_diapers || 0).toLocaleString()}
+                    </Text>
+                    <Text fz="10px" c="#2c85b2" fw={500} mt={2}>
+                      distributed
+                    </Text>
+                  </Box>
+                </Group>
+              )}
+
+              {/* Details */}
+              <Box
+                style={{
+                  border: "1px solid #E4ECF4",
+                  borderRadius: 10,
+                  overflow: "hidden",
+                }}
+              >
+                <Box
+                  style={{
+                    background: "linear-gradient(90deg, #e4effe 0%, #f0f6ff 100%)",
+                    borderBottom: "1px solid #c3d9f7",
+                    padding: "8px 12px",
+                  }}
+                >
+                  <Group gap={7} align="center">
+                    <ThemeIcon
+                      size={22}
+                      radius="xl"
+                      styles={{ root: { backgroundColor: "#c3d9f7", color: "#053766" } }}
+                    >
+                      <IconUsersGroup size={12} />
+                    </ThemeIcon>
+                    <Text fz="11px" fw={800} c="#053766" tt="uppercase" lts="0.06em">
+                      Details
+                    </Text>
+                  </Group>
+                </Box>
+                <Stack gap={0}>
+                  <Group gap={10} p={12} align="flex-start">
+                    <IconMapPin size={15} color="#2c85b2" style={{ marginTop: 2, flexShrink: 0 }} />
+                    <Stack gap={2}>
+                      <Text fz="10px" fw={700} c="#667085" tt="uppercase" lts="0.06em">
+                        Address
+                      </Text>
+                      <Text fz="13px" fw={500} c="#344054">
+                        {partner.address || "Not provided"}
+                      </Text>
+                    </Stack>
+                  </Group>
+                  {partner.status === "active" && partner.startPartner && (
+                    <>
+                      <Divider color="#E4ECF4" />
+                      <Group gap={10} p={12} align="flex-start">
+                        <IconCalendar
+                          size={15}
+                          color="#2c85b2"
+                          style={{ marginTop: 2, flexShrink: 0 }}
+                        />
+                        <Stack gap={2}>
+                          <Text fz="10px" fw={700} c="#667085" tt="uppercase" lts="0.06em">
+                            Partner Since
+                          </Text>
+                          <Text fz="13px" fw={500} c="#344054">
+                            {partner.startPartner.getFullYear()}
+                          </Text>
+                        </Stack>
+                      </Group>
+                    </>
+                  )}
+                </Stack>
+              </Box>
+            </Stack>
+          )
+        )}
+      </Box>
     </Drawer>
   );
 }

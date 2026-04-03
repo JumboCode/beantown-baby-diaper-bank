@@ -213,6 +213,7 @@ export function CityPopup({ city, year, onPartnerSelect, onClose }: CityPopupPro
             {activePartners.length > 0 ? (
               <Stack gap={6}>
                 {activePartners.map((p) => {
+                  console.log(p);
                   const selectedYear = Number(year);
                   let isNew = false;
                   if (p.startPartner) {
@@ -312,6 +313,7 @@ export function CityPopup({ city, year, onPartnerSelect, onClose }: CityPopupPro
                       size="sm"
                       fw={500}
                       style={{ cursor: "default", maxWidth: 160 }}
+                      onClick={() => onPartnerSelect(Number(p.id))}
                     >
                       <Text truncate fz="11px">
                         {p.name}

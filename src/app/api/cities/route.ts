@@ -91,7 +91,7 @@ async function getCities(cityName: string | null, month: string | null, year: st
       partners: city.partnerRegions.map((partnerRegion) => ({
         id: Number(partnerRegion.partnerId),
         name: partnerRegion.partner.name,
-        logo_url: partnerRegion.partner.logoUrl,
+        logoUrl: partnerRegion.partner.logoUrl,
         status: partnerRegion.partner.status,
         startPartner: partnerRegion.partner.startPartner?.toISOString() || null,
       })),
@@ -152,7 +152,7 @@ async function getCities(cityName: string | null, month: string | null, year: st
     partners: city.partnerRegions.map((partnerRegion) => ({
       id: Number(partnerRegion.partnerId),
       name: partnerRegion.partner.name,
-      logo_url: partnerRegion.partner.logoUrl,
+      logoUrl: partnerRegion.partner.logoUrl,
       status: partnerRegion.partner.status,
       startPartner: partnerRegion.partner.startPartner?.toISOString() || null,
     })),

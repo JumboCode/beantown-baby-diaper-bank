@@ -25,7 +25,7 @@ export type Partner = {
   status: status;
   address: string | null;
   coords?: { lat: number; lng: number };
-  logo_url: string | null;
+  logoUrl: string | null;
 };
 
 function formatDate(rawDate: string) {
@@ -114,9 +114,9 @@ export default function PartnerTable({
                   <Table.Tr key={partner.id}>
                     <Table.Td>
                       <div className="flex items-center gap-3">
-                        {partner.logo_url && (
+                        {partner.logoUrl && (
                           <img
-                            src={partner.logo_url}
+                            src={partner.logoUrl}
                             alt={partner.name}
                             className="h-10 w-10 object-contain"
                             onError={(e) => {
