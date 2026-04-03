@@ -8,6 +8,7 @@ import {
   IconChevronLeft,
   IconChevronRight,
 } from "@tabler/icons-react";
+import LastUploaded from "@/app/LastUploaded";
 
 export default function TimelineSlider({
   index,
@@ -44,14 +45,11 @@ export default function TimelineSlider({
   if (!labels || labels.length === 0) return <Box h={50} />;
 
   const maxPoints = labels.length - 1;
-  const markStep =
-    labels.length <= 8 ? 1 : labels.length <= 12 ? 2 : Math.ceil(labels.length / 6);
+  const markStep = labels.length <= 8 ? 1 : labels.length <= 12 ? 2 : Math.ceil(labels.length / 6);
   const marks = labels.map((label, idx) => ({
     value: idx,
     label:
-      idx === 0 || idx === maxPoints || idx === index || idx % markStep === 0
-        ? label
-        : undefined,
+      idx === 0 || idx === maxPoints || idx === index || idx % markStep === 0 ? label : undefined,
   }));
 
   return (
@@ -61,9 +59,12 @@ export default function TimelineSlider({
           <Text fz="18px" fw={700} c="#101828">
             Explore distribution data by year
           </Text>
-          <Text fz="13px" c="#667085">
-            Step through each year or play the timeline to follow distribution growth over time.
-          </Text>
+          <Group align="center" gap={6} mb={4}>
+            <Text fz="13px" c="#667085">
+              Step through each year or play the timeline to follow distribution growth over time.
+            </Text>
+            <LastUploaded />
+          </Group>
         </Box>
 
         <Group

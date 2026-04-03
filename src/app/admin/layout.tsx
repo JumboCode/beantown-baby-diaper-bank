@@ -1,16 +1,6 @@
 import Profile from "@/components/admin/Profile";
-import SettingsButton from "@/components/admin/AdminSettingsButton";
-import { auth } from "@clerk/nextjs/server";
 import { AppShell, AppShellHeader, AppShellMain, Group, Text } from "@mantine/core";
 import Link from "next/link";
-import { Suspense } from "react";
-
-async function canAccessAdminControls() {
-  const { sessionClaims } = await auth();
-  const role = sessionClaims?.metadata?.role;
-  const canAccessAdminControls = role === "superadmin";
-  return canAccessAdminControls;
-}
 
 export default async function Layout({ children }: { children: React.ReactNode }) {
   return (
@@ -24,7 +14,6 @@ export default async function Layout({ children }: { children: React.ReactNode }
           <Group gap="xs">
             <Link href="/">View Map</Link>
             <Profile />
-            
           </Group>
         </Group>
       </AppShellHeader>
