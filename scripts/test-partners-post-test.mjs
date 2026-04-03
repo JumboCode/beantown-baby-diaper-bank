@@ -198,7 +198,8 @@ async function fetchPartnerRegions(partnerId) {
 
   if (response.status === 401 || response.status === 403) {
     process.stdout.write(
-      `Info: /api/partners/percentages is protected (${response.status}); using DB fallback for partner ${partnerId}.\n`,
+      `Info: /api/partners/percentages is protected (${response.status}); 
+      using DB fallback for partner ${partnerId}.\n`,
     );
     return fetchPartnerRegionsFromDb(partnerId);
   }

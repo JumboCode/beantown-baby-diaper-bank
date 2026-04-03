@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { month, Prisma as PrismaTypes } from "@/generated/prisma/client";
+import { allocateLargestRemainder } from "@/lib/server/distribution-update";
 
 const MONTH_NAMES = [
   "January",
@@ -152,6 +153,109 @@ export async function DELETE(req: Request) {
     return NextResponse.json(
       { error: "Failed to delete distributions" },
       { status: 500 },
+    );
+  }
+}
+
+export async function POST(req: Request) {
+  try {
+    const body = await req.json();
+    const { partnerId, month: monthName, year, percentages } = body;
+
+    // validate
+    if (!partnerId || !monthName || !Number.isInteger(year) || !Array.isArray(percentages)) {
+      return NextResponse.json({ error: "Missing or invalid fields" }, {status: 400});
+    }
+
+    const targetMonth = monthName as month;
+    if (!Object.values(month).includes(targetMonth)) {
+      return NextResponse.json({ error: "Invalid month" }, { status: 400 });
+    }
+
+    if (percentages.some((item) => !item.city || item.percentage < 0)) {
+      return NextResponse.json({ error: "Invalid city or percentage" }, { status: 400 });
+    }
+
+    const uniqueCities = new Set(percentages.map((item) => item.city));
+    if (uniqueCities.size !== percentages.length) {
+      return NextResponse.json({ error: "Duplicate cities in payload" }, { status: 400 });
+    }
+
+    const totalPercentage = percentages.reduce((sum, item) => sum + item.percentage, 0);
+    if (Math.abs(totalPercentage - 1) > 1e-9) {
+      return NextResponse.json({ error: "Percentages must sum up to 100%" }, { status: 400 });
+    }
+
+    const res = await prisma.$transaction(async (tx) => {
+      
+      const monthlyRows = await tx.monthlyData.findMany({
+        where: {
+          partnerId: BigInt(partnerId),
+          year: String(year),
+          month: targetMonth,
+        },
+        select: { id: true, numDiapers: true },
+      });
+      if (monthlyRows.length !== 1) {
+        throw new Error("Expected unique (partner, year, month) combo");
+      }
+      const monthly = monthlyRows[0];
+      
+      const cities = await tx.city.findMany({
+        where: { name: { in: [...uniqueCities] }},
+        select: { id: true, name: true },
+      });
+      if (cities.length !== uniqueCities.size) {
+        throw new Error("One or more payload cities not found in DB");
+      }
+      // Since the payload doesn't include cityId, but our distributions table 
+      // only has cityId and not cityName, we must connect them explicitly
+      const cityIdByName = new Map(cities.map((city) => [city.name, city.id]));
+
+      // total numDiapers does not change across one-time update, and should 
+      // be used to calculate the latest diaper distributions based on the 
+      // updated percentages
+      const totalDiapers = Number(monthly.numDiapers);
+      const diaperAllocations = allocateLargestRemainder(
+        totalDiapers,
+        percentages.map(item => item.percentage),
+      );
+
+      // Full replace for the whole scope instead of selective delete + upsert
+      await tx.distribution.deleteMany({
+        where: {
+          partnerId: BigInt(partnerId),
+          year: String(year),
+          month: targetMonth,
+        }
+      })
+
+      if (percentages.length > 0) {
+        await tx.distribution.createMany({
+          data: percentages.map((item, idx) => ({
+            partnerId: BigInt(partnerId),
+            cityId: cityIdByName.get(item.city),
+            year: String(year),
+            month: targetMonth,
+            percentage: item.percentage,
+            numberDiapers: diaperAllocations[idx],
+          })),
+        });
+      }
+
+      return { rowsCreated: percentages.length };
+    })
+
+    return NextResponse.json({
+      success: true,
+      message: 'Distributions updated successfully',
+      ...res,
+    })
+} catch (error) {
+  console.error("Error updating distributions:", error);
+    return NextResponse.json(
+      { error: "Failed to update distributions" },
+      { status: 500 }
     );
   }
 }

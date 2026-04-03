@@ -21,6 +21,9 @@ export type CityPercentage = {
 interface CityPercentagesFormProps {
   cityOptions?: CityOption[];
   initialEntries?: CityPercentage[];
+  disabled?: boolean;
+  onSave?: (entries: CityPercentage[]) => void;
+  isLoading?: boolean;
 }
 
 const DEFAULT_CITY_OPTIONS: CityOption[] = [
@@ -36,6 +39,9 @@ const DEFAULT_ENTRIES: CityPercentage[] = [];
 export default function CityPercentagesForm({
   cityOptions = DEFAULT_CITY_OPTIONS,
   initialEntries = DEFAULT_ENTRIES,
+  onSave,
+  disabled = false,
+  isLoading = false,
 }: CityPercentagesFormProps) {
   const [city, setCity] = useState<string | null>(null);
   const [percentage, setPercentage] = useState<number | undefined>();
@@ -81,6 +87,7 @@ export default function CityPercentagesForm({
         </Text>
         <Group gap="sm" wrap="nowrap">
           <Select
+            disabled={disabled}
             placeholder="Choose a city"
             data={cityOptions}
             value={city}
@@ -90,6 +97,7 @@ export default function CityPercentagesForm({
             className="flex-1"
           />
           <NumberInput
+            disabled={disabled}
             placeholder="Percentage"
             value={percentage}
             onChange={(val) =>
@@ -101,12 +109,10 @@ export default function CityPercentagesForm({
             className="w-[140px]"
           />
           <Button
+            disabled={disabled || !city || percentage === undefined}
             radius="md"
             onClick={addEntry}
-            disabled={!city || percentage === undefined}
-          >
-            Add
-          </Button>
+          >Add</Button>
         </Group>
       </Stack>
 
@@ -130,6 +136,7 @@ export default function CityPercentagesForm({
                 className="w-[90px]"
                 size="sm"
                 styles={{ input: { textAlign: "center" } }}
+                disabled={disabled}
               />
               <Text c="dimmed" size="sm">
                 %
@@ -138,6 +145,7 @@ export default function CityPercentagesForm({
                 variant="subtle"
                 color="red"
                 size="compact-sm"
+                disabled={disabled}
                 onClick={() => removeEntry(entry.id)}
                 leftSection={<RiCloseLine size={16} />}
               >
@@ -149,11 +157,29 @@ export default function CityPercentagesForm({
       </Stack>
 
       <Divider />
+      <Group justify="space-between">
+        {disabled ? 
+          null 
+          : 
+          <Text 
+            fw={600} 
+            c={totalPercent === 100 ? "green" : "red"}
+            size="sm"
+          >
+            Total: {totalPercent.toFixed(0)}% 
+            {totalPercent !== 100 && " (Must equal 100%)"}
+          </Text>
+        }
 
-      <Group justify="flex-end">
-        <Text fw={600} c="green">
-          Total: {totalPercent.toFixed(0)}%
-        </Text>
+        <Button
+          color="blue"
+          radius="md"
+          loading={isLoading}
+          disabled={disabled || totalPercent !== 100}
+          onClick={() => onSave?.(entries)}
+        >
+          Save Percentages
+        </Button>
       </Group>
     </Stack>
   );
