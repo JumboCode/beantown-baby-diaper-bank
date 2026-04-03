@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { PartnerRegion, Prisma } from "@/generated/prisma/client";
+import { Prisma } from "@/generated/prisma/client";
 import { stringifyWithBigInt } from "@/lib/util";
 import { PartnerRegionInclude } from "@/generated/prisma/models";
 
@@ -61,40 +61,125 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
-    const newPercentages: PartnerRegion[] = await request.json();
+    const body = await request.json();
+    const { partnerId, percentages } = body as {
+      partnerId?: string;
+      percentages?: Array<{ city?: string; percentage?: number }>;
+    };
 
-    if (!Array.isArray(newPercentages)) {
+    if (!partnerId || !Array.isArray(percentages) || percentages.length === 0) {
       return NextResponse.json(
-        { error: "Expected an array of PartnerRegion values" },
+        { error: "Missing partnerId or percentages array" },
         { status: 400 },
       );
     }
 
-    await prisma.$transaction(
-      newPercentages.map((p) =>
-        prisma.partnerRegion.update({
-          where: {
-            partnerId_cityId: {
-              partnerId: p.partnerId,
-              cityId: p.cityId,
-            },
-          },
-          data: {
-            percentage: p.percentage,
-          },
-        }),
-      ),
+    let pId: bigint;
+
+    try {
+      pId = BigInt(partnerId);
+    } catch {
+      return NextResponse.json(
+        { error: "Invalid partnerId" },
+        { status: 400 },
+      );
+    }
+
+    const normalizedPercentages = percentages.map((item) => ({
+      city: typeof item.city === "string" ? item.city.trim() : "",
+      percentage: item.percentage,
+    }));
+
+    if (normalizedPercentages.some (
+        (item) =>
+          !item.city ||
+          typeof item.percentage !== "number" ||
+          !Number.isFinite(item.percentage) ||
+          item.percentage < 0 ||
+          item.percentage > 1,
+      )
+    ) {
+      return NextResponse.json(
+        { error: "Invalid city or percentage" },
+        { status: 400 },
+      );
+    }
+
+    const validatedPercentages: Array<{ city: string; percentage: number }> =
+      normalizedPercentages.map((item) => ({
+        city: item.city,
+        percentage: item.percentage as number,
+      }));
+
+    const normalizedCityNames = validatedPercentages.map((item) =>
+      item.city.toLowerCase(),
+    );
+    if (new Set(normalizedCityNames).size !== normalizedCityNames.length) {
+      return NextResponse.json(
+        { error: "Duplicate cities in payload" },
+        { status: 400 },
+      );
+    }
+
+    const totalPercentage = validatedPercentages.reduce(
+      (sum, item) => sum + item.percentage,
+      0,
+    );
+    if (Math.abs(totalPercentage - 1) > 1e-9) {
+      return NextResponse.json(
+        { error: "Percentages must sum to 1" },
+        { status: 400 },
+      );
+    }
+
+    const partner = await prisma.partner.findUnique({
+      where: { id: pId },
+      select: { id: true },
+    });
+
+    if (!partner) {
+      return NextResponse.json({ error: "Partner not found" }, { status: 404 });
+    }
+
+    const cities = await prisma.city.findMany({
+      where: { name: { in: validatedPercentages.map((item) => item.city) } },
+      select: { id: true, name: true },
+    });
+
+    const cityIdByName = new Map(
+      cities.map((city) => [city.name?.trim().toLowerCase(), city.id]),
     );
 
-    const data_response = stringifyWithBigInt({ data: newPercentages });
+    if (
+      validatedPercentages.some(
+        (item) => !cityIdByName.has(item.city.toLowerCase()),
+      )
+    ) {
+      return NextResponse.json(
+        { error: "One or more payload cities not found in DB" },
+        { status: 400 },
+      );
+    }
 
-    return new Response(data_response, {
-      status: 200,
-      headers: { "Content-Type": "application/json" },
+    await prisma.$transaction([
+      prisma.partnerRegion.deleteMany({
+        where: { partnerId: pId },
+      }),
+      prisma.partnerRegion.createMany({
+        data: validatedPercentages.map((item) => ({
+          partnerId: pId,
+          cityId: cityIdByName.get(item.city.toLowerCase())!,
+          percentage: item.percentage,
+        })),
+      }),
+    ]);
+
+    return NextResponse.json({
+      success: true,
+      message: "Continuous percentages updated",
     });
   } catch (error) {
-    console.error("Error updating percentages:", error);
-    console.log("Unable to update percentages");
-    return NextResponse.json({ status: 500 });
+    console.error("Error updating continuous percentages:", error);
+    return NextResponse.json({ error: "Failed to update" }, { status: 500 });
   }
 }

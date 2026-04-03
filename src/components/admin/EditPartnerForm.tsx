@@ -13,7 +13,6 @@ import {
   Stack,
   LoadingOverlay,
   Box,
-  Tabs,
   SimpleGrid,
 } from "@mantine/core";
 import { useForm } from "@mantine/form";
@@ -190,6 +189,7 @@ export default function EditPartnerForm({
   onClose,
 }: EditPartnerFormProps) {
   const [loading, setLoading] = useState(false);
+  const [monthVerificationErrorMsg, setMonthVerificationErrorMsg] = useState<string | null>('');
   const [initialLogoUrl] = useState<string>(partner.logo_url || "");
   const [activePercentTab, setActivePercentTab] =
     useState<UpdatePercentagesOptions>("one-time");
@@ -577,90 +577,76 @@ export default function EditPartnerForm({
 
           {form.values.status !== "waitlisted" && (
             <Group justify="space-between" align="flex-start">
-              <Text fw={600} c="#344054">
-                City Distribution Percentages
-              </Text>
-              <Tabs
-                value={activePercentTab}
-                onChange={(val) => {
-                  if (!val) return;
-                  setActivePercentTab(val as UpdatePercentagesOptions);
-                  form.setFieldValue(
-                    "updatePercentagesType",
-                    val as UpdatePercentagesOptions,
-                  );
-                }}
-                className="min-w-170 w-full max-w-[600px]"
-              >
-                <Tabs.List grow mb="xl">
-                  {[
-                    {
-                      value: "one-time",
-                      title: "One-Time Update",
-                      description: "Update a specific month only",
-                      icon: <RiCalendarEventLine size={22} />,
-                    },
-                    {
-                      value: "continuous",
-                      title: "Continuous Update",
-                      description: "Apply to all future distributions",
-                      icon: <RiLineChartLine size={22} />,
-                    },
-                  ].map((option) => (
-                    <Tabs.Tab
-                      key={option.value}
-                      value={option.value}
-                      className="px-0"
-                    >
-                      {(() => {
-                        const isActive = activePercentTab === option.value;
-                        return (
-                          <div
-                            className={`rounded-xl shadow-sm transition hover:-translate-y-0.5 hover:shadow-md h-full border ${isActive
-                              ? "border-[#1D3A8A] bg-[#EEF2FF]"
-                              : "border-gray-300 bg-white"
-                              }`}
-                            style={{ borderWidth: isActive ? 2 : 1 }}
-                          >
-                            <Stack gap="xs" align="center" p="md">
-                              <div
-                                className={`${isActive ? "text-[#1D3A8A]" : "text-gray-500"
-                                  } opacity-80`}
-                              >
-                                {option.icon}
-                              </div>
-                              <Text
-                                fw={700}
-                                size="md"
-                                className={isActive ? "text-[#1D3A8A]" : ""}
-                              >
-                                {option.title}
-                              </Text>
-                              <Text
-                                size="sm"
-                                c={isActive ? "gray.6" : "dimmed"}
-                                ta="center"
-                              >
-                                {option.description}
-                              </Text>
-                            </Stack>
-                          </div>
-                        );
-                      })()}
-                    </Tabs.Tab>
-                  ))}
-                </Tabs.List>
-                <Tabs.Panel value="one-time">
+              <Stack gap={4} className="w-40">
+                <Text fw={600} c="#344054">
+                  Update Logic
+                </Text>
+                <Text size="xs" c="dimmed">Choose how to update percentages</Text>
+              </Stack>
+
+              <Stack className="min-w-170 w-full max-w-[600px]" gap="xl">
+                <Radio.Group
+                  value={activePercentTab}
+                  onChange={(val) => {
+                    setActivePercentTab(val as UpdatePercentagesOptions);
+                    form.setFieldValue("updatePercentagesType", val as UpdatePercentagesOptions);
+                  }}
+                >
+                  <SimpleGrid cols={2} spacing="md">
+                    {[
+                      {
+                        value: "continuous",
+                        title: "Continuous Update",
+                        description: "Updates ongoing percentages (All future months)",
+                        icon: <RiLineChartLine size={22} />,
+                      },
+                      {
+                        value: "one-time",
+                        title: "One-Time Update",
+                        description: "Updates a specific historical month only",
+                        icon: <RiCalendarEventLine size={22} />,
+                      },
+                    ].map((option) => (
+                      <Radio.Card
+                        key={option.value}
+                        value={option.value}
+                        radius="lg"
+                        p="md"
+                        className={`border transition shadow-sm hover:shadow-md ${
+                          activePercentTab === option.value 
+                            ? "border-blue-600 bg-blue-50" 
+                            : "border-gray-200"
+                        }`}
+                      >
+                        <Group wrap="nowrap" align="flex-start">
+                          <Radio.Indicator />
+                          <Stack gap={4}>
+                            <Group gap="xs">
+                              {option.icon}
+                              <Text fw={700}>{option.title}</Text>
+                            </Group>
+                            <Text size="xs" c="dimmed">
+                              {option.description}
+                            </Text>
+                          </Stack>
+                        </Group>
+                      </Radio.Card>
+                    ))}
+                  </SimpleGrid>
+                </Radio.Group>
+                {activePercentTab === "one-time" ? (
                   <OneTimeUpdateForm
                     initialCityPercentages={initialCityPercentEntries}
+                    partnerId={`${partner.id}`}
+                    dataNotExistErrorMsg={monthVerificationErrorMsg}
                   />
-                </Tabs.Panel>
-                <Tabs.Panel value="continuous">
+                ) : (
                   <ContinuousUpdateForm
+                    partnerId={`${partner.id}`}
                     initialCityPercentages={initialCityPercentEntries}
                   />
-                </Tabs.Panel>
-              </Tabs>
+                )}
+              </Stack>
             </Group>
           )}
 
