@@ -1,23 +1,36 @@
-import { useState } from "react";
-import { Paper, Stack, Group, Text, RadioGroup, Radio } from "@mantine/core";
+import { Paper, Stack, Group, Text } from "@mantine/core";
 import { RiLineChartLine } from "react-icons/ri";
-import { Month, MonthPickerInput } from "@mantine/dates";
 import CityPercentagesForm, { CityPercentage } from "./CityPercentagesForm";
 
-type Month = string; // e.g., "2024-06"
 
 type ContinuousUpdateFormProps = {
+  partnerId: string,
   initialCityPercentages?: CityPercentage[];
 };
 
 export default function ContinuousUpdateForm({
+  partnerId,
   initialCityPercentages,
 }: ContinuousUpdateFormProps) {
-  const [monthRange, setMonthRange] = useState<[Month | null, Month | null]>([
-    null,
-    null,
-  ]);
-  const [fromMonth, setFromMonth] = useState<Month | null>(null);
+
+  const handleSaveContinuous = async (entries: CityPercentage[]) => {
+    try {
+      const response = await fetch("/api/partners/percentages", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          partnerId,
+          percentages: entries.map(e => ({
+            city: e.city,
+            percentage: e.percent / 100
+          }))
+        }),
+      });
+      if (response.ok) alert("Global percentages updated!");
+    } catch (err) {
+      console.error(err);
+    }
+  }
 
   return (
     <Paper withBorder radius="lg" p="lg">
@@ -33,54 +46,13 @@ export default function ContinuousUpdateForm({
         </Text>
         <Stack gap={6}>
           <Text fw={600} size="sm">
-            Effective From
+            Effective From now (applies to all future distributions)
           </Text>
-          <RadioGroup>
-            <Stack gap="lg">
-              <Radio
-                value="now"
-                label="Now (apply to all future distributions)"
-                onChange={() => {
-                  setMonthRange([null, null]);
-                  setFromMonth(null);
-                }}
-              />
-              <Group>
-                <Radio
-                  value="range"
-                  label="Range of months"
-                  onChange={() => {
-                    setFromMonth(null);
-                    setMonthRange([null, null]);
-                  }}
-                />
-                <MonthPickerInput
-                  placeholder="Select a range of months"
-                  value={monthRange}
-                  onChange={setMonthRange}
-                  type="range"
-                />
-              </Group>
-              <Group>
-                <Radio
-                  value="from"
-                  label="From specific month onward"
-                  onChange={() => {
-                    setMonthRange([null, null]);
-                    setFromMonth(null);
-                  }}
-                />
-                <MonthPickerInput
-                  value={fromMonth}
-                  onChange={setFromMonth}
-                  w={200}
-                  placeholder="Select a month"
-                />
-              </Group>
-            </Stack>
-          </RadioGroup>
         </Stack>
-        <CityPercentagesForm initialEntries={initialCityPercentages} />
+        <CityPercentagesForm 
+          initialEntries={initialCityPercentages} 
+          onSave={handleSaveContinuous}
+        />
       </Stack>
     </Paper>
   );

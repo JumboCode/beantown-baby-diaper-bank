@@ -10,11 +10,9 @@ import {
   Tabs,
   Button,
   Drawer,
-  Select,
   Popover,
   Checkbox,
   TextInput,
-  Stepper,
 } from "@mantine/core";
 import { MonthPickerInput } from "@mantine/dates";
 import { useState, useEffect, useCallback, useMemo } from "react";
@@ -126,11 +124,8 @@ export default function Page() {
   const [partnerSearch, setPartnerSearch] = useState("");
   const [isLoadingPartners, setIsLoadingPartners] = useState(false);
 
-  // diaper filtering
   const [valueFrom, setValueFrom] = useState<string | null>(null);
   const [valueTo, setValueTo] = useState<string | null>(null);
-  const [orgName, setOrgName] = useState<string | null>(null);
-  const [city, setCity] = useState<string | null>(null);
 
   const [distributions, setDistributions] = useState<Distribution[]>([]);
   const [filteredDistributions, setFilteredDistributions] = useState<
@@ -253,51 +248,22 @@ export default function Page() {
     fetchTimelineData();
   }, [fetchTimelineData]);
 
-  const formatMonthKeyFromDate = (date: Date) =>
-    `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, "0")}`;
-
-  const toMonthKey = (value: string | null) => {
-    if (!value) return null;
-
-    const trimmed = value.trim();
-
-    if (/^\d{4}-\d{2}$/.test(trimmed)) return trimmed;
-    if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) return trimmed.slice(0, 7);
-
-    const parsed = new Date(trimmed);
-    if (Number.isNaN(parsed.getTime())) return null;
-
-    return formatMonthKeyFromDate(parsed);
-  };
-
   const filterDistributions = () => {
     let filtered = [...distributions];
 
-    if (orgName) {
-      filtered = filtered.filter((dist) => dist.partner.name === orgName);
-    }
-
-    if (city) {
-      filtered = filtered.filter((dist) => dist.city.name === city);
-    }
-
     const distToYYYYMM = (dist: Distribution) => {
+      if (!dist.month) return "0000-00";
       const monthNum = monthMap[dist.month.trim()];
-      if (!monthNum) {
-        console.warn(`Unknown month: "${dist.month}"`);
-        return "0000-00";
-      }
+      if (!monthNum) return "0000-00";
       return `${dist.year}-${monthNum}`;
     };
 
-    const fromKey = toMonthKey(valueFrom);
-    if (fromKey) {
-      filtered = filtered.filter((d) => distToYYYYMM(d) >= fromKey);
+    if (valueFrom) {
+      filtered = filtered.filter((dist) => distToYYYYMM(dist) >= valueFrom);
     }
 
-    const toKey = toMonthKey(valueTo);
-    if (toKey) {
-      filtered = filtered.filter((d) => distToYYYYMM(d) <= toKey);
+    if (valueTo) {
+      filtered = filtered.filter((dist) => distToYYYYMM(dist) <= valueTo);
     }
 
     setFilteredDistributions(filtered);
@@ -365,16 +331,6 @@ export default function Page() {
     fetchPartners();
   }, [fetchPartners]);
 
-  const organizationOptions = useMemo(
-    () => [...new Set(distributions.map((d) => d.partner.name))],
-    [distributions],
-  );
-
-  const cityOptions = useMemo(
-    () => [...new Set(distributions.map((d) => d.city.name))],
-    [distributions],
-  );
-
   const [
     openedUploadDataForm,
     { open: openUploadDataForm, close: closeUploadDataForm },
@@ -404,10 +360,8 @@ export default function Page() {
   };
 
   const resetDistributionFilters = () => {
-    setOrgName(null);
     setValueFrom(null);
     setValueTo(null);
-    setCity(null);
     setFilteredDistributions(distributions);
     drawerControls.close();
   };
@@ -507,43 +461,22 @@ export default function Page() {
               >
                 <h1 className="font-bold text-gray-900">Filter Data</h1>
                 <p className="text-gray-500 mb-6">
-                  Filter the diaper distribution data by organization, city, and
-                  date range.
+                  Filter the diaper distribution data by date range.
                 </p>
-                <h2 className="text-gray-900 font-semibold">
-                  Organization Name
-                </h2>
-                <Select
-                  data={organizationOptions}
-                  value={orgName}
-                  onChange={setOrgName}
-                  placeholder="All organizations"
-                  className="mb-6"
-                />
-
-                <h2 className="text-gray-900 font-semibold">City</h2>
-                <Select
-                  data={cityOptions}
-                  value={city}
-                  onChange={setCity}
-                  placeholder="All cities"
-                  className="mb-6"
-                />
-
                 <h2 className="text-gray-900 font-semibold mb-2">Date Range</h2>
                 <h3 className="text-gray-900 font-medium">From</h3>
                 <MonthPickerInput
                   placeholder="Pick date"
-                  value={valueFrom}
-                  onChange={setValueFrom}
+                  value={valueFrom ? `${valueFrom}-01` : null}
+                  onChange={(val) => setValueFrom(val ? (val as unknown as string).slice(0, 7) : null)}
                   className="mb-3"
                 />
 
                 <h3 className="text-gray-900 font-medium">To</h3>
                 <MonthPickerInput
                   placeholder="Pick date"
-                  value={valueTo}
-                  onChange={setValueTo}
+                  value={valueTo ? `${valueTo}-01` : null}
+                  onChange={(val) => setValueTo(val ? (val as unknown as string).slice(0, 7) : null)}
                   className="mb-6"
                 />
                 <div className="flex justify-between">
@@ -567,7 +500,7 @@ export default function Page() {
               </Drawer>
 
               <Group ml="auto" align="flex-start" gap="sm">
-                {!isPartnersTab && <DeleteDistributionDataButton />}
+                {!isPartnersTab && <DeleteDistributionDataButton onSuccess={fetchDistributions} />}
                 {isPartnersTab && (
                   <TextInput
                     placeholder="Search by name or cities..."

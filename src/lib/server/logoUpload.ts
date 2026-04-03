@@ -83,7 +83,7 @@ export async function uploadLogoObject(
   const { data } = supabaseAdmin.storage
     .from(LOGO_BUCKET)
     .getPublicUrl(objectKey);
-  return data.publicUrl;
+  return `${data.publicUrl}?t=${Date.now()}`;
 }
 
 export async function deleteLogoObject(objectKey: string): Promise<void> {

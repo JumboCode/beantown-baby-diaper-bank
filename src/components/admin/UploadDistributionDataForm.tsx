@@ -9,9 +9,11 @@ import {
   Box,
   Alert,
 } from "@mantine/core";
-import FileUpload, { FileInfo } from "../sprint2/FileUpload";
+import FileUpload, { FileInfo } from "./FileUpload";
 import { MonthPickerInput } from "@mantine/dates";
 import { useState } from "react";
+import Link from "next/link";
+import { FaDownload } from "react-icons/fa";
 
 interface UploadNewDataProps {
   opened: boolean;
@@ -20,7 +22,20 @@ interface UploadNewDataProps {
   uploadedMonths: number[];
 }
 
-const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+const MONTHS = [
+  "Jan",
+  "Feb",
+  "Mar",
+  "Apr",
+  "May",
+  "Jun",
+  "Jul",
+  "Aug",
+  "Sep",
+  "Oct",
+  "Nov",
+  "Dec",
+];
 
 export default function UploadNewData({
   opened,
@@ -201,7 +216,6 @@ export default function UploadNewData({
               })}
             </SimpleGrid>
           </Paper>
-
           <Group justify="center" grow>
             <MonthPickerInput
               label="Dataset Information"
@@ -219,12 +233,23 @@ export default function UploadNewData({
               }}
             />
           </Group>
-
           <Group grow>
             <FileUpload fileInfo={fileInfo} onFileChange={setFileInfo} />
           </Group>
+          <Text size="xs" c="dimmed">
+            File must be a CSV (.csv)
+          </Text>
 
           <Group justify="flex-end" gap="xs">
+            <Button
+              component="a"
+              href="/MothlyDataTemplate.xlsx"
+              download
+              leftSection={<FaDownload />}
+              color="#163663"
+            >
+              Download Template
+            </Button>
             <Button variant="default" color="#163663" onClick={handleClose}>
               Cancel
             </Button>
