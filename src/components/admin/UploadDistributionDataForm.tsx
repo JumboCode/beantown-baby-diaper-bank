@@ -236,6 +236,9 @@ export default function UploadNewData({
           <Group grow>
             <FileUpload fileInfo={fileInfo} onFileChange={setFileInfo} />
           </Group>
+          <Text size="xs" c="dimmed">
+            File must be a CSV (.csv)
+          </Text>
 
           <Group justify="flex-end" gap="xs">
             <Button
