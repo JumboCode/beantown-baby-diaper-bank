@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { revalidateTag, cacheLife, cacheTag } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { stringifyWithBigInt } from "@/lib/util";
+import { PartnerInclude } from "@/generated/prisma/models";
 
 const normalizeDate = (dateString: string | null) => {
   if (!dateString) return null;
@@ -14,8 +15,22 @@ async function getPartnerById(id: string) {
   cacheTag("cities");
   cacheLife("max");
 
+  const partnerIncludeClause = {
+    partnerRegions: {
+      include: {
+        city: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+      },
+    },
+  } satisfies PartnerInclude;
+
   const partner = await prisma.partner.findUnique({
     where: { id: Number(id) },
+    include: partnerIncludeClause,
   });
 
   if (!partner) {
@@ -42,6 +57,9 @@ async function getPartnerById(id: string) {
     endPartner: partner.endPartner,
     number_babies_helped: Number(aggregate._sum.numberChildren),
     number_diapers: Number(aggregate._sum.numberDiapers),
+    citiesServed: partner.partnerRegions.map((pr) => ({
+      id: pr.city?.id,
+    })),
   };
 }
 

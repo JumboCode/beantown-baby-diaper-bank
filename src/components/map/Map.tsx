@@ -400,6 +400,7 @@ export default function Map({
       <PartnerDrawer
         partnerId={selectedPartnerId}
         onClose={() => setSelectedPartnerId(undefined)}
+        boundaries={boundaries}
       />
     </div>
   );

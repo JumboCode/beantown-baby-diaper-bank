@@ -1,7 +1,7 @@
 "use client";
 
 import { Container, Title, Paper, Divider, Text } from "@mantine/core";
-import ImpactModal from "../../components/map/ImpactModal";
+
 import OurSlider from "../../components/sprint2/OurSlider";
 import DotPopUps from "@/components/sprint2/DotPopUps";
 import YearlyMonthlySwitch from "@/components/sprint2/YearlyMonthlySwitch";
@@ -9,7 +9,6 @@ import FileUpload from "@/components/admin/FileUpload";
 import { useTimelinePeriod } from "@/components/map/useTimelinePeriod";
 
 export default function Sprint2Page() {
-  const { view, toggleView } = useTimelinePeriod();
   return (
     <Container size="sm" py="xl">
       <Paper shadow="md" p="xl" radius="md" withBorder>
@@ -32,9 +31,6 @@ export default function Sprint2Page() {
       <Text c="dimmed" mb="xl">
         Place make an impact ticket here
       </Text>
-      <div>
-        <ImpactModal />
-      </div>
 
       <Title order={2} mt="md" mb="xs">
         File Upload Button
@@ -54,7 +50,7 @@ export default function Sprint2Page() {
         Yearly vs Monthly Switch
       </Title>
       <div>
-        <YearlyMonthlySwitch value={view} onChange={toggleView} />
+        {/*<YearlyMonthlySwitch value={view} onChange={toggleView} />*/}
       </div>
     </Container>
   );

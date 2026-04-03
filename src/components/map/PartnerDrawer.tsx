@@ -1,52 +1,36 @@
 import type { Partner } from "@/generated/prisma/client";
-import type { MapData } from "@/app/page";
 import type { LatLngExpression } from "leaflet";
 
-import {
-  Center,
-  Drawer,
-  Loader,
-  Skeleton,
-  Stack,
-  Group,
-  Text,
-  Title,
-  Box,
-} from "@mantine/core";
+import { Center, Drawer, Loader, Skeleton, Stack, Group, Text, Title, Box } from "@mantine/core";
 import dynamic from "next/dynamic";
 import { useEffect, useState } from "react";
 import { useBaseTileLayer } from "./useBaseTileLayer";
 import { useLeafletMap } from "./useLeafletMap";
+import { GeoJsonBoundaries } from "@/lib/types";
 
-export interface PartnerDrawer {
+export interface PartnerDrawerProps {
   partnerId?: number;
   onClose: () => void;
-  mapData?: MapData | null;
+  boundaries: GeoJsonBoundaries;
 }
 
-const MapContainer = dynamic(
-  () => import("react-leaflet").then((module) => module.MapContainer),
-  {
-    ssr: false,
-    loading: () => (
-      <Center h={180}>
-        <Loader color="#51A3CC" size="sm" />
-      </Center>
-    ),
-  },
-);
-const TileLayer = dynamic(
-  () => import("react-leaflet").then((module) => module.TileLayer),
-  { ssr: false },
-);
-const Marker = dynamic(
-  () => import("react-leaflet").then((module) => module.Marker),
-  { ssr: false },
-);
-const Polygon = dynamic(
-  () => import("react-leaflet").then((module) => module.Polygon),
-  { ssr: false },
-);
+const MapContainer = dynamic(() => import("react-leaflet").then((module) => module.MapContainer), {
+  ssr: false,
+  loading: () => (
+    <Center h={180}>
+      <Loader color="#51A3CC" size="sm" />
+    </Center>
+  ),
+});
+const TileLayer = dynamic(() => import("react-leaflet").then((module) => module.TileLayer), {
+  ssr: false,
+});
+const Marker = dynamic(() => import("react-leaflet").then((module) => module.Marker), {
+  ssr: false,
+});
+const Polygon = dynamic(() => import("react-leaflet").then((module) => module.Polygon), {
+  ssr: false,
+});
 
 const infoCardStyle = {
   border: "1px solid #F2F4F7",
@@ -119,14 +103,7 @@ type PartnerCoordinates = {
   lng: number;
 };
 
-<<<<<<< HEAD:src/components/map/PartnerDrawer.tsx
 interface PartnerWithStats extends Omit<Partner, "coords" | "startPartner" | "endPartner"> {
-=======
-interface PartnerWithStats extends Omit<
-  Partner,
-  "coords" | "startPartner" | "endPartner"
-> {
->>>>>>> 262ce731d33ce93e93420317d4384f0be8f24e85:src/components/map/PartnerIconDrawer.tsx
   partner_id: number;
   logoUrl: string | null;
   coordinates?: PartnerCoordinates | null;
@@ -135,6 +112,7 @@ interface PartnerWithStats extends Omit<
   endPartner: Date | null;
   number_babies_helped: number;
   number_diapers: number;
+  citiesServed: string[];
 }
 
 function createPartnerIcon(
@@ -143,10 +121,7 @@ function createPartnerIcon(
   partner: PartnerWithStats,
 ) {
   const initials = (partner.name ?? "PN").substring(0, 2).toUpperCase();
-  const validUrl =
-    url && url.trim() !== ""
-      ? url
-      : `https://placehold.co/400x400?text=${initials}`;
+  const validUrl = url && url.trim() !== "" ? url : `https://placehold.co/400x400?text=${initials}`;
 
   return leaflet.divIcon({
     className: "custom-partner-icon",
@@ -170,10 +145,10 @@ function createPartnerIcon(
 
 function PartnerMiniMap({
   partner,
-  mapData,
+  boundaries,
 }: {
   partner: PartnerWithStats;
-  mapData?: MapData | null;
+  boundaries: GeoJsonBoundaries;
 }) {
   const coords = partner.coords ?? partner.coordinates ?? null;
   const { tileLayerProps } = useBaseTileLayer();
@@ -185,22 +160,14 @@ function PartnerMiniMap({
       setLeaflet(module);
     });
   }, []);
-
-  // Find city names this partner serves
-  const servedCityNames = new Set(
-    (mapData?.cities.data ?? [])
-      .filter((city) => city.partners.some((p) => p.id === partner.partner_id))
-      .map((city) => city.name)
-      .filter(Boolean),
-  );
-
-  // Extract boundary polygons for served cities
-  const servedBoundaries = (mapData?.boundaries.features ?? [])
-    .filter((f) => servedCityNames.has(f.properties?.name))
-    .map((f) => ({
-      id: f.properties?.name ?? Math.random(),
-      positions: f.geometry.coordinates as unknown as LatLngExpression[][],
-    }));
+  const filteredBoundaires = (boundaries.features ?? []).filter((f) => {
+    const id = f.id;
+    return id && partner.citiesServed.includes(String(id));
+  });
+  const servedBoundaries = filteredBoundaires.map((f) => ({
+    id: f.properties?.name ?? Math.random(),
+    positions: f.geometry.coordinates as unknown as LatLngExpression[][],
+  }));
 
   if (!coords) {
     return null;
@@ -271,7 +238,7 @@ function PartnerMiniMap({
   );
 }
 
-export default function PartnerDrawer({ partnerId, onClose }: PartnerDrawer) {
+export default function PartnerDrawer({ partnerId, onClose, boundaries }: PartnerDrawerProps) {
   const [selectedPartner, setSelectedPartner] = useState<PartnerWithStats>();
   const [loading, setLoading] = useState(false);
 
@@ -299,7 +266,9 @@ export default function PartnerDrawer({ partnerId, onClose }: PartnerDrawer) {
     const partner = result.data as PartnerWithStats;
     partner.startPartner = partner.startPartner ? new Date(partner.startPartner) : null;
     partner.endPartner = partner.endPartner ? new Date(partner.endPartner) : null;
+    partner.citiesServed = partner.citiesServed.map((c) => String(Object(c).id));
     partner.coords = partner.coordinates ?? null;
+    console.log("Fetched partner details:", partner);
     return partner;
   }
 
@@ -420,7 +389,7 @@ export default function PartnerDrawer({ partnerId, onClose }: PartnerDrawer) {
               )}
             </div>
 
-            <PartnerMiniMap partner={partner} mapData={mapData} />
+            <PartnerMiniMap partner={partner} boundaries={boundaries} />
 
             <div
               style={{
@@ -436,9 +405,7 @@ export default function PartnerDrawer({ partnerId, onClose }: PartnerDrawer) {
               {partner.status == "active" && (
                 <div style={infoCardStyle}>
                   <div style={infoLabelStyle}>Start Year</div>
-                  <div style={infoValueStyle}>
-                    {partner.startPartner?.getFullYear()}
-                  </div>
+                  <div style={infoValueStyle}>{partner.startPartner?.getFullYear()}</div>
                 </div>
               )}
             </div>
