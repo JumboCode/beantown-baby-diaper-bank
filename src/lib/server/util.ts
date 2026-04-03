@@ -1,3 +1,6 @@
+import { Roles } from "@/types/global";
+import { auth } from "@clerk/nextjs/server";
+
 const GEOCODIO_API_KEY = process.env.GEOCODIO_API_KEY;
 
 /**
@@ -15,12 +18,19 @@ export async function fetchCoordsFromAddress(address: string) {
       `https://api.geocod.io/v1.9/geocode?q=${encodeURIComponent(address)}&api_key=${GEOCODIO_API_KEY}`,
     );
     const data = await response.json();
-    return data.results?.[0]?.location as
-      | { lat: number; lng: number }
-      | null
-      | undefined;
+    return data.results?.[0]?.location as { lat: number; lng: number } | null | undefined;
   } catch (error) {
     console.error("Geocoding failed:", error);
     return null;
   }
+}
+
+/**
+ * function to check if the user has a specific role by accessing the session claims from Clerk authentication
+ * @param role - the role to check against the user's session claims
+ * @returns a boolean indicating whether the user has the specified role
+ */
+export async function checkRole(role: Roles) {
+  const { sessionClaims } = await auth();
+  return sessionClaims?.metadata?.role === role;
 }

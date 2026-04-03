@@ -1,4 +1,16 @@
 import type * as GeoJSON from "geojson";
+import type { City, Partner, Distribution as PrismaDistribution } from "@/generated/prisma/browser";
+
+export type GeoJsonBoundaries = GeoJSON.FeatureCollection<GeoJSON.Polygon | GeoJSON.MultiPolygon>;
+
+export type CityWithStats = City & {
+  distributions: PrismaDistribution[];
+  partners: Partner[];
+  stats: {
+    historical?: { median: number; p25: number; p75: number } | null;
+    runningTotal?: number;
+  };
+};
 
 // Region polygon (GeoJSON Feature with props)
 export type RegionFeatureProps = {

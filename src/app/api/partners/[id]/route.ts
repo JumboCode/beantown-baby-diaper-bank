@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
+import { revalidateTag, cacheLife, cacheTag } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { stringifyWithBigInt } from "@/lib/util";
+import { PartnerInclude } from "@/generated/prisma/models";
 
 const normalizeDate = (dateString: string | null) => {
   if (!dateString) return null;
@@ -8,58 +10,78 @@ const normalizeDate = (dateString: string | null) => {
   return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), 1));
 };
 
-export async function GET(
-  _request: NextRequest,
-  { params }: { params: Promise<{ id: string }> },
-) {
+async function getPartnerById(id: string) {
+  "use cache";
+  cacheTag("cities");
+  cacheLife("max");
+
+  const partnerIncludeClause = {
+    partnerRegions: {
+      include: {
+        city: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+      },
+    },
+  } satisfies PartnerInclude;
+
+  const partner = await prisma.partner.findUnique({
+    where: { id: Number(id) },
+    include: partnerIncludeClause,
+  });
+
+  if (!partner) {
+    return null;
+  }
+
+  const aggregate = await prisma.distribution.aggregate({
+    where: { partnerId: Number(id) },
+    _sum: {
+      numberDiapers: true,
+      numberChildren: true,
+    },
+  });
+
+  return {
+    partner_id: Number(partner.id),
+    name: partner.name,
+    description: partner.description,
+    logoUrl: partner.logoUrl,
+    coordinates: partner.coords,
+    address: partner.address,
+    status: partner.status,
+    startPartner: partner.startPartner,
+    endPartner: partner.endPartner,
+    number_babies_helped: Number(aggregate._sum.numberChildren),
+    number_diapers: Number(aggregate._sum.numberDiapers),
+    citiesServed: partner.partnerRegions.map((pr) => ({
+      id: pr.city?.id,
+    })),
+  };
+}
+
+export async function GET(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
 
   try {
-    const partner = await prisma.partner.findUnique({
-      where: { id: Number(id) },
-    });
+    const data = await getPartnerById(id);
 
-    const aggregate = await prisma.distribution.aggregate({
-      where: { partnerId: Number(id) },
-      _sum: {
-        numberDiapers: true,
-        numberChildren: true,
-      },
-    });
-
-    if (!partner) {
+    if (!data) {
       return NextResponse.json({ error: "Partner not found" }, { status: 404 });
     }
 
-    const dataToReturn = {
-      partner_id: Number(partner.id),
-      name: partner.name,
-      description: partner.description,
-      logoUrl: partner.logoUrl,
-      coordinates: partner.coords,
-      address: partner.address,
-      status: partner.status,
-      startPartner: partner.startPartner,
-      endPartner: partner.endPartner, // Requirement: Add end date to drawer
-      number_babies_helped: Number(aggregate._sum.numberChildren),
-      number_diapers: Number(aggregate._sum.numberDiapers),
-    };
-
     return NextResponse.json({
-      data: JSON.parse(stringifyWithBigInt(dataToReturn)),
+      data: JSON.parse(stringifyWithBigInt(data)),
     });
-  } catch (error) {
-    return NextResponse.json(
-      { error: "Unable to load partner" },
-      { status: 500 },
-    );
+  } catch {
+    return NextResponse.json({ error: "Unable to load partner" }, { status: 500 });
   }
 }
 
-export async function POST(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> },
-) {
+export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const body = await request.json();
 
@@ -88,13 +110,11 @@ export async function POST(
       data: updateData,
     });
 
+    revalidateTag("cities", "max");
     return NextResponse.json({
       data: JSON.parse(stringifyWithBigInt(updatedPartner)),
     });
-  } catch (error) {
-    return NextResponse.json(
-      { error: "Failed to update partner" },
-      { status: 500 },
-    );
+  } catch {
+    return NextResponse.json({ error: "Failed to update partner" }, { status: 500 });
   }
 }

@@ -1,9 +1,7 @@
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 
-const isSuperAdminOnlyRoute = createRouteMatcher([
-  "/admin/controls(.*)",
-]);
+const isSuperAdminOnlyRoute = createRouteMatcher(["/admin/controls(.*)"]);
 
 const isAdminRoute = createRouteMatcher(["/admin(.*)"]);
 const isAdminApiRoute = createRouteMatcher([
@@ -19,10 +17,10 @@ export default clerkMiddleware(async (auth, req) => {
     return;
   }
 
-  const authState = await auth();
-  const role = authState.sessionClaims?.metadata?.role
-  
-  if (!authState.userId) {
+  const { sessionClaims, userId } = await auth();
+  const role = sessionClaims?.metadata?.role;
+
+  if (!userId) {
     if (isAdminApiRoute(req) || isSuperAdminOnlyRoute(req)) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }

@@ -119,13 +119,7 @@ const parseAddressFields = (address: string | null): AddressFields => {
   };
 };
 
-const buildAddressString = ({
-  addressLine,
-  city,
-  state,
-  zipCode,
-  country,
-}: AddressFields) =>
+const buildAddressString = ({ addressLine, city, state, zipCode, country }: AddressFields) =>
   [addressLine, city, state, zipCode, country || DEFAULT_COUNTRY]
     .filter((part) => Boolean(part))
     .join(", ");
@@ -150,10 +144,7 @@ const requiredInput = (label: string) => (value: unknown) => {
 
 type UpdatePercentagesOptions = "one-time" | "continuous";
 
-
-const parseMonthDateForPicker = (
-  rawDate: string | null | undefined,
-): Date | null => {
+const parseMonthDateForPicker = (rawDate: string | null | undefined): Date | null => {
   if (!rawDate) return null;
   const monthMatch = rawDate.match(/^(\d{4})-(\d{2})/);
   if (!monthMatch) {
@@ -184,15 +175,11 @@ const formatMonthDateForApi = (date: Date | string | null): string | null => {
   return `${year}-${month}-01`;
 };
 
-export default function EditPartnerForm({
-  partner,
-  onClose,
-}: EditPartnerFormProps) {
+export default function EditPartnerForm({ partner, onClose }: EditPartnerFormProps) {
   const [loading, setLoading] = useState(false);
   const [monthVerificationErrorMsg, setMonthVerificationErrorMsg] = useState<string | null>('');
-  const [initialLogoUrl] = useState<string>(partner.logo_url || "");
-  const [activePercentTab, setActivePercentTab] =
-    useState<UpdatePercentagesOptions>("one-time");
+  const [initialLogoUrl] = useState<string>(partner.logoUrl || "");
+  const [activePercentTab, setActivePercentTab] = useState<UpdatePercentagesOptions>("one-time");
   const [cityPercentages, setCityPercentages] = useState<
     {
       city: { id: number; name: string };
@@ -214,10 +201,10 @@ export default function EditPartnerForm({
   const initialCityPercentEntries: CityPercentage[] =
     cityPercentages.length > 0
       ? cityPercentages.map((entry, idx) => ({
-        id: `${entry.city.name}-${idx}`,
-        city: entry.city.name,
-        percent: Math.round((entry.percentage ?? 0) * 100),
-      }))
+          id: `${entry.city.name}-${idx}`,
+          city: entry.city.name,
+          percent: Math.round((entry.percentage ?? 0) * 100),
+        }))
       : [];
 
   const addressFields = parseAddressFields(partner.address);
@@ -240,7 +227,7 @@ export default function EditPartnerForm({
       zipCode: addressFields.zipCode,
       country: addressFields.country,
       logoFile: null as File | null,
-      logoUrl: partner.logo_url || "",
+      logoUrl: partner.logoUrl || "",
       updatePercentagesType: "one-time" as UpdatePercentagesOptions,
     },
     validate: {
@@ -279,7 +266,7 @@ export default function EditPartnerForm({
 
     fetchCoordsFromAddress(fullAddress).then((location) => {
       if (!location) return;
-      form.setFieldValue("latitude", String(location.lat)); 
+      form.setFieldValue("latitude", String(location.lat));
       form.setFieldValue("longitude", String(location.lng));
     });
   }, [
@@ -297,14 +284,8 @@ export default function EditPartnerForm({
       id: partner.id,
       name: values.organization,
       description: values.description,
-      start_partner:
-        values.status !== "waitlisted"
-          ? formatMonthDateForApi(values.time)
-          : null,
-      end_partner:
-        values.status === "inactive"
-          ? formatMonthDateForApi(values.endTime)
-          : null,
+      start_partner: values.status !== "waitlisted" ? formatMonthDateForApi(values.time) : null,
+      end_partner: values.status === "inactive" ? formatMonthDateForApi(values.endTime) : null,
       status: values.status,
       coordinates: {
         lat: Number(values.latitude),
@@ -350,20 +331,13 @@ export default function EditPartnerForm({
 
   return (
     <Box pos="relative">
-      <LoadingOverlay
-        visible={loading}
-        zIndex={1000}
-        overlayProps={{ radius: "sm", blur: 2 }}
-      />
+      <LoadingOverlay visible={loading} zIndex={1000} overlayProps={{ radius: "sm", blur: 2 }} />
 
       <div className="mx-8">
         <h2 className="text-lg text-gray-500" style={{ marginBottom: "24px" }}>
           Change your partner data
         </h2>
-        <form
-          onSubmit={form.onSubmit(submitEditPartner)}
-          className="flex flex-col gap-5"
-        >
+        <form onSubmit={form.onSubmit(submitEditPartner)} className="flex flex-col gap-5">
           <Group justify="space-between" align="flex-start">
             <Text fw={600} c="#344054">
               Name of Organization <span className="text-red-600">*</span>
@@ -651,12 +625,7 @@ export default function EditPartnerForm({
           )}
 
           <Group justify="flex-end" mt="md">
-            <Button
-              variant="outline"
-              color="#053766"
-              radius="md"
-              onClick={onClose}
-            >
+            <Button variant="outline" color="#053766" radius="md" onClick={onClose}>
               Cancel
             </Button>
             <Button variant="filled" color="#053766" radius="md" type="submit">

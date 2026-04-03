@@ -60,7 +60,7 @@ type Partner = {
   status: status;
   address: string | null;
   coords?: { lat: number; lng: number };
-  logo_url: string | null;
+  logoUrl: string | null;
 };
 
 type PartnerRegionWithCity = {
@@ -106,16 +106,29 @@ const statuses = (Object.values(status) as string[]).map((s) => ({
 }));
 
 export default function Page() {
+  const hashToTab = (hash: string): string => (hash === "#diapers" ? "Diapers" : "Partners");
+
   const [activeTab, setActiveTab] = useState<string | null>("Partners");
+
+  useEffect(() => {
+    setActiveTab(hashToTab(window.location.hash));
+
+    const onHashChange = () => setActiveTab(hashToTab(window.location.hash));
+    window.addEventListener("hashchange", onHashChange);
+    return () => window.removeEventListener("hashchange", onHashChange);
+  }, []);
+
+  const handleTabChange = (tab: string | null) => {
+    setActiveTab(tab);
+    if (tab) window.location.hash = tab.toLowerCase();
+  };
   const [isDrawerOpen, drawerControls] = useDisclosure(false);
   const [isPartnerFilterOpen, setPartnerFilterOpen] = useState(false);
 
   const [error, setError] = useState<string>();
 
   // partner filtering
-  const [partnerYearSince, setPartnerYearSince] = useState<string | null>(
-    "All",
-  );
+  const [partnerYearSince, setPartnerYearSince] = useState<string | null>("All");
   const [partnerStatus, setPartnerStatus] = useState<string[]>([]);
 
   const [partners, setPartners] = useState<Partner[]>([]);
@@ -128,9 +141,7 @@ export default function Page() {
   const [valueTo, setValueTo] = useState<string | null>(null);
 
   const [distributions, setDistributions] = useState<Distribution[]>([]);
-  const [filteredDistributions, setFilteredDistributions] = useState<
-    Distribution[]
-  >([]);
+  const [filteredDistributions, setFilteredDistributions] = useState<Distribution[]>([]);
 
   const fetchDistributions = useCallback(async () => {
     try {
@@ -138,9 +149,7 @@ export default function Page() {
       if (!response.ok) throw new Error("Failed to fetch distributions");
       const data = await response.json();
       // Handle both array and object responses
-      const distributions = Array.isArray(data)
-        ? data
-        : data.distributions || [];
+      const distributions = Array.isArray(data) ? data : data.distributions || [];
       setDistributions(distributions);
       setFilteredDistributions(distributions);
     } catch (err) {
@@ -167,17 +176,15 @@ export default function Page() {
     try {
       const response = await fetch("/api/partners/percentages");
       const result = await response.json();
-      const normalized = (result.data ?? []).map(
-        (entry: PartnerRegionApiResponse) => ({
-          ...entry,
-          partnerId: Number(entry.partnerId),
-          cityId: Number(entry.cityId),
-          city: {
-            ...entry.city,
-            id: Number(entry.city.id),
-          },
-        }),
-      );
+      const normalized = (result.data ?? []).map((entry: PartnerRegionApiResponse) => ({
+        ...entry,
+        partnerId: Number(entry.partnerId),
+        cityId: Number(entry.cityId),
+        city: {
+          ...entry.city,
+          id: Number(entry.city.id),
+        },
+      }));
       setPercentages(normalized);
     } catch (err) {
       console.log("Error fetching percentages data", err);
@@ -220,14 +227,14 @@ export default function Page() {
       if (data.months) {
         const validMonths = data.months.filter(
           (d: { Month: string | null; Year: string | null }) =>
-            typeof d.Month === "string" && typeof d.Year === "string"
+            typeof d.Month === "string" && typeof d.Year === "string",
         );
         const currentYearMonths = validMonths.filter(
-          (d: { Month: string; Year: string }) => d.Year === String(currentYear)
+          (d: { Month: string; Year: string }) => d.Year === String(currentYear),
         );
         const indices = currentYearMonths
           .map((d: { Month: string; Year: string }) =>
-            MONTHS.findIndex((m) => d.Month.startsWith(m))
+            MONTHS.findIndex((m) => d.Month.startsWith(m)),
           )
           .filter((index: number) => index >= 0);
         setUploadedMonths(indices);
@@ -295,9 +302,7 @@ export default function Page() {
     if (partnerYearSince && partnerYearSince !== "All") {
       filtered = filtered.filter((p) => {
         if (!p.start_partner) return false;
-        return (
-          new Date(p.start_partner).getUTCFullYear() <= Number(partnerYearSince)
-        );
+        return new Date(p.start_partner).getUTCFullYear() <= Number(partnerYearSince);
       });
     }
 
@@ -319,27 +324,17 @@ export default function Page() {
     }
 
     setFilteredPartners(filtered);
-  }, [
-    partners,
-    partnerYearSince,
-    partnerStatus,
-    partnerSearch,
-    partnerCitiesMap,
-  ]);
+  }, [partners, partnerYearSince, partnerStatus, partnerSearch, partnerCitiesMap]);
 
   const refreshTable = useCallback(() => {
     fetchPartners();
   }, [fetchPartners]);
 
-  const [
-    openedUploadDataForm,
-    { open: openUploadDataForm, close: closeUploadDataForm },
-  ] = useDisclosure(false);
+  const [openedUploadDataForm, { open: openUploadDataForm, close: closeUploadDataForm }] =
+    useDisclosure(false);
 
-  const [
-    openedPartnerForm,
-    { open: openPartnerForm, close: closePartnerForm },
-  ] = useDisclosure(false);
+  const [openedPartnerForm, { open: openPartnerForm, close: closePartnerForm }] =
+    useDisclosure(false);
 
   const isPartnersTab = activeTab === "Partners";
 
@@ -377,14 +372,7 @@ export default function Page() {
           ? "/admin_view/diapers_tab_blue.svg"
           : "/admin_view/diapers_tab_gray.svg";
 
-    return (
-      <Image
-        src={icon}
-        alt={`${tab.toLowerCase()} tab icon`}
-        height={16}
-        width={16}
-      />
-    );
+    return <Image src={icon} alt={`${tab.toLowerCase()} tab icon`} height={16} width={16} />;
   };
 
   return (
@@ -409,22 +397,14 @@ export default function Page() {
                 onUploaded={fetchDistributions}
                 uploadedMonths={uploadedMonths}
               />
-              <AddPartnerForm
-                opened={openedPartnerForm}
-                onClose={closePartnerForm}
-              />
+              <AddPartnerForm opened={openedPartnerForm} onClose={closePartnerForm} />
               <Button
                 onClick={handleAddClick}
                 variant="default"
                 radius="md"
                 c="#053766"
                 rightSection={
-                  <Image
-                    src="/admin_view/add_icon.svg"
-                    alt="add button"
-                    width={16}
-                    height={16}
-                  />
+                  <Image src="/admin_view/add_icon.svg" alt="add button" width={16} height={16} />
                 }
               >
                 {isPartnersTab ? "Add A New Partner" : "Upload New Data"}
@@ -435,7 +415,7 @@ export default function Page() {
           <Tabs
             classNames={classes}
             value={activeTab}
-            onChange={setActiveTab}
+            onChange={handleTabChange}
             styles={{
               list: {
                 "--tabs-border-color": "transparent",
@@ -443,10 +423,7 @@ export default function Page() {
             }}
           >
             <Tabs.List mb="16px">
-              <Tabs.Tab
-                value="Partners"
-                leftSection={renderTabIcon("Partners")}
-              >
+              <Tabs.Tab value="Partners" leftSection={renderTabIcon("Partners")}>
                 Partners
               </Tabs.Tab>
               <Tabs.Tab value="Diapers" leftSection={renderTabIcon("Diapers")}>
@@ -468,7 +445,9 @@ export default function Page() {
                 <MonthPickerInput
                   placeholder="Pick date"
                   value={valueFrom ? `${valueFrom}-01` : null}
-                  onChange={(val) => setValueFrom(val ? (val as unknown as string).slice(0, 7) : null)}
+                  onChange={(val) =>
+                    setValueFrom(val ? (val as unknown as string).slice(0, 7) : null)
+                  }
                   className="mb-3"
                 />
 
@@ -476,7 +455,9 @@ export default function Page() {
                 <MonthPickerInput
                   placeholder="Pick date"
                   value={valueTo ? `${valueTo}-01` : null}
-                  onChange={(val) => setValueTo(val ? (val as unknown as string).slice(0, 7) : null)}
+                  onChange={(val) =>
+                    setValueTo(val ? (val as unknown as string).slice(0, 7) : null)
+                  }
                   className="mb-6"
                 />
                 <div className="flex justify-between">

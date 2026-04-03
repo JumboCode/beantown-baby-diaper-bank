@@ -1,16 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import {
-  Table,
-  Modal,
-  Pill,
-  Mark,
-  Text,
-  Button,
-  Loader,
-  Center,
-} from "@mantine/core";
+import { Table, Modal, Pill, Mark, Text, Button, Loader, Center } from "@mantine/core";
 import EditPartnerForm from "./EditPartnerForm";
 import { useDisclosure } from "@mantine/hooks";
 import { status } from "@/generated/prisma/enums";
@@ -25,7 +16,7 @@ export type Partner = {
   status: status;
   address: string | null;
   coords?: { lat: number; lng: number };
-  logo_url: string | null;
+  logoUrl: string | null;
 };
 
 function formatDate(rawDate: string) {
@@ -114,9 +105,9 @@ export default function PartnerTable({
                   <Table.Tr key={partner.id}>
                     <Table.Td>
                       <div className="flex items-center gap-3">
-                        {partner.logo_url && (
+                        {partner.logoUrl && (
                           <img
-                            src={partner.logo_url}
+                            src={partner.logoUrl}
                             alt={partner.name}
                             className="h-10 w-10 object-contain"
                             onError={(e) => {
@@ -131,9 +122,7 @@ export default function PartnerTable({
                     </Table.Td>
                     <Table.Td className="text-sm text-gray-600">
                       {partner.description || (
-                        <span className="text-gray-400 italic">
-                          No description
-                        </span>
+                        <span className="text-gray-400 italic">No description</span>
                       )}
                     </Table.Td>
                     <Table.Td className="text-sm text-gray-600">
@@ -146,13 +135,10 @@ export default function PartnerTable({
                     <Table.Td>
                       <span key={partner.id} className="text-sm text-gray-600">
                         <span>
-                          {/* percentages for waitlisted orgs are optional and 
+                          {/* percentages for waitlisted orgs are optional and
                           won't be displayed for now */}
                           {percentages
-                            .filter(
-                              (percentage) =>
-                                Number(percentage.partnerId) === partner.id,
-                            )
+                            .filter((percentage) => Number(percentage.partnerId) === partner.id)
                             .map((p) =>
                               partner.status !== "waitlisted"
                                 ? `${p.city.name} (${formatPercentDisplay(p.percentage)})`
@@ -179,14 +165,11 @@ export default function PartnerTable({
                               : "#98A2B3"
                         }
                       >
-                        {partner.status.charAt(0).toUpperCase() +
-                          partner.status.slice(1)}
+                        {partner.status.charAt(0).toUpperCase() + partner.status.slice(1)}
                       </Pill>
                     </Table.Td>
                     <Table.Td className="text-sm text-gray-600">
-                      {partner.address || (
-                        <span className="text-gray-400 italic">N/A</span>
-                      )}
+                      {partner.address || <span className="text-gray-400 italic">N/A</span>}
                     </Table.Td>
 
                     <Table.Td style={{ verticalAlign: "middle" }}>
@@ -201,23 +184,11 @@ export default function PartnerTable({
                         }}
                         w="100px"
                         rightSection={
-                          <Image
-                            src="/admin_view/pen.svg"
-                            alt="Edit"
-                            width={20}
-                            height={20}
-                          />
+                          <Image src="/admin_view/pen.svg" alt="Edit" width={20} height={20} />
                         }
                       >
                         Edit
                       </Button>
-                      {/* <ActionIcon
-                      variant="light"
-                      onClick={() => {
-                        setPartner(partner);
-                        open();
-                      }}
-                      size="lg"></ActionIcon> */}
                     </Table.Td>
                   </Table.Tr>
                 ))
