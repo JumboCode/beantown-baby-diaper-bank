@@ -143,9 +143,48 @@ export async function DELETE(req: Request) {
 
     const parsedIds = ids.map((id) => BigInt(id));
 
-    const result = await prisma.distribution.deleteMany({
+    const toDelete = await prisma.distribution.findMany({
       where: { id: { in: parsedIds } },
+      select: { partnerId: true, cityId: true, year: true, month: true, numberDiapers: true, numberChildren: true },
     });
+
+    const monthlyDataKeys = [
+      ...new Map(
+        toDelete
+          .filter((d) => d.partnerId && d.year && d.month)
+          .map((d) => [`${d.partnerId}-${d.year}-${d.month}`, d]),
+      ).values(),
+    ] as { partnerId: bigint; year: string; month: string }[];
+
+    const yearlyTotals = new Map<string, { cityId: bigint; year: string; diapers: bigint; children: bigint }>();
+    for (const d of toDelete) {
+      if (!d.cityId || !d.year) continue;
+      const key = `${d.cityId}-${d.year}`;
+      const existing = yearlyTotals.get(key) ?? { cityId: d.cityId, year: d.year, diapers: BigInt(0), children: BigInt(0) };
+      existing.diapers += d.numberDiapers ?? BigInt(0);
+      existing.children += d.numberChildren ?? BigInt(0);
+      yearlyTotals.set(key, existing);
+    }
+
+    const [result] = await prisma.$transaction([
+      prisma.distribution.deleteMany({
+        where: { id: { in: parsedIds } },
+      }),
+      ...monthlyDataKeys.map(({ partnerId, year, month }) =>
+        prisma.monthlyData.deleteMany({
+          where: { partnerId, year, month: month as never },
+        }),
+      ),
+      ...[...yearlyTotals.values()].map(({ cityId, year, diapers, children }) =>
+        prisma.yearlyData.updateMany({
+          where: { cityId, year },
+          data: {
+            numDiapers: { decrement: diapers },
+            numBabies: { decrement: children },
+          },
+        }),
+      ),
+    ]);
 
     return NextResponse.json({ deletedCount: result.count });
   } catch (error) {
