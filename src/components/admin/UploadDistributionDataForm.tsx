@@ -1,18 +1,7 @@
-import {
-  Modal,
-  Button,
-  Group,
-  Text,
-  Stack,
-  SimpleGrid,
-  Paper,
-  Box,
-  Alert,
-} from "@mantine/core";
+import { Modal, Button, Group, Text, Stack, SimpleGrid, Paper, Box, Alert } from "@mantine/core";
 import FileUpload, { FileInfo } from "./FileUpload";
 import { MonthPickerInput } from "@mantine/dates";
 import { useState } from "react";
-import Link from "next/link";
 import { FaDownload } from "react-icons/fa";
 
 interface UploadNewDataProps {
@@ -22,20 +11,7 @@ interface UploadNewDataProps {
   uploadedMonths: number[];
 }
 
-const MONTHS = [
-  "Jan",
-  "Feb",
-  "Mar",
-  "Apr",
-  "May",
-  "Jun",
-  "Jul",
-  "Aug",
-  "Sep",
-  "Oct",
-  "Nov",
-  "Dec",
-];
+const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
 export default function UploadNewData({
   opened,

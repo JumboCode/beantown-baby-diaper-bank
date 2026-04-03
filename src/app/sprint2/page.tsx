@@ -4,9 +4,7 @@ import { Container, Title, Paper, Divider, Text } from "@mantine/core";
 
 import OurSlider from "../../components/sprint2/OurSlider";
 import DotPopUps from "@/components/sprint2/DotPopUps";
-import YearlyMonthlySwitch from "@/components/sprint2/YearlyMonthlySwitch";
 import FileUpload from "@/components/admin/FileUpload";
-import { useTimelinePeriod } from "@/components/map/useTimelinePeriod";
 
 export default function Sprint2Page() {
   return (
@@ -49,9 +47,7 @@ export default function Sprint2Page() {
       <Title order={2} mt="md" mb="xs">
         Yearly vs Monthly Switch
       </Title>
-      <div>
-        {/*<YearlyMonthlySwitch value={view} onChange={toggleView} />*/}
-      </div>
+      <div>{/*<YearlyMonthlySwitch value={view} onChange={toggleView} />*/}</div>
     </Container>
   );
 }
