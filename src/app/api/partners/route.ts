@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { revalidateTag, cacheLife, cacheTag } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { Prisma as PrismaTypes, status } from "@/generated/prisma/client";
 import type { City, Partner } from "@/generated/prisma/client";
@@ -66,9 +67,7 @@ class PartnerRequestError extends Error {
   }
 }
 
-async function fetchCityGeoDataFromNominatim(
-  cityName: string,
-): Promise<CityGeoData> {
+async function fetchCityGeoDataFromNominatim(cityName: string): Promise<CityGeoData> {
   const query = new URLSearchParams({
     q: `${cityName}, Massachusetts, United States`,
     format: "jsonv2",
@@ -79,8 +78,7 @@ async function fetchCityGeoDataFromNominatim(
 
   const response = await fetch(`${NOMINATIM_BASE_URL}?${query.toString()}`, {
     headers: {
-      "User-Agent":
-        "beantown-baby-diaper-bank/1.0 (contact: your-email@domain.com)",
+      "User-Agent": "beantown-baby-diaper-bank/1.0 (contact: your-email@domain.com)",
       Accept: "application/json",
     },
   });
@@ -103,8 +101,7 @@ async function fetchCityGeoDataFromNominatim(
 
   const lat = first.lat ? Number(first.lat) : NaN;
   const lon = first.lon ? Number(first.lon) : NaN;
-  const addressType =
-    typeof first.addresstype === "string" ? first.addresstype : "";
+  const addressType = typeof first.addresstype === "string" ? first.addresstype : "";
 
   if (
     (addressType !== "town" && addressType !== "city") ||
@@ -125,10 +122,10 @@ async function fetchCityGeoDataFromNominatim(
   };
 }
 
-export async function GET(request: Request) {
-  const { searchParams } = new URL(request.url);
-  const search = searchParams.get("search");
-  const waitlisted = searchParams.get("waitlisted");
+async function getPartners(search: string | null, waitlisted: string | null) {
+  "use cache";
+  cacheTag("cities");
+  cacheLife("max");
 
   const where: PrismaTypes.PartnerWhereInput = {};
 
@@ -143,34 +140,37 @@ export async function GET(request: Request) {
     where.status = waitlisted === "true" ? "waitlisted" : { not: "waitlisted" };
   }
 
-  try {
-    const partners: Partner[] = await prisma.partner.findMany({
-      where,
-      orderBy: { name: "asc" },
-    });
+  const partners: Partner[] = await prisma.partner.findMany({
+    where,
+    orderBy: { name: "asc" },
+  });
 
-    return NextResponse.json({
-      data: partners.map((partner) => ({
-        id: Number(partner.id),
-        created_at: partner.createdAt.toISOString(),
-        name: partner.name,
-        description: partner.description,
-        start_partner: partner.startPartner
-          ? partner.startPartner.toISOString()
-          : null,
-        end_partner: partner.endPartner ? partner.endPartner.toISOString() : null,
-        status: partner.status,
-        waitlisted: partner.status === "waitlisted",
-        address: partner.address,
-        coords: partner.coords,
-        logo_url: partner.logoUrl,
-      })),
-    });
+  return partners.map((partner) => ({
+    id: Number(partner.id),
+    created_at: partner.createdAt.toISOString(),
+    name: partner.name,
+    description: partner.description,
+    start_partner: partner.startPartner ? partner.startPartner.toISOString() : null,
+    end_partner: partner.endPartner ? partner.endPartner.toISOString() : null,
+    status: partner.status,
+    waitlisted: partner.status === "waitlisted",
+    address: partner.address,
+    coords: partner.coords,
+    logoUrl: partner.logoUrl,
+  }));
+}
+
+export async function GET(request: Request) {
+  const { searchParams } = new URL(request.url);
+  const search = searchParams.get("search");
+  const waitlisted = searchParams.get("waitlisted");
+
+  try {
+    const data = await getPartners(search, waitlisted);
+    return NextResponse.json({ data });
   } catch (error) {
     const message =
-      error instanceof Error
-        ? error.message
-        : "Unable to load partners from the database.";
+      error instanceof Error ? error.message : "Unable to load partners from the database.";
 
     return NextResponse.json({ error: message }, { status: 500 });
   }
@@ -196,15 +196,9 @@ export async function PUT(request: Request) {
     }
   } catch (error) {
     if (error instanceof PartnerRequestError) {
-      return NextResponse.json(
-        { error: error.message },
-        { status: error.status },
-      );
+      return NextResponse.json({ error: error.message }, { status: error.status });
     }
-    return NextResponse.json(
-      { error: "Invalid request body" },
-      { status: 400 },
-    );
+    return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
   }
 
   const cityNames = Array.from(
@@ -284,29 +278,20 @@ export async function PUT(request: Request) {
         }
       }
 
-      const allCities = cityNames.length
-        ? await tx.city.findMany({ where: cityWhere })
-        : [];
+      const allCities = cityNames.length ? await tx.city.findMany({ where: cityWhere }) : [];
 
       return new Map(
         allCities
-          .map((city) => [
-            city.name ? normalizeCityName(city.name) : null,
-            city.id,
-          ])
+          .map((city) => [city.name ? normalizeCityName(city.name) : null, city.id])
           .filter(([name]) => name !== null) as Array<[string, bigint]>,
       );
     });
   } catch (error) {
     if (error instanceof PartnerRequestError) {
-      return NextResponse.json(
-        { error: error.message },
-        { status: error.status },
-      );
+      return NextResponse.json({ error: error.message }, { status: error.status });
     }
 
-    const message =
-      error instanceof Error ? error.message : "Failed to prepare cities";
+    const message = error instanceof Error ? error.message : "Failed to prepare cities";
     return NextResponse.json({ error: message }, { status: 500 });
   }
 
@@ -349,16 +334,10 @@ export async function PUT(request: Request) {
     });
   } catch (error) {
     if (error instanceof PartnerRequestError) {
-      return NextResponse.json(
-        { error: error.message },
-        { status: error.status },
-      );
+      return NextResponse.json({ error: error.message }, { status: error.status });
     }
 
-    const message =
-      error instanceof Error
-        ? error.message
-        : "Unable to create partner in database";
+    const message = error instanceof Error ? error.message : "Unable to create partner in database";
     return NextResponse.json({ error: message }, { status: 500 });
   }
 
@@ -378,14 +357,10 @@ export async function PUT(request: Request) {
       try {
         await cleanupPartnerCreate(partnerId, uploadedObjectKey);
       } catch (cleanupError) {
-        console.error(
-          "Failed to clean up partner after logo upload failure:",
-          cleanupError,
-        );
+        console.error("Failed to clean up partner after logo upload failure:", cleanupError);
       }
 
-      const message =
-        error instanceof Error ? error.message : "Unable to create partner.";
+      const message = error instanceof Error ? error.message : "Unable to create partner.";
       const statusCode =
         error instanceof PartnerRequestError || error instanceof FileUploadError
           ? error.status
@@ -394,6 +369,7 @@ export async function PUT(request: Request) {
     }
   }
 
+  revalidateTag("cities", "max");
   return NextResponse.json({
     data: stringifyWithBigInt(partner),
   });
@@ -411,15 +387,9 @@ export async function POST(request: Request) {
     logoFile = parsed.logoFile;
   } catch (error) {
     if (error instanceof PartnerRequestError) {
-      return NextResponse.json(
-        { error: error.message },
-        { status: error.status },
-      );
+      return NextResponse.json({ error: error.message }, { status: error.status });
     }
-    return NextResponse.json(
-      { error: "Invalid request body" },
-      { status: 400 },
-    );
+    return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
   }
 
   const partnerId = Number(payload.id);
@@ -437,10 +407,7 @@ export async function POST(request: Request) {
     );
 
     if (cityNames.length === 0) {
-      return NextResponse.json(
-        { error: "Please check the entered cities." },
-        { status: 422 },
-      );
+      return NextResponse.json({ error: "Please check the entered cities." }, { status: 422 });
     }
 
     try {
@@ -516,23 +483,16 @@ export async function POST(request: Request) {
 
         return new Map(
           allCities
-            .map((city) => [
-              city.name ? normalizeCityName(city.name) : null,
-              city.id,
-            ])
+            .map((city) => [city.name ? normalizeCityName(city.name) : null, city.id])
             .filter(([name]) => name !== null) as Array<[string, bigint]>,
         );
       });
     } catch (error) {
       if (error instanceof PartnerRequestError) {
-        return NextResponse.json(
-          { error: error.message },
-          { status: error.status },
-        );
+        return NextResponse.json({ error: error.message }, { status: error.status });
       }
 
-      const message =
-        error instanceof Error ? error.message : "Failed to prepare cities";
+      const message = error instanceof Error ? error.message : "Failed to prepare cities";
       return NextResponse.json({ error: message }, { status: 500 });
     }
   }
@@ -542,10 +502,7 @@ export async function POST(request: Request) {
 
     if (logoAction === "replace") {
       if (!logoFile) {
-        throw new PartnerRequestError(
-          "File is required when logoAction is replace",
-          400,
-        );
+        throw new PartnerRequestError("File is required when logoAction is replace", 400);
       }
       validateLogoFile(logoFile);
       await validateImageSignature(logoFile);
@@ -593,10 +550,7 @@ export async function POST(request: Request) {
           ([normalizedCityName, percentage]) => {
             const cityId = cityIdByName.get(normalizedCityName);
             if (!cityId) {
-              throw new PartnerRequestError(
-                "Please check the entered cities.",
-                422,
-              );
+              throw new PartnerRequestError("Please check the entered cities.", 422);
             }
 
             return {
@@ -638,29 +592,22 @@ export async function POST(request: Request) {
     });
 
     if (logoAction === "remove") {
-      await deleteLogoObject(getLogoObjectKey(partnerId)).catch(
-        () => undefined,
-      );
+      await deleteLogoObject(getLogoObjectKey(partnerId)).catch(() => undefined);
     }
 
+    revalidateTag("cities", "max");
     return NextResponse.json({
       data: stringifyWithBigInt(partner),
     });
   } catch (error) {
     if (logoAction === "replace") {
-      await deleteLogoObject(getLogoObjectKey(partnerId)).catch(
-        () => undefined,
-      );
+      await deleteLogoObject(getLogoObjectKey(partnerId)).catch(() => undefined);
     }
 
     const message =
-      error instanceof Error
-        ? error.message
-        : "Unable to update partner in database.";
+      error instanceof Error ? error.message : "Unable to update partner in database.";
     const statusCode =
-      error instanceof PartnerRequestError || error instanceof FileUploadError
-        ? error.status
-        : 500;
+      error instanceof PartnerRequestError || error instanceof FileUploadError ? error.status : 500;
     return NextResponse.json({ error: message }, { status: statusCode });
   }
 }
@@ -675,12 +622,7 @@ function normalizeMonthDate(value: string | null): string | null {
 
   const year = Number(match[1]);
   const month = Number(match[2]);
-  if (
-    !Number.isInteger(year) ||
-    !Number.isInteger(month) ||
-    month < 1 ||
-    month > 12
-  ) {
+  if (!Number.isInteger(year) || !Number.isInteger(month) || month < 1 || month > 12) {
     throw new PartnerRequestError("Invalid date value", 400);
   }
 
@@ -693,17 +635,12 @@ function parseLogoAction(raw: FormDataEntryValue | null): LogoAction {
     throw new PartnerRequestError("Invalid logoAction field", 400);
   }
   if (raw !== "keep" && raw !== "replace" && raw !== "remove") {
-    throw new PartnerRequestError(
-      "logoAction must be keep, replace, or remove",
-      400,
-    );
+    throw new PartnerRequestError("logoAction must be keep, replace, or remove", 400);
   }
   return raw;
 }
 
-function assertCreatePayload(
-  payload: unknown,
-): asserts payload is CreatePartnerPayload {
+function assertCreatePayload(payload: unknown): asserts payload is CreatePartnerPayload {
   if (!payload || typeof payload !== "object") {
     throw new PartnerRequestError("Invalid partner payload", 400);
   }
@@ -744,19 +681,13 @@ async function parseCreatePartnerRequest(request: Request): Promise<{
 
     const logoAction = parseLogoAction(formData.get("logoAction"));
     if (logoAction === "remove") {
-      throw new PartnerRequestError(
-        "logoAction remove is invalid for create",
-        400,
-      );
+      throw new PartnerRequestError("logoAction remove is invalid for create", 400);
     }
 
     const fileRaw = formData.get("file");
     const logoFile = fileRaw instanceof File ? fileRaw : null;
     if (logoAction === "replace" && !logoFile) {
-      throw new PartnerRequestError(
-        "File is required when logoAction is replace",
-        400,
-      );
+      throw new PartnerRequestError("File is required when logoAction is replace", 400);
     }
 
     return { payload: parsed, logoAction, logoFile };
@@ -767,9 +698,7 @@ async function parseCreatePartnerRequest(request: Request): Promise<{
   return { payload: body, logoAction: "keep", logoFile: null };
 }
 
-function assertUpdatePayload(
-  payload: unknown,
-): asserts payload is UpdatePartnerPayload {
+function assertUpdatePayload(payload: unknown): asserts payload is UpdatePartnerPayload {
   if (!payload || typeof payload !== "object") {
     throw new PartnerRequestError("Invalid partner payload", 400);
   }
@@ -812,10 +741,7 @@ async function parseUpdatePartnerRequest(request: Request): Promise<{
     const fileRaw = formData.get("file");
     const logoFile = fileRaw instanceof File ? fileRaw : null;
     if (logoAction === "replace" && !logoFile) {
-      throw new PartnerRequestError(
-        "File is required when logoAction is replace",
-        400,
-      );
+      throw new PartnerRequestError("File is required when logoAction is replace", 400);
     }
 
     return { payload: parsed, logoAction, logoFile };
@@ -826,16 +752,10 @@ async function parseUpdatePartnerRequest(request: Request): Promise<{
   return { payload: body, logoAction: "keep", logoFile: null };
 }
 
-async function cleanupPartnerCreate(
-  partnerId: number,
-  objectKey?: string,
-): Promise<void> {
+async function cleanupPartnerCreate(partnerId: number, objectKey?: string): Promise<void> {
   if (objectKey) {
     await deleteLogoObject(objectKey).catch((error: unknown) => {
-      const message =
-        error instanceof Error
-          ? error.message
-          : "unknown storage cleanup error";
+      const message = error instanceof Error ? error.message : "unknown storage cleanup error";
       console.error("Failed to delete uploaded logo during rollback:", message);
     });
   }

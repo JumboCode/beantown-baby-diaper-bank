@@ -26,7 +26,7 @@ import LeafletMap from "./WeiKimLeafletMap";
 import type { ChoroplethBucket } from "./useRegionsLayerWeiKim";
 import type { RegionsGeoJSON } from "@/lib/types";
 import baseRegions from "./baseRegionsWeiKim";
-import type { DotDatum } from "@/components/map/DotPopupContent";
+import type { DotDatum } from "@/components/sprint4/DotPopupContent";
 
 const emptyRegions: RegionsGeoJSON = {
   type: "FeatureCollection",
@@ -173,13 +173,13 @@ export default function HanahCaitlynMap() {
 
       return impact && centroid
         ? {
-            cityId: id,
-            cityName: name ?? id,
-            lat: centroid[0],
-            lng: centroid[1],
-            numDiapers: impact.diapersDelivered,
-            partnerOrgs: [`${impact.partnerSites} partner sites`],
-          }
+          cityId: id,
+          cityName: name ?? id,
+          lat: centroid[0],
+          lng: centroid[1],
+          numDiapers: impact.diapersDelivered,
+          partnerOrgs: [`${impact.partnerSites} partner sites`],
+        }
         : null;
     })
     .filter(Boolean) as DotDatum[];

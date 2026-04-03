@@ -2,31 +2,26 @@
 
 import { Group, Text } from "@mantine/core";
 import { UserButton, useUser } from "@clerk/nextjs";
+import SettingsButton from "./AdminSettingsButton";
 
 export default function Profile() {
   const { user, isLoaded } = useUser();
-
-  if (!isLoaded) {
-    return null;
-  }
-
   const role =
-    (typeof user?.publicMetadata?.role === "string" &&
-      user.publicMetadata.role) ||
-    "member";
+    (typeof user?.publicMetadata?.role === "string" && user.publicMetadata.role) || "member";
   const adminTypeLabel =
-    role === "superadmin"
-      ? "Super Admin"
-      : role === "admin"
-        ? "Admin"
-        : "Member";
+    role === "superadmin" ? "Super Admin" : role === "admin" ? "Admin" : "Member";
 
   return (
-    <Group gap="xs" wrap="nowrap">
-      <UserButton afterSignOutUrl="/" />
-      <Text size="xs" c="dimmed" tt="uppercase" fw={600}>
-        {adminTypeLabel}
-      </Text>
-    </Group>
+    <>
+      {isLoaded ? (
+        <Group gap="xs" wrap="nowrap">
+          <UserButton afterSignOutUrl="/" />
+          <Text size="xs" c="dimmed" tt="uppercase" fw={600}>
+            {adminTypeLabel}
+          </Text>
+          {role === "superadmin" && <SettingsButton />}
+        </Group>
+      ) : null}
+    </>
   );
 }

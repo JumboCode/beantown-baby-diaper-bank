@@ -4,14 +4,13 @@ import { type month as MonthName } from "../src/generated/prisma/client";
 loadEnv({ path: ".env.local", quiet: true });
 loadEnv({ path: ".env", quiet: true });
 
-const BASE_URL = process.env.BASE_URL ?? "http://localhost:3000";
 const FLOAT_TOLERANCE = 1e-9;
 
 type Scope = {
   partnerId: string;
   month: MonthName;
   year: number;
-}
+};
 
 type PercentageRow = {
   city: string;
@@ -44,8 +43,8 @@ const ORIGINAL_ROWS: PercentageRow[] = [
 const TEST_CASES: Array<{
   name: string;
   scope: Scope;
-  expectedStartingRows: PercentageRow[],
-  payload: Payload,
+  expectedStartingRows: PercentageRow[];
+  payload: Payload;
 }> = [
   {
     name: "March 2026: keep all cities, only add percentages",
@@ -56,9 +55,9 @@ const TEST_CASES: Array<{
       month: "March",
       year: 2026,
       percentages: [
-        { city: "Waltham", percentage: 0.70 },
-        { city: "Dorchester", percentage: 0.20 },
-        { city: "Mattapan", percentage: 0.10 },
+        { city: "Waltham", percentage: 0.7 },
+        { city: "Dorchester", percentage: 0.2 },
+        { city: "Mattapan", percentage: 0.1 },
       ],
     },
   },
@@ -71,9 +70,9 @@ const TEST_CASES: Array<{
       month: "March",
       year: 2026,
       percentages: [
-        { city: "Waltham", percentage: 0.60 },
-        { city: "Boston", percentage: 0.20 },
-        { city: "Cambridge", percentage: 0.20 },
+        { city: "Waltham", percentage: 0.6 },
+        { city: "Boston", percentage: 0.2 },
+        { city: "Cambridge", percentage: 0.2 },
       ],
     },
   },
@@ -91,14 +90,12 @@ const TEST_CASES: Array<{
         { city: "Medford", percentage: 0.33 },
       ],
     },
-  }
+  },
 ];
 
 async function main() {
   const { prisma } = await import("../src/lib/prisma");
-  const { allocateLargestRemainder } = await import(
-    "../src/lib/server/distribution-update"
-  );
+  const { allocateLargestRemainder } = await import("../src/lib/server/distribution-update");
 
   function assert(condition: unknown, message: string): asserts condition {
     if (!condition) {
@@ -107,7 +104,9 @@ async function main() {
   }
 
   function normalizeCityName(value: string | null | undefined) {
-    return String(value ?? "").trim().toLowerCase();
+    return String(value ?? "")
+      .trim()
+      .toLowerCase();
   }
 
   function nearlyEqual(a: number, b: number, tolerance = FLOAT_TOLERANCE) {
@@ -160,17 +159,17 @@ async function main() {
       );
       assert(
         nearlyEqual(actual[i].percentage, expected[i].percentage),
-        `${label}: percentage mismatch for ${expected[i].city}. 
-        expected=${expected[i].percentage} 
+        `${label}: percentage mismatch for ${expected[i].city}.
+        expected=${expected[i].percentage}
         actual=${actual[i].percentage}`,
       );
     }
   }
 
   function verifyExactRestore(
-    actualRows: SnapshotRow[], 
-    snapshotRows: SnapshotRow[], 
-    label: string
+    actualRows: SnapshotRow[],
+    snapshotRows: SnapshotRow[],
+    label: string,
   ) {
     const actual = serializeRows(actualRows);
     const expected = serializeRows(snapshotRows);
@@ -222,8 +221,8 @@ async function main() {
 
     assert(
       monthlyRows.length === 1,
-      `Expected exactly one MonthlyData row for (${scope.partnerId}, 
-      ${scope.month}, ${scope.year}), 
+      `Expected exactly one MonthlyData row for (${scope.partnerId},
+      ${scope.month}, ${scope.year}),
       found ${monthlyRows.length}`,
     );
 
@@ -305,14 +304,16 @@ async function main() {
         Response: ${JSON.stringify(response.json, null, 2)}`,
       );
 
-      const responseJson = response.json as
-        | { success?: boolean; message?: string; rowsCreated?: number }
-        | null;
+      const responseJson = response.json as {
+        success?: boolean;
+        message?: string;
+        rowsCreated?: number;
+      } | null;
 
       assert(responseJson?.success === true, `${testCase.name}: success !== true`);
       assert(
         responseJson?.rowsCreated === testCase.payload.percentages.length,
-        `${testCase.name}: rowsCreated mismatch. expected=${testCase.payload.percentages.length} 
+        `${testCase.name}: rowsCreated mismatch. expected=${testCase.payload.percentages.length}
         actual=${responseJson?.rowsCreated}`,
       );
 
@@ -349,7 +350,7 @@ async function main() {
 
       assert(
         actualTotalDiapers === totalDiapers,
-        `${testCase.name}: total diapers changed. expected=${totalDiapers} 
+        `${testCase.name}: total diapers changed. expected=${totalDiapers}
         actual=${actualTotalDiapers}`,
       );
 
@@ -360,7 +361,7 @@ async function main() {
         assert(expected !== undefined, `${testCase.name}: unexpected city in final rows: ${city}`);
         assert(
           Number(row.numberDiapers ?? BigInt(0)) === expected,
-          `${testCase.name}: numberDiapers mismatch for ${city}. 
+          `${testCase.name}: numberDiapers mismatch for ${city}.
           expected=${expected} actual=${String(row.numberDiapers ?? BigInt(0))}`,
         );
       }
@@ -381,7 +382,7 @@ async function main() {
       console.log(`RESTORED ${testCase.name}`);
     }
   }
-  
+
   let passed = 0;
 
   for (const testCase of TEST_CASES) {
@@ -398,8 +399,7 @@ async function main() {
   console.log(`\n${passed}/${TEST_CASES.length} test cases passed`);
 }
 
-main()
-  .catch((error) => {
-    console.error(error);
-    process.exitCode = 1;
-  })
+main().catch((error) => {
+  console.error(error);
+  process.exitCode = 1;
+});

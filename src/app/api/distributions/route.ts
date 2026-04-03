@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { month, Prisma as PrismaTypes } from "@/generated/prisma/client";
+import { revalidateTag } from "next/cache";
 import { allocateLargestRemainder } from "@/lib/server/distribution-update";
 
 const MONTH_NAMES = [
@@ -27,9 +28,7 @@ export async function GET(req: Request) {
   const startYear: string | null = searchParams.get("startYear");
   const endYear: string | null = searchParams.get("endYear");
 
-  const startMonth: month | null = searchParams.get(
-    "startMonth",
-  ) as month | null;
+  const startMonth: month | null = searchParams.get("startMonth") as month | null;
   const endMonth: month | null = searchParams.get("endMonth") as month | null;
 
   let where: PrismaTypes.DistributionWhereInput = {};
@@ -41,20 +40,14 @@ export async function GET(req: Request) {
     const eMonthIdx = MONTH_NAMES.indexOf(endMonth);
 
     if (sYear === eYear) {
-      const monthsInRange: month[] = MONTH_NAMES.slice(
-        sMonthIdx,
-        eMonthIdx + 1,
-      ) as month[];
+      const monthsInRange: month[] = MONTH_NAMES.slice(sMonthIdx, eMonthIdx + 1) as month[];
       where = {
         year: startYear,
         month: { in: monthsInRange },
       };
     } else {
       const startYearMonths: month[] = MONTH_NAMES.slice(sMonthIdx) as month[];
-      const endYearMonths: month[] = MONTH_NAMES.slice(
-        0,
-        eMonthIdx + 1,
-      ) as month[];
+      const endYearMonths: month[] = MONTH_NAMES.slice(0, eMonthIdx + 1) as month[];
 
       where = {
         OR: [
@@ -90,8 +83,7 @@ export async function GET(req: Request) {
   } satisfies PrismaTypes.DistributionFindManyArgs;
 
   try {
-    const distributionsArr =
-      await prisma.distribution.findMany(distributionsQuery);
+    const distributionsArr = await prisma.distribution.findMany(distributionsQuery);
 
     const formattedData = distributionsArr.map(
       (dist: {
@@ -124,10 +116,7 @@ export async function GET(req: Request) {
     return NextResponse.json(formattedData);
   } catch (error) {
     console.error("Error fetching distributions:", error);
-    return NextResponse.json(
-      { error: "Failed to fetch distributions" },
-      { status: 500 },
-    );
+    return NextResponse.json({ error: "Failed to fetch distributions" }, { status: 500 });
   }
 }
 
@@ -145,7 +134,14 @@ export async function DELETE(req: Request) {
 
     const toDelete = await prisma.distribution.findMany({
       where: { id: { in: parsedIds } },
-      select: { partnerId: true, cityId: true, year: true, month: true, numberDiapers: true, numberChildren: true },
+      select: {
+        partnerId: true,
+        cityId: true,
+        year: true,
+        month: true,
+        numberDiapers: true,
+        numberChildren: true,
+      },
     });
 
     const monthlyDataKeys = [
@@ -156,11 +152,19 @@ export async function DELETE(req: Request) {
       ).values(),
     ] as { partnerId: bigint; year: string; month: string }[];
 
-    const yearlyTotals = new Map<string, { cityId: bigint; year: string; diapers: bigint; children: bigint }>();
+    const yearlyTotals = new Map<
+      string,
+      { cityId: bigint; year: string; diapers: bigint; children: bigint }
+    >();
     for (const d of toDelete) {
       if (!d.cityId || !d.year) continue;
       const key = `${d.cityId}-${d.year}`;
-      const existing = yearlyTotals.get(key) ?? { cityId: d.cityId, year: d.year, diapers: BigInt(0), children: BigInt(0) };
+      const existing = yearlyTotals.get(key) ?? {
+        cityId: d.cityId,
+        year: d.year,
+        diapers: BigInt(0),
+        children: BigInt(0),
+      };
       existing.diapers += d.numberDiapers ?? BigInt(0);
       existing.children += d.numberChildren ?? BigInt(0);
       yearlyTotals.set(key, existing);
@@ -186,13 +190,12 @@ export async function DELETE(req: Request) {
       ),
     ]);
 
+    revalidateTag("cities", "max");
+
     return NextResponse.json({ deletedCount: result.count });
   } catch (error) {
     console.error("Error deleting distributions:", error);
-    return NextResponse.json(
-      { error: "Failed to delete distributions" },
-      { status: 500 },
-    );
+    return NextResponse.json({ error: "Failed to delete distributions" }, { status: 500 });
   }
 }
 
@@ -203,7 +206,7 @@ export async function POST(req: Request) {
 
     // validate
     if (!partnerId || !monthName || !Number.isInteger(year) || !Array.isArray(percentages)) {
-      return NextResponse.json({ error: "Missing or invalid fields" }, {status: 400});
+      return NextResponse.json({ error: "Missing or invalid fields" }, { status: 400 });
     }
 
     const targetMonth = monthName as month;
@@ -226,7 +229,6 @@ export async function POST(req: Request) {
     }
 
     const res = await prisma.$transaction(async (tx) => {
-      
       const monthlyRows = await tx.monthlyData.findMany({
         where: {
           partnerId: BigInt(partnerId),
@@ -239,25 +241,25 @@ export async function POST(req: Request) {
         throw new Error("Expected unique (partner, year, month) combo");
       }
       const monthly = monthlyRows[0];
-      
+
       const cities = await tx.city.findMany({
-        where: { name: { in: [...uniqueCities] }},
+        where: { name: { in: [...uniqueCities] } },
         select: { id: true, name: true },
       });
       if (cities.length !== uniqueCities.size) {
         throw new Error("One or more payload cities not found in DB");
       }
-      // Since the payload doesn't include cityId, but our distributions table 
+      // Since the payload doesn't include cityId, but our distributions table
       // only has cityId and not cityName, we must connect them explicitly
       const cityIdByName = new Map(cities.map((city) => [city.name, city.id]));
 
-      // total numDiapers does not change across one-time update, and should 
-      // be used to calculate the latest diaper distributions based on the 
+      // total numDiapers does not change across one-time update, and should
+      // be used to calculate the latest diaper distributions based on the
       // updated percentages
       const totalDiapers = Number(monthly.numDiapers);
       const diaperAllocations = allocateLargestRemainder(
         totalDiapers,
-        percentages.map(item => item.percentage),
+        percentages.map((item) => item.percentage),
       );
 
       // Full replace for the whole scope instead of selective delete + upsert
@@ -266,8 +268,8 @@ export async function POST(req: Request) {
           partnerId: BigInt(partnerId),
           year: String(year),
           month: targetMonth,
-        }
-      })
+        },
+      });
 
       if (percentages.length > 0) {
         await tx.distribution.createMany({
@@ -283,18 +285,15 @@ export async function POST(req: Request) {
       }
 
       return { rowsCreated: percentages.length };
-    })
+    });
 
     return NextResponse.json({
       success: true,
-      message: 'Distributions updated successfully',
+      message: "Distributions updated successfully",
       ...res,
-    })
-} catch (error) {
-  console.error("Error updating distributions:", error);
-    return NextResponse.json(
-      { error: "Failed to update distributions" },
-      { status: 500 }
-    );
+    });
+  } catch (error) {
+    console.error("Error updating distributions:", error);
+    return NextResponse.json({ error: "Failed to update distributions" }, { status: 500 });
   }
 }

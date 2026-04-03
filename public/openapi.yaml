@@ -677,7 +677,7 @@ components:
           type: object
           nullable: true
           additionalProperties: true
-        logo_url:
+        logoUrl:
           type: string
           nullable: true
 
@@ -924,7 +924,7 @@ components:
               name:
                 type: string
                 nullable: true
-              logo_url:
+              logoUrl:
                 type: string
                 nullable: true
               status:

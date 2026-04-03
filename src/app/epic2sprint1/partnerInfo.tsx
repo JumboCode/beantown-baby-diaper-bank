@@ -11,7 +11,7 @@ type Partner = {
   status: "active" | "inactive" | "waitlisted" | null;
   address: string | null;
   coords: { lat: number; lng: number };
-  logo_url: string | null;
+  logoUrl: string | null;
   number_babies_helped: number;
   number_diapers: number;
 };
@@ -182,7 +182,7 @@ export default function PartnerInfo({
                 gap: "0.9rem",
               }}
             >
-              {selectedPartner.logo_url && (
+              {selectedPartner.logoUrl && (
                 <div
                   style={{
                     width: 56,
@@ -197,7 +197,7 @@ export default function PartnerInfo({
                   }}
                 >
                   <img
-                    src={selectedPartner.logo_url}
+                    src={selectedPartner.logoUrl}
                     alt={`${selectedPartner.name} logo`}
                     style={{ maxWidth: "100%", maxHeight: "100%" }}
                   />
