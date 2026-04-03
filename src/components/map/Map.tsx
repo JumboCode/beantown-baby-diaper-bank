@@ -443,6 +443,7 @@ export default function Map({
       <PartnerIconDrawer
         partnerId={selectedPartnerId}
         onClose={() => setSelectedPartnerId(null)}
+        mapData={mapData}
       />
 
       <Box
@@ -698,6 +699,7 @@ function PopupContent({
                       border: "1px solid #D0D5DD",
                       background: "#F9FAFB",
                     }}
+                    onClick={() => onPartnerSelect(p.id)}
                   >
                     {p.name.substring(0, 2).toUpperCase()}
                   </Avatar>
