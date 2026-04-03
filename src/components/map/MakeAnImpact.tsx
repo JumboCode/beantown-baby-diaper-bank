@@ -33,7 +33,7 @@ export default function MakeAnImpact() {
             styles={{
               root: {
                 color: "white",
-                backgroundColor: "#e3393e",
+                backgroundColor: "#1e3a5f",
                 border: "none",
                 fontWeight: 700,
                 borderRadius: "6px",
