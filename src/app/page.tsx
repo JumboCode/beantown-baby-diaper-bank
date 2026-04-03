@@ -63,17 +63,17 @@ const flipBoundaries = (
     geometry:
       feature.geometry.type === "Polygon"
         ? {
-          ...feature.geometry,
-          coordinates: swapLngLat(
-            feature.geometry.coordinates,
-          ) as Polygon["coordinates"],
-        }
+            ...feature.geometry,
+            coordinates: swapLngLat(
+              feature.geometry.coordinates,
+            ) as Polygon["coordinates"],
+          }
         : {
-          ...feature.geometry,
-          coordinates: swapLngLat(
-            feature.geometry.coordinates,
-          ) as MultiPolygon["coordinates"],
-        },
+            ...feature.geometry,
+            coordinates: swapLngLat(
+              feature.geometry.coordinates,
+            ) as MultiPolygon["coordinates"],
+          },
   }));
 
   return {
@@ -90,39 +90,39 @@ export default function Page() {
     useState<number>();
   const [yearlyTotalDiapers, setYearlyTotalDiapers] = useState<number>();
   const [selectedYear, setSelectedYear] = useState<string>();
-  const [cachedBoundaries, setCachedBoundaries] =
-    useState<FeatureCollection<Polygon | MultiPolygon> | null>(null);
+  const [cachedBoundaries, setCachedBoundaries] = useState<FeatureCollection<
+    Polygon | MultiPolygon
+  > | null>(null);
 
   const [lastUploaded, setLastUploaded] = useState<string | null>(null);
   const currentYear = new Date().getFullYear();
 
   const fetchTimelineData = useCallback(async () => {
-      try {
-        const res = await fetch(`/api/timeline-slider?year=${currentYear}`);
-        const data = await res.json();
-        if (data.months) {
-          const validMonths = data.months.filter(
-            (d: { Month: string | null; Year: string | null }) =>
-              typeof d.Month === "string" && typeof d.Year === "string"
-          );
+    try {
+      const res = await fetch(`/api/timeline-slider?year=${currentYear}`);
+      const data = await res.json();
+      if (data.months) {
+        const validMonths = data.months.filter(
+          (d: { Month: string | null; Year: string | null }) =>
+            typeof d.Month === "string" && typeof d.Year === "string",
+        );
 
-          if (validMonths.length > 0) {
-            const last = validMonths[validMonths.length - 1];
-            setLastUploaded(`${last.Month} ${last.Year}`);
-          } else {
-            setLastUploaded(null);
-          }
+        if (validMonths.length > 0) {
+          const last = validMonths[validMonths.length - 1];
+          setLastUploaded(`${last.Month} ${last.Year}`);
+        } else {
+          setLastUploaded(null);
         }
-      } catch (err) {
-        console.error("Failed to fetch timeline data:", err);
       }
-    }, [currentYear]);
+    } catch (err) {
+      console.error("Failed to fetch timeline data:", err);
+    }
+  }, [currentYear]);
 
-    useEffect(() => {
-      fetchTimelineData();
-    }, [fetchTimelineData]);
+  useEffect(() => {
+    fetchTimelineData();
+  }, [fetchTimelineData]);
 
-  
   const handleTimelineChange = useCallback(
     async (params: { month?: string; year: string }) => {
       try {
@@ -137,17 +137,17 @@ export default function Page() {
         const boundariesPromise = cachedBoundaries
           ? Promise.resolve(cachedBoundaries)
           : fetch(`/api/cities/boundaries`)
-            .then((res) => res.json())
-            .then(flipBoundaries);
+              .then((res) => res.json())
+              .then(flipBoundaries);
 
         const [cities, boundaries, totalDiapersResponse] = await Promise.all([
           fetch(`/api/cities?${queryParams.toString()}`).then((res) =>
             res.json(),
           ),
           boundariesPromise,
-          fetch(`/api/total-diapers?year=${encodeURIComponent(params.year)}`).then(
-            (res) => res.json(),
-          ),
+          fetch(
+            `/api/total-diapers?year=${encodeURIComponent(params.year)}`,
+          ).then((res) => res.json()),
         ]);
 
         if (!cachedBoundaries) {
@@ -198,9 +198,18 @@ export default function Page() {
           <Title order={1} fz="30px" fw={500} mb="xs" c="#101828">
             See where diapers are distributed
           </Title>
-          <Text fz="18px" c="#667085">
-            Last data uploaded: {lastUploaded ?? "N/A"}
-          </Text>
+          <Group align="center" mb="md" gap="xs">
+            <Text fz="18px" c="#667085">
+              Last data uploaded:
+            </Text>
+            {lastUploaded ? (
+              <Text fz="18px" c="#667085" fw={500} inline inherit>
+                {lastUploaded}
+              </Text>
+            ) : (
+              <Skeleton w={100} h={16} radius="sm" />
+            )}
+          </Group>
         </Box>
 
         <TotalDiapersDistributed totalDiapers={totalDiapers} />
