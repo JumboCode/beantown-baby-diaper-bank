@@ -9,7 +9,7 @@ import {
   Box,
   Alert,
 } from "@mantine/core";
-import FileUpload, { FileInfo } from "../sprint2/FileUpload";
+import FileUpload, { FileInfo } from "./FileUpload";
 import { MonthPickerInput } from "@mantine/dates";
 import { useState } from "react";
 import Link from "next/link";
