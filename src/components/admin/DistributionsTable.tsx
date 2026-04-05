@@ -42,6 +42,14 @@ interface MonthlyDataResponseRow {
   numberDiapers: string | null;
 }
 
+interface YearGroup {
+  year: string;
+  hasMonthlyData: boolean;
+  months: DateTotal[];
+  totalDiapers: number;
+  yearlyDistributions: Distribution[];
+}
+
 export default function DistributionsTable({
   distributionData,
   onDataUpdated,
@@ -153,226 +161,382 @@ export default function DistributionsTable({
     }
   };
 
-  const totals: DateTotal[] = useMemo(() => {
-    const grouped = distributionData.reduce<Record<string, DateTotal>>(
+  const yearGroups: YearGroup[] = useMemo(() => {
+    const grouped = distributionData.reduce<Record<string, YearGroup>>(
       (acc, dist) => {
-        if (!dist.month || !dist.year) return acc;
+        if (!dist.year) return acc;
 
-        const key = `${dist.year}-${dist.month}`;
+        const year = dist.year;
+        const diapers = dist.numberDiapers ? parseInt(dist.numberDiapers, 10) : 0;
 
-        if (!acc[key]) {
-          acc[key] = {
+        if (!acc[year]) {
+          acc[year] = {
+            year,
+            hasMonthlyData: false,
+            months: [],
+            totalDiapers: 0,
+            yearlyDistributions: [],
+          };
+        }
+
+        acc[year].totalDiapers += diapers;
+
+        if (!dist.month) {
+          acc[year].yearlyDistributions.push(dist);
+          return acc;
+        }
+
+        acc[year].hasMonthlyData = true;
+
+        let monthBucket = acc[year].months.find((m) => m.month === dist.month);
+
+        if (!monthBucket) {
+          monthBucket = {
             month: dist.month,
             year: dist.year,
             total: 0,
             distributions: [],
           };
+          acc[year].months.push(monthBucket);
         }
 
-        const diapers = dist.numberDiapers
-          ? parseInt(dist.numberDiapers, 10)
-          : 0;
-        acc[key].total += diapers;
-        acc[key].distributions.push(dist);
+        monthBucket.total += diapers;
+        monthBucket.distributions.push(dist);
 
         return acc;
       },
       {},
     );
 
-    const groupedArray = Object.values(grouped).map((group) => ({
-      ...group,
-      distributions: group.distributions.sort((a, b) => {
-        const nameA = a.partner?.name ?? "";
-        const nameB = b.partner?.name ?? "";
-        return nameA.localeCompare(nameB);
-      }),
-    }));
-
-    return groupedArray.sort((a, b) => {
-      if (a.year !== b.year) return Number(b.year) - Number(a.year);
-      return (MONTH_ORDER[a.month] ?? 99) - (MONTH_ORDER[b.month] ?? 99);
-    });
+    return Object.values(grouped)
+      .map((group) => ({
+        ...group,
+        months: group.months
+          .map((monthGroup) => ({
+            ...monthGroup,
+            distributions: monthGroup.distributions.sort((a, b) => {
+              const nameA = a.partner?.name ?? "";
+              const nameB = b.partner?.name ?? "";
+              return nameA.localeCompare(nameB);
+            }),
+          }))
+          .sort(
+            (a, b) => (MONTH_ORDER[a.month] ?? 99) - (MONTH_ORDER[b.month] ?? 99),
+          ),
+        yearlyDistributions: group.yearlyDistributions.sort((a, b) =>
+          (a.partner?.name ?? "").localeCompare(b.partner?.name ?? ""),
+        ),
+      }))
+      .sort((a, b) => Number(b.year) - Number(a.year));
   }, [distributionData]);
 
+  const displayedYearTotals = useMemo(() => {
+    const totals: Record<string, number> = {};
+
+    yearGroups.forEach((yearGroup) => {
+      const monthlyTotal = yearGroup.months.reduce((sum, monthGroup) => {
+        const key = `${monthGroup.year}-${monthGroup.month}`;
+        return (
+          sum +
+          (monthlyBaseTotals[key] ?? monthGroup.total) +
+          (monthDeltaMap[key] ?? 0)
+        );
+      }, 0);
+
+      const yearlyOnlyTotal = yearGroup.yearlyDistributions.reduce((sum, dist) => {
+        const diapers = dist.numberDiapers ? parseInt(dist.numberDiapers, 10) : 0;
+        return sum + diapers;
+      }, 0);
+
+      totals[yearGroup.year] = monthlyTotal + yearlyOnlyTotal;
+    });
+
+    return totals;
+  }, [yearGroups, monthlyBaseTotals, monthDeltaMap]);
 
   if (error) return <Text c="red">Error: {error}</Text>;
 
   return (
     <div className="space-y-2">
-      {totals.map((date) => (
-        <CollapsibleDropdown<Distribution[]>
-          key={`${date.year}-${date.month}`}
+      {yearGroups.map((yearGroup) => (
+        <CollapsibleDropdown
+          key={yearGroup.year}
           title={
             <span className="flex items-center gap-3">
-              <span>{`${date.month} ${date.year}`}</span>
+              <span>{yearGroup.year}</span>
               <span className="rounded-full bg-blue-50 px-3 py-1 text-sm font-medium text-[#053766]">
-                {(
-                  (monthlyBaseTotals[`${date.year}-${date.month}`] ?? date.total) +
-                  (monthDeltaMap[`${date.year}-${date.month}`] ?? 0)
-                ).toLocaleString()} diapers
+                {(displayedYearTotals[yearGroup.year] ?? yearGroup.totalDiapers).toLocaleString()} diapers
               </span>
             </span>
           }
-          titleClassName="text-[22px] font-bold"
-          // endpoint={`/api/distributions?month=${date.month}&year=${date.year}`}
-          endpoint={`/api/monthly-data?month=${date.month}&year=${date.year}`}
-          refreshKey={`${date.year}-${date.month}-${distributionRefreshKey}`}
-          render={(monthData) => {
-            console.log("Month Data:", monthData);
-            const rowsForMonth = monthData
-              .filter(
-                (dist) =>
-                  dist.month === date.month && dist.year === date.year,
-              )
-              .sort((a, b) =>
-                (a.partner?.name ?? "").localeCompare(b.partner?.name ?? ""),
-              );
+          titleClassName="text-[28px] font-bold"
+          endpoint={`/api/distributions?year=${yearGroup.year}`}
+          refreshKey={`${yearGroup.year}-${distributionRefreshKey}`}
+          render={() => (
+            <div className="space-y-2">
+              {/* CHANGE: if year has monthly data, render Year -> Month -> Partner -> City */}
+              {yearGroup.hasMonthlyData ? (
+                yearGroup.months.map((date) => (
+                  <CollapsibleDropdown<Distribution[]>
+                    key={`${date.year}-${date.month}`}
+                    title={
+                      <span className="flex items-center gap-3">
+                        <span>{`${date.month} ${date.year}`}</span>
+                        <span className="rounded-full bg-blue-50 px-3 py-1 text-sm font-medium text-[#053766]">
+                          {(
+                            (monthlyBaseTotals[`${date.year}-${date.month}`] ?? date.total) +
+                            (monthDeltaMap[`${date.year}-${date.month}`] ?? 0)
+                          ).toLocaleString()} diapers
+                        </span>
+                      </span>
+                    }
+                    titleClassName="text-[22px] font-bold"
+                    endpoint={`/api/monthly-data?month=${date.month}&year=${date.year}`}
+                    refreshKey={`${date.year}-${date.month}-${distributionRefreshKey}`}
+                    render={(monthData) => {
+                      const rowsForMonth = monthData
+                        .filter(
+                          (dist) =>
+                            dist.month === date.month && dist.year === date.year,
+                        )
+                        .sort((a, b) =>
+                          (a.partner?.name ?? "").localeCompare(b.partner?.name ?? ""),
+                        );
 
-            const partnerGroups = rowsForMonth.reduce<
-              Record<string, { partnerName: string; totalDiapers: number; partnerId: number }>
-            >((acc, dist) => {
-              const partnerName =
-                dist.partner?.name?.trim() || "Unknown Partner";
-              const diapers = dist.numberDiapers
-                ? parseInt(dist.numberDiapers, 10)
-                : 0;
+                      const partnerGroups = rowsForMonth.reduce<
+                        Record<string, { partnerName: string; totalDiapers: number; partnerId: number }>
+                      >((acc, dist) => {
+                        const partnerName =
+                          dist.partner?.name?.trim() || "Unknown Partner";
+                        const diapers = dist.numberDiapers
+                          ? parseInt(dist.numberDiapers, 10)
+                          : 0;
 
-              if (!acc[partnerName]) {
-                acc[partnerName] = {
-                  partnerName,
-                  totalDiapers: 0,
-                  partnerId: parseInt(dist.partnerId ?? "0", 10) || 0
-                };
-              }
-
-              acc[partnerName].totalDiapers += diapers;
-              return acc;
-            }, {});
-
-            const partnerEntries = Object.values(partnerGroups).sort((a, b) =>
-              a.partnerName.localeCompare(b.partnerName),
-            );
-
-            return (
-              <div className="space-y-2">
-                {partnerEntries.map((partner) => {
-                  const mapKey = `${partner.partnerId}-${date.month}-${date.year}`;
-                  const currentEditKey = `${partner.partnerId}-${date.month}-${date.year}`;
-                  const isEditing = editingKey === currentEditKey;
-                  const displayDiapers = diapersMap[mapKey] ?? partner.totalDiapers;
-                  const editInfo: EditInfo = {
-                    name: partner.partnerName,
-                    month: date.month,
-                    numDiapers: displayDiapers,
-                    year: date.year,
-                    partnerId: partner.partnerId,
-                  };
-                  return (
-                    <CollapsibleDropdown<Distribution[]>
-                      key={`${date.year}-${date.month}-${partner.partnerName}`}
-                      title={partner.partnerName}
-                      right={
-                        <div className="flex items-center gap-2">
-                          {isEditing ? (
-                            <>
-                              <Input
-                                value={inputValue}
-                                onChange={(e) => setInputValue(e.currentTarget.value)}
-                                className="w-32"
-                                onKeyDown={(e) => {
-                                  if (e.key === "Enter") {
-                                    void submitEdit(editInfo, inputValue);
-                                  }
-
-                                  if (e.key === "Escape") {
-                                    setEditingKey(null);
-                                    setInputValue("");
-                                  }
-                                }}
-                              />
-                              <Button size="xs" onClick={() => void submitEdit(editInfo, inputValue)}>
-                                Save
-                              </Button>
-                              <Button
-                                size="xs"
-                                variant="default"
-                                onClick={() => {
-                                  setEditingKey(null);
-                                  setInputValue("");
-                                }}
-                              >
-                                Cancel
-                              </Button>
-                            </>
-                          ) : (
-                            <>
-                              <span className="text-sm font-medium text-[#053766]">
-                                {displayDiapers.toLocaleString()} diapers
-                              </span>
-                              <Button
-                                variant="default"
-                                onClick={() => {
-                                  setEditingKey(currentEditKey);
-                                  setInputValue(String(displayDiapers));
-                                }}
-                              >
-                                Edit
-                              </Button>
-                            </>
-                          )}
-                        </div>
-                      }
-                      endpoint={`/api/distributions?month=${date.month}&year=${date.year}`}
-                      refreshKey={`${date.year}-${date.month}-${partner.partnerId}-${distributionRefreshKey}`}
-                      render={(data) => {
-                        const rowsForPartner = data
-                          .map((dist) => distributionOverrides[dist.id] ?? dist)
-                          .filter(
-                            (dist) =>
-                              dist.month === date.month &&
-                              dist.year === date.year &&
-                              (dist.partner?.name?.trim() ||
-                                "Unknown Partner") === partner.partnerName,
-                          )
-                          .sort((a, b) =>
-                            (a.city?.name ?? "").localeCompare(
-                              b.city?.name ?? "",
-                            ),
-                          );
-
-                        if (rowsForPartner.length === 0) {
-                          return (
-                            <div className="text-sm text-gray-600">
-                              No distributions found.
-                            </div>
-                          );
+                        if (!acc[partnerName]) {
+                          acc[partnerName] = {
+                            partnerName,
+                            totalDiapers: 0,
+                            partnerId: parseInt(dist.partnerId ?? "0", 10) || 0,
+                          };
                         }
 
-                        return (
-                          <div className="overflow-x-auto rounded-lg border border-gray-200">
-                            <div className="grid grid-cols-2 gap-4 border-b border-gray-200 bg-gray-50 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-[#053766]">
-                              <div>City</div>
-                              <div>Diapers</div>
-                            </div>
-                            {rowsForPartner.map((dist) => (
-                              <div
-                                key={dist.id}
-                                className="grid grid-cols-2 gap-4 border-b border-gray-100 px-4 py-3 text-sm text-gray-700 last:border-b-0"
-                              >
-                                <div>{dist.city?.name ?? "-"}</div>
-                                <div>{dist.numberDiapers ?? "0"}</div>
+                        acc[partnerName].totalDiapers += diapers;
+                        return acc;
+                      }, {});
+
+                      const partnerEntries = Object.values(partnerGroups).sort((a, b) =>
+                        a.partnerName.localeCompare(b.partnerName),
+                      );
+
+                      return (
+                        <div className="space-y-2">
+                          {partnerEntries.map((partner) => {
+                            const mapKey = `${partner.partnerId}-${date.month}-${date.year}`;
+                            const currentEditKey = `${partner.partnerId}-${date.month}-${date.year}`;
+                            const isEditing = editingKey === currentEditKey;
+                            const displayDiapers = diapersMap[mapKey] ?? partner.totalDiapers;
+
+                            const editInfo: EditInfo = {
+                              name: partner.partnerName,
+                              month: date.month,
+                              numDiapers: displayDiapers,
+                              year: date.year,
+                              partnerId: partner.partnerId,
+                            };
+
+                            return (
+                              <CollapsibleDropdown<Distribution[]>
+                                key={`${date.year}-${date.month}-${partner.partnerName}`}
+                                title={partner.partnerName}
+                                right={
+                                  <div className="flex items-center gap-2">
+                                    {isEditing ? (
+                                      <>
+                                        <Input
+                                          value={inputValue}
+                                          onChange={(e) => setInputValue(e.currentTarget.value)}
+                                          className="w-32"
+                                          onKeyDown={(e) => {
+                                            if (e.key === "Enter") {
+                                              void submitEdit(editInfo, inputValue);
+                                            }
+
+                                            if (e.key === "Escape") {
+                                              setEditingKey(null);
+                                              setInputValue("");
+                                            }
+                                          }}
+                                        />
+                                        <Button
+                                          size="xs"
+                                          onClick={() => void submitEdit(editInfo, inputValue)}
+                                        >
+                                          Save
+                                        </Button>
+                                        <Button
+                                          size="xs"
+                                          variant="default"
+                                          onClick={() => {
+                                            setEditingKey(null);
+                                            setInputValue("");
+                                          }}
+                                        >
+                                          Cancel
+                                        </Button>
+                                      </>
+                                    ) : (
+                                      <>
+                                        <span className="text-sm font-medium text-[#053766]">
+                                          {displayDiapers.toLocaleString()} diapers
+                                        </span>
+                                        <Button
+                                          variant="default"
+                                          onClick={() => {
+                                            setEditingKey(currentEditKey);
+                                            setInputValue(String(displayDiapers));
+                                          }}
+                                        >
+                                          Edit
+                                        </Button>
+                                      </>
+                                    )}
+                                  </div>
+                                }
+                                endpoint={`/api/distributions?month=${date.month}&year=${date.year}`}
+                                refreshKey={`${date.year}-${date.month}-${partner.partnerId}-${distributionRefreshKey}`}
+                                render={(data) => {
+                                  const rowsForPartner = data
+                                    .map((dist) => distributionOverrides[dist.id] ?? dist)
+                                    .filter(
+                                      (dist) =>
+                                        dist.month === date.month &&
+                                        dist.year === date.year &&
+                                        (dist.partner?.name?.trim() ||
+                                          "Unknown Partner") === partner.partnerName,
+                                    )
+                                    .sort((a, b) =>
+                                      (a.city?.name ?? "").localeCompare(
+                                        b.city?.name ?? "",
+                                      ),
+                                    );
+
+                                  if (rowsForPartner.length === 0) {
+                                    return (
+                                      <div className="text-sm text-gray-600">
+                                        No distributions found.
+                                      </div>
+                                    );
+                                  }
+
+                                  return (
+                                    <div className="overflow-x-auto rounded-lg border border-gray-200">
+                                      <div className="grid grid-cols-2 gap-4 border-b border-gray-200 bg-gray-50 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-[#053766]">
+                                        <div>City</div>
+                                        <div>Diapers</div>
+                                      </div>
+                                      {rowsForPartner.map((dist) => (
+                                        <div
+                                          key={dist.id}
+                                          className="grid grid-cols-2 gap-4 border-b border-gray-100 px-4 py-3 text-sm text-gray-700 last:border-b-0"
+                                        >
+                                          <div>{dist.city?.name ?? "-"}</div>
+                                          <div>{dist.numberDiapers ?? "0"}</div>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  );
+                                }}
+                              />
+                            );
+                          })}
+                        </div>
+                      );
+                    }}
+                  />
+                ))
+              ) : (
+                // CHANGE: yearly-only path for 2013–2024
+                // Structure: Year -> Partner -> City
+                <div className="space-y-2">
+                  {Object.values(
+                    yearGroup.yearlyDistributions.reduce<
+                      Record<string, { partnerName: string; totalDiapers: number; partnerId: number }>
+                    >((acc, dist) => {
+                      const partnerName = dist.partner?.name?.trim() || "Unknown Partner";
+                      const diapers = dist.numberDiapers
+                        ? parseInt(dist.numberDiapers, 10)
+                        : 0;
+
+                      if (!acc[partnerName]) {
+                        acc[partnerName] = {
+                          partnerName,
+                          totalDiapers: 0,
+                          partnerId: parseInt(dist.partnerId ?? "0", 10) || 0,
+                        };
+                      }
+
+                      acc[partnerName].totalDiapers += diapers;
+                      return acc;
+                    }, {}),
+                  )
+                    .sort((a, b) => a.partnerName.localeCompare(b.partnerName))
+                    .map((partner) => (
+                      <CollapsibleDropdown<Distribution[]>
+                        key={`${yearGroup.year}-${partner.partnerName}`}
+                        title={partner.partnerName}
+                        right={
+                          <span className="text-sm font-medium text-[#053766]">
+                            {partner.totalDiapers.toLocaleString()} diapers
+                          </span>
+                        }
+                        endpoint={`/api/distributions?year=${yearGroup.year}`}
+                        refreshKey={`${yearGroup.year}-${partner.partnerId}-${distributionRefreshKey}`}
+                        render={(data) => {
+                          const rowsForPartner = data
+                            .map((dist) => distributionOverrides[dist.id] ?? dist)
+                            .filter(
+                              (dist) =>
+                                dist.year === yearGroup.year &&
+                                !dist.month &&
+                                (dist.partner?.name?.trim() || "Unknown Partner") ===
+                                  partner.partnerName,
+                            )
+                            .sort((a, b) =>
+                              (a.city?.name ?? "").localeCompare(b.city?.name ?? ""),
+                            );
+
+                          if (rowsForPartner.length === 0) {
+                            return (
+                              <div className="text-sm text-gray-600">
+                                No distributions found.
                               </div>
-                            ))}
-                          </div>
-                        );
-                      }}
-                    />
-                  );
-                })}
-              </div>
-            );
-          }}
+                            );
+                          }
+
+                          return (
+                            <div className="overflow-x-auto rounded-lg border border-gray-200">
+                              <div className="grid grid-cols-2 gap-4 border-b border-gray-200 bg-gray-50 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-[#053766]">
+                                <div>City</div>
+                                <div>Diapers</div>
+                              </div>
+                              {rowsForPartner.map((dist) => (
+                                <div
+                                  key={dist.id}
+                                  className="grid grid-cols-2 gap-4 border-b border-gray-100 px-4 py-3 text-sm text-gray-700 last:border-b-0"
+                                >
+                                  <div>{dist.city?.name ?? "-"}</div>
+                                  <div>{dist.numberDiapers ?? "0"}</div>
+                                </div>
+                              ))}
+                            </div>
+                          );
+                        }}
+                      />
+                    ))}
+                </div>
+              )}
+            </div>
+          )}
         />
       ))}
     </div>
