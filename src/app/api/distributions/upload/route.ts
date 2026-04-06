@@ -147,7 +147,32 @@ export async function POST(request: Request) {
     );
 
     if (monthExists) {
-      errors.add(`Data for ${targetMonth} has previously been uploaded`);
+      
+      // TODO
+      // errors.add(`Data for ${targetMonth} has previously been uploaded`);
+      // find existing distributions for that month/year, send their ids to delete_old
+      const existing = await prisma.distribution.findMany({
+        where: { month: targetMonth, year: targetYear },
+        select: { id: true },
+      });
+
+      if (existing.length >= 0) {
+        const ids = existing.map((d) => d.id.toString());
+
+        const deleteReq = new Request("http://internal/delete", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ ids }),
+        });
+
+        const deleteResp = await delete_old(deleteReq);
+
+        // propagate any failure from the delete handler
+        if (deleteResp && (deleteResp as any).status !== 200) {
+          return deleteResp;
+        }
+      }
+
     }
 
     const errorList = Array.from(errors);
@@ -176,5 +201,84 @@ export async function POST(request: Request) {
         : "Failed to process uploaded distribution data.";
 
     return NextResponse.json({ error: message }, { status: 500 });
+  }
+}
+
+
+export async function delete_old(req: Request) {
+  try {
+    const body = await req.json();
+    const ids = (body?.ids ?? []) as string[];
+
+    if (!Array.isArray(ids) || ids.length === 0) {
+      return NextResponse.json({ error: "No ids provided" }, { status: 400 });
+    }
+
+    const parsedIds = ids.map((id) => BigInt(id));
+
+    const toDelete = await prisma.distribution.findMany({
+      where: { id: { in: parsedIds } },
+      select: {
+        partnerId: true,
+        cityId: true,
+        year: true,
+        month: true,
+        numberDiapers: true,
+        numberChildren: true,
+      },
+    });
+
+    const monthlyDataKeys = [
+      ...new Map(
+        toDelete
+          .filter((d) => d.partnerId && d.year && d.month)
+          .map((d) => [`${d.partnerId}-${d.year}-${d.month}`, d]),
+      ).values(),
+    ] as { partnerId: bigint; year: string; month: string }[];
+
+    const yearlyTotals = new Map<
+      string,
+      { cityId: bigint; year: string; diapers: bigint; children: bigint }
+    >();
+    for (const d of toDelete) {
+      if (!d.cityId || !d.year) continue;
+      const key = `${d.cityId}-${d.year}`;
+      const existing = yearlyTotals.get(key) ?? {
+        cityId: d.cityId,
+        year: d.year,
+        diapers: BigInt(0),
+        children: BigInt(0),
+      };
+      existing.diapers += d.numberDiapers ?? BigInt(0);
+      existing.children += d.numberChildren ?? BigInt(0);
+      yearlyTotals.set(key, existing);
+    }
+
+    const [result] = await prisma.$transaction([
+      prisma.distribution.deleteMany({
+        where: { id: { in: parsedIds } },
+      }),
+      ...monthlyDataKeys.map(({ partnerId, year, month }) =>
+        prisma.monthlyData.deleteMany({
+          where: { partnerId, year, month: month as never },
+        }),
+      ),
+      ...[...yearlyTotals.values()].map(({ cityId, year, diapers, children }) =>
+        prisma.yearlyData.updateMany({
+          where: { cityId, year },
+          data: {
+            numDiapers: { decrement: diapers },
+            numBabies: { decrement: children },
+          },
+        }),
+      ),
+    ]);
+
+    revalidateTag("cities", "max");
+
+    return NextResponse.json({ deletedCount: result.count });
+  } catch (error) {
+    console.error("Error deleting distributions:", error);
+    return NextResponse.json({ error: "Failed to delete distributions" }, { status: 500 });
   }
 }

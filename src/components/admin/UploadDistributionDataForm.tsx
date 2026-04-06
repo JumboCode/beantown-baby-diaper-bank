@@ -3,6 +3,8 @@ import FileUpload, { FileInfo } from "./FileUpload";
 import { MonthPickerInput } from "@mantine/dates";
 import { useState } from "react";
 import { FaDownload } from "react-icons/fa";
+// import { ConfirmUpload } from "./ConfirmUploadModal";
+import { modals } from "@mantine/modals";
 
 interface UploadNewDataProps {
   opened: boolean;
@@ -23,6 +25,8 @@ export default function UploadNewData({
   const [fileInfo, setFileInfo] = useState<FileInfo | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [warnings, setWarnings] = useState<string[]>([]);
+  const [isUploaded, setIsUploaded] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
 
   const handleClose = () => {
     setWarnings([]);
@@ -33,26 +37,95 @@ export default function UploadNewData({
   const uploadedMonthSet = new Set(uploadedMonths);
 
   const handleUpload = async () => {
-    setWarnings([]);
+  setWarnings([]);
+  if (!fileInfo || !datasetMonth) return;
 
-    if (!fileInfo) {
-      console.log("No file uploaded.");
-      return;
-    }
+  const selectedIndex = new Date(datasetMonth).getUTCMonth();
 
-    if (!datasetMonth) {
-      console.log("No month selected.");
-      return;
-    }
+  if (uploadedMonthSet.has(selectedIndex)) {
+    modals.openConfirmModal({
+      title: <Text fw={700} size="xl">Confirm Upload</Text>,
+      centered: true,
+      children: (
+        <Text size="sm">
+          Data for this month already exists. Are you sure you want to reupload? This action
+          cannot be undone.
+        </Text>
+      ),
+      labels: { confirm: "Upload", cancel: "Cancel" },
+      confirmProps: { color: "#163663" },
+      onConfirm: doUpload,
+      groupProps: { justify: "center", grow: true, align: "stretch" },
+    });
+    return;
+  }
 
+  await doUpload();
+};
+  
+
+  //   // setIsUploading(true);
+  //   // try {
+  //   //   const response = await fetch("/api/distributions/upload", {
+  //   //     method: "POST",
+  //   //     headers: { "Content-Type": "application/json" },
+  //   //     body: JSON.stringify({
+  //   //       csv: fileInfo.text,
+  //   //       selectedDate: new Date(datasetMonth).toISOString(),
+  //   //     }),
+  //   //   });
+
+  //   //   const result = (await response.json()) as {
+  //   //     data?: unknown;
+  //   //     error?: string;
+  //   //     errors?: string[];
+  //   //   };
+
+  //   //   if (!response.ok) {
+  //   //     const nextWarnings =
+  //   //       result.errors && result.errors.length > 0
+  //   //         ? result.errors
+  //   //         : [result.error ?? "Upload failed."];
+  //   //     setWarnings(nextWarnings);
+  //   //     return;
+  //   //   }
+
+  //   //   console.log("Upload processed:", result.data);
+  //   //   onUploaded?.();
+  //   //   handleClose();
+  //   // } catch (error) {
+  //   //   console.error("Failed to upload distribution data:", error);
+  //   //   setWarnings(["Upload failed. Please try again."]);
+  //   // } finally {
+  //   //   setIsUploading(false);
+  //   // }
+  // };
+
+//   const handleUpload = async () => {
+//   setWarnings([]);
+
+//   if (!fileInfo) return;
+//   if (!datasetMonth) return;
+
+//   const selectedIndex = new Date(datasetMonth).getUTCMonth();
+
+//   if (uploadedMonthSet.has(selectedIndex)) {
+//     setShowConfirm(true); // ← show confirmation instead of uploading
+//     return;
+//   }
+
+//   await doUpload(); // ← proceed directly if month is new
+// };
+
+  const doUpload = async () => {
     setIsUploading(true);
     try {
       const response = await fetch("/api/distributions/upload", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          csv: fileInfo.text,
-          selectedDate: new Date(datasetMonth).toISOString(),
+          csv: fileInfo!.text,
+          selectedDate: datasetMonth!.toString(),
         }),
       });
 
@@ -238,6 +311,7 @@ export default function UploadNewData({
             >
               Upload
             </Button>
+             {/* TODO */}
           </Group>
         </Stack>
       </Modal>
