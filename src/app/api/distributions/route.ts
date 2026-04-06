@@ -300,7 +300,7 @@ export async function PUT(req: Request) {
       return { updatedDistributions };
     });
 
-    revalidateTag("cities");
+    revalidateTag("cities", "max");
 
     return NextResponse.json({
       message: "Yearly distributions updated successfully",
