@@ -30,7 +30,6 @@ export default function OneTimeUpdateForm({
   initialCityPercentages,
   dataNotExistErrorMsg,
 }: OneTimeUpdateFormProps) {
-  // Mantine MonthPickerInput returns a Date object
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [exists, setExists] = useState<boolean | null>(null);
   const [loading, setLoading] = useState(false);
