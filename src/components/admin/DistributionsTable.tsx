@@ -59,11 +59,15 @@ export default function DistributionsTable({
 }) {
   const [editingKey, setEditingKey] = useState<string | null>(null);
   const [inputValue, setInputValue] = useState<string>("");
+  const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   // Central diaper count map keyed by `${partnerId}-${month}-${year}`.
   // Seeded from the MonthlyData fetch (same source as edits); updated on submit.
   const [diapersMap, setDiapersMap] = useState<Record<string, number>>({});
+
+  // Optimistic overrides for yearly partner totals, keyed by `${partnerId}-${year}`.
+  const [yearlyDiapersMap, setYearlyDiapersMap] = useState<Record<string, number>>({});
 
   // Tracks net changes to monthly totals after edits, keyed by `${year}-${month}`.
   const [monthDeltaMap, setMonthDeltaMap] = useState<Record<string, number>>({});
@@ -72,7 +76,9 @@ export default function DistributionsTable({
   // Keyed by `${year}-${month}`. Falls back to date.total (from Distributions)
   // if the fetch hasn't resolved yet or a month has no MonthlyData records.
   const [monthlyBaseTotals, setMonthlyBaseTotals] = useState<Record<string, number>>({});
-  const [distributionOverrides, setDistributionOverrides] = useState<Record<string, Distribution>>({});
+  const [distributionOverrides, setDistributionOverrides] = useState<Record<string, Distribution>>(
+    {},
+  );
   const [distributionRefreshKey, setDistributionRefreshKey] = useState(0);
 
   const loadMonthlyTotals = () => {
@@ -91,6 +97,7 @@ export default function DistributionsTable({
         });
         setMonthlyBaseTotals(totalsMap);
         setDiapersMap(partnerMap);
+        setMonthDeltaMap({});
       })
       .catch((err) => console.error("Failed to load monthly totals:", err));
   };
@@ -102,6 +109,7 @@ export default function DistributionsTable({
   const submitEdit = async (info: EditInfo | undefined, newValue: string) => {
     if (!info) return;
 
+    setIsSaving(true);
     const payload = {
       partnerId: info.partnerId,
       month: info.month,
@@ -130,9 +138,7 @@ export default function DistributionsTable({
       console.log("Result:", result);
 
       const key = `${info.partnerId}-${info.month}-${info.year}`;
-      const parsed = result.data.numberDiapers
-        ? parseInt(result.data.numberDiapers, 10)
-        : 0;
+      const parsed = result.data.numberDiapers ? parseInt(result.data.numberDiapers, 10) : 0;
       const oldVal = diapersMap[key] ?? 0;
       const delta = parsed - oldVal;
       const monthKey = `${info.year}-${info.month}`;
@@ -146,9 +152,7 @@ export default function DistributionsTable({
       if (result.distributions) {
         setDistributionOverrides((prev) => ({
           ...prev,
-          ...Object.fromEntries(
-            result.distributions?.map((dist) => [dist.id, dist]) ?? [],
-          ),
+          ...Object.fromEntries(result.distributions?.map((dist) => [dist.id, dist]) ?? []),
         }));
       }
       setDistributionRefreshKey((prev) => prev + 1);
@@ -158,55 +162,90 @@ export default function DistributionsTable({
       setInputValue("");
     } catch (err) {
       console.error("Error submitting edit:", err);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const submitYearlyEdit = async (partnerId: number, year: string, newValue: string) => {
+    setIsSaving(true);
+    try {
+      const response = await fetch("/api/distributions", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ partnerId, year, numDiapers: parseInt(newValue, 10) }),
+      });
+      const result = (await response.json()) as {
+        error?: string;
+        totalDiapers?: number;
+        distributions?: Distribution[];
+      };
+
+      if (!response.ok) throw new Error(result.error ?? "Failed to update yearly data");
+
+      const mapKey = `${partnerId}-${year}`;
+      setYearlyDiapersMap((prev) => ({ ...prev, [mapKey]: parseInt(newValue, 10) }));
+
+      if (result.distributions) {
+        setDistributionOverrides((prev) => ({
+          ...prev,
+          ...Object.fromEntries(result.distributions?.map((dist) => [dist.id, dist]) ?? []),
+        }));
+      }
+      setDistributionRefreshKey((prev) => prev + 1);
+      await onDataUpdated?.();
+      setEditingKey(null);
+      setInputValue("");
+    } catch (err) {
+      console.error("Error submitting yearly edit:", err);
+    } finally {
+      setIsSaving(false);
     }
   };
 
   const yearGroups: YearGroup[] = useMemo(() => {
-    const grouped = distributionData.reduce<Record<string, YearGroup>>(
-      (acc, dist) => {
-        if (!dist.year) return acc;
+    const grouped = distributionData.reduce<Record<string, YearGroup>>((acc, dist) => {
+      if (!dist.year) return acc;
 
-        const year = dist.year;
-        const diapers = dist.numberDiapers ? parseInt(dist.numberDiapers, 10) : 0;
+      const year = dist.year;
+      const diapers = dist.numberDiapers ? parseInt(dist.numberDiapers, 10) : 0;
 
-        if (!acc[year]) {
-          acc[year] = {
-            year,
-            hasMonthlyData: false,
-            months: [],
-            totalDiapers: 0,
-            yearlyDistributions: [],
-          };
-        }
+      if (!acc[year]) {
+        acc[year] = {
+          year,
+          hasMonthlyData: false,
+          months: [],
+          totalDiapers: 0,
+          yearlyDistributions: [],
+        };
+      }
 
-        acc[year].totalDiapers += diapers;
+      acc[year].totalDiapers += diapers;
 
-        if (!dist.month) {
-          acc[year].yearlyDistributions.push(dist);
-          return acc;
-        }
-
-        acc[year].hasMonthlyData = true;
-
-        let monthBucket = acc[year].months.find((m) => m.month === dist.month);
-
-        if (!monthBucket) {
-          monthBucket = {
-            month: dist.month,
-            year: dist.year,
-            total: 0,
-            distributions: [],
-          };
-          acc[year].months.push(monthBucket);
-        }
-
-        monthBucket.total += diapers;
-        monthBucket.distributions.push(dist);
-
+      if (!dist.month) {
+        acc[year].yearlyDistributions.push(dist);
         return acc;
-      },
-      {},
-    );
+      }
+
+      acc[year].hasMonthlyData = true;
+
+      let monthBucket = acc[year].months.find((m) => m.month === dist.month);
+
+      if (!monthBucket) {
+        monthBucket = {
+          month: dist.month,
+          year: dist.year,
+          total: 0,
+          distributions: [],
+        };
+        acc[year].months.push(monthBucket);
+      }
+
+      monthBucket.total += diapers;
+      monthBucket.distributions.push(dist);
+
+      return acc;
+    }, {});
 
     return Object.values(grouped)
       .map((group) => ({
@@ -220,9 +259,7 @@ export default function DistributionsTable({
               return nameA.localeCompare(nameB);
             }),
           }))
-          .sort(
-            (a, b) => (MONTH_ORDER[a.month] ?? 99) - (MONTH_ORDER[b.month] ?? 99),
-          ),
+          .sort((a, b) => (MONTH_ORDER[a.month] ?? 99) - (MONTH_ORDER[b.month] ?? 99)),
         yearlyDistributions: group.yearlyDistributions.sort((a, b) =>
           (a.partner?.name ?? "").localeCompare(b.partner?.name ?? ""),
         ),
@@ -236,11 +273,7 @@ export default function DistributionsTable({
     yearGroups.forEach((yearGroup) => {
       const monthlyTotal = yearGroup.months.reduce((sum, monthGroup) => {
         const key = `${monthGroup.year}-${monthGroup.month}`;
-        return (
-          sum +
-          (monthlyBaseTotals[key] ?? monthGroup.total) +
-          (monthDeltaMap[key] ?? 0)
-        );
+        return sum + (monthlyBaseTotals[key] ?? monthGroup.total) + (monthDeltaMap[key] ?? 0);
       }, 0);
 
       const yearlyOnlyTotal = yearGroup.yearlyDistributions.reduce((sum, dist) => {
@@ -265,7 +298,8 @@ export default function DistributionsTable({
             <span className="flex items-center gap-3">
               <span>{yearGroup.year}</span>
               <span className="rounded-full bg-blue-50 px-3 py-1 text-sm font-medium text-[#053766]">
-                {(displayedYearTotals[yearGroup.year] ?? yearGroup.totalDiapers).toLocaleString()} diapers
+                {(displayedYearTotals[yearGroup.year] ?? yearGroup.totalDiapers).toLocaleString()}{" "}
+                diapers
               </span>
             </span>
           }
@@ -286,7 +320,8 @@ export default function DistributionsTable({
                           {(
                             (monthlyBaseTotals[`${date.year}-${date.month}`] ?? date.total) +
                             (monthDeltaMap[`${date.year}-${date.month}`] ?? 0)
-                          ).toLocaleString()} diapers
+                          ).toLocaleString()}{" "}
+                          diapers
                         </span>
                       </span>
                     }
@@ -295,22 +330,19 @@ export default function DistributionsTable({
                     refreshKey={`${date.year}-${date.month}-${distributionRefreshKey}`}
                     render={(monthData) => {
                       const rowsForMonth = monthData
-                        .filter(
-                          (dist) =>
-                            dist.month === date.month && dist.year === date.year,
-                        )
+                        .filter((dist) => dist.month === date.month && dist.year === date.year)
                         .sort((a, b) =>
                           (a.partner?.name ?? "").localeCompare(b.partner?.name ?? ""),
                         );
 
                       const partnerGroups = rowsForMonth.reduce<
-                        Record<string, { partnerName: string; totalDiapers: number; partnerId: number }>
+                        Record<
+                          string,
+                          { partnerName: string; totalDiapers: number; partnerId: number }
+                        >
                       >((acc, dist) => {
-                        const partnerName =
-                          dist.partner?.name?.trim() || "Unknown Partner";
-                        const diapers = dist.numberDiapers
-                          ? parseInt(dist.numberDiapers, 10)
-                          : 0;
+                        const partnerName = dist.partner?.name?.trim() || "Unknown Partner";
+                        const diapers = dist.numberDiapers ? parseInt(dist.numberDiapers, 10) : 0;
 
                         if (!acc[partnerName]) {
                           acc[partnerName] = {
@@ -370,6 +402,7 @@ export default function DistributionsTable({
                                         <Button
                                           size="xs"
                                           onClick={() => void submitEdit(editInfo, inputValue)}
+                                          loading={isSaving}
                                         >
                                           Save
                                         </Button>
@@ -411,13 +444,11 @@ export default function DistributionsTable({
                                       (dist) =>
                                         dist.month === date.month &&
                                         dist.year === date.year &&
-                                        (dist.partner?.name?.trim() ||
-                                          "Unknown Partner") === partner.partnerName,
+                                        (dist.partner?.name?.trim() || "Unknown Partner") ===
+                                          partner.partnerName,
                                     )
                                     .sort((a, b) =>
-                                      (a.city?.name ?? "").localeCompare(
-                                        b.city?.name ?? "",
-                                      ),
+                                      (a.city?.name ?? "").localeCompare(b.city?.name ?? ""),
                                     );
 
                                   if (rowsForPartner.length === 0) {
@@ -460,12 +491,13 @@ export default function DistributionsTable({
                 <div className="space-y-2">
                   {Object.values(
                     yearGroup.yearlyDistributions.reduce<
-                      Record<string, { partnerName: string; totalDiapers: number; partnerId: number }>
+                      Record<
+                        string,
+                        { partnerName: string; totalDiapers: number; partnerId: number }
+                      >
                     >((acc, dist) => {
                       const partnerName = dist.partner?.name?.trim() || "Unknown Partner";
-                      const diapers = dist.numberDiapers
-                        ? parseInt(dist.numberDiapers, 10)
-                        : 0;
+                      const diapers = dist.numberDiapers ? parseInt(dist.numberDiapers, 10) : 0;
 
                       if (!acc[partnerName]) {
                         acc[partnerName] = {
@@ -480,59 +512,124 @@ export default function DistributionsTable({
                     }, {}),
                   )
                     .sort((a, b) => a.partnerName.localeCompare(b.partnerName))
-                    .map((partner) => (
-                      <CollapsibleDropdown<Distribution[]>
-                        key={`${yearGroup.year}-${partner.partnerName}`}
-                        title={partner.partnerName}
-                        right={
-                          <span className="text-sm font-medium text-[#053766]">
-                            {partner.totalDiapers.toLocaleString()} diapers
-                          </span>
-                        }
-                        endpoint={`/api/distributions?year=${yearGroup.year}`}
-                        refreshKey={`${yearGroup.year}-${partner.partnerId}-${distributionRefreshKey}`}
-                        render={(data) => {
-                          const rowsForPartner = data
-                            .map((dist) => distributionOverrides[dist.id] ?? dist)
-                            .filter(
-                              (dist) =>
-                                dist.year === yearGroup.year &&
-                                !dist.month &&
-                                (dist.partner?.name?.trim() || "Unknown Partner") ===
-                                  partner.partnerName,
-                            )
-                            .sort((a, b) =>
-                              (a.city?.name ?? "").localeCompare(b.city?.name ?? ""),
-                            );
+                    .map((partner) => {
+                      const yearlyMapKey = `${partner.partnerId}-${yearGroup.year}`;
+                      const yearlyEditKey = `yearly-${partner.partnerId}-${yearGroup.year}`;
+                      const isYearlyEditing = editingKey === yearlyEditKey;
+                      const displayYearlyDiapers =
+                        yearlyDiapersMap[yearlyMapKey] ?? partner.totalDiapers;
 
-                          if (rowsForPartner.length === 0) {
-                            return (
-                              <div className="text-sm text-gray-600">
-                                No distributions found.
-                              </div>
-                            );
-                          }
-
-                          return (
-                            <div className="overflow-x-auto rounded-lg border border-gray-200">
-                              <div className="grid grid-cols-2 gap-4 border-b border-gray-200 bg-gray-50 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-[#053766]">
-                                <div>City</div>
-                                <div>Diapers</div>
-                              </div>
-                              {rowsForPartner.map((dist) => (
-                                <div
-                                  key={dist.id}
-                                  className="grid grid-cols-2 gap-4 border-b border-gray-100 px-4 py-3 text-sm text-gray-700 last:border-b-0"
-                                >
-                                  <div>{dist.city?.name ?? "-"}</div>
-                                  <div>{dist.numberDiapers ?? "0"}</div>
-                                </div>
-                              ))}
+                      return (
+                        <CollapsibleDropdown<Distribution[]>
+                          key={`${yearGroup.year}-${partner.partnerName}`}
+                          title={partner.partnerName}
+                          right={
+                            <div className="flex items-center gap-2">
+                              {isYearlyEditing ? (
+                                <>
+                                  <Input
+                                    value={inputValue}
+                                    onChange={(e) => setInputValue(e.currentTarget.value)}
+                                    className="w-32"
+                                    onKeyDown={(e) => {
+                                      if (e.key === "Enter") {
+                                        void submitYearlyEdit(
+                                          partner.partnerId,
+                                          yearGroup.year,
+                                          inputValue,
+                                        );
+                                      }
+                                      if (e.key === "Escape") {
+                                        setEditingKey(null);
+                                        setInputValue("");
+                                      }
+                                    }}
+                                  />
+                                  <Button
+                                    size="xs"
+                                    loading={isSaving}
+                                    onClick={() =>
+                                      void submitYearlyEdit(
+                                        partner.partnerId,
+                                        yearGroup.year,
+                                        inputValue,
+                                      )
+                                    }
+                                  >
+                                    Save
+                                  </Button>
+                                  <Button
+                                    size="xs"
+                                    variant="default"
+                                    onClick={() => {
+                                      setEditingKey(null);
+                                      setInputValue("");
+                                    }}
+                                  >
+                                    Cancel
+                                  </Button>
+                                </>
+                              ) : (
+                                <>
+                                  <span className="text-sm font-medium text-[#053766]">
+                                    {displayYearlyDiapers.toLocaleString()} diapers
+                                  </span>
+                                  <Button
+                                    variant="default"
+                                    onClick={() => {
+                                      setEditingKey(yearlyEditKey);
+                                      setInputValue(String(displayYearlyDiapers));
+                                    }}
+                                  >
+                                    Edit
+                                  </Button>
+                                </>
+                              )}
                             </div>
-                          );
-                        }}
-                      />
-                    ))}
+                          }
+                          endpoint={`/api/distributions?year=${yearGroup.year}`}
+                          refreshKey={`${yearGroup.year}-${partner.partnerId}-${distributionRefreshKey}`}
+                          render={(data) => {
+                            const rowsForPartner = data
+                              .map((dist) => distributionOverrides[dist.id] ?? dist)
+                              .filter(
+                                (dist) =>
+                                  dist.year === yearGroup.year &&
+                                  !dist.month &&
+                                  (dist.partner?.name?.trim() || "Unknown Partner") ===
+                                    partner.partnerName,
+                              )
+                              .sort((a, b) =>
+                                (a.city?.name ?? "").localeCompare(b.city?.name ?? ""),
+                              );
+
+                            if (rowsForPartner.length === 0) {
+                              return (
+                                <div className="text-sm text-gray-600">No distributions found.</div>
+                              );
+                            }
+
+                            return (
+                              <div className="overflow-x-auto rounded-lg border border-gray-200">
+                                <div className="grid grid-cols-2 gap-4 border-b border-gray-200 bg-gray-50 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-[#053766]">
+                                  <div>City</div>
+                                  <div>Diapers</div>
+                                </div>
+                                {rowsForPartner.map((dist) => (
+                                  <div
+                                    key={dist.id}
+                                    className="grid grid-cols-2 gap-4 border-b border-gray-100 px-4 py-3 text-sm text-gray-700 last:border-b-0"
+                                  >
+                                    <div>{dist.city?.name ?? "-"}</div>
+                                    <div>{dist.numberDiapers ?? "0"}</div>
+                                  </div>
+                                ))}
+                              </div>
+                            );
+                          }}
+                        />
+                      );
+                    })}
                 </div>
               )}
             </div>

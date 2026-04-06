@@ -199,6 +199,131 @@ export async function DELETE(req: Request) {
   }
 }
 
+export async function PUT(req: Request) {
+  try {
+    const body = await req.json();
+    const { partnerId, year, numDiapers } = body as {
+      partnerId: string | number;
+      year: string;
+      numDiapers: number | null;
+    };
+
+    const partnerIdBig = BigInt(partnerId);
+    const numDiapersBig = numDiapers === null ? null : BigInt(Math.round(Number(numDiapers)));
+
+    const result = await prisma.$transaction(async (tx) => {
+      const existingDistributions = await tx.distribution.findMany({
+        where: { partnerId: partnerIdBig, year: String(year), month: null },
+        orderBy: { id: "asc" },
+      });
+
+      const seedRows =
+        existingDistributions.length > 0
+          ? existingDistributions.map((d) => ({ cityId: d.cityId, percentage: d.percentage }))
+          : await tx.partnerRegion.findMany({
+              where: { partnerId: partnerIdBig },
+              select: { cityId: true, percentage: true },
+              orderBy: { cityId: "asc" },
+            });
+
+      if (existingDistributions.length > 0) {
+        await tx.distribution.deleteMany({
+          where: { id: { in: existingDistributions.map((d) => d.id) } },
+        });
+      }
+
+      if (seedRows.length > 0) {
+        await tx.distribution.createMany({
+          data: seedRows.map((row) => ({
+            partnerId: partnerIdBig,
+            cityId: row.cityId,
+            year: String(year),
+            month: null,
+            percentage: row.percentage,
+            numberDiapers:
+              numDiapersBig === null
+                ? null
+                : BigInt(Math.round(Number(numDiapersBig) * (row.percentage ?? 0))),
+          })),
+        });
+      }
+
+      const yearlyAggregates = await tx.distribution.groupBy({
+        by: ["cityId"],
+        where: { year: String(year), cityId: { not: null } },
+        _sum: { numberDiapers: true, numberChildren: true },
+      });
+
+      const existingYearly = await tx.yearlyData.findMany({ where: { year: String(year) } });
+      const aggregateCityIds = new Set<bigint>();
+
+      for (const agg of yearlyAggregates) {
+        const cityId = agg.cityId;
+        if (!cityId) continue;
+        aggregateCityIds.add(cityId);
+        const existing = existingYearly.find((r) => r.cityId === cityId);
+        const nextDiapers = agg._sum.numberDiapers ?? BigInt(0);
+        const nextBabies = agg._sum.numberChildren ?? BigInt(0);
+        if (existing) {
+          await tx.yearlyData.update({
+            where: { id: existing.id },
+            data: { numDiapers: nextDiapers, numBabies: nextBabies },
+          });
+        } else {
+          await tx.yearlyData.create({
+            data: {
+              id: crypto.randomUUID(),
+              cityId,
+              year: String(year),
+              numDiapers: nextDiapers,
+              numBabies: nextBabies,
+            },
+          });
+        }
+      }
+
+      const staleIds = existingYearly
+        .filter((r) => !aggregateCityIds.has(r.cityId))
+        .map((r) => r.id);
+      if (staleIds.length > 0) {
+        await tx.yearlyData.deleteMany({ where: { id: { in: staleIds } } });
+      }
+
+      const updatedDistributions = await tx.distribution.findMany({
+        where: { partnerId: partnerIdBig, year: String(year), month: null },
+        include: {
+          partner: { select: { name: true } },
+          city: { select: { name: true } },
+        },
+      });
+
+      return { updatedDistributions };
+    });
+
+    revalidateTag("cities");
+
+    return NextResponse.json({
+      message: "Yearly distributions updated successfully",
+      totalDiapers: numDiapers,
+      distributions: result.updatedDistributions.map((dist) => ({
+        id: dist.id.toString(),
+        partnerId: dist.partnerId?.toString() ?? null,
+        cityId: dist.cityId?.toString() ?? null,
+        year: dist.year,
+        month: dist.month,
+        numberDiapers: dist.numberDiapers?.toString() ?? null,
+        numberChildren: dist.numberChildren?.toString() ?? null,
+        percentage: dist.percentage,
+        partner: dist.partner,
+        city: dist.city,
+      })),
+    });
+  } catch (error) {
+    console.error("Error updating yearly distributions:", error);
+    return NextResponse.json({ error: "Failed to update yearly distributions" }, { status: 500 });
+  }
+}
+
 export async function POST(req: Request) {
   try {
     const body = await req.json();
