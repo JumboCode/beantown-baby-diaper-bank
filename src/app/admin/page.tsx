@@ -394,7 +394,10 @@ export default function Page() {
               <UploadNewData
                 opened={openedUploadDataForm}
                 onClose={closeUploadDataForm}
-                onUploaded={fetchDistributions}
+                onUploaded={async () => {
+                  await fetchDistributions();
+                  await fetchTimelineData();
+                }}
                 uploadedMonths={uploadedMonths}
               />
               <AddPartnerForm opened={openedPartnerForm} onClose={closePartnerForm} />
