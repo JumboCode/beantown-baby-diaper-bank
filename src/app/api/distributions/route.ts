@@ -66,12 +66,20 @@ export async function GET(req: Request) {
       };
     }
   } else {
-    // Single month/year filter
+    if (month) {
+    // return rows for month if requested
     where = {
-      ...(month ? { month } : {}),
+      month,
       ...(year ? { year } : {}),
     };
+  } else if (year) {
+    // if no month data, return year
+    where = {
+      year,
+      month: null,
+    };
   }
+}
 
   const distributionsQuery = {
     where,
