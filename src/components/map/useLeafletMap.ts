@@ -6,14 +6,7 @@ import "./SmoothWheelZoom";
 // Define the configuration type for the Leaflet map
 type MapConfig = Pick<
   MapContainerProps,
-  | "center"
-  | "zoom"
-  | "scrollWheelZoom"
-  | "preferCanvas"
-  | "minZoom"
-  | "maxZoom"
-  | "maxBounds"
-  | "maxBoundsViscosity"
+  "center" | "zoom" | "scrollWheelZoom" | "preferCanvas" | "minZoom" | "maxZoom" | "maxBounds" | "maxBoundsViscosity"
 > & { style: CSSProperties };
 
 // Default to Boston, MA
@@ -21,10 +14,14 @@ const DEFAULT_CENTER: LatLngTuple = [42.3601, -71.0589];
 const DEFAULT_ZOOM = 11;
 
 // Massachusetts bounding box (with padding)
+<<<<<<< HEAD
 const MA_BOUNDS: LatLngBoundsExpression = [
   [41.0, -73.8],
   [43.2, -69.5],
 ];
+=======
+const MA_BOUNDS: LatLngBoundsExpression = [[41.0, -73.8], [43.2, -69.5]];
+>>>>>>> 279f9387f5203869a334322566747cd4558ebdca
 
 /**
  * Creates and memoized a Leaflet map configuration for use with a MapContainer or similar map component.
@@ -54,13 +51,8 @@ export function useLeafletMap() {
       preferCanvas: false,
       minZoom: 8,
       maxZoom: 18,
-
       maxBounds: MA_BOUNDS,
       maxBoundsViscosity: 1.0,
-      scrollWheelZoom: false, // disable original zoom function
-      smoothWheelZoom: true, // enable smooth zoom
-      smoothSensitivity: 2, // zoom speed. default is 1
-      zoomSnap: 0,
       style: {
         height: "100%",
         width: "100%",

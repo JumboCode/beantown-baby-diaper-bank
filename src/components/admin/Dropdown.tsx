@@ -2,6 +2,7 @@
 
 import React, { useEffect, useRef, useState } from "react";
 import { ChevronDown } from "lucide-react";
+import { Skeleton } from "@mantine/core";
 
 type FetchState<T> =
   | { status: "idle"; data: null; error: null }
@@ -102,9 +103,7 @@ export function CollapsibleDropdown<T>({
 
   // styling of dropdown (open and closed)
   return (
-    <div
-      className={`w-full rounded-xl border border-gray-200 bg-white ${className}`}
-    >
+    <div className={`w-full rounded-xl border border-gray-200 bg-white ${className}`}>
       <div className="flex items-center justify-between gap-3 p-3">
         <button
           type="button"
@@ -125,7 +124,18 @@ export function CollapsibleDropdown<T>({
       {open ? (
         <div className="border-t border-gray-100 p-3">
           {state.status === "loading" ? (
-            <div className="text-sm text-gray-600">Loading...</div>
+            <div className="space-y-2">
+              {[65, 80, 50].map((w, i) => (
+                <div
+                  key={i}
+                  className="flex items-center gap-2 rounded-lg border border-gray-100 p-3"
+                >
+                  <Skeleton height={16} width={16} radius="sm" />
+                  <Skeleton height={16} width={`${w}%`} radius="sm" />
+                  <Skeleton height={16} width={60} radius="sm" className="ml-auto" />
+                </div>
+              ))}
+            </div>
           ) : null}
 
           {state.status === "error" ? (
@@ -142,9 +152,7 @@ export function CollapsibleDropdown<T>({
           ) : null}
 
           {state.status === "success" ? (
-            <div className="space-y-2">
-              {render(state.data)}
-            </div>
+            <div className="space-y-2">{render(state.data)}</div>
           ) : null}
         </div>
       ) : null}
