@@ -461,17 +461,19 @@ export default function DistributionsTable({
 
                                   return (
                                     <div className="overflow-x-auto rounded-lg border border-gray-200">
-                                      <div className="grid grid-cols-2 gap-4 border-b border-gray-200 bg-gray-50 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-[#053766]">
+                                      <div className="grid grid-cols-3 gap-4 border-b border-gray-200 bg-gray-50 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-[#053766]">
                                         <div>City</div>
                                         <div>Diapers</div>
+                                        <div>Percentage</div>
                                       </div>
                                       {rowsForPartner.map((dist) => (
                                         <div
                                           key={dist.id}
-                                          className="grid grid-cols-2 gap-4 border-b border-gray-100 px-4 py-3 text-sm text-gray-700 last:border-b-0"
+                                          className="grid grid-cols-3 gap-4 border-b border-gray-100 px-4 py-3 text-sm text-gray-700 last:border-b-0"
                                         >
                                           <div>{dist.city?.name ?? "-"}</div>
                                           <div>{dist.numberDiapers ?? "0"}</div>
+                                          <div>{dist.percentage != null ? `${(Number(dist.percentage) * 100).toFixed(0)}%`: "-"}</div>
                                         </div>
                                       ))}
                                     </div>
@@ -611,17 +613,19 @@ export default function DistributionsTable({
 
                             return (
                               <div className="overflow-x-auto rounded-lg border border-gray-200">
-                                <div className="grid grid-cols-2 gap-4 border-b border-gray-200 bg-gray-50 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-[#053766]">
+                                <div className="grid grid-cols-3 gap-4 border-b border-gray-200 bg-gray-50 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-[#053766]">
                                   <div>City</div>
                                   <div>Diapers</div>
+                                  <div>Percentage</div>
                                 </div>
                                 {rowsForPartner.map((dist) => (
                                   <div
                                     key={dist.id}
-                                    className="grid grid-cols-2 gap-4 border-b border-gray-100 px-4 py-3 text-sm text-gray-700 last:border-b-0"
+                                    className="grid grid-cols-3 gap-4 border-b border-gray-100 px-4 py-3 text-sm text-gray-700 last:border-b-0"
                                   >
                                     <div>{dist.city?.name ?? "-"}</div>
                                     <div>{dist.numberDiapers ?? "0"}</div>
+                                    <div>{dist.percentage != null ? `${(Number(dist.percentage) * 100)}%`: "-"}</div>
                                   </div>
                                 ))}
                               </div>
