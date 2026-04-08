@@ -33,7 +33,7 @@ export default function MakeAnImpact() {
             styles={{
               root: {
                 color: "white",
-                backgroundColor: "#1e3a5f",
+                backgroundColor: "#1B3668",
                 border: "none",
                 fontWeight: 700,
                 borderRadius: "6px",
@@ -49,7 +49,7 @@ export default function MakeAnImpact() {
         </Popover.Target>
 
         <Popover.Dropdown p="lg">
-          <Text fw={800} mb={6} style={{ fontSize: "17px", color: "#1e3a5f", lineHeight: 1.3 }}>
+          <Text fw={800} mb={6} style={{ fontSize: "17px", color: "#1B3668", lineHeight: 1.3 }}>
             Help us bring diaper relief to the greater Boston area!
           </Text>
           <Text size="sm" c="dimmed" mb="md">
@@ -66,15 +66,15 @@ export default function MakeAnImpact() {
                 gap="sm"
                 wrap="nowrap"
                 style={{
-                  background: "linear-gradient(135deg, #f0f6ff 0%, #e4effe 100%)",
-                  border: "1.5px solid #c3d9f7",
+                  background: "linear-gradient(135deg, #edf1f8 0%, #e0e8f5 100%)",
+                  border: "1.5px solid #c5d2e9",
                   borderRadius: "12px",
                   padding: "12px 14px",
                 }}
               >
                 <div
                   style={{
-                    backgroundColor: "#1e3a5f",
+                    backgroundColor: "#1B3668",
                     borderRadius: "8px",
                     padding: "6px 10px",
                     minWidth: "52px",
@@ -89,14 +89,14 @@ export default function MakeAnImpact() {
 
                 <Group gap={2} wrap="nowrap" style={{ flexShrink: 0 }}>
                   {Array.from({ length: tier.diapers }).map((_, i) => (
-                    <IconDiaper key={i} size={16} color="#2c85b2" />
+                    <IconDiaper key={i} size={16} color="#2471A3" />
                   ))}
                 </Group>
 
                 <div style={{ minWidth: 0 }}>
                   <Text
                     fw={700}
-                    c="#1e3a5f"
+                    c="#1B3668"
                     style={{ fontSize: "13px", lineHeight: 1.2, whiteSpace: "nowrap" }}
                   >
                     {tier.label}
@@ -116,12 +116,12 @@ export default function MakeAnImpact() {
             target="_blank"
             styles={{
               root: {
-                backgroundColor: "#1e3a5f",
-                color: "white",
+                backgroundColor: "#F5C200",
+                color: "#1B3668",
                 fontSize: "14px",
-                fontWeight: 600,
+                fontWeight: 800,
                 borderRadius: "8px",
-                "&:hover": { backgroundColor: "#163050" },
+                "&:hover": { backgroundColor: "#DBA900" },
               },
             }}
           >

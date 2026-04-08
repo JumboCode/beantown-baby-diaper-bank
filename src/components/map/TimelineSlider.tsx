@@ -79,7 +79,7 @@ export default function TimelineSlider({
         >
           <Tooltip label="Previous year" withArrow>
             <ActionIcon
-              color="#053766"
+              color="#1B3668"
               variant="subtle"
               radius="xl"
               size="lg"
@@ -92,7 +92,7 @@ export default function TimelineSlider({
 
           <Tooltip label={isPlaying ? "Pause timeline" : "Play timeline"} withArrow>
             <ActionIcon
-              color={isPlaying ? "#e3393e" : "#053766"}
+              color={isPlaying ? "#CC2027" : "#1B3668"}
               variant="filled"
               radius="xl"
               size="lg"
@@ -108,7 +108,7 @@ export default function TimelineSlider({
 
           <Tooltip label="Next year" withArrow>
             <ActionIcon
-              color="#053766"
+              color="#1B3668"
               variant="subtle"
               radius="xl"
               size="lg"
@@ -126,7 +126,7 @@ export default function TimelineSlider({
         style={{
           border: "1px solid #E4E7EC",
           borderRadius: 18,
-          background: "linear-gradient(180deg, #F8FBFF 0%, #FFFFFF 100%)",
+          background: "linear-gradient(180deg, #F4F7FC 0%, #FFFFFF 100%)",
           boxShadow: "inset 0 1px 0 rgba(255,255,255,0.9)",
         }}
       >
@@ -141,7 +141,7 @@ export default function TimelineSlider({
             label={(val) => labels[val] ?? ""}
             labelAlwaysOn
             marks={marks}
-            color="#053766"
+            color="#1B3668"
             thumbSize={36}
             thumbChildren={
               <Image
@@ -156,7 +156,7 @@ export default function TimelineSlider({
               root: { paddingLeft: 6, paddingRight: 6 },
               track: { height: 8 },
               bar: {
-                background: "linear-gradient(90deg, #143E6E 0%, #0F6B99 100%)",
+                background: "linear-gradient(90deg, #1B3668 0%, #2471A3 100%)",
                 transition: "width 220ms ease",
               },
               mark: {
@@ -180,7 +180,7 @@ export default function TimelineSlider({
                 backgroundColor: "#FFFFFF",
                 border: "1px solid #D0D5DD",
                 borderRadius: 999,
-                color: "#053766",
+                color: "#1B3668",
                 fontWeight: 800,
                 padding: "6px 10px",
                 boxShadow: "0 6px 18px rgba(16, 24, 40, 0.12)",

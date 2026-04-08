@@ -59,7 +59,7 @@ export function CityPopup({ city, year, onPartnerSelect, onClose }: CityPopupPro
       {/* Gradient header banner */}
       <Box
         style={{
-          background: "linear-gradient(135deg, #053766 0%, #1e3a5f 55%, #2c85b2 100%)",
+          background: "linear-gradient(135deg, #1B3668 0%, #162C58 55%, #2471A3 100%)",
           borderRadius: "12px 12px 0 0",
           padding: "16px 16px 14px",
           position: "sticky",
@@ -120,49 +120,49 @@ export function CityPopup({ city, year, onPartnerSelect, onClose }: CityPopupPro
         <Group grow gap={8}>
           <Box
             style={{
-              background: "#f0f6ff",
-              border: "1px solid #c3d9f7",
-              borderLeft: "4px solid #053766",
+              background: "#edf1f8",
+              border: "1px solid #c5d2e9",
+              borderLeft: "4px solid #1B3668",
               borderRadius: 10,
               padding: "10px 12px",
             }}
           >
             <Group gap={5} mb={4} align="center">
-              <IconChartBar size={12} color="#053766" />
-              <Text fz="9px" c="#053766" tt="uppercase" fw={800} lts="0.08em">
+              <IconChartBar size={12} color="#1B3668" />
+              <Text fz="9px" c="#1B3668" tt="uppercase" fw={800} lts="0.08em">
                 Lifetime Total
               </Text>
             </Group>
-            <Text fz="24px" fw={900} c="#053766" lh={1}>
+            <Text fz="24px" fw={900} c="#1B3668" lh={1}>
               {city.stats.runningTotal?.toLocaleString() ?? 0}
             </Text>
-            <Text fz="10px" c="#2c85b2" fw={500} mt={2}>
+            <Text fz="10px" c="#2471A3" fw={500} mt={2}>
               diapers distributed
             </Text>
           </Box>
           <Box
             style={{
-              background: "#e4effe",
-              border: "1px solid #c3d9f7",
-              borderLeft: "4px solid #2c85b2",
+              background: "#e0e8f5",
+              border: "1px solid #c5d2e9",
+              borderLeft: "4px solid #2471A3",
               borderRadius: 10,
               padding: "10px 12px",
             }}
           >
             <Group gap={5} mb={4} align="center">
-              <IconCalendarStats size={12} color="#2c85b2" />
-              <Text fz="9px" c="#1e3a5f" tt="uppercase" fw={800} lts="0.08em">
+              <IconCalendarStats size={12} color="#2471A3" />
+              <Text fz="9px" c="#162C58" tt="uppercase" fw={800} lts="0.08em">
                 {year} YTD
               </Text>
             </Group>
-            <Text fz="24px" fw={900} c="#1e3a5f" lh={1}>
+            <Text fz="24px" fw={900} c="#162C58" lh={1}>
               +{totalDiapers.toLocaleString()}
             </Text>
-            <Text fz="10px" c="#2c85b2" fw={500} mt={2}>
+            <Text fz="10px" c="#2471A3" fw={500} mt={2}>
               this year
             </Text>
             {totalChildren > 0 && (
-              <Text fz="10px" c="#1e3a5f" fw={600} mt={3}>
+              <Text fz="10px" c="#162C58" fw={600} mt={3}>
                 {totalChildren.toLocaleString()} children helped
               </Text>
             )}
@@ -179,8 +179,8 @@ export function CityPopup({ city, year, onPartnerSelect, onClose }: CityPopupPro
         >
           <Box
             style={{
-              background: "linear-gradient(90deg, #e4effe 0%, #f0f6ff 100%)",
-              borderBottom: activePartners.length > 0 ? "1px solid #c3d9f7" : undefined,
+              background: "linear-gradient(90deg, #e0e8f5 0%, #edf1f8 100%)",
+              borderBottom: activePartners.length > 0 ? "1px solid #c5d2e9" : undefined,
               padding: "8px 12px",
             }}
           >
@@ -189,11 +189,11 @@ export function CityPopup({ city, year, onPartnerSelect, onClose }: CityPopupPro
                 <ThemeIcon
                   size={22}
                   radius="xl"
-                  styles={{ root: { backgroundColor: "#c3d9f7", color: "#053766" } }}
+                  styles={{ root: { backgroundColor: "#c5d2e9", color: "#1B3668" } }}
                 >
                   <IconUsersGroup size={12} />
                 </ThemeIcon>
-                <Text fz="11px" fw={800} c="#053766" tt="uppercase" lts="0.06em">
+                <Text fz="11px" fw={800} c="#1B3668" tt="uppercase" lts="0.06em">
                   Partner Organizations
                 </Text>
               </Group>
@@ -202,7 +202,7 @@ export function CityPopup({ city, year, onPartnerSelect, onClose }: CityPopupPro
                 radius="xl"
                 fw={700}
                 size="sm"
-                styles={{ root: { background: "#053766" } }}
+                styles={{ root: { background: "#1B3668" } }}
               >
                 {activePartners.length}
               </Badge>
@@ -233,7 +233,7 @@ export function CityPopup({ city, year, onPartnerSelect, onClose }: CityPopupPro
                         borderRadius: 8,
                         transition: "background 0.15s",
                       }}
-                      onMouseEnter={(e) => (e.currentTarget.style.background = "#f0f6ff")}
+                      onMouseEnter={(e) => (e.currentTarget.style.background = "#edf1f8")}
                       onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
                     >
                       <Avatar
@@ -249,7 +249,7 @@ export function CityPopup({ city, year, onPartnerSelect, onClose }: CityPopupPro
                       <Text
                         fz="13px"
                         fw={600}
-                        c="#1e3a5f"
+                        c="#162C58"
                         style={{ flex: 1, minWidth: 0 }}
                         truncate
                       >
@@ -289,7 +289,7 @@ export function CityPopup({ city, year, onPartnerSelect, onClose }: CityPopupPro
             <Box
               style={{
                 background: "#f5f8ff",
-                borderBottom: "1px solid #c3d9f7",
+                borderBottom: "1px solid #c5d2e9",
                 padding: "8px 12px",
               }}
             >

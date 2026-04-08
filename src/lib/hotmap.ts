@@ -1,6 +1,6 @@
 // --- 1. Helper Functions ---
 
-export const LEVEL_COLORS = ["#E8F4FF", "#B2E5FF", "#51A3CC", "#2C85B2"];
+export const LEVEL_COLORS = ["#E8EEF7", "#B2C8E8", "#4A70B0", "#1B3668"];
 
 export const hexToRgb = (hex: string): [number, number, number] => {
   const parsed = hex.replace("#", "");
@@ -19,17 +19,17 @@ export const rgbToHex = (r: number, g: number, b: number) =>
 
 export const clamp01 = (x: number) => {
   return Math.max(0, Math.min(1, x));
-}
+};
 
 export const sigmoid = (z: number) => {
   return 1 / (1 + Math.exp(-z));
-}
+};
 
 export const cityScore = (value: number, median: number, p25: number, p75: number) => {
   const iqr = Math.max(p75 - p25, 1);
   const k = 4 / iqr;
   return clamp01(sigmoid(k * (value - median)));
-}
+};
 
 export const getScoreColor = (score: number) => {
   const stops = LEVEL_COLORS.length - 1;
