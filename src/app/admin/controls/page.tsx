@@ -49,16 +49,10 @@ export default function AdminControlsPage() {
   const [error, setError] = useState<string | null>(null);
 
   const currentRole =
-    typeof user?.publicMetadata?.role === "string"
-      ? user.publicMetadata.role
-      : "user";
+    typeof user?.publicMetadata?.role === "string" ? user.publicMetadata.role : "user";
   const canDeleteAdmins = currentRole === "superadmin";
   const currentRoleLabel =
-    currentRole === "superadmin"
-      ? "Super Admin"
-      : currentRole === "admin"
-        ? "Admin"
-        : "Member";
+    currentRole === "superadmin" ? "Super Admin" : currentRole === "admin" ? "Admin" : "Member";
   const superAdminCount = adminList.filter(
     (admin) => admin.level.toLowerCase() === "superadmin",
   ).length;
@@ -83,7 +77,9 @@ export default function AdminControlsPage() {
   }, []);
 
   const handleDelete = async (adminId: string) => {
-    const confirmed = window.confirm("Are you sure you want to delete this admin? This action cannot be undone.");
+    const confirmed = window.confirm(
+      "Are you sure you want to delete this admin? This action cannot be undone.",
+    );
 
     if (!confirmed) return;
 
@@ -102,7 +98,6 @@ export default function AdminControlsPage() {
       }
 
       setAdminList((prevAdmins) => prevAdmins.filter((admin) => admin.id !== adminId));
-
     } catch (err: any) {
       console.error(err);
       alert(err.message || "An error occurred while trying to delete the admin.");
@@ -150,12 +145,7 @@ export default function AdminControlsPage() {
             radius="xl"
             size="lg"
           >
-            <Image
-              src="/admin_view/delete.svg"
-              alt="delete icon"
-              width={20}
-              height={20}
-            />
+            <Image src="/admin_view/delete.svg" alt="delete icon" width={20} height={20} />
           </ActionIcon>
         ) : (
           <Text size="xs" c="dimmed" fw={500}>

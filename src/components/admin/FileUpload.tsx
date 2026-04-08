@@ -13,13 +13,8 @@ interface FileUploadProps {
   onFileChange?: (fileInfo: FileInfo | null) => void;
 }
 
-export default function FileUpload({
-  fileInfo,
-  onFileChange,
-}: FileUploadProps) {
-  const [internalFileInfo, setInternalFileInfo] = useState<FileInfo | null>(
-    null,
-  );
+export default function FileUpload({ fileInfo, onFileChange }: FileUploadProps) {
+  const [internalFileInfo, setInternalFileInfo] = useState<FileInfo | null>(null);
   const displayedFileInfo = fileInfo ?? internalFileInfo;
 
   const updateFile = (next: FileInfo | null) => {
@@ -56,16 +51,8 @@ export default function FileUpload({
           },
         }}
       />
-      <div>
-        {displayedFileInfo != null && (
-          <h1> File name: {displayedFileInfo.name} </h1>
-        )}
-      </div>
-      <div>
-        {displayedFileInfo != null && (
-          <h1> Number of rows: {displayedFileInfo.rows} </h1>
-        )}
-      </div>
+      <div>{displayedFileInfo != null && <h1> File name: {displayedFileInfo.name} </h1>}</div>
+      <div>{displayedFileInfo != null && <h1> Number of rows: {displayedFileInfo.rows} </h1>}</div>
     </div>
   );
 }

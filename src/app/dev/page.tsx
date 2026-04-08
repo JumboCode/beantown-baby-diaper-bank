@@ -36,8 +36,8 @@ export default function Home() {
               </Button>
             </Group>
             <Text c="dimmed" size="lg">
-              Welcome devs to the Beantown Baby Diaper Bank! This project is a
-              JumboCode project to add new functionality to{" "}
+              Welcome devs to the Beantown Baby Diaper Bank! This project is a JumboCode project to
+              add new functionality to{" "}
               <Anchor
                 href="https://beantownbabydiaperbank.org/"
                 target="_blank"
@@ -46,23 +46,15 @@ export default function Home() {
                 beantownbabydiaperbank.org
               </Anchor>
               . Built with{" "}
-              <Anchor
-                href="https://mantine.dev/"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
+              <Anchor href="https://mantine.dev/" target="_blank" rel="noopener noreferrer">
                 Mantine
               </Anchor>{" "}
               and{" "}
-              <Anchor
-                href="https://tailwindcss.com/"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
+              <Anchor href="https://tailwindcss.com/" target="_blank" rel="noopener noreferrer">
                 Tailwind
               </Anchor>
-              , this page is here to help you get started, find resources, and
-              contribute. We&apos;re excited to have you on the team!
+              , this page is here to help you get started, find resources, and contribute.
+              We&apos;re excited to have you on the team!
             </Text>
           </Stack>
 
@@ -76,21 +68,14 @@ export default function Home() {
                 <List.Item>
                   <Text size="sm" c="dimmed">
                     If you don&apos;t have Node.js installed, download it from{" "}
-                    <Anchor
-                      href="https://nodejs.org/"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
+                    <Anchor href="https://nodejs.org/" target="_blank" rel="noopener noreferrer">
                       nodejs.org
                     </Anchor>
                     .
                   </Text>
                 </List.Item>
                 <List.Item>
-                  <Code>
-                    git clone
-                    https://github.com/JumboCode/beantown-baby-diaper-bank.git
-                  </Code>{" "}
+                  <Code>git clone https://github.com/JumboCode/beantown-baby-diaper-bank.git</Code>{" "}
                   <Text size="sm" c="dimmed" span>
                     — clones the project repository to your computer
                   </Text>
@@ -113,8 +98,7 @@ export default function Home() {
                   <Code>npm run dev</Code>
                   <Text size="sm" c="dimmed" span>
                     {" "}
-                    — starts the development server so you can view the app
-                    locally
+                    — starts the development server so you can view the app locally
                   </Text>
                 </List.Item>
               </List>
@@ -141,13 +125,9 @@ export default function Home() {
                 The developer landing page now lives at <Code>/dev</Code>.
               </Text>
               <Text size="sm" c="dimmed">
-                This project uses <b>Next.js</b> for routing, server-side
-                rendering, and more. Learn more in the{" "}
-                <Anchor
-                  href="https://nextjs.org/docs"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
+                This project uses <b>Next.js</b> for routing, server-side rendering, and more. Learn
+                more in the{" "}
+                <Anchor href="https://nextjs.org/docs" target="_blank" rel="noopener noreferrer">
                   Next.js documentation
                 </Anchor>
                 .
@@ -215,19 +195,14 @@ export default function Home() {
             <Divider />
             <List size="sm">
               <List.Item>
-                <b>Mantine</b> is a modern React component library used for
-                building UI.{" "}
-                <Anchor
-                  href="https://mantine.dev/"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
+                <b>Mantine</b> is a modern React component library used for building UI.{" "}
+                <Anchor href="https://mantine.dev/" target="_blank" rel="noopener noreferrer">
                   Mantine documentation
                 </Anchor>
               </List.Item>
               <List.Item>
-                <b>Tailwind CSS</b> is a utility-first CSS framework for rapidly
-                building custom designs.{" "}
+                <b>Tailwind CSS</b> is a utility-first CSS framework for rapidly building custom
+                designs.{" "}
                 <Anchor
                   href="https://tailwindcss.com/docs"
                   target="_blank"
@@ -237,8 +212,8 @@ export default function Home() {
                 </Anchor>
               </List.Item>
               <List.Item>
-                Use Mantine for most UI components and Tailwind for utility
-                classes (spacing, colors, etc).
+                Use Mantine for most UI components and Tailwind for utility classes (spacing,
+                colors, etc).
               </List.Item>
               <List.Item>
                 For more info, see the{" "}

@@ -40,7 +40,9 @@ function assert(condition: unknown, message: string): asserts condition {
 }
 
 function normalizeCityName(value: string | null | undefined) {
-  return String(value ?? "").trim().toLowerCase();
+  return String(value ?? "")
+    .trim()
+    .toLowerCase();
 }
 
 function nearlyEqual(a: number, b: number, tolerance = FLOAT_TOLERANCE) {
@@ -95,11 +97,7 @@ function verifyRowsByCityAndPercentage(
   }
 }
 
-function verifyExactRestore(
-  actualRows: SnapshotRow[],
-  snapshotRows: SnapshotRow[],
-  label: string,
-) {
+function verifyExactRestore(actualRows: SnapshotRow[], snapshotRows: SnapshotRow[], label: string) {
   const actual = serializeRows(actualRows);
   const expected = serializeRows(snapshotRows);
 
@@ -240,10 +238,7 @@ async function main() {
     };
   }
 
-  async function restorePartnerRegions(
-    partnerId: string,
-    snapshotRows: SnapshotRow[],
-  ) {
+  async function restorePartnerRegions(partnerId: string, snapshotRows: SnapshotRow[]) {
     await prisma.$transaction(async (tx) => {
       await tx.partnerRegion.deleteMany({
         where: { partnerId: BigInt(partnerId) },
@@ -275,9 +270,11 @@ async function main() {
         got ${response.status}\nResponse: ${JSON.stringify(response.json, null, 2)}`,
       );
 
-      const responseJson = response.json as
-        | { success?: boolean; message?: string; error?: string }
-        | null;
+      const responseJson = response.json as {
+        success?: boolean;
+        message?: string;
+        error?: string;
+      } | null;
 
       if (typeof testCase.expectedSuccess === "boolean") {
         assert(
@@ -306,11 +303,7 @@ async function main() {
       }
 
       if (testCase.expectNoDbChange) {
-        verifyExactRestore(
-          finalRows,
-          snapshotRows,
-          `${testCase.name} no-change check`,
-        );
+        verifyExactRestore(finalRows, snapshotRows, `${testCase.name} no-change check`);
       }
 
       console.log(`PASS ${testCase.name}`);
@@ -318,11 +311,7 @@ async function main() {
       await restorePartnerRegions(testCase.payload.partnerId, snapshotRows);
 
       const restoredRows = await fetchPartnerRegionRows(testCase.payload.partnerId);
-      verifyExactRestore(
-        restoredRows,
-        snapshotRows,
-        `${testCase.name} restore-check`,
-      );
+      verifyExactRestore(restoredRows, snapshotRows, `${testCase.name} restore-check`);
 
       console.log(`RESTORED ${testCase.name}`);
     }
