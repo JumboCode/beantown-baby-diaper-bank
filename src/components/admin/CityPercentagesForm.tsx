@@ -1,13 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import {
-  Stack,
-  Group,
-  Text,
-  Select,
-  NumberInput,
-  Button,
-  Divider,
-} from "@mantine/core";
+import { Stack, Group, Text, Select, NumberInput, Button, Divider } from "@mantine/core";
 import { RiCloseLine } from "react-icons/ri";
 
 type CityOption = { value: string; label: string };
@@ -100,9 +92,7 @@ export default function CityPercentagesForm({
             disabled={disabled}
             placeholder="Percentage"
             value={percentage}
-            onChange={(val) =>
-              setPercentage(typeof val === "number" ? val : undefined)
-            }
+            onChange={(val) => setPercentage(typeof val === "number" ? val : undefined)}
             radius="md"
             min={0}
             max={100}
@@ -112,7 +102,9 @@ export default function CityPercentagesForm({
             disabled={disabled || !city || percentage === undefined}
             radius="md"
             onClick={addEntry}
-          >Add</Button>
+          >
+            Add
+          </Button>
         </Group>
       </Stack>
 
@@ -158,18 +150,11 @@ export default function CityPercentagesForm({
 
       <Divider />
       <Group justify="space-between">
-        {disabled ? 
-          null 
-          : 
-          <Text 
-            fw={600} 
-            c={totalPercent === 100 ? "green" : "red"}
-            size="sm"
-          >
-            Total: {totalPercent.toFixed(0)}% 
-            {totalPercent !== 100 && " (Must equal 100%)"}
+        {disabled ? null : (
+          <Text fw={600} c={totalPercent === 100 ? "green" : "red"} size="sm">
+            Total: {totalPercent.toFixed(0)}%{totalPercent !== 100 && " (Must equal 100%)"}
           </Text>
-        }
+        )}
 
         <Button
           color="blue"

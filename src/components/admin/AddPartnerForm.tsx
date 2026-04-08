@@ -89,13 +89,7 @@ type AddressFields = {
   country: string;
 };
 
-const buildAddressString = ({
-  addressLine,
-  city,
-  state,
-  zipCode,
-  country,
-}: AddressFields) =>
+const buildAddressString = ({ addressLine, city, state, zipCode, country }: AddressFields) =>
   [addressLine, city, state, zipCode, country || DEFAULT_COUNTRY]
     .filter((part) => Boolean(part))
     .join(", ");
@@ -135,9 +129,7 @@ export default function AddPartnerForm({
         const data = await res.json();
 
         if (data.geonames) {
-          const cityNames = data.geonames.map(
-            (city: { name: string }) => city.name,
-          );
+          const cityNames = data.geonames.map((city: { name: string }) => city.name);
           const cityUniqueSorted = Array.from(new Set(cityNames)).sort();
           setCitiesAPI(cityUniqueSorted as string[]);
         }
@@ -173,9 +165,7 @@ export default function AddPartnerForm({
     },
     validate: {
       organization: (value) =>
-        typeof value === "string" && value.trim()
-          ? null
-          : "Organization name is required",
+        typeof value === "string" && value.trim() ? null : "Organization name is required",
       time: (value, values) => {
         if (values.status === "waitlisted") return null;
         return value ? null : "Select a start time";
@@ -195,8 +185,7 @@ export default function AddPartnerForm({
       longitude: requiredNumber("Longitude"),
       state: (value) => (value ? null : "Select a state"),
       city: (value) => (value.trim() ? null : "City is required"),
-      addressLine: (value) =>
-        value.trim() ? null : "Address Line is required",
+      addressLine: (value) => (value.trim() ? null : "Address Line is required"),
       zipCode: requiredInteger("Zip Code"),
       country: (value) => (value ? null : "Select a country"),
       status: (value) => (value ? null : "Select a status"),
@@ -255,14 +244,11 @@ export default function AddPartnerForm({
     // Check for duplicate partner name before submitting.
     try {
       const trimmedName = values.organization.trim();
-      const checkRes = await fetch(
-        `/api/partners?search=${encodeURIComponent(trimmedName)}`,
-      );
+      const checkRes = await fetch(`/api/partners?search=${encodeURIComponent(trimmedName)}`);
       if (checkRes.ok) {
         const checkData = await checkRes.json();
         const duplicate = checkData.data?.find(
-          (p: { name: string }) =>
-            p.name.trim().toLowerCase() === trimmedName.toLowerCase(),
+          (p: { name: string }) => p.name.trim().toLowerCase() === trimmedName.toLowerCase(),
         );
         if (duplicate) {
           const duplicateWarning = `The partner ${trimmedName} already exists.`;
@@ -278,9 +264,7 @@ export default function AddPartnerForm({
 
     const cityPercentages = values.cities.map((city) => {
       const raw = Number(percentages[city] ?? 0);
-      const normalized = Number.isFinite(raw)
-        ? Number((raw / 100).toFixed(4))
-        : 0;
+      const normalized = Number.isFinite(raw) ? Number((raw / 100).toFixed(4)) : 0;
       return { city, percentage: normalized };
     });
 
@@ -313,14 +297,8 @@ export default function AddPartnerForm({
 
       if (!response.ok) {
         const err = await response.json();
-        const warning =
-          typeof err?.error === "string"
-            ? err.error
-            : "Unable to submit partner.";
-        if (
-          response.status === 422 ||
-          warning === "Please check the entered cities."
-        ) {
+        const warning = typeof err?.error === "string" ? err.error : "Unable to submit partner.";
+        if (response.status === 422 || warning === "Please check the entered cities.") {
           const cityWarning = "Please check the entered cities.";
           form.setFieldError("cities", cityWarning);
           setSubmitWarning(cityWarning);
@@ -455,9 +433,7 @@ export default function AddPartnerForm({
               Cities Served <span className="text-red-600">*</span>
             </Text>
             <TagsInput
-              placeholder={
-                isLoadingCities ? "Loading cities..." : "Select cities"
-              }
+              placeholder={isLoadingCities ? "Loading cities..." : "Select cities"}
               data={citiesAPI}
               filter={({ options, search }) => {
                 const splittedSearch = search.toLowerCase().trim().split(" ");
@@ -496,49 +472,46 @@ export default function AddPartnerForm({
           </Group>
 
           <Group w={526} ml="auto" justify="flex-end">
-            {form.values.cities.length > 0 &&
-              form.values.status !== "waitlisted" && (
-                <Table w="100%" striped highlightOnHover withTableBorder>
-                  <Table.Thead>
-                    <Table.Tr>
-                      <Table.Th>Cities</Table.Th>
-                      <Table.Th>Percentage</Table.Th>
-                    </Table.Tr>
-                  </Table.Thead>
-                  <Table.Tbody>
-                    {form.values.cities.map((city) => (
-                      <Table.Tr key={city}>
-                        <Table.Td>{city}</Table.Td>
-                        <Table.Td>
-                          <NumberInput
-                            placeholder="Enter %"
-                            min={0}
-                            max={100}
-                            suffix="%"
-                            value={percentages[city] || ""}
-                            onChange={(value) => {
-                              let result = 0;
-                              if (typeof value === "number") {
-                                result = value;
-                                const decimalPart = value
-                                  .toString()
-                                  .split(".")[1];
-                                if (decimalPart && decimalPart.length > 2) {
-                                  result = Math.round(value * 100) / 100;
-                                }
+            {form.values.cities.length > 0 && form.values.status !== "waitlisted" && (
+              <Table w="100%" striped highlightOnHover withTableBorder>
+                <Table.Thead>
+                  <Table.Tr>
+                    <Table.Th>Cities</Table.Th>
+                    <Table.Th>Percentage</Table.Th>
+                  </Table.Tr>
+                </Table.Thead>
+                <Table.Tbody>
+                  {form.values.cities.map((city) => (
+                    <Table.Tr key={city}>
+                      <Table.Td>{city}</Table.Td>
+                      <Table.Td>
+                        <NumberInput
+                          placeholder="Enter %"
+                          min={0}
+                          max={100}
+                          suffix="%"
+                          value={percentages[city] || ""}
+                          onChange={(value) => {
+                            let result = 0;
+                            if (typeof value === "number") {
+                              result = value;
+                              const decimalPart = value.toString().split(".")[1];
+                              if (decimalPart && decimalPart.length > 2) {
+                                result = Math.round(value * 100) / 100;
                               }
-                              setPercentages((prev) => ({
-                                ...prev,
-                                [city]: result,
-                              }));
-                            }}
-                          />
-                        </Table.Td>
-                      </Table.Tr>
-                    ))}
-                  </Table.Tbody>
-                </Table>
-              )}
+                            }
+                            setPercentages((prev) => ({
+                              ...prev,
+                              [city]: result,
+                            }));
+                          }}
+                        />
+                      </Table.Td>
+                    </Table.Tr>
+                  ))}
+                </Table.Tbody>
+              </Table>
+            )}
           </Group>
 
           {form.values.status !== "waitlisted" && (
@@ -597,9 +570,7 @@ export default function AddPartnerForm({
                   placeholder="Zip Code"
                   key={form.key("zipCode")}
                   value={form.values.zipCode}
-                  onChange={(event) =>
-                    form.setFieldValue("zipCode", event.currentTarget.value)
-                  }
+                  onChange={(event) => form.setFieldValue("zipCode", event.currentTarget.value)}
                   error={form.errors.zipCode}
                   size="md"
                   radius="md"
@@ -639,9 +610,7 @@ export default function AddPartnerForm({
                 placeholder="Longitude"
                 key={form.key("longitude")}
                 value={form.values.longitude}
-                onChange={(val) =>
-                  form.setFieldValue("longitude", String(val))
-                }
+                onChange={(val) => form.setFieldValue("longitude", String(val))}
                 error={form.errors.longitude}
                 size="md"
                 radius="md"

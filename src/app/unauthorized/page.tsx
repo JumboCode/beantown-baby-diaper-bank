@@ -1,15 +1,6 @@
 "use client";
 
-import {
-  Button,
-  Card,
-  Divider,
-  Group,
-  Stack,
-  Text,
-  ThemeIcon,
-  Title,
-} from "@mantine/core";
+import { Button, Card, Divider, Group, Stack, Text, ThemeIcon, Title } from "@mantine/core";
 import { useClerk, useUser } from "@clerk/nextjs";
 import Link from "next/link";
 
@@ -25,9 +16,7 @@ export default function Page() {
     "No email on file";
 
   const role =
-    (typeof user?.publicMetadata?.role === "string" &&
-      user.publicMetadata.role) ||
-    "member";
+    (typeof user?.publicMetadata?.role === "string" && user.publicMetadata.role) || "member";
   const requestAccessSubject = "Request admin access";
   const requestAccessBody = `Hello,
 
@@ -82,10 +71,7 @@ Thanks,`;
           <Divider />
 
           <Group gap="sm" wrap="wrap">
-            <Button
-              variant="filled"
-              onClick={() => signOut({ redirectUrl: "/sign-in" })}
-            >
+            <Button variant="filled" onClick={() => signOut({ redirectUrl: "/sign-in" })}>
               Sign in with a different account
             </Button>
             {requestAccessHref && (

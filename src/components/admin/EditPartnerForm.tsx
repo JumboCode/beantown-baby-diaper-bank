@@ -177,7 +177,7 @@ const formatMonthDateForApi = (date: Date | string | null): string | null => {
 
 export default function EditPartnerForm({ partner, onClose }: EditPartnerFormProps) {
   const [loading, setLoading] = useState(false);
-  const [monthVerificationErrorMsg, setMonthVerificationErrorMsg] = useState<string | null>('');
+  const [monthVerificationErrorMsg, setMonthVerificationErrorMsg] = useState<string | null>("");
   const [initialLogoUrl] = useState<string>(partner.logoUrl || "");
   const [activePercentTab, setActivePercentTab] = useState<UpdatePercentagesOptions>("one-time");
   const [cityPercentages, setCityPercentages] = useState<
@@ -324,6 +324,8 @@ export default function EditPartnerForm({ partner, onClose }: EditPartnerFormPro
         window.dispatchEvent(new Event("partners:refresh"));
       }
       onClose();
+    } catch {
+      setMonthVerificationErrorMsg("An error occurred while verifying the month.");
     } finally {
       setLoading(false);
     }
@@ -555,7 +557,9 @@ export default function EditPartnerForm({ partner, onClose }: EditPartnerFormPro
                 <Text fw={600} c="#344054">
                   Update Logic
                 </Text>
-                <Text size="xs" c="dimmed">Choose how to update percentages</Text>
+                <Text size="xs" c="dimmed">
+                  Choose how to update percentages
+                </Text>
               </Stack>
 
               <Stack className="min-w-170 w-full max-w-[600px]" gap="xl">
@@ -587,8 +591,8 @@ export default function EditPartnerForm({ partner, onClose }: EditPartnerFormPro
                         radius="lg"
                         p="md"
                         className={`border transition shadow-sm hover:shadow-md ${
-                          activePercentTab === option.value 
-                            ? "border-blue-600 bg-blue-50" 
+                          activePercentTab === option.value
+                            ? "border-blue-600 bg-blue-50"
                             : "border-gray-200"
                         }`}
                       >
