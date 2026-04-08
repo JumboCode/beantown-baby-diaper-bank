@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { connection } from "next/server";
 import { Suspense } from "react";
 import { MantineProvider, Skeleton } from "@mantine/core";
 import { ModalsProvider } from "@mantine/modals";
@@ -13,13 +12,11 @@ export const metadata: Metadata = {
   description: "Providing diapers to families in need.",
 };
 
-export default async function RootLayout({
+export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  await connection();
-
   return (
     <html lang="en">
       <body>
