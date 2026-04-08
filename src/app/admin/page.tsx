@@ -18,6 +18,7 @@ import { MonthPickerInput } from "@mantine/dates";
 import { useState, useEffect, useCallback, useMemo } from "react";
 import Image from "next/image";
 import { Poppins } from "next/font/google";
+import { useUser } from "@clerk/nextjs";
 import DistributionsTable from "@/components/admin/DistributionsTable";
 import { useDisclosure } from "@mantine/hooks";
 import UploadNewData from "../../components/admin/UploadDistributionDataForm";
@@ -105,8 +106,20 @@ const statuses = (Object.values(status) as string[]).map((s) => ({
   label: s.charAt(0).toUpperCase() + s.slice(1),
 }));
 
+function getGreetingName(user: ReturnType<typeof useUser>["user"]) {
+  if (user?.username) return user.username;
+
+  const email =
+    user?.primaryEmailAddress?.emailAddress ?? user?.emailAddresses?.[0]?.emailAddress;
+  if (!email) return "there";
+
+  return email.split("@")[0] || "there";
+}
+
 export default function Page() {
+  const { user } = useUser();
   const hashToTab = (hash: string): string => (hash === "#diapers" ? "Diapers" : "Partners");
+  const greetingName = getGreetingName(user);
 
   const [activeTab, setActiveTab] = useState<string | null>("Partners");
 
@@ -384,7 +397,7 @@ export default function Page() {
           <Card p={0}>
             <Group justify="space-between" align="flex-start">
               <Stack gap={4}>
-                <Title order={2}>Hello, Rachel 👋</Title>
+                <Title order={2}>Hello, {greetingName} 👋</Title>
                 <Group gap="xl" wrap="wrap">
                   <Text size="sm" c="dimmed">
                     Last data uploaded: {lastUploaded ?? "N/A"}
