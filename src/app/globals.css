@@ -19,6 +19,12 @@ body {
   margin: 0 !important;
 }
 
+.leaflet-tooltip,
+.leaflet-popup-content,
+.leaflet-popup-content-wrapper {
+  font-family: var(--font-poppins), sans-serif;
+}
+
 .custom-map-tooltip {
   background: transparent !important;
   border: none !important;
