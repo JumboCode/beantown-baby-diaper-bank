@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Suspense } from "react";
 import { Poppins } from "next/font/google";
 import { createTheme, MantineProvider, Skeleton, type MantineColorsTuple } from "@mantine/core";
@@ -17,6 +17,12 @@ const poppins = Poppins({
 export const metadata: Metadata = {
   title: "Beantown Baby Diaper Bank",
   description: "Providing diapers to families in need.",
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
 };
 
 // Brand navy: #1B3668 (banner in BBDB logo)

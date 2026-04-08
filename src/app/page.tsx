@@ -124,7 +124,7 @@ export default function Page() {
         style={{
           background: "#ffffff",
           borderTop: "1px solid #E4E7EC",
-          padding: "10px 24px",
+          padding: "10px 16px",
           flexShrink: 0,
         }}
       >
