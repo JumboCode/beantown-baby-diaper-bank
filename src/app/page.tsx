@@ -5,6 +5,7 @@ import { Box, Skeleton } from "@mantine/core";
 import TimelineSlider from "@/components/map/TimelineSlider";
 import { useTimelinePeriod } from "@/components/map/useTimelinePeriod";
 import { useState, useCallback } from "react";
+import { useMediaQuery } from "@mantine/hooks";
 import { FeatureCollection, MultiPolygon, Polygon } from "geojson";
 import { GeoJsonBoundaries, CityWithStats } from "@/lib/types";
 
@@ -55,6 +56,7 @@ const flipBoundaries = (
 
 export default function Page() {
   const timeline = useTimelinePeriod();
+  const isMobile = useMediaQuery("(max-width: 768px)");
   const [boundaries, setBoundaries] = useState<GeoJsonBoundaries | null>(null);
   const [cities, setCities] = useState<CityWithStats[]>([]);
   const [cumulativeTotalDiapers, setCumulativeTotalDiapers] = useState<number>();
@@ -97,15 +99,22 @@ export default function Page() {
   return (
     <Box
       style={{
-        height: "100vh",
+        height: "100dvh",
         display: "flex",
         flexDirection: "column",
         overflow: "hidden",
         background: "#fff",
       }}
     >
-      {/* Map — fills all available height */}
-      <Box style={{ flex: 1, position: "relative", minHeight: 0 }}>
+      {/* Map — fills remaining height after timeline */}
+      <Box
+        style={{
+          flex: 1,
+          position: "relative",
+          minHeight: 0,
+          maxHeight: isMobile ? "calc(100dvh - 120px)" : undefined,
+        }}
+      >
         {boundaries && cities ? (
           <LeafletMap
             boundaries={boundaries}
