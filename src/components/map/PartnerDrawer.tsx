@@ -12,6 +12,7 @@ import {
   Divider,
   Badge,
 } from "@mantine/core";
+import { useMediaQuery } from "@mantine/hooks";
 import {
   IconMapPin,
   IconBabyCarriage,
@@ -82,6 +83,7 @@ export interface PartnerDrawerProps {
 export default function PartnerDrawer({ partnerId, onClose, boundaries }: PartnerDrawerProps) {
   const [partner, setPartner] = useState<PartnerWithStats>();
   const [loading, setLoading] = useState(false);
+  const isMobile = useMediaQuery("(max-width: 768px)");
 
   useEffect(() => {
     if (partnerId) {
@@ -116,9 +118,9 @@ export default function PartnerDrawer({ partnerId, onClose, boundaries }: Partne
     <Drawer
       opened={!!partnerId}
       onClose={onClose}
-      position="right"
+      position={isMobile ? "bottom" : "right"}
       padding={0}
-      size="35%"
+      size={isMobile ? "85%" : "35%"}
       withCloseButton={false}
       overlayProps={{ opacity: 0.2 }}
     >
