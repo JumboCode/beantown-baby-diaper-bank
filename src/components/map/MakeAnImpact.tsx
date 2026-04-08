@@ -149,7 +149,7 @@ function DropdownContent() {
         <Button
           fullWidth
           component="a"
-          href="https://beantownbabydiaperbank.org/donate"
+          href={process.env.NEXT_PUBLIC_DONATION_LINK}
           target="_blank"
           rightSection={<IconExternalLink size={14} />}
           styles={{
