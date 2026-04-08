@@ -152,7 +152,7 @@ export default function PartnerDrawer({ partnerId, onClose, boundaries }: Partne
                 style={{
                   width: 52,
                   height: 52,
-                  background: "rgba(255,255,255,0.12)",
+                  background: "rgba(255,255,255,1)",
                   borderRadius: 10,
                   display: "flex",
                   alignItems: "center",
