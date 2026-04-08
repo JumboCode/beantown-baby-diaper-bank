@@ -132,6 +132,7 @@ export function PartnerMiniMap({
             {...mapConfig}
             center={[coords.lat, coords.lng]}
             zoom={9}
+            minZoom={9}
             zoomControl={false}
             attributionControl={false}
             style={{ height: "100%", width: "100%" }}
@@ -142,9 +143,9 @@ export function PartnerMiniMap({
                 key={String(boundary.id)}
                 positions={boundary.positions}
                 pathOptions={{
-                  color: "#2C85B2",
-                  weight: 1.5,
-                  fillColor: "#B2E5FF",
+                  color: "#1B3668",
+                  weight: 0.5,
+                  fillColor: "#1B3668",
                   fillOpacity: 0.35,
                 }}
               />
