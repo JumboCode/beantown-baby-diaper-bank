@@ -154,9 +154,9 @@ export default function Map({
                   activeCityId === boundary.id ? 2 : hoveredCityId === boundary.id ? 2.5 : 0.5,
                 color:
                   activeCityId === boundary.id
-                    ? "#0F4F78"
+                    ? "#1B3668"
                     : hoveredCityId === boundary.id
-                      ? "#F97316" // Vibrant orange
+                      ? "#CC2027"
                       : "#5A7687",
                 fillColor: boundary.fillColor,
                 fillOpacity:
@@ -289,9 +289,9 @@ export default function Map({
           zIndex: 1000,
           pointerEvents: "none",
           minWidth: 240,
-          background: "#053766",
+          background: "#1B3668",
           borderRadius: 14,
-          boxShadow: "0 8px 32px rgba(5, 55, 102, 0.4)",
+          boxShadow: "0 8px 32px rgba(27, 54, 104, 0.4)",
           padding: "14px 18px",
         }}
       >
