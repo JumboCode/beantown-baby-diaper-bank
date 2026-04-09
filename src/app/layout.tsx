@@ -1,8 +1,6 @@
 import type { Metadata } from "next";
-import { Suspense } from "react";
-import { MantineProvider, Skeleton } from "@mantine/core";
+import { MantineProvider } from "@mantine/core";
 import { ModalsProvider } from "@mantine/modals";
-import { ClerkProvider } from "@clerk/nextjs";
 import "@mantine/core/styles.css";
 import "./globals.css";
 import "leaflet/dist/leaflet.css";
@@ -22,9 +20,7 @@ export default function RootLayout({
       <body>
         <MantineProvider>
           <ModalsProvider>
-            <Suspense fallback={<Skeleton />}>
-              <ClerkProvider>{children}</ClerkProvider>
-            </Suspense>
+            {children}
           </ModalsProvider>
         </MantineProvider>
       </body>
