@@ -572,7 +572,7 @@ export default function DistributionsTable({
                                                   onChange={(e) =>
                                                     setEditingPercentages((prev) => ({
                                                       ...prev,
-                                                      [cityName]: e.currentTarget.value,
+                                                      [cityName]: e.target.value,
                                                     }))
                                                   }
                                                   rightSection={
