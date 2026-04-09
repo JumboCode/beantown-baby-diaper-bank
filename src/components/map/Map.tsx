@@ -11,6 +11,7 @@ import { cityScore, getScoreColor, LEVEL_COLORS } from "@/lib/hotmap";
 import { IconMapPin } from "@tabler/icons-react";
 import { LatLngExpression } from "leaflet";
 import { Text, Stack, Group, Box, Badge, ThemeIcon } from "@mantine/core";
+import { useMediaQuery } from "@mantine/hooks";
 import { TileLayer, MapContainer, Tooltip } from "react-leaflet";
 import MakeAnImpact from "./MakeAnImpact";
 import { Polygon as ReactLeafletPolygon } from "react-leaflet";
@@ -51,6 +52,7 @@ export default function Map({
   const [selectedPartnerId, setSelectedPartnerId] = useState<number>();
 
   const animatedRunningTotal = useCountUp(totalDiapersForYear, 1400);
+  const isMobile = useMediaQuery("(max-width: 768px)");
 
   const activeCityWithStats = cities.find((c) => c.name === activeCityName);
 
@@ -154,9 +156,9 @@ export default function Map({
                   activeCityId === boundary.id ? 2 : hoveredCityId === boundary.id ? 2.5 : 0.5,
                 color:
                   activeCityId === boundary.id
-                    ? "#0F4F78"
+                    ? "#1B3668"
                     : hoveredCityId === boundary.id
-                      ? "#F97316" // Vibrant orange
+                      ? "#CC2027"
                       : "#5A7687",
                 fillColor: boundary.fillColor,
                 fillOpacity:
@@ -288,49 +290,84 @@ export default function Map({
           right: 16,
           zIndex: 1000,
           pointerEvents: "none",
-          minWidth: 240,
-          background: "#053766",
-          borderRadius: 14,
-          boxShadow: "0 8px 32px rgba(5, 55, 102, 0.4)",
-          padding: "14px 18px",
+          minWidth: isMobile ? 0 : 240,
+          background: "#1B3668",
+          borderRadius: isMobile ? 10 : 14,
+          boxShadow: "0 8px 32px rgba(27, 54, 104, 0.4)",
+          padding: isMobile ? "8px 12px" : "14px 18px",
         }}
       >
-        <Group justify="space-between" align="flex-start" wrap="nowrap">
-          <Stack gap={4}>
-            <Text fz="10px" fw={700} c="rgba(255,255,255,0.55)" tt="uppercase" lts="0.1em">
-              Total Diapers Distributed{selectedYear ? ` Through ${selectedYear}` : ""}
+        <Group justify="space-between" align="flex-start" wrap="nowrap" gap={isMobile ? 8 : 12}>
+          <Stack gap={isMobile ? 1 : 4}>
+            <Text
+              fz={isMobile ? "9px" : "10px"}
+              fw={700}
+              c="rgba(255,255,255,0.55)"
+              tt="uppercase"
+              lts="0.1em"
+            >
+              {isMobile
+                ? (selectedYear ?? "Total")
+                : `Total Diapers${selectedYear ? ` Through ${selectedYear}` : ""}`}
             </Text>
-            <Text fz="40px" fw={900} c="white" lh={1}>
+            <Text fz={isMobile ? "22px" : "40px"} fw={900} c="white" lh={1}>
               {totalDiapersForYear != null ? animatedRunningTotal.toLocaleString() : "--"}
             </Text>
+            {isMobile && (
+              <Text fz="8px" fw={600} c="rgba(255,255,255,0.5)" tt="uppercase" lts="0.05em">
+                diapers
+              </Text>
+            )}
           </Stack>
-          <Image
-            src="/diaper.svg"
-            alt="Diaper icon"
-            width={52}
-            height={42}
-            style={{ filter: "brightness(0) invert(1)", opacity: 0.7, flexShrink: 0, marginTop: 2 }}
-          />
+          {!isMobile && (
+            <Image
+              src="/diaper.svg"
+              alt="Diaper icon"
+              width={52}
+              height={42}
+              style={{
+                filter: "brightness(0) invert(1)",
+                opacity: 0.7,
+                flexShrink: 0,
+                marginTop: 2,
+              }}
+            />
+          )}
         </Group>
       </Box>
 
-      {/* City Popup */}
+      {/* City Popup — side panel on desktop, bottom sheet on mobile */}
       {activeCityWithStats && (
         <Box
-          style={{
-            position: "absolute",
-            top: 110,
-            right: 16,
-            zIndex: 1000,
-            width: 350,
-            maxHeight: "calc(100% - 190px)",
-            overflowY: "auto",
-            background: "rgba(255, 255, 255, 0.97)",
-            border: "1px solid #E4E7EC",
-            borderRadius: 12,
-            boxShadow: "0 8px 24px rgba(16, 24, 40, 0.12)",
-            backdropFilter: "blur(8px)",
-          }}
+          style={
+            isMobile
+              ? {
+                  position: "absolute",
+                  bottom: 0,
+                  left: 0,
+                  right: 0,
+                  zIndex: 1000,
+                  maxHeight: "60vh",
+                  overflowY: "auto",
+                  background: "rgba(255, 255, 255, 0.99)",
+                  borderRadius: "16px 16px 0 0",
+                  boxShadow: "0 -4px 24px rgba(16, 24, 40, 0.18)",
+                }
+              : {
+                  position: "absolute",
+                  top: 110,
+                  right: 16,
+                  zIndex: 1000,
+                  width: 350,
+                  maxHeight: "calc(100% - 190px)",
+                  overflowY: "auto",
+                  background: "rgba(255, 255, 255, 0.97)",
+                  border: "1px solid #E4E7EC",
+                  borderRadius: 12,
+                  boxShadow: "0 8px 24px rgba(16, 24, 40, 0.12)",
+                  backdropFilter: "blur(8px)",
+                }
+          }
         >
           <CityPopup
             city={activeCityWithStats}
@@ -344,58 +381,73 @@ export default function Map({
         </Box>
       )}
 
-      {/* Legend */}
-      <Box
-        style={{
-          position: "absolute",
-          bottom: 16,
-          left: 16,
-          zIndex: 1000,
-          pointerEvents: "none",
-          background: "rgba(255, 255, 255, 0.96)",
-          border: "1px solid #E4E7EC",
-          borderRadius: 12,
-          boxShadow: "0 8px 24px rgba(16, 24, 40, 0.12)",
-          padding: "12px 14px",
-          backdropFilter: "blur(8px)",
-          minWidth: 220,
-          maxWidth: 280,
-        }}
-      >
-        <Text fz="11px" fw={800} c="#475467" tt="uppercase" mb={8} lts="0.05em">
-          Relative Distribution Volume
-        </Text>
+      {/* Legend — hidden on mobile when city popup is open to avoid overlap */}
+      {!(isMobile && activeCityWithStats) && (
         <Box
           style={{
-            height: 8,
-            borderRadius: 4,
-            width: "100%",
-            background: `linear-gradient(to right, ${LEVEL_COLORS.join(", ")})`,
-            marginBottom: 6,
+            position: "absolute",
+            bottom: 16,
+            left: 16,
+            zIndex: 1000,
+            pointerEvents: "none",
+            background: "rgba(255, 255, 255, 0.96)",
+            border: "1px solid #E4E7EC",
+            borderRadius: isMobile ? 10 : 12,
+            boxShadow: "0 8px 24px rgba(16, 24, 40, 0.12)",
+            padding: isMobile ? "8px 10px" : "12px 14px",
+            backdropFilter: "blur(8px)",
+            minWidth: isMobile ? 160 : 220,
+            maxWidth: isMobile ? 200 : 280,
           }}
-        />
-        <Group justify="space-between">
-          <Text fz="10px" fw={700} c="#667085" tt="uppercase">
-            Below Avg
-          </Text>
-          <Text fz="10px" fw={700} c="#667085" tt="uppercase">
-            Above Avg
-          </Text>
-        </Group>
-      </Box>
+        >
+          {!isMobile && (
+            <Text fz="11px" fw={800} c="#475467" tt="uppercase" mb={8} lts="0.05em">
+              Relative Distribution Volume
+            </Text>
+          )}
+          <Box
+            style={{
+              height: isMobile ? 6 : 8,
+              borderRadius: 4,
+              width: "100%",
+              background: `linear-gradient(to right, ${LEVEL_COLORS.join(", ")})`,
+              marginBottom: isMobile ? 4 : 6,
+            }}
+          />
+          <Group justify="space-between">
+            <Text fz="10px" fw={700} c="#667085" tt="uppercase">
+              Low
+            </Text>
+            <Text fz="10px" fw={700} c="#667085" tt="uppercase">
+              High
+            </Text>
+          </Group>
+        </Box>
+      )}
 
       {/* Make an Impact */}
-      <Box
-        style={{
-          position: "absolute",
-          top: 16,
-          left: "50%",
-          transform: "translateX(-50%)",
-          zIndex: 1001,
-        }}
-      >
-        <MakeAnImpact />
-      </Box>
+      {!(isMobile && activeCityWithStats) && (
+        <Box
+          style={
+            isMobile
+              ? {
+                  position: "absolute",
+                  bottom: 16,
+                  right: 16,
+                  zIndex: 1001,
+                }
+              : {
+                  position: "absolute",
+                  top: 16,
+                  left: "50%",
+                  transform: "translateX(-50%)",
+                  zIndex: 1001,
+                }
+          }
+        >
+          <MakeAnImpact />
+        </Box>
+      )}
 
       <PartnerDrawer
         partnerId={selectedPartnerId}

@@ -12,6 +12,7 @@ import {
   Divider,
   Badge,
 } from "@mantine/core";
+import { useMediaQuery } from "@mantine/hooks";
 import {
   IconMapPin,
   IconBabyCarriage,
@@ -82,6 +83,7 @@ export interface PartnerDrawerProps {
 export default function PartnerDrawer({ partnerId, onClose, boundaries }: PartnerDrawerProps) {
   const [partner, setPartner] = useState<PartnerWithStats>();
   const [loading, setLoading] = useState(false);
+  const isMobile = useMediaQuery("(max-width: 768px)");
 
   useEffect(() => {
     if (partnerId) {
@@ -116,16 +118,16 @@ export default function PartnerDrawer({ partnerId, onClose, boundaries }: Partne
     <Drawer
       opened={!!partnerId}
       onClose={onClose}
-      position="right"
+      position={isMobile ? "bottom" : "right"}
       padding={0}
-      size="30%"
+      size={isMobile ? "85%" : "35%"}
       withCloseButton={false}
       overlayProps={{ opacity: 0.2 }}
     >
       {/* Gradient header */}
       <Box
         style={{
-          background: "linear-gradient(135deg, #053766 0%, #1e3a5f 55%, #2c85b2 100%)",
+          background: "linear-gradient(135deg, #1B3668 0%, #162C58 55%, #2471A3 100%)",
           borderRadius: "0 0 0 0",
           padding: "20px 20px 18px",
           position: "sticky",
@@ -152,7 +154,7 @@ export default function PartnerDrawer({ partnerId, onClose, boundaries }: Partne
                 style={{
                   width: 52,
                   height: 52,
-                  background: "rgba(255,255,255,0.12)",
+                  background: "rgba(255,255,255,1)",
                   borderRadius: 10,
                   display: "flex",
                   alignItems: "center",
@@ -269,8 +271,8 @@ export default function PartnerDrawer({ partnerId, onClose, boundaries }: Partne
               >
                 <Box
                   style={{
-                    background: "linear-gradient(90deg, #e4effe 0%, #f0f6ff 100%)",
-                    borderBottom: "1px solid #c3d9f7",
+                    background: "linear-gradient(90deg, #e0e8f5 0%, #edf1f8 100%)",
+                    borderBottom: "1px solid #c5d2e9",
                     padding: "8px 12px",
                   }}
                 >
@@ -278,11 +280,11 @@ export default function PartnerDrawer({ partnerId, onClose, boundaries }: Partne
                     <ThemeIcon
                       size={22}
                       radius="xl"
-                      styles={{ root: { backgroundColor: "#c3d9f7", color: "#053766" } }}
+                      styles={{ root: { backgroundColor: "#c5d2e9", color: "#1B3668" } }}
                     >
                       <IconAlignLeft size={12} />
                     </ThemeIcon>
-                    <Text fz="11px" fw={800} c="#053766" tt="uppercase" lts="0.06em">
+                    <Text fz="11px" fw={800} c="#1B3668" tt="uppercase" lts="0.06em">
                       About
                     </Text>
                   </Group>
@@ -308,45 +310,45 @@ export default function PartnerDrawer({ partnerId, onClose, boundaries }: Partne
                 <Group grow gap={8}>
                   <Box
                     style={{
-                      background: "#f0f6ff",
-                      border: "1px solid #c3d9f7",
-                      borderLeft: "4px solid #053766",
+                      background: "#edf1f8",
+                      border: "1px solid #c5d2e9",
+                      borderLeft: "4px solid #1B3668",
                       borderRadius: 10,
                       padding: "10px 12px",
                     }}
                   >
                     <Group gap={5} mb={4} align="center">
-                      <IconBabyCarriage size={12} color="#053766" />
-                      <Text fz="9px" c="#053766" tt="uppercase" fw={800} lts="0.08em">
+                      <IconBabyCarriage size={12} color="#1B3668" />
+                      <Text fz="9px" c="#1B3668" tt="uppercase" fw={800} lts="0.08em">
                         Babies Helped
                       </Text>
                     </Group>
-                    <Text fz="24px" fw={900} c="#053766" lh={1}>
+                    <Text fz="24px" fw={900} c="#1B3668" lh={1}>
                       {(partner.number_babies_helped || 0).toLocaleString()}
                     </Text>
-                    <Text fz="10px" c="#2c85b2" fw={500} mt={2}>
+                    <Text fz="10px" c="#2471A3" fw={500} mt={2}>
                       children served
                     </Text>
                   </Box>
                   <Box
                     style={{
-                      background: "#e4effe",
-                      border: "1px solid #c3d9f7",
-                      borderLeft: "4px solid #2c85b2",
+                      background: "#e0e8f5",
+                      border: "1px solid #c5d2e9",
+                      borderLeft: "4px solid #2471A3",
                       borderRadius: 10,
                       padding: "10px 12px",
                     }}
                   >
                     <Group gap={5} mb={4} align="center">
-                      <IconChartBar size={12} color="#2c85b2" />
-                      <Text fz="9px" c="#1e3a5f" tt="uppercase" fw={800} lts="0.08em">
+                      <IconChartBar size={12} color="#2471A3" />
+                      <Text fz="9px" c="#162C58" tt="uppercase" fw={800} lts="0.08em">
                         Diapers
                       </Text>
                     </Group>
-                    <Text fz="24px" fw={900} c="#1e3a5f" lh={1}>
+                    <Text fz="24px" fw={900} c="#162C58" lh={1}>
                       {(partner.number_diapers || 0).toLocaleString()}
                     </Text>
-                    <Text fz="10px" c="#2c85b2" fw={500} mt={2}>
+                    <Text fz="10px" c="#2471A3" fw={500} mt={2}>
                       distributed
                     </Text>
                   </Box>
@@ -363,8 +365,8 @@ export default function PartnerDrawer({ partnerId, onClose, boundaries }: Partne
               >
                 <Box
                   style={{
-                    background: "linear-gradient(90deg, #e4effe 0%, #f0f6ff 100%)",
-                    borderBottom: "1px solid #c3d9f7",
+                    background: "linear-gradient(90deg, #e0e8f5 0%, #edf1f8 100%)",
+                    borderBottom: "1px solid #c5d2e9",
                     padding: "8px 12px",
                   }}
                 >
@@ -372,18 +374,18 @@ export default function PartnerDrawer({ partnerId, onClose, boundaries }: Partne
                     <ThemeIcon
                       size={22}
                       radius="xl"
-                      styles={{ root: { backgroundColor: "#c3d9f7", color: "#053766" } }}
+                      styles={{ root: { backgroundColor: "#c5d2e9", color: "#1B3668" } }}
                     >
                       <IconUsersGroup size={12} />
                     </ThemeIcon>
-                    <Text fz="11px" fw={800} c="#053766" tt="uppercase" lts="0.06em">
+                    <Text fz="11px" fw={800} c="#1B3668" tt="uppercase" lts="0.06em">
                       Details
                     </Text>
                   </Group>
                 </Box>
                 <Stack gap={0}>
                   <Group gap={10} p={12} align="flex-start">
-                    <IconMapPin size={15} color="#2c85b2" style={{ marginTop: 2, flexShrink: 0 }} />
+                    <IconMapPin size={15} color="#2471A3" style={{ marginTop: 2, flexShrink: 0 }} />
                     <Stack gap={2}>
                       <Text fz="10px" fw={700} c="#667085" tt="uppercase" lts="0.06em">
                         Address
@@ -399,7 +401,7 @@ export default function PartnerDrawer({ partnerId, onClose, boundaries }: Partne
                       <Group gap={10} p={12} align="flex-start">
                         <IconCalendar
                           size={15}
-                          color="#2c85b2"
+                          color="#2471A3"
                           style={{ marginTop: 2, flexShrink: 0 }}
                         />
                         <Stack gap={2}>
