@@ -9,7 +9,7 @@ import { modals } from "@mantine/modals";
 interface UploadNewDataProps {
   opened: boolean;
   onClose: () => void;
-  onUploaded?: () => void;
+  onUploaded?: () => Promise<void> | void;
   uploadedMonths: number[];
 }
 
@@ -25,8 +25,6 @@ export default function UploadNewData({
   const [fileInfo, setFileInfo] = useState<FileInfo | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [warnings, setWarnings] = useState<string[]>([]);
-  const [isUploaded, setIsUploaded] = useState(false);
-  const [showConfirm, setShowConfirm] = useState(false);
 
   const handleClose = () => {
     setWarnings([]);
@@ -145,7 +143,7 @@ export default function UploadNewData({
       }
 
       console.log("Upload processed:", result.data);
-      onUploaded?.();
+      await onUploaded?.();
       handleClose();
     } catch (error) {
       console.error("Failed to upload distribution data:", error);
