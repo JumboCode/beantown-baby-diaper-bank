@@ -3,11 +3,13 @@ import FileUpload, { FileInfo } from "./FileUpload";
 import { MonthPickerInput } from "@mantine/dates";
 import { useState } from "react";
 import { FaDownload } from "react-icons/fa";
+// import { ConfirmUpload } from "./ConfirmUploadModal";
+import { modals } from "@mantine/modals";
 
 interface UploadNewDataProps {
   opened: boolean;
   onClose: () => void;
-  onUploaded?: () => void;
+  onUploaded?: () => Promise<void> | void;
   uploadedMonths: number[];
 }
 
@@ -26,6 +28,8 @@ export default function UploadNewData({
 
   const handleClose = () => {
     setWarnings([]);
+    setDatasetMonth(null);
+    setFileInfo(null);
     onClose();
   };
 
@@ -34,25 +38,44 @@ export default function UploadNewData({
 
   const handleUpload = async () => {
     setWarnings([]);
+    if (!fileInfo || !datasetMonth) return;
 
-    if (!fileInfo) {
-      console.log("No file uploaded.");
+    const selectedIndex = new Date(datasetMonth).getUTCMonth();
+
+    if (uploadedMonthSet.has(selectedIndex)) {
+      modals.openConfirmModal({
+        title: (
+          <Text fw={700} size="xl">
+            Confirm Upload
+          </Text>
+        ),
+        centered: true,
+        children: (
+          <Text size="sm">
+            Data for this month already exists. Are you sure you want to reupload? This action
+            cannot be undone.
+          </Text>
+        ),
+        labels: { confirm: "Upload", cancel: "Cancel" },
+        confirmProps: { color: "#163663" },
+        onConfirm: doUpload,
+        groupProps: { justify: "center", grow: true, align: "stretch" },
+      });
       return;
     }
 
-    if (!datasetMonth) {
-      console.log("No month selected.");
-      return;
-    }
+    await doUpload();
+  };
 
+  const doUpload = async () => {
     setIsUploading(true);
     try {
       const response = await fetch("/api/distributions/upload", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          csv: fileInfo.text,
-          selectedDate: new Date(datasetMonth).toISOString(),
+          csv: fileInfo!.text,
+          selectedDate: datasetMonth!.toString(),
         }),
       });
 
@@ -70,9 +93,7 @@ export default function UploadNewData({
         setWarnings(nextWarnings);
         return;
       }
-
-      console.log("Upload processed:", result.data);
-      onUploaded?.();
+      await onUploaded?.();
       handleClose();
     } catch (error) {
       console.error("Failed to upload distribution data:", error);
@@ -238,6 +259,7 @@ export default function UploadNewData({
             >
               Upload
             </Button>
+            {/* TODO */}
           </Group>
         </Stack>
       </Modal>
