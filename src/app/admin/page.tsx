@@ -27,6 +27,7 @@ import { status } from "@/generated/prisma/enums";
 import { Search } from "lucide-react";
 
 import DeleteDistributionDataButton from "@/components/admin/DeleteDistributionDataButton";
+import { useUser } from "@clerk/nextjs";
 
 const poppins = Poppins({
   subsets: ["latin"],
@@ -106,6 +107,7 @@ const statuses = (Object.values(status) as string[]).map((s) => ({
 }));
 
 export default function Page() {
+  const { user } = useUser();
   const hashToTab = (hash: string): string => (hash === "#diapers" ? "Diapers" : "Partners");
 
   const [activeTab, setActiveTab] = useState<string | null>("Partners");
@@ -394,7 +396,7 @@ export default function Page() {
           <Card p={0}>
             <Group justify="space-between" align="flex-start">
               <Stack gap={4}>
-                <Title order={2}>Hello, Rachel 👋</Title>
+                <Title order={2}>Hello, {user?.firstName ?? "Admin"} 👋</Title>
                 <Group gap="xl" wrap="wrap">
                   <Text size="sm" c="dimmed">
                     Last data uploaded: {lastUploaded ?? "N/A"}
