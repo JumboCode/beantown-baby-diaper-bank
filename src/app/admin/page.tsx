@@ -375,6 +375,16 @@ export default function Page() {
     return <Image src={icon} alt={`${tab.toLowerCase()} tab icon`} height={16} width={16} />;
   };
 
+  const onDataUpload = async () => {
+    await fetchDistributions();
+    await fetchTimelineData();
+  };
+
+  const handleCloseUploadDataForm = () => {
+    fetchTimelineData();
+    closeUploadDataForm();
+  };
+
   return (
     <Stack mx="72px" my="44px" gap="lg" className={poppins.className}>
       {error ? (
@@ -393,11 +403,8 @@ export default function Page() {
               </Stack>
               <UploadNewData
                 opened={openedUploadDataForm}
-                onClose={closeUploadDataForm}
-                onUploaded={async () => {
-                  await fetchDistributions();
-                  await fetchTimelineData();
-                }}
+                onClose={handleCloseUploadDataForm}
+                onUploaded={onDataUpload}
                 uploadedMonths={uploadedMonths}
               />
               <AddPartnerForm opened={openedPartnerForm} onClose={closePartnerForm} />
