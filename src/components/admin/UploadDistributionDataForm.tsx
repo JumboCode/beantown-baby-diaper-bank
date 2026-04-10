@@ -93,8 +93,6 @@ export default function UploadNewData({
         setWarnings(nextWarnings);
         return;
       }
-
-      console.log("Upload processed:", result.data);
       await onUploaded?.();
       handleClose();
     } catch (error) {
