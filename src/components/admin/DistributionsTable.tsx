@@ -104,7 +104,7 @@ export default function DistributionsTable({
 
   useEffect(() => {
     loadMonthlyTotals();
-  }, []);
+  }, [distributionData]);
 
   const submitEdit = async (info: EditInfo | undefined, newValue: string) => {
     if (!info) return;
