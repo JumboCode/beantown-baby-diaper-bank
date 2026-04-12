@@ -192,6 +192,8 @@ export async function POST(request: Request) {
     });
 
     revalidateTag("cities", "max");
+    revalidateTag("timeline-slider", "max");
+    
 
     return NextResponse.json({ data: result }, { status: 200 });
   } catch (error) {

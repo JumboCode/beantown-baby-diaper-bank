@@ -27,6 +27,7 @@ import { status } from "@/generated/prisma/enums";
 import { Search } from "lucide-react";
 
 import DeleteDistributionDataButton from "@/components/admin/DeleteDistributionDataButton";
+import { useUser } from "@clerk/nextjs";
 
 const poppins = Poppins({
   subsets: ["latin"],
@@ -106,6 +107,7 @@ const statuses = (Object.values(status) as string[]).map((s) => ({
 }));
 
 export default function Page() {
+  const { user } = useUser();
   const hashToTab = (hash: string): string => (hash === "#diapers" ? "Diapers" : "Partners");
 
   const [activeTab, setActiveTab] = useState<string | null>("Partners");
@@ -375,6 +377,16 @@ export default function Page() {
     return <Image src={icon} alt={`${tab.toLowerCase()} tab icon`} height={16} width={16} />;
   };
 
+  const onDataUpload = async () => {
+    await fetchDistributions();
+    await fetchTimelineData();
+  };
+
+  const handleCloseUploadDataForm = () => {
+    fetchTimelineData();
+    closeUploadDataForm();
+  };
+
   return (
     <Stack mx="72px" my="44px" gap="lg" className={poppins.className}>
       {error ? (
@@ -384,7 +396,7 @@ export default function Page() {
           <Card p={0}>
             <Group justify="space-between" align="flex-start">
               <Stack gap={4}>
-                <Title order={2}>Hello, Rachel 👋</Title>
+                <Title order={2}>Hello, {user?.firstName ?? "Admin"} 👋</Title>
                 <Group gap="xl" wrap="wrap">
                   <Text size="sm" c="dimmed">
                     Last data uploaded: {lastUploaded ?? "N/A"}
@@ -393,11 +405,16 @@ export default function Page() {
               </Stack>
               <UploadNewData
                 opened={openedUploadDataForm}
+<<<<<<< HEAD
                 onClose={closeUploadDataForm}
                 onUploaded={async () => {
                   await fetchDistributions();
                   await fetchTimelineData();
                 }}
+=======
+                onClose={handleCloseUploadDataForm}
+                onUploaded={onDataUpload}
+>>>>>>> 30c9dda93a0d7f27641fb385b3531150f73b6fb7
                 uploadedMonths={uploadedMonths}
               />
               <AddPartnerForm opened={openedPartnerForm} onClose={closePartnerForm} />
