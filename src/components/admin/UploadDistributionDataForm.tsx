@@ -21,15 +21,15 @@ export default function UploadNewData({
   onUploaded,
   uploadedMonths,
 }: UploadNewDataProps) {
-  const [datasetMonth, setDatasetMonth] = useState<string | null>(null);
-  const [fileInfos, setFileInfos] = useState<FileInfo[]>([]);
+  const [fileEntries, setFileEntries] = useState<
+    { fileInfo: FileInfo; datasetMonth: string | null }[]
+  >([]);
   const [isUploading, setIsUploading] = useState(false);
   const [warnings, setWarnings] = useState<string[]>([]);
 
   const handleClose = () => {
     setWarnings([]);
-    setDatasetMonth(null);
-    setFileInfos([]);
+    setFileEntries([]);
     onClose();
   };
 
@@ -37,18 +37,15 @@ export default function UploadNewData({
   const uploadedMonthSet = new Set(uploadedMonths);
 
   const uploadFiles = async () => {
-    const selectedDate = datasetMonth?.toString();
-    if (!selectedDate) return;
-
     setIsUploading(true);
     try {
-      for (const fileInfo of fileInfos) {
+      for (const entry of fileEntries) {
         const response = await fetch("/api/distributions/upload", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            csv: fileInfo.text,
-            selectedDate,
+            csv: entry.fileInfo.text,
+            selectedDate: entry.datasetMonth,
           }),
         });
 
@@ -80,11 +77,27 @@ export default function UploadNewData({
 
   const handleUpload = async () => {
     setWarnings([]);
-    if (fileInfos.length === 0 || !datasetMonth) return;
+    if (fileEntries.length === 0) return;
+    if (fileEntries.some((entry) => !entry.datasetMonth)) {
+      setWarnings(["Please choose a dataset time for every file."]);
+      return;
+    }
 
-    const selectedIndex = new Date(datasetMonth).getUTCMonth();
+    const parsedEntries = fileEntries.map((entry) => ({
+      entry,
+      parsedDate: new Date(entry.datasetMonth!),
+    }));
 
-    if (uploadedMonthSet.has(selectedIndex)) {
+    if (parsedEntries.some(({ parsedDate }) => Number.isNaN(parsedDate.getTime()))) {
+      setWarnings(["One or more selected dates are invalid."]);
+      return;
+    }
+
+    const hasConflict = parsedEntries.some(({ parsedDate }) =>
+      uploadedMonthSet.has(parsedDate.getUTCMonth()),
+    );
+
+    if (hasConflict) {
       modals.openConfirmModal({
         title: (
           <Text fw={700} size="xl">
@@ -94,8 +107,8 @@ export default function UploadNewData({
         centered: true,
         children: (
           <Text size="sm">
-            Data for this month already exists. Are you sure you want to reupload? This action
-            cannot be undone.
+            Data for one of the selected months already exists. Are you sure you want to
+            reupload? This action cannot be undone.
           </Text>
         ),
         labels: { confirm: "Upload", cancel: "Cancel" },
@@ -219,26 +232,46 @@ export default function UploadNewData({
               })}
             </SimpleGrid>
           </Paper>
-          <Group justify="center" grow>
-            <MonthPickerInput
-              label="Dataset Information"
-              placeholder="Select Date"
-              description="Choose dataset time"
-              value={datasetMonth}
-              onChange={setDatasetMonth}
-              required
-              valueFormat="YYYY MMM"
-              styles={{
-                label: {
-                  fontWeight: 700,
-                  fontSize: "1rem",
-                },
-              }}
+          <Group grow>
+            <FileUpload
+              files={fileEntries.map((entry) => entry.fileInfo)}
+              onFileChange={(files) =>
+                setFileEntries(
+                  files.map((file) => ({ fileInfo: file, datasetMonth: null })),
+                )
+              }
             />
           </Group>
-          <Group grow>
-            <FileUpload files={fileInfos} onFileChange={setFileInfos} />
-          </Group>
+          {fileEntries.map((entry, index) => (
+            <Stack key={`${entry.fileInfo.name}-${index}`} spacing="xs">
+              <Text fw={700} size="md">
+                {entry.fileInfo.name}
+              </Text>
+              <MonthPickerInput
+                label="Dataset Information"
+                placeholder="Select Date"
+                description="Choose dataset time"
+                value={entry.datasetMonth}
+                onChange={(value) =>
+                  setFileEntries((prev) =>
+                    prev.map((prevEntry, idx) =>
+                      idx === index
+                        ? { ...prevEntry, datasetMonth: value }
+                        : prevEntry,
+                    ),
+                  )
+                }
+                required
+                valueFormat="YYYY MMM"
+                styles={{
+                  label: {
+                    fontWeight: 700,
+                    fontSize: "1rem",
+                  },
+                }}
+              />
+            </Stack>
+          ))}
           <Text size="xs" c="dimmed">
             File must be a CSV (.csv)
           </Text>
@@ -260,7 +293,11 @@ export default function UploadNewData({
               variant="filled"
               color="#163663"
               onClick={handleUpload}
-              disabled={fileInfos.length === 0 || !datasetMonth || isUploading}
+              disabled={
+                fileEntries.length === 0 ||
+                fileEntries.some((entry) => !entry.datasetMonth) ||
+                isUploading
+              }
               loading={isUploading}
             >
               Upload
