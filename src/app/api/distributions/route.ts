@@ -334,18 +334,22 @@ export async function PUT(req: Request) {
 
 export async function POST(req: Request) {
   try {
+
     const body = await req.json();
+    console.log(body)
     const { partnerId, month: monthName, year, percentages } = body;
 
     // validate
-    if (!partnerId || !monthName || !Number.isInteger(year) || !Array.isArray(percentages)) {
+    if (!partnerId  || !Number.isInteger(year) || !Array.isArray(percentages)) {
       return NextResponse.json({ error: "Missing or invalid fields" }, { status: 400 });
     }
 
     const targetMonth = monthName as month;
-    if (!Object.values(month).includes(targetMonth)) {
-      return NextResponse.json({ error: "Invalid month" }, { status: 400 });
-    }
+    // if (!Object.values(month).includes(targetMonth)) {
+    //   return NextResponse.json({ error: "Invalid month" }, { status: 400 });
+    // }
+    console.log(targetMonth)
+
 
     if (percentages.some((item) => !item.city || item.percentage < 0)) {
       return NextResponse.json({ error: "Invalid city or percentage" }, { status: 400 });
@@ -370,6 +374,7 @@ export async function POST(req: Request) {
         },
         select: { id: true, numDiapers: true },
       });
+      console.log("Rows", monthlyRows);
       if (monthlyRows.length !== 1) {
         throw new Error("Expected unique (partner, year, month) combo");
       }

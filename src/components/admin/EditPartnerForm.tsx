@@ -20,11 +20,9 @@ import { MonthPickerInput } from "@mantine/dates";
 import { Partner } from "./PartnerTable";
 import { useEffect, useState } from "react";
 import { status } from "@/generated/prisma/enums";
-import OneTimeUpdateForm from "./OneTimeUpdateForm";
 import ContinuousUpdateForm from "./ContinuousUpdateForm";
 import type { CityPercentage } from "./CityPercentagesForm";
 import "@mantine/dates/styles.css";
-import { RiCalendarEventLine, RiLineChartLine } from "react-icons/ri";
 import { fetchCoordsFromAddress } from "@/lib/util";
 
 interface EditPartnerFormProps {
@@ -142,7 +140,6 @@ const requiredInput = (label: string) => (value: unknown) => {
   return /.+/.test(v) ? null : `${label} must be filled out`;
 };
 
-type UpdatePercentagesOptions = "one-time" | "continuous";
 
 const parseMonthDateForPicker = (rawDate: string | null | undefined): Date | null => {
   if (!rawDate) return null;
@@ -177,9 +174,7 @@ const formatMonthDateForApi = (date: Date | string | null): string | null => {
 
 export default function EditPartnerForm({ partner, onClose }: EditPartnerFormProps) {
   const [loading, setLoading] = useState(false);
-  const [monthVerificationErrorMsg, setMonthVerificationErrorMsg] = useState<string | null>('');
   const [initialLogoUrl] = useState<string>(partner.logoUrl || "");
-  const [activePercentTab, setActivePercentTab] = useState<UpdatePercentagesOptions>("one-time");
   const [cityPercentages, setCityPercentages] = useState<
     {
       city: { id: number; name: string };
@@ -228,7 +223,6 @@ export default function EditPartnerForm({ partner, onClose }: EditPartnerFormPro
       country: addressFields.country,
       logoFile: null as File | null,
       logoUrl: partner.logoUrl || "",
-      updatePercentagesType: "one-time" as UpdatePercentagesOptions,
     },
     validate: {
       organization: requiredInput("Name of Organization"),
@@ -559,67 +553,10 @@ export default function EditPartnerForm({ partner, onClose }: EditPartnerFormPro
               </Stack>
 
               <Stack className="min-w-170 w-full max-w-[600px]" gap="xl">
-                <Radio.Group
-                  value={activePercentTab}
-                  onChange={(val) => {
-                    setActivePercentTab(val as UpdatePercentagesOptions);
-                    form.setFieldValue("updatePercentagesType", val as UpdatePercentagesOptions);
-                  }}
-                >
-                  <SimpleGrid cols={2} spacing="md">
-                    {[
-                      {
-                        value: "continuous",
-                        title: "Continuous Update",
-                        description: "Updates ongoing percentages (All future months)",
-                        icon: <RiLineChartLine size={22} />,
-                      },
-                      {
-                        value: "one-time",
-                        title: "One-Time Update",
-                        description: "Updates a specific historical month only",
-                        icon: <RiCalendarEventLine size={22} />,
-                      },
-                    ].map((option) => (
-                      <Radio.Card
-                        key={option.value}
-                        value={option.value}
-                        radius="lg"
-                        p="md"
-                        className={`border transition shadow-sm hover:shadow-md ${
-                          activePercentTab === option.value 
-                            ? "border-blue-600 bg-blue-50" 
-                            : "border-gray-200"
-                        }`}
-                      >
-                        <Group wrap="nowrap" align="flex-start">
-                          <Radio.Indicator />
-                          <Stack gap={4}>
-                            <Group gap="xs">
-                              {option.icon}
-                              <Text fw={700}>{option.title}</Text>
-                            </Group>
-                            <Text size="xs" c="dimmed">
-                              {option.description}
-                            </Text>
-                          </Stack>
-                        </Group>
-                      </Radio.Card>
-                    ))}
-                  </SimpleGrid>
-                </Radio.Group>
-                {activePercentTab === "one-time" ? (
-                  <OneTimeUpdateForm
-                    initialCityPercentages={initialCityPercentEntries}
-                    partnerId={`${partner.id}`}
-                    dataNotExistErrorMsg={monthVerificationErrorMsg}
-                  />
-                ) : (
-                  <ContinuousUpdateForm
-                    partnerId={`${partner.id}`}
-                    initialCityPercentages={initialCityPercentEntries}
-                  />
-                )}
+                <ContinuousUpdateForm
+                  partnerId={`${partner.id}`}
+                  initialCityPercentages={initialCityPercentEntries}
+                />
               </Stack>
             </Group>
           )}
