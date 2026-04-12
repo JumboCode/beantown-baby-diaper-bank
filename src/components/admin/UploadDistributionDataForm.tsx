@@ -242,36 +242,40 @@ export default function UploadNewData({
               }
             />
           </Group>
-          {fileEntries.map((entry, index) => (
-            <Stack key={`${entry.fileInfo.name}-${index}`} spacing="xs">
-              <Text fw={700} size="md">
-                {entry.fileInfo.name}
-              </Text>
-              <MonthPickerInput
-                label="Dataset Information"
-                placeholder="Select Date"
-                description="Choose dataset time"
-                value={entry.datasetMonth}
-                onChange={(value) =>
-                  setFileEntries((prev) =>
-                    prev.map((prevEntry, idx) =>
-                      idx === index
-                        ? { ...prevEntry, datasetMonth: value }
-                        : prevEntry,
-                    ),
-                  )
-                }
-                required
-                valueFormat="YYYY MMM"
-                styles={{
-                  label: {
-                    fontWeight: 700,
-                    fontSize: "1rem",
-                  },
-                }}
-              />
+          {fileEntries.length > 0 && (
+            <Stack mt="lg" spacing="xs">
+              {fileEntries.map((entry, index) => (
+                <Stack key={`${entry.fileInfo.name}-${index}`} spacing="xs">
+                  <Text fw={700} size="md">
+                    {entry.fileInfo.name}
+                  </Text>
+                  <MonthPickerInput
+                    label="Dataset Information"
+                    placeholder="Select Date"
+                    description="Choose dataset time"
+                    value={entry.datasetMonth}
+                    onChange={(value) =>
+                      setFileEntries((prev) =>
+                        prev.map((prevEntry, idx) =>
+                          idx === index
+                            ? { ...prevEntry, datasetMonth: value }
+                            : prevEntry,
+                        ),
+                      )
+                    }
+                    required
+                    valueFormat="YYYY MMM"
+                    styles={{
+                      label: {
+                        fontWeight: 700,
+                        fontSize: "1rem",
+                      },
+                    }}
+                  />
+                </Stack>
+              ))}
             </Stack>
-          ))}
+          )}
           <Text size="xs" c="dimmed">
             File must be a CSV (.csv)
           </Text>

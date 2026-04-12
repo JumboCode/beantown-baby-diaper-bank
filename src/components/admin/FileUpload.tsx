@@ -61,19 +61,6 @@ export default function FileUpload({
           },
         }}
       />
-      <Stack mt="md" spacing={4}>
-        {displayedFiles.length === 0 ? (
-          <Text size="sm" c="dimmed">
-            No files selected
-          </Text>
-        ) : (
-          displayedFiles.map((file, index) => (
-            <Text key={`${file.name}-${index}`} size="sm">
-              {index + 1}. {file.name} ({file.rows} rows)
-            </Text>
-          ))
-        )}
-      </Stack>
     </div>
   );
 }
