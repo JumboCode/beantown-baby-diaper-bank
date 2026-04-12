@@ -46,7 +46,7 @@ export default function ContinuousUpdateForm({
         </Text>
         <Stack gap={6}>
           <Text fw={600} size="sm">
-            Effective From now (applies to all future distributions)
+            Effective From Now (applies to all future distributions)
           </Text>
         </Stack>
         <CityPercentagesForm 

@@ -206,7 +206,7 @@ export default function DistributionsTable({
     }
   };
 
-  const submitPercentEdit = async (partnerId: number, month: string, year: string) => {
+  const submitPercentEdit = async (partnerId: number, year: string, month?: string) => {
     setIsPercentSaving(true);
     try {
       const response = await fetch("/api/distributions", {
@@ -214,7 +214,6 @@ export default function DistributionsTable({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           partnerId,
-          month,
           year: parseInt(year, 10),
           percentages: Object.entries(editingPercentages).map(([city, pct]) => ({
             city,
@@ -719,6 +718,9 @@ export default function DistributionsTable({
                                 (a.city?.name ?? "").localeCompare(b.city?.name ?? ""),
                               );
 
+                            const percentKey = `${partner.partnerId}-${yearGroup.year}`;
+                            const isPercentEditing = percentEditKey === percentKey;
+
                             if (rowsForPartner.length === 0) {
                               return (
                                 <div className="text-sm text-gray-600">No distributions found.</div>
@@ -727,10 +729,62 @@ export default function DistributionsTable({
 
                             return (
                               <div className="overflow-x-auto rounded-lg border border-gray-200">
-                                <div className="grid grid-cols-3 gap-4 border-b border-gray-200 bg-gray-50 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-[#053766]">
+                                <div className="grid grid-cols-4 gap-4 border-b border-gray-200 bg-gray-50 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-[#053766]">
                                   <div>City</div>
                                   <div>Diapers</div>
                                   <div>Percentage</div>
+                                  <div className="flex justify-end">
+                                    {isPercentEditing ? (
+                                      <div className="flex gap-1">
+                                        <Button
+                                          size="xs"
+                                          loading={isPercentSaving}
+                                          onClick={() =>
+                                            void submitPercentEdit(
+                                              partner.partnerId,
+                                              yearGroup.year,
+                                            )
+                                          }
+                                        >
+                                          Save
+                                        </Button>
+                                        <Button
+                                          size="xs"
+                                          variant="default"
+                                          onClick={() => {
+                                            setPercentEditKey(null);
+                                            setEditingPercentages({});
+                                          }}
+                                        >
+                                          Cancel
+                                        </Button>
+                                      </div>
+                                    ) : (
+                                      <Button
+                                        size="xs"
+                                        variant="default"
+                                        onClick={() => {
+                                          setPercentEditKey(percentKey);
+                                          setEditingPercentages(
+                                            Object.fromEntries(
+                                              rowsForPartner.map((d) => [
+                                                d.city?.name ?? "",
+                                                d.percentage != null
+                                                  ? String(
+                                                      Math.round(
+                                                        Number(d.percentage) * 100,
+                                                      ),
+                                                    )
+                                                  : "0",
+                                              ]),
+                                            ),
+                                          );
+                                        }}
+                                      >
+                                        Edit
+                                      </Button>
+                                    )}
+                                  </div>
                                 </div>
                                 {rowsForPartner.map((dist) => (
                                   <div
@@ -739,7 +793,28 @@ export default function DistributionsTable({
                                   >
                                     <div>{dist.city?.name ?? "-"}</div>
                                     <div>{dist.numberDiapers ?? "0"}</div>
-                                    <div>{dist.percentage != null ? `${(Number(dist.percentage) * 100)}%`: "-"}</div>
+                                    <div>
+                                      {isPercentEditing ? (
+                                        <Input
+                                          size="xs"
+                                          value={editingPercentages[dist.city?.name ?? "-"] ?? ""}
+                                          onChange={(e) =>
+                                            setEditingPercentages((prev) => ({
+                                              ...prev,
+                                              [dist.city?.name ?? "-"]: e.target.value,
+                                            }))
+                                          }
+                                          rightSection={
+                                            <span className="text-xs text-gray-400">%</span>
+                                          }
+                                          className="w-20"
+                                        />
+                                      ) : dist.percentage != null ? (
+                                        `${(Number(dist.percentage) * 100).toFixed(0)}%`
+                                      ) : (
+                                        "-"
+                                      )}
+                                    </div>
                                   </div>
                                 ))}
                               </div>
