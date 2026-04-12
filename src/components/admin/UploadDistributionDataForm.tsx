@@ -22,23 +22,65 @@ export default function UploadNewData({
   uploadedMonths,
 }: UploadNewDataProps) {
   const [datasetMonth, setDatasetMonth] = useState<string | null>(null);
-  const [fileInfo, setFileInfo] = useState<FileInfo | null>(null);
+  const [fileInfos, setFileInfos] = useState<FileInfo[]>([]);
   const [isUploading, setIsUploading] = useState(false);
   const [warnings, setWarnings] = useState<string[]>([]);
 
   const handleClose = () => {
     setWarnings([]);
     setDatasetMonth(null);
-    setFileInfo(null);
+    setFileInfos([]);
     onClose();
   };
 
   const currentYear = new Date().getFullYear();
   const uploadedMonthSet = new Set(uploadedMonths);
 
+  const uploadFiles = async () => {
+    const selectedDate = datasetMonth?.toString();
+    if (!selectedDate) return;
+
+    setIsUploading(true);
+    try {
+      for (const fileInfo of fileInfos) {
+        const response = await fetch("/api/distributions/upload", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            csv: fileInfo.text,
+            selectedDate,
+          }),
+        });
+
+        const result = (await response.json()) as {
+          data?: unknown;
+          error?: string;
+          errors?: string[];
+        };
+
+        if (!response.ok) {
+          const nextWarnings =
+            result.errors && result.errors.length > 0
+              ? result.errors
+              : [result.error ?? "Upload failed."];
+          setWarnings(nextWarnings);
+          return;
+        }
+      }
+
+      await onUploaded?.();
+      handleClose();
+    } catch (error) {
+      console.error("Failed to upload distribution data:", error);
+      setWarnings(["Upload failed. Please try again."]);
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
   const handleUpload = async () => {
     setWarnings([]);
-    if (!fileInfo || !datasetMonth) return;
+    if (fileInfos.length === 0 || !datasetMonth) return;
 
     const selectedIndex = new Date(datasetMonth).getUTCMonth();
 
@@ -58,49 +100,13 @@ export default function UploadNewData({
         ),
         labels: { confirm: "Upload", cancel: "Cancel" },
         confirmProps: { color: "#163663" },
-        onConfirm: doUpload,
+        onConfirm: uploadFiles,
         groupProps: { justify: "center", grow: true, align: "stretch" },
       });
       return;
     }
 
-    await doUpload();
-  };
-
-  const doUpload = async () => {
-    setIsUploading(true);
-    try {
-      const response = await fetch("/api/distributions/upload", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          csv: fileInfo!.text,
-          selectedDate: datasetMonth!.toString(),
-        }),
-      });
-
-      const result = (await response.json()) as {
-        data?: unknown;
-        error?: string;
-        errors?: string[];
-      };
-
-      if (!response.ok) {
-        const nextWarnings =
-          result.errors && result.errors.length > 0
-            ? result.errors
-            : [result.error ?? "Upload failed."];
-        setWarnings(nextWarnings);
-        return;
-      }
-      await onUploaded?.();
-      handleClose();
-    } catch (error) {
-      console.error("Failed to upload distribution data:", error);
-      setWarnings(["Upload failed. Please try again."]);
-    } finally {
-      setIsUploading(false);
-    }
+    await uploadFiles();
   };
 
   return (
@@ -231,7 +237,7 @@ export default function UploadNewData({
             />
           </Group>
           <Group grow>
-            <FileUpload fileInfo={fileInfo} onFileChange={setFileInfo} />
+            <FileUpload files={fileInfos} onFileChange={setFileInfos} />
           </Group>
           <Text size="xs" c="dimmed">
             File must be a CSV (.csv)
@@ -254,7 +260,7 @@ export default function UploadNewData({
               variant="filled"
               color="#163663"
               onClick={handleUpload}
-              disabled={!fileInfo || !datasetMonth || isUploading}
+              disabled={fileInfos.length === 0 || !datasetMonth || isUploading}
               loading={isUploading}
             >
               Upload

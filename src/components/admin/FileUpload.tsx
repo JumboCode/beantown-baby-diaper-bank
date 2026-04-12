@@ -1,5 +1,4 @@
-import { FileInput } from "@mantine/core";
-import { Text } from "@mantine/core";
+import { FileInput, Stack, Text } from "@mantine/core";
 import { useState } from "react";
 
 export interface FileInfo {
@@ -9,35 +8,40 @@ export interface FileInfo {
 }
 
 interface FileUploadProps {
-  fileInfo?: FileInfo | null;
-  onFileChange?: (fileInfo: FileInfo | null) => void;
+  files?: FileInfo[];
+  onFileChange?: (files: FileInfo[]) => void;
 }
 
 export default function FileUpload({
-  fileInfo,
+  files,
   onFileChange,
 }: FileUploadProps) {
-  const [internalFileInfo, setInternalFileInfo] = useState<FileInfo | null>(
-    null,
-  );
-  const displayedFileInfo = fileInfo ?? internalFileInfo;
+  const [internalFiles, setInternalFiles] = useState<FileInfo[]>([]);
+  const displayedFiles = files ?? internalFiles;
 
-  const updateFile = (next: FileInfo | null) => {
+  const updateFiles = (next: FileInfo[]) => {
     if (onFileChange) {
       onFileChange(next);
       return;
     }
-    setInternalFileInfo(next);
+    setInternalFiles(next);
   };
 
-  const handleFileChange = async (file: File | null) => {
-    if (file) {
-      const text = await file.text();
-      const rows = text.split("\n").length;
-      updateFile({ name: file.name, rows, text });
-    } else {
-      updateFile(null);
+  const handleFileChange = async (selected: File[] | null) => {
+    if (!selected || selected.length === 0) {
+      updateFiles([]);
+      return;
     }
+
+    const nextFiles = await Promise.all(
+      selected.map(async (file) => {
+        const text = await file.text();
+        const rows = text.split("\n").length;
+        return { name: file.name, rows, text };
+      }),
+    );
+
+    updateFiles(nextFiles);
   };
 
   return (
@@ -46,6 +50,7 @@ export default function FileUpload({
         required
         accept="csv"
         label="Files"
+        multiple
         onChange={handleFileChange}
         placeholder={<Text size="sm">Click to Upload</Text>}
         description="Upload one or more dataset files"
@@ -56,16 +61,19 @@ export default function FileUpload({
           },
         }}
       />
-      <div>
-        {displayedFileInfo != null && (
-          <h1> File name: {displayedFileInfo.name} </h1>
+      <Stack mt="md" spacing={4}>
+        {displayedFiles.length === 0 ? (
+          <Text size="sm" c="dimmed">
+            No files selected
+          </Text>
+        ) : (
+          displayedFiles.map((file, index) => (
+            <Text key={`${file.name}-${index}`} size="sm">
+              {index + 1}. {file.name} ({file.rows} rows)
+            </Text>
+          ))
         )}
-      </div>
-      <div>
-        {displayedFileInfo != null && (
-          <h1> Number of rows: {displayedFileInfo.rows} </h1>
-        )}
-      </div>
+      </Stack>
     </div>
   );
 }
