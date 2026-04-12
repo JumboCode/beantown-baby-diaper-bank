@@ -186,6 +186,7 @@ export default function EditPartnerForm({ partner, onClose }: EditPartnerFormPro
       percentage: number;
     }[]
   >([]);
+  // const [partnerRegionCityIds, setPartnerRegionCityIds] = useState<number[]>([]);
 
   useEffect(() => {
     fetch(`/api/partners/percentages?partnerId=${partner.id}`)
@@ -197,6 +198,18 @@ export default function EditPartnerForm({ partner, onClose }: EditPartnerFormPro
         console.error("Error fetching partner percentages:", error);
       });
   }, [partner.id]);
+
+useEffect(() => {
+  if (cityPercentages.length === 0) {
+    form.setFieldValue("projectedCities", "");
+    return;
+  }
+
+  // const cityIds = cityPercentages.map((entry) => entry.city.id);
+  const cityNames = cityPercentages.map((entry) => entry.city.name);
+
+  form.setFieldValue("projectedCities", cityNames.join(", "));
+}, [cityPercentages]);
 
   const initialCityPercentEntries: CityPercentage[] =
     cityPercentages.length > 0
@@ -229,6 +242,7 @@ export default function EditPartnerForm({ partner, onClose }: EditPartnerFormPro
       logoFile: null as File | null,
       logoUrl: partner.logoUrl || "",
       updatePercentagesType: "one-time" as UpdatePercentagesOptions,
+      projectedCities: "",
     },
     validate: {
       organization: requiredInput("Name of Organization"),
@@ -280,6 +294,14 @@ export default function EditPartnerForm({ partner, onClose }: EditPartnerFormPro
   async function submitEditPartner(values: typeof form.values) {
     setLoading(true);
 
+    const projectedCityNames =
+      values.status === "waitlisted"
+        ? values.projectedCities
+            .split(",")
+            .map((city) => city.trim())
+            .filter(Boolean)
+        : [];
+
     const formData = {
       id: partner.id,
       name: values.organization,
@@ -293,6 +315,7 @@ export default function EditPartnerForm({ partner, onClose }: EditPartnerFormPro
       },
       address: buildAddressString(values),
       logo: values.logoUrl,
+      projectedCities: values.projectedCities || "",
     };
 
     const logoAction = values.logoFile
@@ -548,6 +571,22 @@ export default function EditPartnerForm({ partner, onClose }: EditPartnerFormPro
               />
             </div>
           </Group>
+
+          {form.values.status === "waitlisted" && (
+            <Group justify="space-between" align="flex-start">
+              <Text fw={600} c="#344054">
+                Projected Cities <span className="text-red-600">*</span>
+              </Text>
+              <Textarea
+                placeholder="Enter projected cities, separated by commas"
+                {...form.getInputProps("projectedCities")}
+                className="min-w-170 w-full max-w-[600px]"
+                radius="md"
+                autosize
+                minRows={2}
+              />
+            </Group>
+          )}
 
           {form.values.status !== "waitlisted" && (
             <Group justify="space-between" align="flex-start">
