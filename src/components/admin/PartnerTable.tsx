@@ -101,7 +101,15 @@ export default function PartnerTable({
                   </Table.Td>
                 </Table.Tr>
               ) : (
-                partners.map((partner) => (
+                [...partners]
+                  .sort((a, b) => { // sorting: active partners first, then by start date
+                    if (a.status === "active" && b.status !== "active") return -1;
+                    if (a.status !== "active" && b.status === "active") return 1;
+                    const dateA = a.start_partner ? new Date(a.start_partner).getTime() : Infinity;
+                    const dateB = b.start_partner ? new Date(b.start_partner).getTime() : Infinity;
+                    return dateA - dateB;
+                  })
+                  .map((partner) => (
                   <Table.Tr key={partner.id}>
                     <Table.Td>
                       <div className="flex items-center gap-3">
