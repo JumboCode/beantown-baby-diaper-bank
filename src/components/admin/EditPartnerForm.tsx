@@ -18,7 +18,7 @@ import {
 import { useForm } from "@mantine/form";
 import { MonthPickerInput } from "@mantine/dates";
 import { Partner } from "./PartnerTable";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { status } from "@/generated/prisma/enums";
 import ContinuousUpdateForm from "./ContinuousUpdateForm";
 import type { CityPercentage } from "./CityPercentagesForm";
@@ -174,6 +174,7 @@ const formatMonthDateForApi = (date: Date | string | null): string | null => {
 export default function EditPartnerForm({ partner, onClose }: EditPartnerFormProps) {
   const [loading, setLoading] = useState(false);
   const [initialLogoUrl] = useState<string>(partner.logoUrl || "");
+  const [cityEntries, setCityEntries] = useState<CityPercentage[]>([]);
   const [cityPercentages, setCityPercentages] = useState<
     {
       city: { id: number; name: string };
@@ -192,20 +193,20 @@ export default function EditPartnerForm({ partner, onClose }: EditPartnerFormPro
       });
   }, [partner.id]);
 
-  const initialCityPercentEntries: CityPercentage[] =
-    cityPercentages.length > 0
-      ? cityPercentages.map((entry, idx) => ({
-          id: `${entry.city.name}-${idx}`,
-          city: entry.city.name,
-          percent: Math.round((entry.percentage ?? 0) * 100),
-        }))
-      : [];
+  const initialCityPercentEntries = useMemo<CityPercentage[]>(
+    () =>
+      cityPercentages.map((entry, idx) => ({
+        id: `${entry.city.name}-${idx}`,
+        city: entry.city.name,
+        percent: Math.round((entry.percentage ?? 0) * 100),
+      })),
+    [cityPercentages],
+  );
 
   const addressFields = parseAddressFields(partner.address);
 
   const form = useForm({
     mode: "controlled",
-    validateInputOnChange: true,
     validateInputOnBlur: true,
     initialValues: {
       organization: partner.name,
@@ -245,23 +246,24 @@ export default function EditPartnerForm({ partner, onClose }: EditPartnerFormPro
     },
   });
 
+  const geocodeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => {
     const { addressLine, city, state, zipCode, country } = form.values;
     if (!addressLine || !city || !state || !zipCode) return;
 
-    const fullAddress = buildAddressString({
-      addressLine,
-      city,
-      state,
-      zipCode,
-      country,
-    });
+    if (geocodeTimer.current) clearTimeout(geocodeTimer.current);
+    geocodeTimer.current = setTimeout(() => {
+      const fullAddress = buildAddressString({ addressLine, city, state, zipCode, country });
+      fetchCoordsFromAddress(fullAddress).then((location) => {
+        if (!location) return;
+        form.setFieldValue("latitude", String(location.lat));
+        form.setFieldValue("longitude", String(location.lng));
+      });
+    }, 600);
 
-    fetchCoordsFromAddress(fullAddress).then((location) => {
-      if (!location) return;
-      form.setFieldValue("latitude", String(location.lat));
-      form.setFieldValue("longitude", String(location.lng));
-    });
+    return () => {
+      if (geocodeTimer.current) clearTimeout(geocodeTimer.current);
+    };
   }, [
     form.values.addressLine,
     form.values.city,
@@ -311,6 +313,33 @@ export default function EditPartnerForm({ partner, onClose }: EditPartnerFormPro
         const err = await response.json();
         form.setFieldError("logoFile", err.error);
         return;
+      }
+
+      if (form.values.status !== "waitlisted" && cityEntries.length > 0) {
+        for (const entry of cityEntries) {
+          const cityRes = await fetch("/api/cities", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ name: entry.city }),
+          });
+          if (!cityRes.ok && cityRes.status !== 409) {
+            const err = await cityRes.json().catch(() => ({}));
+            form.setFieldError("organization", err.error || "Failed to save city percentages.");
+            return;
+          }
+        }
+
+        await fetch("/api/partners/percentages", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            partnerId: partner.id,
+            percentages: cityEntries.map((e) => ({
+              city: e.city,
+              percentage: e.percent / 100,
+            })),
+          }),
+        });
       }
 
       if (typeof window !== "undefined") {
@@ -551,6 +580,7 @@ export default function EditPartnerForm({ partner, onClose }: EditPartnerFormPro
                 <ContinuousUpdateForm
                   partnerId={`${partner.id}`}
                   initialCityPercentages={initialCityPercentEntries}
+                  onEntriesChange={setCityEntries}
                 />
               </div>
             </Group>
