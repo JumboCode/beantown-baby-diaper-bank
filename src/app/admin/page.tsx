@@ -389,214 +389,186 @@ export default function Page() {
 
   return (
     <Stack mx="72px" my="44px" gap="lg" className={poppins.className}>
-      {error ? (
-        <Text c="red">Error: {error}</Text>
-      ) : (
-        <>
-          <Card p={0}>
-            <Group justify="space-between" align="flex-start">
-              <Stack gap={4}>
-                <Title order={2}>Hello, {user?.firstName ?? "Admin"} 👋</Title>
-                <Group gap="xl" wrap="wrap">
-                  <Text size="sm" c="dimmed">
-                    Last data uploaded: {lastUploaded ?? "N/A"}
-                  </Text>
-                </Group>
-              </Stack>
-              <UploadNewData
-                opened={openedUploadDataForm}
-                onClose={handleCloseUploadDataForm}
-                onUploaded={onDataUpload}
-                uploadedMonths={uploadedMonths}
-              />
-              <AddPartnerForm opened={openedPartnerForm} onClose={closePartnerForm} />
-              <Button
-                onClick={handleAddClick}
-                variant="default"
-                radius="md"
-                c="#053766"
-                rightSection={
-                  <Image src="/admin_view/add_icon.svg" alt="add button" width={16} height={16} />
-                }
-              >
-                {isPartnersTab ? "Add A New Partner" : "Upload New Data"}
-              </Button>
+      <Card p={0}>
+        <Group justify="space-between" align="flex-start">
+          <Stack gap={4}>
+            <Title order={2}>Hello, {user?.firstName ?? "Admin"} 👋</Title>
+            <Group gap="xl" wrap="wrap">
+              <Text size="sm" c="dimmed">
+                Last data uploaded: {lastUploaded ?? "N/A"}
+              </Text>
             </Group>
-          </Card>
-
-          <Tabs
-            classNames={classes}
-            value={activeTab}
-            onChange={handleTabChange}
-            styles={{
-              list: {
-                "--tabs-border-color": "transparent",
-              },
-            }}
+          </Stack>
+          <UploadNewData
+            opened={openedUploadDataForm}
+            onClose={handleCloseUploadDataForm}
+            onUploaded={onDataUpload}
+            uploadedMonths={uploadedMonths}
+          />
+          <AddPartnerForm opened={openedPartnerForm} onClose={closePartnerForm} />
+          <Button
+            onClick={handleAddClick}
+            variant="default"
+            radius="md"
+            c="#053766"
+            rightSection={
+              <Image src="/admin_view/add_icon.svg" alt="add button" width={16} height={16} />
+            }
           >
-            <Tabs.List mb="16px">
-              <Tabs.Tab value="Partners" leftSection={renderTabIcon("Partners")}>
-                Partners
-              </Tabs.Tab>
-              <Tabs.Tab value="Diapers" leftSection={renderTabIcon("Diapers")}>
-                Diapers
-              </Tabs.Tab>
+            {isPartnersTab ? "Add A New Partner" : "Upload New Data"}
+          </Button>
+        </Group>
+      </Card>
+      <Tabs
+        classNames={classes}
+        value={activeTab}
+        onChange={handleTabChange}
+        styles={{
+          list: {
+            "--tabs-border-color": "transparent",
+          },
+        }}
+      >
+        <Tabs.List mb="16px">
+          <Tabs.Tab value="Partners" leftSection={renderTabIcon("Partners")}>
+            Partners
+          </Tabs.Tab>
+          <Tabs.Tab value="Diapers" leftSection={renderTabIcon("Diapers")}>
+            Diapers
+          </Tabs.Tab>
 
-              <Drawer
-                opened={isDrawerOpen}
-                onClose={drawerControls.close}
-                position="right"
-                size="sm"
+          <Drawer opened={isDrawerOpen} onClose={drawerControls.close} position="right" size="sm">
+            <h1 className="font-bold text-gray-900">Filter Data</h1>
+            <p className="text-gray-500 mb-6">Filter the diaper distribution data by date range.</p>
+            <h2 className="text-gray-900 font-semibold mb-2">Date Range</h2>
+            <h3 className="text-gray-900 font-medium">From</h3>
+            <MonthPickerInput
+              placeholder="Pick date"
+              value={valueFrom ? `${valueFrom}-01` : null}
+              onChange={(val) => setValueFrom(val ? (val as unknown as string).slice(0, 7) : null)}
+              className="mb-3"
+            />
+
+            <h3 className="text-gray-900 font-medium">To</h3>
+            <MonthPickerInput
+              placeholder="Pick date"
+              value={valueTo ? `${valueTo}-01` : null}
+              onChange={(val) => setValueTo(val ? (val as unknown as string).slice(0, 7) : null)}
+              className="mb-6"
+            />
+            <div className="flex justify-between">
+              <Button
+                onClick={resetDistributionFilters}
+                variant="outline"
+                color="#053766"
+                radius="md"
               >
-                <h1 className="font-bold text-gray-900">Filter Data</h1>
-                <p className="text-gray-500 mb-6">
-                  Filter the diaper distribution data by date range.
-                </p>
-                <h2 className="text-gray-900 font-semibold mb-2">Date Range</h2>
-                <h3 className="text-gray-900 font-medium">From</h3>
-                <MonthPickerInput
-                  placeholder="Pick date"
-                  value={valueFrom ? `${valueFrom}-01` : null}
-                  onChange={(val) =>
-                    setValueFrom(val ? (val as unknown as string).slice(0, 7) : null)
+                Clear Filters
+              </Button>
+              <Button onClick={filterDistributions} variant="filled" color="#053766" radius="md">
+                Apply Filters
+              </Button>
+            </div>
+          </Drawer>
+
+          <Group ml="auto" align="flex-start" gap="sm">
+            {!isPartnersTab && <DeleteDistributionDataButton onSuccess={fetchDistributions} />}
+            {isPartnersTab && (
+              <TextInput
+                placeholder="Search by name or cities..."
+                value={partnerSearch}
+                onChange={(e) => setPartnerSearch(e.currentTarget.value)}
+                radius="md"
+                w={240}
+                leftSection={<Search size={16} />}
+              />
+            )}
+
+            <Popover
+              opened={isPartnerFilterOpen && isPartnersTab}
+              onChange={setPartnerFilterOpen}
+              position="bottom-end"
+              width={300}
+              shadow="md"
+            >
+              <Popover.Target>
+                <Button
+                  variant="default"
+                  radius={5}
+                  onClick={handleFilterClick}
+                  rightSection={
+                    <Image src="/admin_view/filter.svg" alt="filter icon" width={16} height={16} />
                   }
-                  className="mb-3"
-                />
-
-                <h3 className="text-gray-900 font-medium">To</h3>
-                <MonthPickerInput
-                  placeholder="Pick date"
-                  value={valueTo ? `${valueTo}-01` : null}
-                  onChange={(val) =>
-                    setValueTo(val ? (val as unknown as string).slice(0, 7) : null)
-                  }
-                  className="mb-6"
-                />
-                <div className="flex justify-between">
-                  <Button
-                    onClick={resetDistributionFilters}
-                    variant="outline"
-                    color="#053766"
-                    radius="md"
-                  >
-                    Clear Filters
-                  </Button>
-                  <Button
-                    onClick={filterDistributions}
-                    variant="filled"
-                    color="#053766"
-                    radius="md"
-                  >
-                    Apply Filters
-                  </Button>
-                </div>
-              </Drawer>
-
-              <Group ml="auto" align="flex-start" gap="sm">
-                {!isPartnersTab && <DeleteDistributionDataButton onSuccess={fetchDistributions} />}
-                {isPartnersTab && (
-                  <TextInput
-                    placeholder="Search by name or cities..."
-                    value={partnerSearch}
-                    onChange={(e) => setPartnerSearch(e.currentTarget.value)}
-                    radius="md"
-                    w={240}
-                    leftSection={<Search size={16} />}
-                  />
-                )}
-
-                <Popover
-                  opened={isPartnerFilterOpen && isPartnersTab}
-                  onChange={setPartnerFilterOpen}
-                  position="bottom-end"
-                  width={300}
-                  shadow="md"
+                  className="mb-2"
                 >
-                  <Popover.Target>
-                    <Button
-                      variant="default"
-                      radius={5}
-                      onClick={handleFilterClick}
-                      rightSection={
-                        <Image
-                          src="/admin_view/filter.svg"
-                          alt="filter icon"
-                          width={16}
-                          height={16}
-                        />
-                      }
-                      className="mb-2"
-                    >
-                      Filter
-                    </Button>
-                  </Popover.Target>
-                  <Popover.Dropdown>
-                    <Stack gap="xs">
-                      <h3>
-                        <strong>Year Since</strong>
-                      </h3>
-                      <Group gap={7} mb="xs">
-                        {years.map((year) => {
-                          const isSelected = partnerYearSince === year;
+                  Filter
+                </Button>
+              </Popover.Target>
+              <Popover.Dropdown>
+                <Stack gap="xs">
+                  <h3>
+                    <strong>Year Since</strong>
+                  </h3>
+                  <Group gap={7} mb="xs">
+                    {years.map((year) => {
+                      const isSelected = partnerYearSince === year;
 
-                          return (
-                            <Button
-                              key={year}
-                              variant={isSelected ? "filled" : "outline"}
-                              color="#053766"
-                              radius="md"
-                              onClick={() => setPartnerYearSince(year)}
-                            >
-                              {year}
-                            </Button>
+                      return (
+                        <Button
+                          key={year}
+                          variant={isSelected ? "filled" : "outline"}
+                          color="#053766"
+                          radius="md"
+                          onClick={() => setPartnerYearSince(year)}
+                        >
+                          {year}
+                        </Button>
+                      );
+                    })}
+                  </Group>
+                  <h3>
+                    <strong>Status</strong>
+                  </h3>
+                  <Stack>
+                    {statuses.map((status) => (
+                      <Checkbox
+                        key={status.value}
+                        label={status.label}
+                        checked={partnerStatus.includes(status.value)}
+                        color="#053766"
+                        onChange={(e) => {
+                          const checked = e.currentTarget.checked;
+
+                          setPartnerStatus((prev) =>
+                            checked
+                              ? [...prev, status.value]
+                              : prev.filter((s) => s !== status.value),
                           );
-                        })}
-                      </Group>
-                      <h3>
-                        <strong>Status</strong>
-                      </h3>
-                      <Stack>
-                        {statuses.map((status) => (
-                          <Checkbox
-                            key={status.value}
-                            label={status.label}
-                            checked={partnerStatus.includes(status.value)}
-                            color="#053766"
-                            onChange={(e) => {
-                              const checked = e.currentTarget.checked;
+                        }}
+                      />
+                    ))}
+                  </Stack>
+                </Stack>
+              </Popover.Dropdown>
+            </Popover>
+          </Group>
+        </Tabs.List>
 
-                              setPartnerStatus((prev) =>
-                                checked
-                                  ? [...prev, status.value]
-                                  : prev.filter((s) => s !== status.value),
-                              );
-                            }}
-                          />
-                        ))}
-                      </Stack>
-                    </Stack>
-                  </Popover.Dropdown>
-                </Popover>
-              </Group>
-            </Tabs.List>
-
-            <Tabs.Panel value="Partners">
-              <PartnerTable
-                partners={filteredPartners}
-                refreshTable={refreshTable}
-                percentages={percentages}
-                loading={isLoadingPartners}
-              />
-            </Tabs.Panel>
-            <Tabs.Panel value="Diapers">
-              <DistributionsTable
-                distributionData={filteredDistributions}
-                onDataUpdated={fetchDistributions}
-              />
-            </Tabs.Panel>
-          </Tabs>
-        </>
-      )}
+        <Tabs.Panel value="Partners">
+          <PartnerTable
+            partners={filteredPartners}
+            refreshTable={refreshTable}
+            percentages={percentages}
+            loading={isLoadingPartners}
+          />
+        </Tabs.Panel>
+        <Tabs.Panel value="Diapers">
+          <DistributionsTable
+            distributionData={filteredDistributions}
+            onDataUpdated={fetchDistributions}
+          />
+        </Tabs.Panel>
+      </Tabs>
     </Stack>
   );
 }
