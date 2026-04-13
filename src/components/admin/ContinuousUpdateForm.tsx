@@ -2,36 +2,16 @@ import { Paper, Stack, Group, Text } from "@mantine/core";
 import { RiLineChartLine } from "react-icons/ri";
 import CityPercentagesForm, { CityPercentage } from "./CityPercentagesForm";
 
-
 type ContinuousUpdateFormProps = {
-  partnerId: string,
+  partnerId: string;
   initialCityPercentages?: CityPercentage[];
+  onEntriesChange?: (entries: CityPercentage[]) => void;
 };
 
 export default function ContinuousUpdateForm({
-  partnerId,
   initialCityPercentages,
+  onEntriesChange,
 }: ContinuousUpdateFormProps) {
-
-  const handleSaveContinuous = async (entries: CityPercentage[]) => {
-    try {
-      const response = await fetch("/api/partners/percentages", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          partnerId,
-          percentages: entries.map(e => ({
-            city: e.city,
-            percentage: e.percent / 100
-          }))
-        }),
-      });
-      if (response.ok) alert("Global percentages updated!");
-    } catch (err) {
-      console.error(err);
-    }
-  }
-
   return (
     <Paper withBorder radius="lg" p="lg">
       <Stack gap="md">
@@ -42,17 +22,10 @@ export default function ContinuousUpdateForm({
           </Text>
         </Group>
         <Text size="sm" c="dimmed">
-          This will update distributions for a continuous range of months
+          This will update distributions for future months based on the percentages you set for each
+          city. It will not affect past distributions. Make sure the percentages add up to 100%.
         </Text>
-        <Stack gap={6}>
-          <Text fw={600} size="sm">
-            Effective From now (applies to all future distributions)
-          </Text>
-        </Stack>
-        <CityPercentagesForm 
-          initialEntries={initialCityPercentages} 
-          onSave={handleSaveContinuous}
-        />
+        <CityPercentagesForm initialEntries={initialCityPercentages} onChange={onEntriesChange} />
       </Stack>
     </Paper>
   );

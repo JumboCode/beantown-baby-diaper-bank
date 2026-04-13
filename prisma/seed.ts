@@ -18,9 +18,7 @@ const parseStatus = (value: string | undefined): PartnerStatus | undefined => {
 };
 
 // generic CSV loader -> array of plain objects
-async function loadCsv<T extends Record<string, string | undefined>>(
-  file: string,
-) {
+async function loadCsv<T extends Record<string, string | undefined>>(file: string) {
   console.log(`Loading CSV data from ${file}...`);
   const rows: T[] = [];
   const parser = createReadStream(file).pipe(
@@ -36,18 +34,16 @@ const toNumber = (value: string | undefined) =>
   value && value.length > 0 ? Number(value) : undefined;
 const toDate = (value: string | undefined) =>
   value && value.length > 0 ? new Date(value) : undefined;
-const toStringOrNull = (value: string | undefined) =>
-  value && value.length > 0 ? value : null;
+const toStringOrNull = (value: string | undefined) => (value && value.length > 0 ? value : null);
 
-async function loadBoundaryGeometry(cityName?: string) {  
+async function loadBoundaryGeometry(cityName?: string) {
   if (!cityName) return null;
   const slug = cityName.toLowerCase().replace(/\s+/g, "-");
   const file = path.join(__dirname, "data/geojson", `${slug}.geojson`);
   try {
     const raw = await fs.readFile(file, "utf8");
     const json = JSON.parse(raw);
-    const feature =
-      json.type === "FeatureCollection" ? json.features?.[0] : json;
+    const feature = json.type === "FeatureCollection" ? json.features?.[0] : json;
     if (!feature?.geometry) return null;
     return JSON.stringify(feature.geometry);
   } catch (err) {
@@ -60,7 +56,7 @@ async function seedCities() {
   type Row = {
     id: string;
     created_at?: string;
-    name?: string;
+    name: string;
     centroid?: string;
   };
 
@@ -69,7 +65,7 @@ async function seedCities() {
     data: rows.map((row) => ({
       id: toBigInt(row.id),
       createdAt: toDate(row.created_at),
-      name: toStringOrNull(row.name),
+      name: row.name,
       // centroid: row.centroid ? JSON.parse(row.centroid) : undefined,
     })),
     skipDuplicates: true,
@@ -78,7 +74,7 @@ async function seedCities() {
     if (!row.centroid) continue;
     await prisma.$executeRaw`
     UPDATE "Cities"
-    SET "centroid" = ST_GeomFromGeoJSON(${row.centroid})
+    SET "centroid" = ${row.centroid}::geometry
     WHERE id = ${toBigInt(row.id)}
   `;
   }
@@ -136,9 +132,7 @@ async function seedDistributions() {
     percentage?: string;
   };
 
-  const rows = await loadCsv<Row>(
-    path.join(__dirname, "data/distributions.csv"),
-  );
+  const rows = await loadCsv<Row>(path.join(__dirname, "data/distributions.csv"));
   await prisma.distribution.createMany({
     data: rows.map((row) => ({
       id: toBigInt(row.id),
@@ -161,21 +155,16 @@ async function seedPartnerRegions() {
     percentage?: string;
   };
 
-  const rows = await loadCsv<Row>(
-    path.join(__dirname, "data/partner_regions.csv"),
-  );
+  const rows = await loadCsv<Row>(path.join(__dirname, "data/partner_regions.csv"));
 
-  let data: { partnerId: bigint; cityId: bigint; percentage: number | null }[] =
-    [];
+  let data: { partnerId: bigint; cityId: bigint; percentage: number | null }[] = [];
 
   try {
     data = rows.map((row) => {
       const partnerId = toBigInt(row.partner_id);
       const cityId = toBigInt(row.city_id);
       if (!partnerId || !cityId) {
-        throw new Error(
-          `Invalid partnerId or cityId in row: ${JSON.stringify(row)}`,
-        );
+        throw new Error(`Invalid partnerId or cityId in row: ${JSON.stringify(row)}`);
       }
 
       const raw = toNumber(row.percentage);
