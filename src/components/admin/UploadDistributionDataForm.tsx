@@ -1,10 +1,24 @@
-import { Modal, Button, Group, Text, Stack, SimpleGrid, Paper, Box, Alert } from "@mantine/core";
+import {
+  Modal,
+  Button,
+  Group,
+  Text,
+  Stack,
+  SimpleGrid,
+  Paper,
+  Box,
+  Alert,
+  ThemeIcon,
+  ActionIcon,
+  Title,
+} from "@mantine/core";
 import FileUpload, { FileInfo } from "./FileUpload";
 import { MonthPickerInput } from "@mantine/dates";
 import { useState } from "react";
 import { FaDownload } from "react-icons/fa";
 // import { ConfirmUpload } from "./ConfirmUploadModal";
 import { modals } from "@mantine/modals";
+import { IconTrash, IconFileText } from "@tabler/icons-react";
 
 interface UploadNewDataProps {
   opened: boolean;
@@ -107,8 +121,8 @@ export default function UploadNewData({
         centered: true,
         children: (
           <Text size="sm">
-            Data for one of the selected months already exists. Are you sure you want to
-            reupload? This action cannot be undone.
+            Data for one of the selected months already exists. Are you sure you want to reupload?
+            This action cannot be undone.
           </Text>
         ),
         labels: { confirm: "Upload", cancel: "Cancel" },
@@ -127,13 +141,17 @@ export default function UploadNewData({
       <Modal
         opened={opened}
         onClose={handleClose}
-        size="lg"
+        size={990}
+        padding={32}
         title={
-          <Text fw={700} size="xl">
+          <Text fw={700} size="30px" c="#101828">
             Upload New Dataset
           </Text>
         }
       >
+        <Title order={2} c="#667085" fw="normal" fz={18} mb="md">
+          Add your new distribution data
+        </Title>
         <Stack gap="md">
           {warnings.length > 0 ? (
             <Alert color="red" title="Please fix the following:">
@@ -212,8 +230,17 @@ export default function UploadNewData({
                       alignItems: "flex-start",
                       justifyContent: "center",
                       gap: 4,
-                      backgroundColor: isUploaded ? "#edf7eb" : "#ffffff",
-                      borderColor: isUploaded ? "#8bc17f" : "#d9e1ea",
+                      backgroundColor: isUploaded ? "#eefbf4" : "#ffffff",
+                      borderColor: isUploaded ? "#a5d8b9" : "#e2e8f0",
+                      transition: "transform 150ms ease, box-shadow 150ms ease",
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.transform = "translateY(-2px)";
+                      e.currentTarget.style.boxShadow = "var(--mantine-shadow-sm)";
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.transform = "translateY(0)";
+                      e.currentTarget.style.boxShadow = "none";
                     }}
                   >
                     <Text fw={700} size="md" c="#495057">
@@ -222,7 +249,7 @@ export default function UploadNewData({
                     <Text
                       size="xs"
                       fw={600}
-                      c={isUploaded ? "#2f8a22" : "#868e96"}
+                      c={isUploaded ? "#16a34a" : "#94a3b8"}
                       style={{ lineHeight: 1.2 }}
                     >
                       {isUploaded ? "Uploaded" : "Missing"}
@@ -235,79 +262,165 @@ export default function UploadNewData({
           <Group grow>
             <FileUpload
               files={fileEntries.map((entry) => entry.fileInfo)}
-              onFileChange={(files) =>
-                setFileEntries(
-                  files.map((file) => ({ fileInfo: file, datasetMonth: null })),
-                )
+              onFileChange={(newFiles) =>
+                setFileEntries((prev) => {
+                  return newFiles.map((file) => {
+                    const existing = prev.find((p) => p.fileInfo.name === file.name);
+                    return existing ? existing : { fileInfo: file, datasetMonth: null };
+                  });
+                })
               }
             />
           </Group>
           {fileEntries.length > 0 && (
-            <Stack mt="lg" spacing="xs">
-              {fileEntries.map((entry, index) => (
-                <Stack key={`${entry.fileInfo.name}-${index}`} spacing="xs">
-                  <Text fw={700} size="md">
-                    {entry.fileInfo.name}
-                  </Text>
-                  <MonthPickerInput
-                    label="Dataset Information"
-                    placeholder="Select Date"
-                    description="Choose dataset time"
-                    value={entry.datasetMonth}
-                    onChange={(value) =>
-                      setFileEntries((prev) =>
-                        prev.map((prevEntry, idx) =>
-                          idx === index
-                            ? { ...prevEntry, datasetMonth: value }
-                            : prevEntry,
-                        ),
-                      )
-                    }
-                    
-                    required
-                    valueFormat="YYYY MMM"
-                    styles={{
-                      label: {
-                        fontWeight: 700,
-                        fontSize: "1rem",
-                      },
-                    }}
-                  />
-                </Stack>
-              ))}
+            <Stack mt="md" gap="md">
+              <Group justify="space-between" align="center">
+                <Text fw={700} size="sm">
+                  Set distribution month for {fileEntries.length} File
+                  {fileEntries.length !== 1 ? "s" : ""}
+                </Text>
+                <Button variant="subtle" color="red" size="xs" onClick={() => setFileEntries([])}>
+                  Clear All
+                </Button>
+              </Group>
+              {fileEntries.map((entry, index) => {
+                const hasErrors = entry.fileInfo.errors && entry.fileInfo.errors.length > 0;
+
+                return (
+                  <Paper
+                    key={`${entry.fileInfo.name}-${index}`}
+                    withBorder
+                    p="sm"
+                    radius="md"
+                    bg={hasErrors ? "red.0" : undefined}
+                    style={hasErrors ? { borderColor: "var(--mantine-color-red-4)" } : undefined}
+                  >
+                    <Stack gap="sm">
+                      <Group justify="space-between" wrap="nowrap" align="center">
+                        <Group wrap="nowrap" style={{ flex: 1, minWidth: 0 }}>
+                          <ThemeIcon
+                            size="lg"
+                            radius="md"
+                            variant="light"
+                            color={hasErrors ? "red" : "#163663"}
+                          >
+                            <IconFileText size={20} />
+                          </ThemeIcon>
+                          <Stack gap={0} style={{ flex: 1, minWidth: 0 }}>
+                            <Text fw={600} size="sm" truncate c={hasErrors ? "red.9" : undefined}>
+                              {entry.fileInfo.name}
+                            </Text>
+                            <Text size="xs" c={hasErrors ? "red.7" : "dimmed"}>
+                              {entry.fileInfo.rows} rows
+                            </Text>
+                          </Stack>
+                        </Group>
+
+                        <Group wrap="nowrap" gap="sm">
+                          <MonthPickerInput
+                            placeholder="Select Date"
+                            value={entry.datasetMonth as any}
+                            onChange={(value) =>
+                              setFileEntries((prev) =>
+                                prev.map((prevEntry, idx) =>
+                                  idx === index
+                                    ? { ...prevEntry, datasetMonth: value as any }
+                                    : prevEntry,
+                                ),
+                              )
+                            }
+                            required={!hasErrors}
+                            disabled={hasErrors}
+                            valueFormat="YYYY MMM"
+                            w={140}
+                            styles={{ input: { fontWeight: 500 } }}
+                          />
+                          <ActionIcon
+                            variant="subtle"
+                            color="red"
+                            onClick={() => {
+                              setFileEntries((prev) => prev.filter((_, idx) => idx !== index));
+                            }}
+                          >
+                            <IconTrash size={18} />
+                          </ActionIcon>
+                        </Group>
+                      </Group>
+                      {hasErrors && (
+                        <Alert variant="subtle" p="xs" styles={{ title: { fontSize: "0.85rem" } }}>
+                          <Stack gap={4}>
+                            {entry.fileInfo.errors!.map((err, i) => (
+                              <Text key={i} size="xs" fw={500}>
+                                {err}
+                              </Text>
+                            ))}
+                          </Stack>
+                        </Alert>
+                      )}
+                    </Stack>
+                  </Paper>
+                );
+              })}
             </Stack>
           )}
           <Text size="xs" c="dimmed">
             File must be a CSV (.csv)
           </Text>
 
-          <Group justify="flex-end" gap="xs">
+          <Group
+            justify="flex-end"
+            mt="md"
+            style={{
+              position: "sticky",
+              bottom: 0,
+              backgroundColor: "white",
+              paddingTop: 16,
+              paddingBottom: 16,
+              paddingLeft: 32,
+              paddingRight: 32,
+              borderTop: "1px solid #f1f3f5",
+              zIndex: 10,
+              margin: "auto -32px -32px -32px",
+            }}
+          >
             <Button
               component="a"
               href="/MothlyDataTemplate.xlsx"
               download
               leftSection={<FaDownload />}
-              color="#163663"
+              color="#053766"
+              radius="md"
+              variant="subtle"
             >
               Download Template
             </Button>
-            <Button variant="default" color="#163663" onClick={handleClose}>
+            <Button
+              variant="outline"
+              color="#053766"
+              radius="md"
+              type="button"
+              onClick={handleClose}
+            >
               Cancel
             </Button>
             <Button
               variant="filled"
-              color="#163663"
+              color="#053766"
+              radius="md"
               onClick={handleUpload}
               disabled={
                 fileEntries.length === 0 ||
-                fileEntries.some((entry) => !entry.datasetMonth) ||
+                fileEntries.some(
+                  (entry) =>
+                    !entry.datasetMonth ||
+                    (entry.fileInfo.errors && entry.fileInfo.errors.length > 0),
+                ) ||
                 isUploading
               }
               loading={isUploading}
             >
-              Upload
+              Upload Datasets
             </Button>
-            {/* TODO */}
           </Group>
         </Stack>
       </Modal>
