@@ -142,7 +142,7 @@ export default function PartnerTable({
                                 }}
                               />
                             )}
-                            <Text c="#101828" fw={600} fz={"16px"}>
+                            <Text c="#101828" fw={600} fz={"16px"} truncate>
                               {partner.name}
                             </Text>
                           </div>
