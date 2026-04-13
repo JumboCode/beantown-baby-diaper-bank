@@ -7,8 +7,9 @@ import { stringifyWithBigInt } from "@/lib/util";
 import {
   deleteLogoObject,
   FileUploadError,
-  getLogoObjectKey,
-  uploadLogoForPartner,
+  generateLogoObjectKey,
+  getObjectKeyFromUrl,
+  uploadLogoObject,
   validateImageSignature,
   validateLogoFile,
 } from "@/lib/server/logoUpload";
@@ -175,6 +176,20 @@ async function createPartner(
     }
   }
 
+  // Upload logo before touching the DB so the create is a single transaction
+  let logoUrl = payload.logo ?? "";
+  let uploadedKey: string | null = null;
+  if (logoAction === "replace") {
+    uploadedKey = generateLogoObjectKey(logoFile!);
+    try {
+      logoUrl = await uploadLogoObject(uploadedKey, logoFile!);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unable to upload logo.";
+      const statusCode = error instanceof FileUploadError ? error.status : 500;
+      return NextResponse.json({ error: message }, { status: statusCode });
+    }
+  }
+
   let partner: Partner;
   try {
     partner = await prisma.$transaction(async (tx) => {
@@ -186,7 +201,7 @@ async function createPartner(
           status: payload.status,
           coords: payload.coordinates,
           address: payload.address,
-          logoUrl: logoAction === "replace" ? "" : (payload.logo ?? ""),
+          logoUrl,
         },
       });
 
@@ -204,34 +219,15 @@ async function createPartner(
       return newPartner;
     });
   } catch (error) {
+    // Clean up the uploaded logo if the DB write fails
+    if (uploadedKey) {
+      await deleteLogoObject(uploadedKey).catch(() => undefined);
+    }
     if (error instanceof PartnerRequestError) {
       return NextResponse.json({ error: error.message }, { status: error.status });
     }
     const message = error instanceof Error ? error.message : "Unable to create partner in database";
     return NextResponse.json({ error: message }, { status: 500 });
-  }
-
-  if (logoAction === "replace") {
-    const partnerId = Number(partner.id);
-    try {
-      const { publicUrl } = await uploadLogoForPartner(partnerId, logoFile!);
-      partner = await prisma.partner.update({
-        where: { id: partner.id },
-        data: { logoUrl: publicUrl },
-      });
-    } catch (error) {
-      // Best-effort cleanup: delete the partner record and any regions
-      await prisma
-        .$transaction([
-          prisma.partnerRegion.deleteMany({ where: { partnerId } }),
-          prisma.partner.delete({ where: { id: partner.id } }),
-        ])
-        .catch((e) => console.error("Cleanup after logo upload failure failed:", e));
-      await deleteLogoObject(getLogoObjectKey(partnerId)).catch(() => undefined);
-      const message = error instanceof Error ? error.message : "Unable to upload logo.";
-      const statusCode = error instanceof FileUploadError ? error.status : 500;
-      return NextResponse.json({ error: message }, { status: statusCode });
-    }
   }
 
   revalidateTag("cities", "max");
@@ -247,12 +243,15 @@ async function updatePartner(
 ) {
   const partnerId = payload.id;
 
+  const existingLogoKey = payload.logo ? getObjectKeyFromUrl(payload.logo) : null;
+
   // Resolve final logoUrl before touching the DB
   let logoUrl = payload.logo ?? "";
+  let uploadedKey: string | null = null;
   if (logoAction === "replace") {
+    uploadedKey = generateLogoObjectKey(logoFile!);
     try {
-      const uploadResult = await uploadLogoForPartner(partnerId, logoFile!);
-      logoUrl = uploadResult.publicUrl;
+      logoUrl = await uploadLogoObject(uploadedKey, logoFile!);
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unable to upload logo.";
       const statusCode = error instanceof FileUploadError ? error.status : 500;
@@ -260,7 +259,9 @@ async function updatePartner(
     }
   } else if (logoAction === "remove") {
     logoUrl = "";
-    await deleteLogoObject(getLogoObjectKey(partnerId)).catch(() => undefined);
+    if (existingLogoKey) {
+      await deleteLogoObject(existingLogoKey).catch(() => undefined);
+    }
   }
 
   try {
@@ -278,11 +279,16 @@ async function updatePartner(
       },
     });
 
+    // Delete the old logo after a successful replace
+    if (logoAction === "replace" && existingLogoKey) {
+      await deleteLogoObject(existingLogoKey).catch(() => undefined);
+    }
+
     revalidateTag("cities", "max");
     return NextResponse.json({ data: stringifyWithBigInt(partner) });
   } catch (error) {
-    if (logoAction === "replace") {
-      await deleteLogoObject(getLogoObjectKey(partnerId)).catch(() => undefined);
+    if (uploadedKey) {
+      await deleteLogoObject(uploadedKey).catch(() => undefined);
     }
     const message =
       error instanceof Error ? error.message : "Unable to update partner in database.";
