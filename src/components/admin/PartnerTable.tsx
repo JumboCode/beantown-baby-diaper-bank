@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Table, Modal, Pill, Mark, Text, Button, Loader, Center } from "@mantine/core";
+import { Table, Modal, Pill, Mark, Text, Loader, Center, ScrollArea, Tooltip, Group, Badge, ActionIcon } from "@mantine/core";
 import EditPartnerForm from "./EditPartnerForm";
 import { useDisclosure } from "@mantine/hooks";
 import { status } from "@/generated/prisma/enums";
@@ -65,8 +65,8 @@ export default function PartnerTable({
 
   return (
     <>
-      <div className="bg-white rounded-xl shadow-lg overflow-hidden flex flex-col">
-        <div className="overflow-x-auto flex-1">
+      <div className="bg-white rounded-xl shadow-lg flex flex-col h-full">
+        <ScrollArea className="flex-1" type="auto" offsetScrollbars>
           <Table highlightOnHover withTableBorder tabularNums>
             <Table.Thead bg="#F9FAFB" c="#667085">
               <Table.Tr>
@@ -128,33 +128,68 @@ export default function PartnerTable({
                         </Text>
                       </div>
                     </Table.Td>
-                    <Table.Td className="text-sm text-gray-600">
-                      {partner.description || (
-                        <span className="text-gray-400 italic">No description</span>
-                      )}
-                    </Table.Td>
-                    <Table.Td className="text-sm text-gray-600">
-                      {partner.start_partner ? (
-                        formatDate(partner.start_partner)
+                    <Table.Td w="20%">
+                      {partner.description ? (
+                        <Tooltip label={partner.description} multiline w={300} withArrow>
+                          <Text size="sm" c="dimmed" lineClamp={2}>
+                            {partner.description}
+                          </Text>
+                        </Tooltip>
                       ) : (
-                        <span className="text-gray-400 italic">N/A</span>
+                        <Text size="sm" c="dimmed" fs="italic">
+                          No description
+                        </Text>
                       )}
                     </Table.Td>
                     <Table.Td>
-                      <span key={partner.id} className="text-sm text-gray-600">
-                        <span>
-                          {/* percentages for waitlisted orgs are optional and
-                          won't be displayed for now */}
-                          {percentages
+                      {partner.start_partner ? (
+                        <Text size="sm" c="dimmed">{formatDate(partner.start_partner)}</Text>
+                      ) : (
+                        <Text size="sm" c="dimmed" fs="italic">N/A</Text>
+                      )}
+                    </Table.Td>
+                    <Table.Td w="25%">
+                      <Group gap="xs">
+                        {(() => {
+                          const partnerPercentages = percentages
                             .filter((percentage) => Number(percentage.partnerId) === partner.id)
-                            .map((p) =>
-                              partner.status !== "waitlisted"
-                                ? `${p.city.name} (${formatPercentDisplay(p.percentage)})`
-                                : p.city.name,
-                            )
-                            .join(", ")}
-                        </span>
-                      </span>
+                            .sort((a, b) => (b.percentage ?? 0) - (a.percentage ?? 0));
+                          const visibleCities = partnerPercentages.slice(0, 4);
+                          const hiddenCities = partnerPercentages.slice(4);
+
+                          return (
+                            <>
+                              {visibleCities.map((p) => (
+                                <Badge key={p.cityId} variant="light" color="blue" radius="sm" fw="normal" tt="none">
+                                  {partner.status !== "waitlisted" && p.percentage != null
+                                    ? `${p.city.name} (${formatPercentDisplay(p.percentage)})`
+                                    : p.city.name}
+                                </Badge>
+                              ))}
+                              {hiddenCities.length > 0 && (
+                                <Tooltip
+                                  label={
+                                    <div className="flex flex-col gap-1">
+                                      {hiddenCities.map(p => (
+                                        <span key={p.cityId}>
+                                          {partner.status !== "waitlisted" && p.percentage != null
+                                            ? `${p.city.name} (${formatPercentDisplay(p.percentage)})`
+                                            : p.city.name}
+                                        </span>
+                                      ))}
+                                    </div>
+                                  }
+                                  withArrow
+                                >
+                                  <Badge variant="outline" color="gray" radius="sm" fw="normal" tt="none" style={{ cursor: "pointer" }}>
+                                    +{hiddenCities.length} more
+                                  </Badge>
+                                </Tooltip>
+                              )}
+                            </>
+                          );
+                        })()}
+                      </Group>
                     </Table.Td>
                     <Table.Td align="center">
                       <Pill
@@ -176,34 +211,39 @@ export default function PartnerTable({
                         {partner.status.charAt(0).toUpperCase() + partner.status.slice(1)}
                       </Pill>
                     </Table.Td>
-                    <Table.Td className="text-sm text-gray-600">
-                      {partner.address || <span className="text-gray-400 italic">N/A</span>}
+                    <Table.Td w="15%">
+                      {partner.address ? (
+                        <Tooltip label={partner.address} multiline w={250} withArrow>
+                          <Text size="sm" c="dimmed" lineClamp={2}>
+                            {partner.address}
+                          </Text>
+                        </Tooltip>
+                      ) : (
+                        <Text size="sm" c="dimmed" fs="italic">
+                          N/A
+                        </Text>
+                      )}
                     </Table.Td>
 
-                    <Table.Td style={{ verticalAlign: "middle" }}>
-                      <Button
-                        variant="transparent"
-                        // size="14px"
-                        fz="14px"
-                        c="#14215A"
+                    <Table.Td style={{ verticalAlign: "middle" }} w="5%">
+                      <ActionIcon
+                        variant="subtle"
+                        size="md"
+                        color="#14215A"
                         onClick={() => {
                           setPartner(partner);
                           open();
                         }}
-                        w="100px"
-                        rightSection={
-                          <Image src="/admin_view/pen.svg" alt="Edit" width={20} height={20} />
-                        }
                       >
-                        Edit
-                      </Button>
+                        <Image src="/admin_view/pen.svg" alt="Edit" width={16} height={16} />
+                      </ActionIcon>
                     </Table.Td>
                   </Table.Tr>
                 ))
               )}
             </Table.Tbody>
           </Table>
-        </div>
+        </ScrollArea>
       </div>
 
       {partner && (
