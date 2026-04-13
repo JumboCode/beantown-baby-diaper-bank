@@ -13,7 +13,7 @@ export class FileUploadError extends Error {
 }
 
 export function getLogoObjectKey(partnerId: number): string {
-  return `partner_logos/${partnerId}/logo`;
+  return `${LOGO_BUCKET}/${partnerId}/logo`;
 }
 
 export function validateLogoFile(file: File): void {
@@ -53,45 +53,66 @@ export async function validateImageSignature(file: File): Promise<void> {
   }
 }
 
-export async function uploadLogoForPartner(
-  partnerId: number,
-  file: File,
-): Promise<{ objectKey: string; publicUrl: string }> {
-  const objectKey = getLogoObjectKey(partnerId);
-  const publicUrl = await uploadLogoObject(objectKey, file, true);
-  return { objectKey, publicUrl };
-}
-
 export async function uploadLogoObject(
   objectKey: string,
   file: File,
   upsert: boolean,
 ): Promise<string> {
   const supabaseAdmin = getSupabaseAdmin();
-  const { error } = await supabaseAdmin.storage
-    .from(LOGO_BUCKET)
-    .upload(objectKey, file, {
-      cacheControl: "3600",
-      upsert,
-      contentType: file.type,
-    });
+  const { error } = await supabaseAdmin.storage.from(LOGO_BUCKET).upload(objectKey, file, {
+    cacheControl: "3600",
+    upsert,
+    contentType: file.type,
+  });
 
   if (error) {
     throw new Error(error.message);
   }
 
-  const { data } = supabaseAdmin.storage
-    .from(LOGO_BUCKET)
-    .getPublicUrl(objectKey);
+  const { data } = supabaseAdmin.storage.from(LOGO_BUCKET).getPublicUrl(objectKey);
   return `${data.publicUrl}?t=${Date.now()}`;
 }
 
 export async function deleteLogoObject(objectKey: string): Promise<void> {
   const supabaseAdmin = getSupabaseAdmin();
-  const { error } = await supabaseAdmin.storage
-    .from(LOGO_BUCKET)
-    .remove([objectKey]);
+  const { error } = await supabaseAdmin.storage.from(LOGO_BUCKET).remove([objectKey]);
   if (error) {
     throw new Error(error.message);
   }
+}
+
+async function createLogoBucket() {
+  console.log("Creating bucket: ", LOGO_BUCKET);
+  const supabaseAdmin = getSupabaseAdmin();
+  const { error } = await supabaseAdmin.storage.createBucket(LOGO_BUCKET, {
+    public: true,
+  });
+  if (error) {
+    throw new Error(error.message);
+  }
+}
+
+async function checkLogoBucketExists(): Promise<boolean> {
+  const supabaseAdmin = getSupabaseAdmin();
+  const { data: buckets, error } = await supabaseAdmin.storage.listBuckets();
+
+  const exists = buckets?.some((bucket) => bucket.name === LOGO_BUCKET);
+  if (!error && exists) {
+    return true;
+  }
+
+  return false;
+}
+
+export async function uploadLogoForPartner(
+  partnerId: number,
+  file: File,
+): Promise<{ objectKey: string; publicUrl: string }> {
+  const bucketExists = await checkLogoBucketExists();
+  if (!bucketExists) {
+    await createLogoBucket();
+  }
+  const objectKey = getLogoObjectKey(partnerId);
+  const publicUrl = await uploadLogoObject(objectKey, file, true);
+  return { objectKey, publicUrl };
 }
