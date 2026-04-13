@@ -56,7 +56,7 @@ async function seedCities() {
   type Row = {
     id: string;
     created_at?: string;
-    name?: string;
+    name: string;
     centroid?: string;
   };
 
@@ -65,7 +65,7 @@ async function seedCities() {
     data: rows.map((row) => ({
       id: toBigInt(row.id),
       createdAt: toDate(row.created_at),
-      name: toStringOrNull(row.name),
+      name: row.name,
       // centroid: row.centroid ? JSON.parse(row.centroid) : undefined,
     })),
     skipDuplicates: true,
@@ -289,7 +289,7 @@ async function main() {
     prisma.partner.deleteMany(),
     prisma.city.deleteMany(),
   ]);
-  // await seedCities();
+  await seedCities();
   await seedPartners();
   await seedDistributions();
   await seedMonthlyData();
