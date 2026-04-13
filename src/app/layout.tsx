@@ -3,7 +3,6 @@ import { Suspense } from "react";
 import { Poppins } from "next/font/google";
 import { createTheme, MantineProvider, Skeleton, type MantineColorsTuple } from "@mantine/core";
 import { ModalsProvider } from "@mantine/modals";
-import { ClerkProvider } from "@clerk/nextjs";
 import "@mantine/core/styles.css";
 import "./globals.css";
 import "leaflet/dist/leaflet.css";
@@ -74,9 +73,7 @@ export default function RootLayout({
       <body>
         <MantineProvider theme={theme}>
           <ModalsProvider>
-            <Suspense fallback={<Skeleton />}>
-              <ClerkProvider>{children}</ClerkProvider>
-            </Suspense>
+            <Suspense fallback={<Skeleton />}>{children}</Suspense>
           </ModalsProvider>
         </MantineProvider>
       </body>
