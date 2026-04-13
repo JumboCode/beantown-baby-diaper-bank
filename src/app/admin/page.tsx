@@ -141,6 +141,7 @@ export default function Page() {
 
   const [valueFrom, setValueFrom] = useState<string | null>(null);
   const [valueTo, setValueTo] = useState<string | null>(null);
+  const [dateRangeError, setDateRangeError] = useState<string | null>(null);
 
   const [distributions, setDistributions] = useState<Distribution[]>([]);
   const [filteredDistributions, setFilteredDistributions] = useState<Distribution[]>([]);
@@ -258,22 +259,30 @@ export default function Page() {
   }, [fetchTimelineData]);
 
   const filterDistributions = () => {
-    let filtered = [...distributions];
-
-    const distToYYYYMM = (dist: Distribution) => {
-      if (!dist.month) return "0000-00";
-      const monthNum = monthMap[dist.month.trim()];
-      if (!monthNum) return "0000-00";
-      return `${dist.year}-${monthNum}`;
-    };
-
-    if (valueFrom) {
-      filtered = filtered.filter((dist) => distToYYYYMM(dist) >= valueFrom);
+    if (valueFrom && valueTo && valueFrom > valueTo) {
+      setDateRangeError("'From' date must be before 'To' date.");
+      return;
     }
+    setDateRangeError(null);
 
-    if (valueTo) {
-      filtered = filtered.filter((dist) => distToYYYYMM(dist) <= valueTo);
-    }
+    const fromYear = valueFrom ? parseInt(valueFrom.slice(0, 4)) : null;
+    const toYear = valueTo ? parseInt(valueTo.slice(0, 4)) : null;
+
+    const filtered = distributions.filter((dist) => {
+      const distYear = parseInt(dist.year);
+      const monthNum = dist.month ? monthMap[dist.month.trim()] : null;
+
+      if (!monthNum) {
+        if (fromYear !== null && distYear < fromYear) return false;
+        if (toYear !== null && distYear > toYear) return false;
+        return true;
+      }
+
+      const distYYYYMM = `${dist.year}-${monthNum}`;
+      if (valueFrom && distYYYYMM < valueFrom) return false;
+      if (valueTo && distYYYYMM > valueTo) return false;
+      return true;
+    });
 
     setFilteredDistributions(filtered);
     drawerControls.close();
@@ -359,6 +368,7 @@ export default function Page() {
   const resetDistributionFilters = () => {
     setValueFrom(null);
     setValueTo(null);
+    setDateRangeError(null);
     setFilteredDistributions(distributions);
     drawerControls.close();
   };
@@ -472,6 +482,11 @@ export default function Page() {
                   }
                   className="mb-6"
                 />
+                {dateRangeError && (
+                  <Text c="red" size="sm" mb="sm">
+                    {dateRangeError}
+                  </Text>
+                )}
                 <div className="flex justify-between">
                   <Button
                     onClick={resetDistributionFilters}
@@ -515,7 +530,7 @@ export default function Page() {
                   <Popover.Target>
                     <Button
                       variant="default"
-                      radius={5}
+                      radius="md"
                       onClick={handleFilterClick}
                       rightSection={
                         <Image

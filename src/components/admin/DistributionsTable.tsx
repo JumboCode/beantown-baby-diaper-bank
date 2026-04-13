@@ -5,6 +5,9 @@ import { Button, Input, Text } from "@mantine/core";
 import { Distribution } from "@/lib/types";
 import { CollapsibleDropdown } from "./Dropdown";
 
+const pluralizeDiapers = (count: number) =>
+  `${count.toLocaleString()} ${count === 1 ? "diaper" : "diapers"}`;
+
 const MONTH_ORDER: Record<string, number> = {
   January: 1,
   February: 2,
@@ -298,8 +301,7 @@ export default function DistributionsTable({
             <span className="flex items-center gap-3">
               <span>{yearGroup.year}</span>
               <span className="rounded-full bg-blue-50 px-3 py-1 text-sm font-medium text-[#053766]">
-                {(displayedYearTotals[yearGroup.year] ?? yearGroup.totalDiapers).toLocaleString()}{" "}
-                diapers
+                {pluralizeDiapers(displayedYearTotals[yearGroup.year] ?? yearGroup.totalDiapers)}
               </span>
             </span>
           }
@@ -317,11 +319,10 @@ export default function DistributionsTable({
                       <span className="flex items-center gap-3">
                         <span>{`${date.month} ${date.year}`}</span>
                         <span className="rounded-full bg-blue-50 px-3 py-1 text-sm font-medium text-[#053766]">
-                          {(
+                          {pluralizeDiapers(
                             (monthlyBaseTotals[`${date.year}-${date.month}`] ?? date.total) +
                             (monthDeltaMap[`${date.year}-${date.month}`] ?? 0)
-                          ).toLocaleString()}{" "}
-                          diapers
+                          )}
                         </span>
                       </span>
                     }
@@ -386,7 +387,7 @@ export default function DistributionsTable({
                                       <>
                                         <Input
                                           value={inputValue}
-                                          onChange={(e) => setInputValue(e.currentTarget.value)}
+                                          onChange={(e) => setInputValue(e.currentTarget.value.replace(/\D/g, ""))}
                                           className="w-32"
                                           onKeyDown={(e) => {
                                             if (e.key === "Enter") {
@@ -420,7 +421,7 @@ export default function DistributionsTable({
                                     ) : (
                                       <>
                                         <span className="text-sm font-medium text-[#053766]">
-                                          {displayDiapers.toLocaleString()} diapers
+                                          {pluralizeDiapers(displayDiapers)}
                                         </span>
                                         <Button
                                           variant="default"
@@ -529,7 +530,7 @@ export default function DistributionsTable({
                                 <>
                                   <Input
                                     value={inputValue}
-                                    onChange={(e) => setInputValue(e.currentTarget.value)}
+                                    onChange={(e) => setInputValue(e.currentTarget.value.replace(/\D/g, ""))}
                                     className="w-32"
                                     onKeyDown={(e) => {
                                       if (e.key === "Enter") {
@@ -572,7 +573,7 @@ export default function DistributionsTable({
                               ) : (
                                 <>
                                   <span className="text-sm font-medium text-[#053766]">
-                                    {displayYearlyDiapers.toLocaleString()} diapers
+                                    {pluralizeDiapers(displayYearlyDiapers)}
                                   </span>
                                   <Button
                                     variant="default"

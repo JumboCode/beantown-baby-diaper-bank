@@ -111,9 +111,9 @@ const parseAddressFields = (address: string | null): AddressFields => {
   return {
     addressLine: parts[0] || "",
     city: parts[1] || "",
-    state: parts[2] || "",
-    zipCode: parts[3] || "",
-    country: parts[4] || DEFAULT_COUNTRY,
+    state: US_STATES.includes(parts[2] || "") ? parts[2] : "",
+    zipCode: /^\d{5}(-\d{4})?$/.test(parts[3] || "") ? parts[3] : "",
+    country: countries.includes(parts[4] || "") ? parts[4] : DEFAULT_COUNTRY,
   };
 };
 
@@ -128,11 +128,6 @@ const requiredNumber = (label: string) => (value: unknown) => {
   return /^-?\d+(\.\d+)?$/.test(v) ? null : `${label} must be a number`;
 };
 
-const requiredInteger = (label: string) => (value: unknown) => {
-  const v = (value === 0 ? "0" : (value ?? "")).toString().trim();
-  if (v === "") return `${label} is required`;
-  return /^\d+$/.test(v) ? null : `${label} must be a number`;
-};
 
 const requiredInput = (label: string) => (value: unknown) => {
   const v = (value === 0 ? "0" : (value ?? "")).toString().trim();
@@ -234,7 +229,8 @@ export default function EditPartnerForm({ partner, onClose }: EditPartnerFormPro
       state: (value) => (value ? null : "Select a state"),
       city: requiredInput("City"),
       addressLine: requiredInput("Address Line"),
-      zipCode: requiredInteger("Zip Code"),
+      zipCode: (value: string) =>
+        /^\d{5}(-\d{4})?$/.test(value.trim()) ? null : "Zip Code must be a valid US zip code (e.g. 02101)",
       country: (value) => (value ? null : "Select a country"),
       status: (value) => (value ? null : "Select a status"),
       description: requiredInput("Description"),

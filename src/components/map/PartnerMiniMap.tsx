@@ -27,7 +27,7 @@ const Polygon = dynamic(() => import("react-leaflet").then((module) => module.Po
 
 const infoCardStyle = {
   border: "1px solid #F2F4F7",
-  borderRadius: "12px",
+  borderRadius: 12,
   padding: "1rem 1.25rem",
   background: "#FFFFFF",
   boxShadow: "0 12px 30px rgba(52, 64, 84, 0.08)",
@@ -109,7 +109,7 @@ export function PartnerMiniMap({
             style={{
               width: 12,
               height: 12,
-              borderRadius: "30%",
+              borderRadius: "50%",
               backgroundColor: "#2C85B2",
             }}
           />

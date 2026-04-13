@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Table, Modal, Pill, Mark, Text, Button, Loader, Center } from "@mantine/core";
+import { Table, Modal, Pill, Mark, Text, Button, Loader, Center, Tooltip } from "@mantine/core";
 import EditPartnerForm from "./EditPartnerForm";
 import { useDisclosure } from "@mantine/hooks";
 import { status } from "@/generated/prisma/enums";
@@ -70,7 +70,7 @@ export default function PartnerTable({
           <Table highlightOnHover withTableBorder tabularNums>
             <Table.Thead bg="#F9FAFB" c="#667085">
               <Table.Tr>
-                <Table.Th fw="normal" fz="14px" w="15%">
+                <Table.Th fw="normal" fz="14px">
                   Partner Name
                 </Table.Th>
                 <Table.Th fw="normal" fz="14px">
@@ -111,29 +111,35 @@ export default function PartnerTable({
                   })
                   .map((partner) => (
                   <Table.Tr key={partner.id}>
-                    <Table.Td>
-                      <div className="flex items-center gap-3">
+                    <Table.Td style={{ maxWidth: 0, width: "20%" }}>
+                      <div className="flex items-center gap-3 min-w-0">
                         {partner.logoUrl && (
                           <img
                             src={partner.logoUrl}
                             alt={partner.name}
-                            className="h-10 w-10 object-contain"
+                            className="h-10 w-10 object-contain shrink-0"
                             onError={(e) => {
                               e.currentTarget.style.display = "none";
                             }}
                           />
                         )}
-                        <Text c="#101828" fw={600} fz={"16px"}>
-                          {partner.name}
-                        </Text>
+                        <Tooltip label={partner.name} disabled={partner.name.length <= 30} withArrow>
+                          <Text c="#101828" fw={600} fz={"16px"} truncate="end">
+                            {partner.name}
+                          </Text>
+                        </Tooltip>
                       </div>
                     </Table.Td>
-                    <Table.Td className="text-sm text-gray-600">
-                      {partner.description || (
+                    <Table.Td style={{ maxWidth: 0, width: "25%" }} className="text-sm text-gray-600">
+                      {partner.description ? (
+                        <Text size="sm" truncate="end">
+                          {partner.description}
+                        </Text>
+                      ) : (
                         <span className="text-gray-400 italic">No description</span>
                       )}
                     </Table.Td>
-                    <Table.Td className="text-sm text-gray-600">
+                    <Table.Td style={{ width: 120 }} className="text-sm text-gray-600">
                       {partner.start_partner ? (
                         formatDate(partner.start_partner)
                       ) : (
@@ -156,7 +162,7 @@ export default function PartnerTable({
                         </span>
                       </span>
                     </Table.Td>
-                    <Table.Td align="center">
+                    <Table.Td align="center" style={{ width: 90 }}>
                       <Pill
                         // Fix me: colors
                         ta="center"
