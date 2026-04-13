@@ -9,7 +9,7 @@ import {
   IconChevronLeft,
   IconChevronRight,
 } from "@tabler/icons-react";
-import LastUploaded from "@/app/LastUploaded";
+import LastUploaded from "@/components/admin/LastUploaded";
 
 export default function TimelineSlider({
   index,

@@ -29,6 +29,15 @@ export default function LastUploaded() {
 
   useEffect(() => {
     fetchTimelineData();
+
+    const handleRefresh = () => {
+      fetchTimelineData();
+    };
+
+    window.addEventListener("timeline:refresh", handleRefresh);
+    return () => {
+      window.removeEventListener("timeline:refresh", handleRefresh);
+    };
   }, [fetchTimelineData]);
 
   return (
