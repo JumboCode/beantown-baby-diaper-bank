@@ -84,7 +84,7 @@ Thanks,`;
           <Group gap="sm" wrap="wrap">
             <Button
               variant="filled"
-              onClick={() => signOut({ redirectUrl: "/sign-in" })}
+              onClick={() => signOut({ redirectUrl: "/admin/sign-in" })}
             >
               Sign in with a different account
             </Button>
