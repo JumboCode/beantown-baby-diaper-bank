@@ -11,6 +11,7 @@ import {
   Divider,
 } from "@mantine/core";
 import { RiCheckLine } from "react-icons/ri";
+import { capitalize } from "lodash";
 
 export type CityPercentage = {
   id: string;
@@ -84,9 +85,10 @@ export default function CityPercentagesForm({
   }));
 
   const handleCitiesChange = (values: string[]) => {
-    setSelectedCities(values);
+    const normalized = values.map(capitalize);
+    setSelectedCities(normalized);
     setPercentages((prev) =>
-      values.reduce(
+      normalized.reduce(
         (acc, city) => {
           acc[city] = prev[city] ?? 0;
           return acc;

@@ -21,6 +21,20 @@ export default function ContinuousUpdateForm({
     setSaveStatus("loading");
     setErrorMsg("");
     try {
+      for (const entry of entries) {
+        const res = await fetch("/api/cities", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name: entry.city }),
+        });
+        if (!res.ok && res.status !== 409) {
+          const data = await res.json().catch(() => ({}));
+          setErrorMsg(data.error);
+          setSaveStatus("error");
+          return;
+        }
+      }
+
       const response = await fetch("/api/partners/percentages", {
         method: "POST",
         headers: { "Content-Type": "application/json" },

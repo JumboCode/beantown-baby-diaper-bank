@@ -12,8 +12,7 @@ import {
   validateImageSignature,
   validateLogoFile,
 } from "@/lib/server/logoUpload";
-
-const NOMINATIM_BASE_URL = "https://nominatim.openstreetmap.org/search";
+import { fetchCityGeoDataFromNominatim } from "@/lib/server/city";
 
 type LogoAction = "keep" | "replace" | "remove";
 
@@ -65,61 +64,6 @@ class PartnerRequestError extends Error {
     super(message);
     this.status = status;
   }
-}
-
-async function fetchCityGeoDataFromNominatim(cityName: string): Promise<CityGeoData> {
-  const query = new URLSearchParams({
-    q: `${cityName}, Massachusetts, United States`,
-    format: "jsonv2",
-    polygon_geojson: "1",
-    limit: "1",
-    countrycodes: "us",
-  });
-
-  const response = await fetch(`${NOMINATIM_BASE_URL}?${query.toString()}`, {
-    headers: {
-      "User-Agent": "beantown-baby-diaper-bank/1.0 (contact: your-email@domain.com)",
-      Accept: "application/json",
-    },
-  });
-
-  if (!response.ok) {
-    throw new PartnerRequestError("Please check the entered cities.", 422);
-  }
-
-  const result = (await response.json()) as Array<{
-    lat?: string;
-    lon?: string;
-    geojson?: unknown;
-    addresstype?: string;
-  }>;
-
-  const first = result[0];
-  if (!first) {
-    throw new PartnerRequestError("Please check the entered cities.", 422);
-  }
-
-  const lat = first.lat ? Number(first.lat) : NaN;
-  const lon = first.lon ? Number(first.lon) : NaN;
-  const addressType = typeof first.addresstype === "string" ? first.addresstype : "";
-
-  if (
-    (addressType !== "town" && addressType !== "city") ||
-    !Number.isFinite(lat) ||
-    !Number.isFinite(lon) ||
-    !first.geojson
-  ) {
-    throw new PartnerRequestError("Please check the entered cities.", 422);
-  }
-
-  return {
-    centroidGeoJson: JSON.stringify({
-      type: "Point",
-      coordinates: [lon, lat],
-    }),
-    addressType,
-    boundaryGeoJson: JSON.stringify(first.geojson),
-  };
 }
 
 async function getPartners(search: string | null, waitlisted: string | null) {
