@@ -39,6 +39,7 @@ type CreatePartnerPayload = {
   address: string;
   logo?: string;
   cities: CityPercentage[];
+  num_babies?: number | null;
 };
 
 type UpdatePartnerPayload = {
@@ -52,6 +53,7 @@ type UpdatePartnerPayload = {
   address: string;
   logo?: string;
   cities?: CityPercentage[];
+  num_babies?: number | null;
 };
 
 function normalizeCityName(value: string): string {
@@ -157,6 +159,7 @@ async function getPartners(search: string | null, waitlisted: string | null) {
     address: partner.address,
     coords: partner.coords,
     logoUrl: partner.logoUrl,
+    num_babies: partner.numBabies != null ? Number(partner.numBabies) : null,
   }));
 }
 
@@ -307,6 +310,7 @@ export async function PUT(request: Request) {
           coords: payload.coordinates,
           address: payload.address,
           logoUrl: logoAction === "replace" ? "" : (payload.logo ?? ""),
+          numBabies: payload.num_babies != null ? BigInt(payload.num_babies) : null,
         },
       });
 
@@ -527,6 +531,7 @@ export async function POST(request: Request) {
               : logoAction === "remove"
                 ? ""
                 : (payload.logo ?? ""),
+          numBabies: payload.num_babies != null ? BigInt(payload.num_babies) : null,
         },
       });
 

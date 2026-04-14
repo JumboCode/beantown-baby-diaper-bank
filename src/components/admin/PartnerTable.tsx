@@ -17,6 +17,7 @@ export type Partner = {
   address: string | null;
   coords?: { lat: number; lng: number };
   logoUrl: string | null;
+  num_babies: number | null;
 };
 
 function formatDate(rawDate: string) {
@@ -88,13 +89,16 @@ export default function PartnerTable({
                 <Table.Th fw="normal" fz="14px">
                   Address
                 </Table.Th>
+                <Table.Th fw="normal" fz="14px">
+                  Number of Babies Helped
+                </Table.Th>
                 <Table.Th></Table.Th>
               </Table.Tr>
             </Table.Thead>
             <Table.Tbody>
               {loading ? (
                 <Table.Tr>
-                  <Table.Td colSpan={7}>
+                  <Table.Td colSpan={8}>
                     <Center py="lg">
                       <Loader type="bars" />
                     </Center>
@@ -178,6 +182,9 @@ export default function PartnerTable({
                     </Table.Td>
                     <Table.Td className="text-sm text-gray-600">
                       {partner.address || <span className="text-gray-400 italic">N/A</span>}
+                    </Table.Td>
+                    <Table.Td className="text-sm text-gray-600">
+                      {partner.num_babies != null ? partner.num_babies.toLocaleString() : <span className="text-gray-400 italic">N/A</span>}
                     </Table.Td>
 
                     <Table.Td style={{ verticalAlign: "middle" }}>

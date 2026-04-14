@@ -222,6 +222,7 @@ export default function EditPartnerForm({ partner, onClose }: EditPartnerFormPro
       country: addressFields.country,
       logoFile: null as File | null,
       logoUrl: partner.logoUrl || "",
+      numBabies: (partner.num_babies ?? "") as number | "",
     },
     validate: {
       organization: requiredInput("Name of Organization"),
@@ -286,6 +287,7 @@ export default function EditPartnerForm({ partner, onClose }: EditPartnerFormPro
       },
       address: buildAddressString(values),
       logo: values.logoUrl,
+      num_babies: values.numBabies !== "" ? Number(values.numBabies) : null,
     };
 
     const logoAction = values.logoFile
@@ -540,6 +542,22 @@ export default function EditPartnerForm({ partner, onClose }: EditPartnerFormPro
                 className="min-w-83"
               />
             </div>
+          </Group>
+
+          <Group justify="space-between" align="flex-start">
+            <Text fw={600} c="#344054" className="w-40">
+              Number of Babies Helped Per Month
+            </Text>
+            <NumberInput
+              placeholder="Approximate Number of Babies Helped Per Month (optional)"
+              min={0}
+              value={form.values.numBabies}
+              onChange={(val) => form.setFieldValue("numBabies", typeof val === "number" ? val : "")}
+              size="md"
+              className="min-w-170 w-full max-w-[600px]"
+              radius="md"
+              hideControls
+            />
           </Group>
 
           {form.values.status !== "waitlisted" && (
