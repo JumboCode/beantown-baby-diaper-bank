@@ -5,6 +5,7 @@ import { useMemo, useState, useEffect } from "react";
 import { Distribution } from "@/lib/types";
 import { CollapsibleSection } from "./CollapsibleSection";
 import { EditableDistributionRow } from "./EditableDistributionRow";
+import DistributionsSkeleton from "./DistributionsSkeleton";
 
 const MONTH_ORDER: Record<string, number> = {
   January: 1,
