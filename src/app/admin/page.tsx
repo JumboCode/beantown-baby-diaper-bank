@@ -15,6 +15,7 @@ import {
   Popover,
   Checkbox,
   TextInput,
+  ScrollArea,
 } from "@mantine/core";
 import { IconAlertCircle } from "@tabler/icons-react";
 import { MonthPickerInput } from "@mantine/dates";
@@ -447,7 +448,7 @@ function AdminPageContent() {
   };
 
   return (
-    <Stack mx="72px" my="44px" gap="lg" className={poppins.className}>
+    <Stack gap="lg" className={poppins.className} p="md">
       <Card p={0}>
         <Group justify="space-between" align="flex-start">
           <Stack gap={4}>
