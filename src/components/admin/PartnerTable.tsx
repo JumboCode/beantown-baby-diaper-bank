@@ -148,252 +148,253 @@ export default function PartnerTable({
             <Grid.Col span={1} />
           </Grid>
         </div>
+        <ScrollArea h="68vh">
+          {loading ? (
+            <Center py="xl">
+              <Loader type="bars" />
+            </Center>
+          ) : (
+            <Accordion
+              variant="filled"
+              radius={0}
+              chevronPosition="right"
+              order={3}
+              classNames={{
+                item: "border-b border-gray-200 last:border-b-0 bg-white overflow-hidden",
+                control: "hover:bg-gray-50/50 transition-colors duration-200 px-6 py-4",
+                panel: "bg-gray-50/50 border-t border-gray-100",
+                // content: "p-6",
+              }}
+            >
+              {[...partners]
+                .sort((a, b) => {
+                  if (a.status === "active" && b.status !== "active") return -1;
+                  if (a.status !== "active" && b.status === "active") return 1;
+                  const dateA = a.start_partner ? new Date(a.start_partner).getTime() : Infinity;
+                  const dateB = b.start_partner ? new Date(b.start_partner).getTime() : Infinity;
+                  return dateA - dateB;
+                })
+                .map((partner) => {
+                  const partnerPercentages = percentages
+                    .filter((percentage) => Number(percentage.partnerId) === partner.id)
+                    .sort((a, b) => (b.percentage ?? 0) - (a.percentage ?? 0));
 
-        {loading ? (
-          <Center py="xl">
-            <Loader type="bars" />
-          </Center>
-        ) : (
-          <Accordion
-            variant="filled"
-            radius={0}
-            chevronPosition="right"
-            order={3}
-            classNames={{
-              item: "border-b border-gray-200 last:border-b-0 bg-white overflow-hidden",
-              control: "hover:bg-gray-50/50 transition-colors duration-200 px-6 py-4",
-              panel: "bg-gray-50/50 border-t border-gray-100",
-              // content: "p-6",
-            }}
-          >
-            {[...partners]
-              .sort((a, b) => {
-                if (a.status === "active" && b.status !== "active") return -1;
-                if (a.status !== "active" && b.status === "active") return 1;
-                const dateA = a.start_partner ? new Date(a.start_partner).getTime() : Infinity;
-                const dateB = b.start_partner ? new Date(b.start_partner).getTime() : Infinity;
-                return dateA - dateB;
-              })
-              .map((partner) => {
-                const partnerPercentages = percentages
-                  .filter((percentage) => Number(percentage.partnerId) === partner.id)
-                  .sort((a, b) => (b.percentage ?? 0) - (a.percentage ?? 0));
-
-                return (
-                  <Accordion.Item key={partner.id} value={partner.id.toString()}>
-                    <div style={{ position: "relative" }}>
-                      <Accordion.Control>
-                        <Grid columns={13} gutter="sm" align="center">
-                          <Grid.Col span={4}>
-                            <div className="flex items-center gap-3">
-                              {partner.logoUrl ? (
-                                <div className="h-10 w-10 flex-shrink-0 rounded-full overflow-hidden border border-gray-200 flex items-center justify-center bg-white shadow-sm">
-                                  <img
-                                    src={partner.logoUrl}
-                                    alt={partner.name}
-                                    className="h-full w-full object-contain p-1"
-                                    onError={(e) => {
-                                      e.currentTarget.parentElement!.style.display = "none";
-                                    }}
-                                  />
-                                </div>
-                              ) : (
-                                <div className="h-10 w-10 flex-shrink-0 rounded-full border border-gray-200 bg-linear-to-br from-gray-50 to-gray-100 flex items-center justify-center text-gray-500 text-sm font-bold shadow-sm">
-                                  {partner.name.charAt(0).toUpperCase()}
-                                </div>
-                              )}
-                              <Text c="#000000" fw={600} fz="sm" truncate>
-                                {partner.name}
-                              </Text>
-                            </div>
-                          </Grid.Col>
-
-                          <Grid.Col span={2}>
-                            <Text size="sm" c="#4B5563">
-                              {partner.start_partner ? (
-                                formatDate(partner.start_partner)
-                              ) : (
-                                <Text size="sm" c="#D1D5DB" fs="italic" span>
-                                  —
+                  return (
+                    <Accordion.Item key={partner.id} value={partner.id.toString()}>
+                      <div style={{ position: "relative" }}>
+                        <Accordion.Control>
+                          <Grid columns={13} gutter="sm" align="center">
+                            <Grid.Col span={4}>
+                              <div className="flex items-center gap-3">
+                                {partner.logoUrl ? (
+                                  <div className="h-10 w-10 flex-shrink-0 rounded-full overflow-hidden border border-gray-200 flex items-center justify-center bg-white shadow-sm">
+                                    <img
+                                      src={partner.logoUrl}
+                                      alt={partner.name}
+                                      className="h-full w-full object-contain p-1"
+                                      onError={(e) => {
+                                        e.currentTarget.parentElement!.style.display = "none";
+                                      }}
+                                    />
+                                  </div>
+                                ) : (
+                                  <div className="h-10 w-10 flex-shrink-0 rounded-full border border-gray-200 bg-linear-to-br from-gray-50 to-gray-100 flex items-center justify-center text-gray-500 text-sm font-bold shadow-sm">
+                                    {partner.name.charAt(0).toUpperCase()}
+                                  </div>
+                                )}
+                                <Text c="#000000" fw={600} fz="sm" truncate>
+                                  {partner.name}
                                 </Text>
-                              )}
-                            </Text>
-                          </Grid.Col>
+                              </div>
+                            </Grid.Col>
 
-                          <Grid.Col span={2}>
-                            <Text size="sm" c="#4B5563" fw={500}>
-                              {partnerPercentages.length}{" "}
-                              <Text span c="#9CA3AF" fw={400}>
-                                {partnerPercentages.length === 1 ? "city" : "cities"}
+                            <Grid.Col span={2}>
+                              <Text size="sm" c="#4B5563">
+                                {partner.start_partner ? (
+                                  formatDate(partner.start_partner)
+                                ) : (
+                                  <Text size="sm" c="#D1D5DB" fs="italic" span>
+                                    —
+                                  </Text>
+                                )}
                               </Text>
-                            </Text>
-                          </Grid.Col>
+                            </Grid.Col>
 
-                          <Grid.Col span={2}>
-                            <Text size="sm" c="#4B5563" fw={500}>
-                              {partner.num_babies != null ? (
-                                partner.num_babies.toLocaleString()
-                              ) : (
-                                <Text size="sm" c="#D1D5DB" fs="italic" span>
-                                  —
+                            <Grid.Col span={2}>
+                              <Text size="sm" c="#4B5563" fw={500}>
+                                {partnerPercentages.length}{" "}
+                                <Text span c="#9CA3AF" fw={400}>
+                                  {partnerPercentages.length === 1 ? "city" : "cities"}
                                 </Text>
-                              )}
-                            </Text>
-                          </Grid.Col>
+                              </Text>
+                            </Grid.Col>
 
-                          <Grid.Col span={2}>
-                            <Group justify="center">
-                              <Badge
-                                color={
-                                  partner.status === "active"
-                                    ? "#080d46"
-                                    : partner.status === "inactive"
-                                      ? "#f0151f"
-                                      : "gray"
-                                }
-                                variant="light"
-                                size="md"
-                                radius="xl"
+                            <Grid.Col span={2}>
+                              <Text size="sm" c="#4B5563" fw={500}>
+                                {partner.num_babies != null ? (
+                                  partner.num_babies.toLocaleString()
+                                ) : (
+                                  <Text size="sm" c="#D1D5DB" fs="italic" span>
+                                    —
+                                  </Text>
+                                )}
+                              </Text>
+                            </Grid.Col>
+
+                            <Grid.Col span={2}>
+                              <Group justify="center">
+                                <Badge
+                                  color={
+                                    partner.status === "active"
+                                      ? "#080d46"
+                                      : partner.status === "inactive"
+                                        ? "#f0151f"
+                                        : "gray"
+                                  }
+                                  variant="light"
+                                  size="md"
+                                  radius="xl"
+                                  fw={600}
+                                  styles={{ label: { textTransform: "capitalize" } }}
+                                >
+                                  {partner.status}
+                                </Badge>
+                              </Group>
+                            </Grid.Col>
+
+                            <Grid.Col span={1}>
+                              <Group justify="flex-end">
+                                <div style={{ width: 28, height: 28 }} />
+                              </Group>
+                            </Grid.Col>
+                          </Grid>
+                        </Accordion.Control>
+
+                        <div
+                          style={{
+                            position: "absolute",
+                            right: "52px",
+                            top: 0,
+                            bottom: 0,
+                            display: "flex",
+                            alignItems: "center",
+                            zIndex: 2,
+                          }}
+                        >
+                          <Tooltip label="Edit Partner" withArrow closeDelay={0}>
+                            <ActionIcon
+                              variant="subtle"
+                              size="lg"
+                              color="gray"
+                              radius="xl"
+                              className="hover:bg-gray-100"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setPartner(partner);
+                                open();
+                              }}
+                            >
+                              <Image
+                                src="/admin_view/pen.svg"
+                                alt="Edit"
+                                width={18}
+                                height={18}
+                                style={{ opacity: 0.6 }}
+                              />
+                            </ActionIcon>
+                          </Tooltip>
+                        </div>
+                      </div>
+
+                      <Accordion.Panel>
+                        <Grid gutter="xl">
+                          <Grid.Col span={12} pb={0}>
+                            <Stack gap={6}>
+                              <Text
+                                size="xs"
                                 fw={600}
-                                styles={{ label: { textTransform: "capitalize" } }}
+                                c="#080b3c"
+                                tt="uppercase"
+                                style={{ letterSpacing: "0.05em" }}
                               >
-                                {partner.status}
-                              </Badge>
-                            </Group>
+                                Description
+                              </Text>
+                              <Text size="sm" c="#374151" lh={1.6}>
+                                {partner.description || (
+                                  <Text size="sm" c="dimmed" fs="italic" span>
+                                    No description provided.
+                                  </Text>
+                                )}
+                              </Text>
+                            </Stack>
                           </Grid.Col>
 
-                          <Grid.Col span={1}>
-                            <Group justify="flex-end">
-                              <div style={{ width: 28, height: 28 }} />
-                            </Group>
+                          <Grid.Col span={4}>
+                            <Stack gap={6}>
+                              <Text
+                                size="xs"
+                                fw={600}
+                                c="#080b3c"
+                                tt="uppercase"
+                                style={{ letterSpacing: "0.05em" }}
+                              >
+                                Address
+                              </Text>
+                              <Text size="sm" c="#374151" lh={1.6}>
+                                {partner.address || (
+                                  <Text size="sm" c="dimmed" fs="italic" span>
+                                    No address provided.
+                                  </Text>
+                                )}
+                              </Text>
+                            </Stack>
+                          </Grid.Col>
+
+                          <Grid.Col span={8}>
+                            <Stack gap={6}>
+                              <Text
+                                size="xs"
+                                fw={600}
+                                c="#080b3c"
+                                tt="uppercase"
+                                style={{ letterSpacing: "0.05em" }}
+                              >
+                                Cities Served ({partnerPercentages.length})
+                              </Text>
+                              <Group gap="xs">
+                                {partnerPercentages.length > 0 ? (
+                                  partnerPercentages.map((p) => (
+                                    <Badge
+                                      key={p.cityId}
+                                      variant="outline"
+                                      color="#080d46"
+                                      radius="md"
+                                      fw={500}
+                                      tt="none"
+                                      size="md"
+                                      className="border-gray-200 bg-white"
+                                    >
+                                      {partner.status !== "waitlisted" && p.percentage != null
+                                        ? `${p.city.name} · ${formatPercentDisplay(p.percentage)}`
+                                        : p.city.name}
+                                    </Badge>
+                                  ))
+                                ) : (
+                                  <Text size="sm" fs="italic" c="dimmed">
+                                    None
+                                  </Text>
+                                )}
+                              </Group>
+                            </Stack>
                           </Grid.Col>
                         </Grid>
-                      </Accordion.Control>
-
-                      <div
-                        style={{
-                          position: "absolute",
-                          right: "52px",
-                          top: 0,
-                          bottom: 0,
-                          display: "flex",
-                          alignItems: "center",
-                          zIndex: 2,
-                        }}
-                      >
-                        <Tooltip label="Edit Partner" withArrow closeDelay={0}>
-                          <ActionIcon
-                            variant="subtle"
-                            size="lg"
-                            color="gray"
-                            radius="xl"
-                            className="hover:bg-gray-100"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setPartner(partner);
-                              open();
-                            }}
-                          >
-                            <Image
-                              src="/admin_view/pen.svg"
-                              alt="Edit"
-                              width={18}
-                              height={18}
-                              style={{ opacity: 0.6 }}
-                            />
-                          </ActionIcon>
-                        </Tooltip>
-                      </div>
-                    </div>
-
-                    <Accordion.Panel>
-                      <Grid gutter="xl">
-                        <Grid.Col span={12} pb={0}>
-                          <Stack gap={6}>
-                            <Text
-                              size="xs"
-                              fw={600}
-                              c="#080b3c"
-                              tt="uppercase"
-                              style={{ letterSpacing: "0.05em" }}
-                            >
-                              Description
-                            </Text>
-                            <Text size="sm" c="#374151" lh={1.6}>
-                              {partner.description || (
-                                <Text size="sm" c="dimmed" fs="italic" span>
-                                  No description provided.
-                                </Text>
-                              )}
-                            </Text>
-                          </Stack>
-                        </Grid.Col>
-
-                        <Grid.Col span={4}>
-                          <Stack gap={6}>
-                            <Text
-                              size="xs"
-                              fw={600}
-                              c="#080b3c"
-                              tt="uppercase"
-                              style={{ letterSpacing: "0.05em" }}
-                            >
-                              Address
-                            </Text>
-                            <Text size="sm" c="#374151" lh={1.6}>
-                              {partner.address || (
-                                <Text size="sm" c="dimmed" fs="italic" span>
-                                  No address provided.
-                                </Text>
-                              )}
-                            </Text>
-                          </Stack>
-                        </Grid.Col>
-
-                        <Grid.Col span={8}>
-                          <Stack gap={6}>
-                            <Text
-                              size="xs"
-                              fw={600}
-                              c="#080b3c"
-                              tt="uppercase"
-                              style={{ letterSpacing: "0.05em" }}
-                            >
-                              Cities Served ({partnerPercentages.length})
-                            </Text>
-                            <Group gap="xs">
-                              {partnerPercentages.length > 0 ? (
-                                partnerPercentages.map((p) => (
-                                  <Badge
-                                    key={p.cityId}
-                                    variant="outline"
-                                    color="#080d46"
-                                    radius="md"
-                                    fw={500}
-                                    tt="none"
-                                    size="md"
-                                    className="border-gray-200 bg-white"
-                                  >
-                                    {partner.status !== "waitlisted" && p.percentage != null
-                                      ? `${p.city.name} · ${formatPercentDisplay(p.percentage)}`
-                                      : p.city.name}
-                                  </Badge>
-                                ))
-                              ) : (
-                                <Text size="sm" fs="italic" c="dimmed">
-                                  None
-                                </Text>
-                              )}
-                            </Group>
-                          </Stack>
-                        </Grid.Col>
-                      </Grid>
-                    </Accordion.Panel>
-                  </Accordion.Item>
-                );
-              })}
-          </Accordion>
-        )}
+                      </Accordion.Panel>
+                    </Accordion.Item>
+                  );
+                })}
+            </Accordion>
+          )}
+        </ScrollArea>
       </Card>
 
       {partner && (
