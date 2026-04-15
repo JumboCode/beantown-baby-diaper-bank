@@ -55,6 +55,7 @@ model Partner {
   logoUrl        String?         @map("logo_url")
 
   status         status          @default(inactive)
+  numBabies      BigInt?         @map("num_babies")
   distributions  Distribution[]
   partnerRegions PartnerRegion[]
   MonthlyData    MonthlyData[]
