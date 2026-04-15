@@ -8,7 +8,6 @@ import {
   Textarea,
   NumberInput,
   Radio,
-  FileInput,
   Select,
   Modal,
   Title,
@@ -16,6 +15,7 @@ import {
   SimpleGrid,
   LoadingOverlay,
 } from "@mantine/core";
+import LogoDropzone from "./LogoDropzone";
 import { useForm } from "@mantine/form";
 import { MonthPickerInput } from "@mantine/dates";
 import { useEffect, useRef, useState } from "react";
@@ -426,7 +426,9 @@ export default function AddPartnerForm({
               placeholder="Approximate Number of Babies Helped Per Month"
               min={0}
               value={form.values.numBabies}
-              onChange={(val) => form.setFieldValue("numBabies", typeof val === "number" ? val : "")}
+              onChange={(val) =>
+                form.setFieldValue("numBabies", typeof val === "number" ? val : "")
+              }
               size="md"
               w={526}
               radius="md"
@@ -524,26 +526,21 @@ export default function AddPartnerForm({
 
           <Group justify="space-between" align="flex-start">
             <Text c="#344054" fz={16} fw={600}>
-              Logo file or link
+              Logo
             </Text>
-            <Group w={526} grow>
-              <FileInput
-                accept="image/png,image/jpeg"
-                placeholder="Upload image file"
-                radius="md"
-                clearable
+            <div style={{ width: 526 }}>
+              <LogoDropzone
+                file={form.values.logoFile}
                 onChange={(file) => handleFileChange(file)}
-                error={form.errors.logoFile || form.errors.logoUrl}
-                size="md"
+                error={
+                  form.errors.logoFile
+                    ? String(form.errors.logoFile)
+                    : form.errors.logoUrl
+                      ? String(form.errors.logoUrl)
+                      : undefined
+                }
               />
-              <TextInput
-                placeholder="Logo URL"
-                key={form.key("logoUrl")}
-                {...form.getInputProps("logoUrl")}
-                radius="md"
-                size="md"
-              />
-            </Group>
+            </div>
           </Group>
 
           {submitWarning && (

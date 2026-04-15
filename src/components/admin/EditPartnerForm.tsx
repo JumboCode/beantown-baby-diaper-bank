@@ -8,13 +8,13 @@ import {
   Textarea,
   NumberInput,
   Radio,
-  FileInput,
   Select,
   Stack,
   LoadingOverlay,
   Box,
   SimpleGrid,
 } from "@mantine/core";
+import LogoDropzone from "./LogoDropzone";
 import { useForm } from "@mantine/form";
 import { MonthPickerInput } from "@mantine/dates";
 import { Partner } from "./PartnerTable";
@@ -545,30 +545,25 @@ export default function EditPartnerForm({ partner, onClose }: EditPartnerFormPro
 
           <Group justify="space-between" align="flex-start">
             <Text c="#344054" fw={600}>
-              Logo file or link
+              Logo
             </Text>
-            <div className="gap-4 flex">
-              <FileInput
-                accept="image/png,image/jpeg"
-                placeholder="Upload image file"
-                radius="md"
-                clearable
+            <div className="min-w-170 w-full max-w-[600px]">
+              <LogoDropzone
+                file={form.values.logoFile}
+                existingUrl={initialLogoUrl || undefined}
                 onChange={(file) => {
                   form.setFieldValue("logoFile", file);
                   if (!file) {
-                    form.setFieldValue("logoUrl", "");
                     form.clearFieldError("logoFile");
                   }
                 }}
-                error={form.errors.logoFile || form.errors.logoUrl}
-                className="min-w-83"
-              />
-              <TextInput
-                placeholder="Logo URL"
-                key={form.key("logoUrl")}
-                {...form.getInputProps("logoUrl")}
-                radius="md"
-                className="min-w-83"
+                error={
+                  form.errors.logoFile
+                    ? String(form.errors.logoFile)
+                    : form.errors.logoUrl
+                      ? String(form.errors.logoUrl)
+                      : undefined
+                }
               />
             </div>
           </Group>
@@ -581,7 +576,9 @@ export default function EditPartnerForm({ partner, onClose }: EditPartnerFormPro
               placeholder="Approximate Number of Babies Helped Per Month (optional)"
               min={0}
               value={form.values.numBabies}
-              onChange={(val) => form.setFieldValue("numBabies", typeof val === "number" ? val : "")}
+              onChange={(val) =>
+                form.setFieldValue("numBabies", typeof val === "number" ? val : "")
+              }
               size="md"
               className="min-w-170 w-full max-w-[600px]"
               radius="md"
