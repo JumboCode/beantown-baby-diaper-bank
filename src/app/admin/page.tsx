@@ -2,6 +2,7 @@
 
 import PartnerTable from "@/components/admin/PartnerTable";
 import {
+  Badge,
   Card,
   Center,
   CloseButton,
@@ -24,12 +25,14 @@ import Image from "next/image";
 import { Poppins } from "next/font/google";
 import { useRouter, useSearchParams } from "next/navigation";
 import DistributionsTable from "@/components/admin/DistributionsTable";
+import DistributionsSkeleton from "@/components/admin/DistributionsSkeleton";
+import PartnerTableSkeleton from "@/components/admin/PartnerTableSkeleton";
 import { useDisclosure } from "@mantine/hooks";
 import UploadNewData from "../../components/admin/UploadDistributionDataForm";
 import AddPartnerForm from "@/components/admin/AddPartnerForm";
 import classes from "./AdminPage.module.css";
 import { status } from "@/generated/prisma/enums";
-import { Search } from "lucide-react";
+import { Calendar, Search, SlidersHorizontal } from "lucide-react";
 
 import DeleteDistributionDataButton from "@/components/admin/DeleteDistributionDataButton";
 import { useUser } from "@clerk/nextjs";
@@ -136,7 +139,11 @@ function AdminPageContent() {
   const activeTab = searchParams.get("tab") ?? "Partners";
 
   const handleTabChange = (tab: string | null) => {
-    if (tab) router.replace(`/admin?tab=${tab}`);
+    if (tab) {
+      const params = new URLSearchParams(searchParams.toString());
+      params.set("tab", tab);
+      router.replace(`?${params.toString()}`, { scroll: false });
+    }
   };
   const [isFilterOpen, setFilterOpen] = useState(false);
 
@@ -165,6 +172,7 @@ function AdminPageContent() {
 
   const [distributions, setDistributions] = useState<Distribution[]>([]);
   const [filteredDistributions, setFilteredDistributions] = useState<Distribution[]>([]);
+  const [isLoadingDistributions, setIsLoadingDistributions] = useState(true);
 
   // Sync back input to URL
   useEffect(() => {
@@ -180,9 +188,11 @@ function AdminPageContent() {
   }, [partnerSearch, searchParams, router]);
 
   useEffect(() => {
-    if (searchParams.get("search") !== partnerSearch) {
-      setPartnerSearch(searchParams.get("search") || "");
+    const urlSearch = searchParams.get("search") || "";
+    if (urlSearch !== partnerSearch) {
+      setPartnerSearch(urlSearch);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams]);
 
   const setParamAndReplace = (key: string, value: string | null) => {
@@ -193,6 +203,7 @@ function AdminPageContent() {
   };
 
   const fetchDistributions = useCallback(async () => {
+    setIsLoadingDistributions(true);
     try {
       const response = await fetch("/api/distributions");
       if (!response.ok) throw new Error("Failed to fetch distributions");
@@ -203,6 +214,8 @@ function AdminPageContent() {
       setFilteredDistributions(distributions);
     } catch (err) {
       setDistributionsError(err instanceof Error ? err.message : "An error occurred");
+    } finally {
+      setIsLoadingDistributions(false);
     }
   }, []);
 
@@ -405,6 +418,20 @@ function AdminPageContent() {
     router.replace(`?${params.toString()}`, { scroll: false });
   };
 
+  const resetPartnerFilters = () => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.delete("since");
+    params.delete("status");
+    params.delete("search");
+    router.replace(`?${params.toString()}`, { scroll: false });
+    setPartnerSearch("");
+  };
+
+  const activePartnerFilterCount =
+    (partnerYearSince !== "All" ? 1 : 0) + partnerStatus.length + (partnerSearch ? 1 : 0);
+
+  const activeDistributionFilterCount = (dateRange[0] ? 1 : 0) + (dateRange[1] ? 1 : 0);
+
   const handleDateRangeChange = (val: any) => {
     const params = new URLSearchParams(searchParams.toString());
     const fromDate: Date | null =
@@ -535,14 +562,32 @@ function AdminPageContent() {
                   className="mb-2"
                 >
                   Filter
+                  {(isPartnersTab ? activePartnerFilterCount : activeDistributionFilterCount) >
+                    0 && (
+                    <Badge size="xs" circle color="#053766" ml={6}>
+                      {isPartnersTab ? activePartnerFilterCount : activeDistributionFilterCount}
+                    </Badge>
+                  )}
                 </Button>
               </Popover.Target>
               <Popover.Dropdown>
                 {isPartnersTab ? (
                   <Stack gap="xs">
-                    <h3>
-                      <strong>Year Since</strong>
-                    </h3>
+                    <Group justify="space-between" align="center">
+                      <Text fw={600}>Year Since</Text>
+                      {activePartnerFilterCount > 0 && (
+                        <Button
+                          onClick={resetPartnerFilters}
+                          variant="subtle"
+                          color="#053766"
+                          radius="md"
+                          size="xs"
+                          p={0}
+                        >
+                          Clear Filters
+                        </Button>
+                      )}
+                    </Group>
                     <Group gap={7} mb="xs">
                       {years.map((year) => {
                         const isSelected = partnerYearSince === year;
@@ -562,9 +607,7 @@ function AdminPageContent() {
                         );
                       })}
                     </Group>
-                    <h3>
-                      <strong>Status</strong>
-                    </h3>
+                    <Text fw={600}>Status</Text>
                     <Stack>
                       {statuses.map((statusItem) => (
                         <Checkbox
@@ -590,10 +633,13 @@ function AdminPageContent() {
                       <strong>Date Range</strong>
                     </h3>
                     <MonthPickerInput
+                      defaultLevel="decade"
+                      leftSection={<Calendar size={18} />}
                       type="range"
                       placeholder="Pick dates range"
                       value={dateRange}
                       onChange={handleDateRangeChange}
+                      popoverProps={{ withinPortal: false }}
                     />
                     <Group justify="flex-end" mt="sm">
                       <Button
@@ -639,17 +685,38 @@ function AdminPageContent() {
                 </Button>
               </Stack>
             </Center>
-          ) : !isLoadingPartners ? (
+          ) : isLoadingPartners ? (
+            <PartnerTableSkeleton />
+          ) : filteredPartners.length === 0 ? (
+            <Center py={80}>
+              <Stack align="center" ta="center" gap="md">
+                <ThemeIcon size={80} radius="xl" variant="light" color="blue">
+                  <SlidersHorizontal size={40} />
+                </ThemeIcon>
+                <Title order={3} c="dimmed">
+                  No partners match your filters
+                </Title>
+                <Text c="dimmed" maw={360}>
+                  Try adjusting your search or filter criteria.
+                </Text>
+                <Button variant="outline" color="#053766" radius="md" onClick={resetPartnerFilters}>
+                  Clear Filters
+                </Button>
+              </Stack>
+            </Center>
+          ) : (
             <PartnerTable
               partners={filteredPartners}
               refreshTable={refreshTable}
               percentages={percentages}
               loading={false}
             />
-          ) : null}
+          )}
         </Tabs.Panel>
         <Tabs.Panel value="Diapers">
-          {distributionsError ? (
+          {isLoadingDistributions ? (
+            <DistributionsSkeleton />
+          ) : distributionsError ? (
             <Center py={80}>
               <Stack align="center" ta="center" gap="md">
                 <ThemeIcon size={80} radius="xl" variant="light" color="red">
@@ -671,6 +738,28 @@ function AdminPageContent() {
                   }}
                 >
                   Try again
+                </Button>
+              </Stack>
+            </Center>
+          ) : filteredDistributions.length === 0 && distributions.length > 0 ? (
+            <Center py={80}>
+              <Stack align="center" ta="center" gap="md">
+                <ThemeIcon size={80} radius="xl" variant="light" color="blue">
+                  <SlidersHorizontal size={40} />
+                </ThemeIcon>
+                <Title order={3} c="dimmed">
+                  No distributions match your filters
+                </Title>
+                <Text c="dimmed" maw={360}>
+                  Try adjusting the date range or clear the filters.
+                </Text>
+                <Button
+                  variant="outline"
+                  color="#053766"
+                  radius="md"
+                  onClick={resetDistributionFilters}
+                >
+                  Clear Filters
                 </Button>
               </Stack>
             </Center>
