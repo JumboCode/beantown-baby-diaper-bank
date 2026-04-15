@@ -7,6 +7,8 @@ import "@mantine/dropzone/styles.css";
 export interface FileInfo {
   name: string;
   rows: number;
+  totalDiapers: number;
+  organizations: number;
   text: string;
   errors?: string[];
 }
@@ -36,7 +38,21 @@ export default function FileUpload({ files, onFileChange }: FileUploadProps) {
     const nextFiles = await Promise.all(
       selected.map(async (file) => {
         const text = await file.text();
-        const rows = text.split("\n").length;
+        const lines = text.split("\n").filter((l) => l.trim());
+        const dataRows = lines.slice(1); // skip header
+        const rows = dataRows.length;
+
+        let totalDiapers = 0;
+        const orgNames = new Set<string>();
+        for (const line of dataRows) {
+          const cols = line.split(",");
+          const name = cols[0]?.trim();
+          if (name) orgNames.add(name);
+          const raw = cols[1]?.replace(/,/g, "").trim();
+          const val = raw ? Number(raw) : NaN;
+          if (Number.isFinite(val)) totalDiapers += val;
+        }
+        const organizations = orgNames.size;
 
         let errors: string[] = [];
         try {
@@ -51,7 +67,7 @@ export default function FileUpload({ files, onFileChange }: FileUploadProps) {
           errors = ["Failed to reach validation service."];
         }
 
-        return { name: file.name, rows, text, errors };
+        return { name: file.name, rows, totalDiapers, organizations, text, errors };
       }),
     );
 

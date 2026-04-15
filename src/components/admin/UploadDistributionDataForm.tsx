@@ -107,11 +107,25 @@ export default function UploadNewData({
       return;
     }
 
-    const hasConflict = parsedEntries.some(({ parsedDate }) =>
-      uploadedMonthSet.has(parsedDate.getUTCMonth()),
+    const selectedKeys = parsedEntries.map(
+      ({ parsedDate }) => `${parsedDate.getUTCFullYear()}-${parsedDate.getUTCMonth()}`,
     );
+    if (new Set(selectedKeys).size !== selectedKeys.length) {
+      setWarnings(["Each file must have a unique month. Remove the duplicate before uploading."]);
+      return;
+    }
 
-    if (hasConflict) {
+    const conflictingMonths = parsedEntries
+      .filter(
+        ({ parsedDate }) =>
+          parsedDate.getUTCFullYear() === currentYear &&
+          uploadedMonthSet.has(parsedDate.getUTCMonth()),
+      )
+      .map(
+        ({ parsedDate }) => `${MONTHS[parsedDate.getUTCMonth()]} ${parsedDate.getUTCFullYear()}`,
+      );
+
+    if (conflictingMonths.length > 0) {
       modals.openConfirmModal({
         title: (
           <Text fw={700} size="xl">
@@ -120,10 +134,22 @@ export default function UploadNewData({
         ),
         centered: true,
         children: (
-          <Text size="sm">
-            Data for one of the selected months already exists. Are you sure you want to reupload?
-            This action cannot be undone.
-          </Text>
+          <Stack gap="sm">
+            <Text size="sm">
+              The following {conflictingMonths.length === 1 ? "month" : "months"} already{" "}
+              {conflictingMonths.length === 1 ? "has" : "have"} data that will be overwritten:
+            </Text>
+            <Stack gap={4}>
+              {conflictingMonths.map((month) => (
+                <Text key={month} size="sm" fw={600} c="#163663">
+                  • {month}
+                </Text>
+              ))}
+            </Stack>
+            <Text size="sm" c="dimmed">
+              This action cannot be undone.
+            </Text>
+          </Stack>
         ),
         labels: { confirm: "Upload", cancel: "Cancel" },
         confirmProps: { color: "#163663" },
@@ -284,6 +310,16 @@ export default function UploadNewData({
                 </Button>
               </Group>
               {fileEntries.map((entry, index) => {
+                const takenByOthers = new Set(
+                  fileEntries
+                    .filter((_, j) => j !== index)
+                    .flatMap((e) => {
+                      const d = e.datasetMonth ? new Date(e.datasetMonth as any) : null;
+                      return d && !isNaN(d.getTime())
+                        ? [`${d.getUTCFullYear()}-${d.getUTCMonth()}`]
+                        : [];
+                    }),
+                );
                 const hasErrors = entry.fileInfo.errors && entry.fileInfo.errors.length > 0;
 
                 return (
@@ -310,9 +346,28 @@ export default function UploadNewData({
                             <Text fw={600} size="sm" truncate c={hasErrors ? "red.9" : undefined}>
                               {entry.fileInfo.name}
                             </Text>
-                            <Text size="xs" c={hasErrors ? "red.7" : "dimmed"}>
-                              {entry.fileInfo.rows} rows
-                            </Text>
+                            <Group gap="xs" wrap="nowrap">
+                              <Text size="xs" c={hasErrors ? "red.7" : "dimmed"}>
+                                {entry.fileInfo.rows} rows
+                              </Text>
+                              {!hasErrors && (
+                                <>
+                                  <Text size="xs" c="dimmed">
+                                    ·
+                                  </Text>
+                                  <Text size="xs" c="dimmed">
+                                    {entry.fileInfo.organizations} org
+                                    {entry.fileInfo.organizations !== 1 ? "s" : ""}
+                                  </Text>
+                                  <Text size="xs" c="dimmed">
+                                    ·
+                                  </Text>
+                                  <Text size="xs" c="dimmed">
+                                    {entry.fileInfo.totalDiapers.toLocaleString()} diapers
+                                  </Text>
+                                </>
+                              )}
+                            </Group>
                           </Stack>
                         </Group>
 
@@ -329,6 +384,14 @@ export default function UploadNewData({
                                 ),
                               )
                             }
+                            getMonthControlProps={(date) => {
+                              const d = new Date(date);
+                              return {
+                                disabled: takenByOthers.has(
+                                  `${d.getUTCFullYear()}-${d.getUTCMonth()}`,
+                                ),
+                              };
+                            }}
                             required={!hasErrors}
                             disabled={hasErrors}
                             valueFormat="YYYY MMM"
