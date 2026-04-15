@@ -3,9 +3,12 @@
 import PartnerTable from "@/components/admin/PartnerTable";
 import {
   Card,
+  Center,
+  CloseButton,
   Group,
   Stack,
   Text,
+  ThemeIcon,
   Title,
   Tabs,
   Button,
@@ -14,10 +17,12 @@ import {
   Checkbox,
   TextInput,
 } from "@mantine/core";
+import { IconAlertCircle } from "@tabler/icons-react";
 import { MonthPickerInput } from "@mantine/dates";
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, Suspense } from "react";
 import Image from "next/image";
 import { Poppins } from "next/font/google";
+import { useRouter, useSearchParams } from "next/navigation";
 import DistributionsTable from "@/components/admin/DistributionsTable";
 import { useDisclosure } from "@mantine/hooks";
 import UploadNewData from "../../components/admin/UploadDistributionDataForm";
@@ -106,28 +111,21 @@ const statuses = (Object.values(status) as string[]).map((s) => ({
   label: s.charAt(0).toUpperCase() + s.slice(1),
 }));
 
-export default function Page() {
+function AdminPageContent() {
   const { user } = useUser();
-  const hashToTab = (hash: string): string => (hash === "#diapers" ? "Diapers" : "Partners");
+  const router = useRouter();
+  const searchParams = useSearchParams();
 
-  const [activeTab, setActiveTab] = useState<string | null>("Partners");
-
-  useEffect(() => {
-    setActiveTab(hashToTab(window.location.hash));
-
-    const onHashChange = () => setActiveTab(hashToTab(window.location.hash));
-    window.addEventListener("hashchange", onHashChange);
-    return () => window.removeEventListener("hashchange", onHashChange);
-  }, []);
+  const activeTab = searchParams.get("tab") ?? "Partners";
 
   const handleTabChange = (tab: string | null) => {
-    setActiveTab(tab);
-    if (tab) window.location.hash = tab.toLowerCase();
+    if (tab) router.replace(`/admin?tab=${tab}`);
   };
   const [isDrawerOpen, drawerControls] = useDisclosure(false);
   const [isPartnerFilterOpen, setPartnerFilterOpen] = useState(false);
 
-  const [error, setError] = useState<string>();
+  const [distributionsError, setDistributionsError] = useState<string>();
+  const [partnersError, setPartnersError] = useState<string>();
 
   // partner filtering
   const [partnerYearSince, setPartnerYearSince] = useState<string | null>("All");
@@ -137,7 +135,7 @@ export default function Page() {
   const [filteredPartners, setFilteredPartners] = useState<Partner[]>([]);
   const [percentages, setPercentages] = useState<PartnerRegionWithCity[]>([]);
   const [partnerSearch, setPartnerSearch] = useState("");
-  const [isLoadingPartners, setIsLoadingPartners] = useState(false);
+  const [isLoadingPartners, setIsLoadingPartners] = useState(true);
 
   const [valueFrom, setValueFrom] = useState<string | null>(null);
   const [valueTo, setValueTo] = useState<string | null>(null);
@@ -155,7 +153,7 @@ export default function Page() {
       setDistributions(distributions);
       setFilteredDistributions(distributions);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "An error occurred");
+      setDistributionsError(err instanceof Error ? err.message : "An error occurred");
     }
   }, []);
 
@@ -168,7 +166,7 @@ export default function Page() {
       setPartners(result.data);
       setFilteredPartners(result.data);
     } catch (err) {
-      console.error("Error fetching data:", err);
+      setPartnersError(err instanceof Error ? err.message : "An error occurred");
     } finally {
       setIsLoadingPartners(false);
     }
@@ -392,10 +390,12 @@ export default function Page() {
       <Card p={0}>
         <Group justify="space-between" align="flex-start">
           <Stack gap={4}>
-            <Title order={2}>Hello, {user?.firstName ?? "Admin"} 👋</Title>
+            <Title order={2}>
+              Hello, {user && user.firstName} {user && "👋"}
+            </Title>
             <Group gap="xl" wrap="wrap">
               <Text size="sm" c="dimmed">
-                Last data uploaded: {lastUploaded ?? "N/A"}
+                Last data uploaded: {lastUploaded}
               </Text>
             </Group>
           </Stack>
@@ -481,6 +481,11 @@ export default function Page() {
                 radius="md"
                 w={240}
                 leftSection={<Search size={16} />}
+                rightSection={
+                  partnerSearch ? (
+                    <CloseButton size="sm" onClick={() => setPartnerSearch("")} />
+                  ) : null
+                }
               />
             )}
 
@@ -555,20 +560,82 @@ export default function Page() {
         </Tabs.List>
 
         <Tabs.Panel value="Partners">
-          <PartnerTable
-            partners={filteredPartners}
-            refreshTable={refreshTable}
-            percentages={percentages}
-            loading={isLoadingPartners}
-          />
+          {partnersError ? (
+            <Center py={80}>
+              <Stack align="center" ta="center" gap="md">
+                <ThemeIcon size={80} radius="xl" variant="light" color="red">
+                  <IconAlertCircle size={48} stroke={1.5} />
+                </ThemeIcon>
+                <Title order={3} c="red.7">
+                  Failed to load partners
+                </Title>
+                <Text c="dimmed" maw={400}>
+                  {partnersError}
+                </Text>
+                <Button
+                  variant="default"
+                  radius="md"
+                  c="#053766"
+                  onClick={() => {
+                    setPartnersError(undefined);
+                    void fetchPartners();
+                  }}
+                >
+                  Try again
+                </Button>
+              </Stack>
+            </Center>
+          ) : !isLoadingPartners ? (
+            <PartnerTable
+              partners={filteredPartners}
+              refreshTable={refreshTable}
+              percentages={percentages}
+              loading={false}
+            />
+          ) : null}
         </Tabs.Panel>
         <Tabs.Panel value="Diapers">
-          <DistributionsTable
-            distributionData={filteredDistributions}
-            onDataUpdated={fetchDistributions}
-          />
+          {distributionsError ? (
+            <Center py={80}>
+              <Stack align="center" ta="center" gap="md">
+                <ThemeIcon size={80} radius="xl" variant="light" color="red">
+                  <IconAlertCircle size={48} stroke={1.5} />
+                </ThemeIcon>
+                <Title order={3} c="red.7">
+                  Failed to load distributions
+                </Title>
+                <Text c="dimmed" maw={400}>
+                  {distributionsError}
+                </Text>
+                <Button
+                  variant="default"
+                  radius="md"
+                  c="#053766"
+                  onClick={() => {
+                    setDistributionsError(undefined);
+                    void fetchDistributions();
+                  }}
+                >
+                  Try again
+                </Button>
+              </Stack>
+            </Center>
+          ) : (
+            <DistributionsTable
+              distributionData={filteredDistributions}
+              onDataUpdated={fetchDistributions}
+            />
+          )}
         </Tabs.Panel>
       </Tabs>
     </Stack>
+  );
+}
+
+export default function Page() {
+  return (
+    <Suspense>
+      <AdminPageContent />
+    </Suspense>
   );
 }
