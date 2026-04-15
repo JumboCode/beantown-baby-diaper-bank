@@ -50,8 +50,6 @@ export default function DistributionsTable({
   distributionData: Distribution[];
   onDataUpdated?: () => Promise<void> | void;
 }) {
-
-
   // Authoritative data from /api/monthly-data
   const [diapersMap, setDiapersMap] = useState<Record<string, number>>({});
   const [monthlyBaseTotals, setMonthlyBaseTotals] = useState<Record<string, number>>({});
@@ -61,11 +59,15 @@ export default function DistributionsTable({
 
   const loadMonthlyTotals = () => {
     fetch("/api/monthly-data")
-      .then((r) => r.json())
-      .then((data: MonthlyDataResponseRow[]) => {
+      .then((r) => {
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+        return r.json();
+      })
+      .then((data: unknown) => {
+        if (!Array.isArray(data)) return;
         const totalsMap: Record<string, number> = {};
         const partnerMap: Record<string, number> = {};
-        data.forEach((row) => {
+        (data as MonthlyDataResponseRow[]).forEach((row) => {
           if (!row.month || !row.year) return;
           const monthKey = `${row.year}-${row.month}`;
           const partnerKey = `${row.partnerId}-${row.month}-${row.year}`;
@@ -83,12 +85,7 @@ export default function DistributionsTable({
     loadMonthlyTotals();
   }, [distributionData]);
 
-  const submitEdit = async (
-    partnerId: number,
-    year: string,
-    month: string,
-    newValue: number,
-  ) => {
+  const submitEdit = async (partnerId: number, year: string, month: string, newValue: number) => {
     const payload = {
       partnerId,
       month,
@@ -260,7 +257,10 @@ export default function DistributionsTable({
 
   const groupDistributionsByPartner = (distributions: Distribution[]) => {
     const partnerGroups = distributions.reduce<
-      Record<string, { partnerName: string; totalDiapers: number; partnerId: number; rows: Distribution[] }>
+      Record<
+        string,
+        { partnerName: string; totalDiapers: number; partnerId: number; rows: Distribution[] }
+      >
     >((acc, dist) => {
       const partnerName = dist.partner?.name?.trim() || "Unknown Partner";
       const diapers = dist.numberDiapers ? parseInt(dist.numberDiapers, 10) : 0;
@@ -280,13 +280,12 @@ export default function DistributionsTable({
     }, {});
 
     return Object.values(partnerGroups)
-      .map(p => ({
+      .map((p) => ({
         ...p,
-        rows: p.rows.sort((a, b) => (a.city?.name ?? "").localeCompare(b.city?.name ?? ""))
+        rows: p.rows.sort((a, b) => (a.city?.name ?? "").localeCompare(b.city?.name ?? "")),
       }))
       .sort((a, b) => a.partnerName.localeCompare(b.partnerName));
   };
-
 
   return (
     <div className="space-y-2">
@@ -332,7 +331,9 @@ export default function DistributionsTable({
                           key={`${date.year}-${date.month}-${partner.partnerName}`}
                           title={partner.partnerName}
                           displayDiapers={displayDiapers}
-                          onSave={(val) => submitEdit(partner.partnerId, date.year, date.month, val)}
+                          onSave={(val) =>
+                            submitEdit(partner.partnerId, date.year, date.month, val)
+                          }
                         >
                           {renderDistributionsTable(partner.rows)}
                         </EditableDistributionRow>
