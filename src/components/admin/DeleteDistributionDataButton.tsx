@@ -25,7 +25,7 @@ export interface MonthSelectionData {
 }
 
 interface MonthSelectionModalProps {
-  onSuccess?: () => void;
+  onSuccess?: () => void | Promise<void>;
 }
 
 const MONTH_NAMES = [
@@ -43,9 +43,10 @@ const MONTH_NAMES = [
   "December",
 ];
 
-const MONTH_ORDER = Object.fromEntries(
-  MONTH_NAMES.map((month, index) => [month, index]),
-) as Record<string, number>;
+const MONTH_ORDER = Object.fromEntries(MONTH_NAMES.map((month, index) => [month, index])) as Record<
+  string,
+  number
+>;
 
 const MONTH_PICKER_MIN_DATE = new Date(1900, 0, 1);
 const MONTH_PICKER_MAX_DATE = new Date(2100, 11, 1);
@@ -73,14 +74,13 @@ function formatSelectionLabel(
   return `${MONTH_NAMES[start.getUTCMonth()]} ${start.getUTCFullYear()} to ${MONTH_NAMES[end.getUTCMonth()]} ${end.getUTCFullYear()}`;
 }
 
-export default function DeleteDistributionDataButton({
-  onSuccess,
-}: MonthSelectionModalProps) {
+export default function DeleteDistributionDataButton({ onSuccess }: MonthSelectionModalProps) {
   const [opened, { open, close }] = useDisclosure(false);
   const [numMonths, setNumMonths] = useState<string | null>("one_month");
-  const [monthsRange, setMonthsRange] = useState<
-    [DateValue | null, DateValue | null]
-  >([null, null]);
+  const [monthsRange, setMonthsRange] = useState<[DateValue | null, DateValue | null]>([
+    null,
+    null,
+  ]);
   const [loadingDistributions, setLoadingDistributions] = useState(false);
   const [oneMonth, setOneMonth] = useState<DateValue | null>(null);
   const [previewData, setPreviewData] = useState<Distribution[]>([]);
@@ -88,16 +88,13 @@ export default function DeleteDistributionDataButton({
 
   const sortedPreviewData = useMemo(() => {
     return [...previewData].sort((a, b) => {
-      const partnerCompare = (a.partner?.name || "").localeCompare(
-        b.partner?.name || "",
-      );
+      const partnerCompare = (a.partner?.name || "").localeCompare(b.partner?.name || "");
       if (partnerCompare !== 0) return partnerCompare;
 
       const yearCompare = Number(a.year || 0) - Number(b.year || 0);
       if (yearCompare !== 0) return yearCompare;
 
-      const monthCompare =
-        (MONTH_ORDER[a.month || ""] ?? -1) - (MONTH_ORDER[b.month || ""] ?? -1);
+      const monthCompare = (MONTH_ORDER[a.month || ""] ?? -1) - (MONTH_ORDER[b.month || ""] ?? -1);
       if (monthCompare !== 0) return monthCompare;
 
       return (a.city?.name || "").localeCompare(b.city?.name || "");
@@ -156,7 +153,7 @@ export default function DeleteDistributionDataButton({
 
     setPreviewData([]);
     setIsPreviewMode(false);
-    onSuccess?.();
+    await onSuccess?.();
     close();
   }
 
@@ -255,11 +252,7 @@ export default function DeleteDistributionDataButton({
               >
                 <Group mt="xs">
                   <Radio color="#163663" value="one_month" label="One Month" />
-                  <Radio
-                    color="#163663"
-                    value="range"
-                    label="Range of Months"
-                  />
+                  <Radio color="#163663" value="range" label="Range of Months" />
                 </Group>
               </Radio.Group>
 
@@ -297,12 +290,7 @@ export default function DeleteDistributionDataButton({
                   />
                 )}
 
-                <Button
-                  onClick={handleClick}
-                  color="#163663"
-                  mt="md"
-                  radius="md"
-                >
+                <Button onClick={handleClick} color="#163663" mt="md" radius="md">
                   Apply Selection
                 </Button>
               </Group>
@@ -376,12 +364,7 @@ export default function DeleteDistributionDataButton({
                       backgroundColor: "#FFFFFF",
                     }}
                   >
-                    <Table
-                      withTableBorder
-                      highlightOnHover
-                      stickyHeader
-                      striped
-                    >
+                    <Table withTableBorder highlightOnHover stickyHeader striped>
                       <Table.Thead>
                         <Table.Tr>
                           <Table.Th>Partner</Table.Th>
@@ -395,9 +378,7 @@ export default function DeleteDistributionDataButton({
 
                       <Table.Tbody>
                         {sortedPreviewData.map((dist) => (
-                          <Table.Tr
-                            key={`${dist.id}-${dist.month}-${dist.year}-${dist.createdAt}`}
-                          >
+                          <Table.Tr key={`${dist.id}-${dist.month}-${dist.year}-${dist.createdAt}`}>
                             <Table.Td>{dist.partner?.name}</Table.Td>
                             <Table.Td>{dist.city?.name}</Table.Td>
                             <Table.Td>{dist.numberDiapers}</Table.Td>
