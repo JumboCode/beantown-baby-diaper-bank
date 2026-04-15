@@ -83,7 +83,7 @@ export default function PartnerTable({
     <>
       <ScrollArea className="flex-1" type="auto" offsetScrollbars>
         <Card withBorder>
-          <Grid columns={11} gutter="sm" align="center">
+          <Grid columns={13} gutter="sm" align="center">
             <Grid.Col span={4}>
               <Text size="sm" fw={500}>
                 Partner Name
@@ -97,6 +97,11 @@ export default function PartnerTable({
             <Grid.Col span={2}>
               <Text size="sm" fw={500}>
                 Cities Served
+              </Text>
+            </Grid.Col>
+            <Grid.Col span={2}>
+              <Text size="sm" fw={500}>
+                Babies Helped
               </Text>
             </Grid.Col>
             <Grid.Col span={2} ta="center">
@@ -130,7 +135,7 @@ export default function PartnerTable({
                 return (
                   <Accordion.Item key={partner.id} value={partner.id.toString()}>
                     <Accordion.Control>
-                      <Grid columns={11} gutter="sm" align="center">
+                      <Grid columns={13} gutter="sm" align="center">
                         <Grid.Col span={4}>
                           <div className="flex items-center gap-3">
                             {partner.logoUrl && (
@@ -165,6 +170,18 @@ export default function PartnerTable({
                           <Text size="sm" fw={500} c="dimmed">
                             {partnerPercentages.length}{" "}
                             {partnerPercentages.length === 1 ? "City" : "Cities"}
+                          </Text>
+                        </Grid.Col>
+
+                        <Grid.Col span={2}>
+                          <Text size="sm" fw={500} c="dimmed">
+                            {partner.num_babies != null ? (
+                              partner.num_babies.toLocaleString()
+                            ) : (
+                              <Text size="sm" c="dimmed" fs="italic" span>
+                                N/A
+                              </Text>
+                            )}
                           </Text>
                         </Grid.Col>
 
