@@ -130,6 +130,7 @@ export default function AddPartnerForm({
       country: DEFAULT_COUNTRY,
       logoFile: null as File | null,
       logoUrl: "",
+      numBabies: "" as number | "",
     },
     validate: {
       organization: (value) =>
@@ -250,6 +251,7 @@ export default function AddPartnerForm({
       address: buildAddressString(values),
       logo: values.logoUrl || "",
       cities: cityPercentages,
+      num_babies: values.numBabies !== "" ? Number(values.numBabies) : null,
     };
 
     try {
@@ -415,6 +417,22 @@ export default function AddPartnerForm({
               />
             </Group>
           )}
+
+          <Group justify="space-between" align="flex-start">
+            <Text c="#344054" fz={16} fw={600}>
+              Number of Babies Helped Per Month
+            </Text>
+            <NumberInput
+              placeholder="Approximate Number of Babies Helped Per Month"
+              min={0}
+              value={form.values.numBabies}
+              onChange={(val) => form.setFieldValue("numBabies", typeof val === "number" ? val : "")}
+              size="md"
+              w={526}
+              radius="md"
+              hideControls
+            />
+          </Group>
 
           <Group justify="space-between" align="flex-start">
             <Text c="#344054" fz={16} fw={600}>

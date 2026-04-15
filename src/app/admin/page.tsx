@@ -67,6 +67,7 @@ type Partner = {
   address: string | null;
   coords?: { lat: number; lng: number };
   logoUrl: string | null;
+  num_babies: number | null;
 };
 
 type PartnerRegionWithCity = {

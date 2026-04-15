@@ -69,7 +69,7 @@ export interface PartnerWithStats extends Omit<Partner, "coords" | "startPartner
   coords?: PartnerCoordinates | null;
   startPartner: Date | null;
   endPartner: Date | null;
-  number_babies_helped: number;
+  number_babies_helped: number | null;
   number_diapers: number;
   citiesServed: string[];
 }
@@ -307,7 +307,7 @@ export default function PartnerDrawer({ partnerId, onClose, boundaries }: Partne
 
               {/* Stats */}
               {partner.status !== "waitlisted" && (
-                <Group grow gap={8}>
+                <Group grow gap={8} align="stretch">
                   <Box
                     style={{
                       background: "#edf1f8",
@@ -315,20 +315,24 @@ export default function PartnerDrawer({ partnerId, onClose, boundaries }: Partne
                       borderLeft: "4px solid #1B3668",
                       borderRadius: 10,
                       padding: "10px 12px",
+                      display: "flex",
+                      flexDirection: "column",
                     }}
                   >
-                    <Group gap={5} mb={4} align="center">
-                      <IconBabyCarriage size={12} color="#1B3668" />
+                    <Group gap={5} align="flex-start" style={{ minHeight: 44 }}>
+                      <IconBabyCarriage size={12} color="#1B3668" style={{ marginTop: 1, flexShrink: 0 }} />
                       <Text fz="9px" c="#1B3668" tt="uppercase" fw={800} lts="0.08em">
-                        Babies Helped
+                        Approx. Number of Babies Helped
                       </Text>
                     </Group>
-                    <Text fz="24px" fw={900} c="#1B3668" lh={1}>
-                      {(partner.number_babies_helped || 0).toLocaleString()}
-                    </Text>
-                    <Text fz="10px" c="#2471A3" fw={500} mt={2}>
-                      children served
-                    </Text>
+                    <Box style={{ paddingTop: 4 }}>
+                      <Text fz="24px" fw={900} c="#1B3668" lh={1}>
+                        {partner.number_babies_helped != null ? partner.number_babies_helped.toLocaleString() : "N/A"}
+                      </Text>
+                      <Text fz="10px" c="#2471A3" fw={500} mt={2}>
+                        Per Month
+                      </Text>
+                    </Box>
                   </Box>
                   <Box
                     style={{
@@ -337,20 +341,24 @@ export default function PartnerDrawer({ partnerId, onClose, boundaries }: Partne
                       borderLeft: "4px solid #2471A3",
                       borderRadius: 10,
                       padding: "10px 12px",
+                      display: "flex",
+                      flexDirection: "column",
                     }}
                   >
-                    <Group gap={5} mb={4} align="center">
-                      <IconChartBar size={12} color="#2471A3" />
+                    <Group gap={5} align="flex-start" style={{ minHeight: 44 }}>
+                      <IconChartBar size={12} color="#2471A3" style={{ marginTop: 1, flexShrink: 0 }} />
                       <Text fz="9px" c="#162C58" tt="uppercase" fw={800} lts="0.08em">
-                        Diapers
+                        Total Number of Diapers Distributed
                       </Text>
                     </Group>
-                    <Text fz="24px" fw={900} c="#162C58" lh={1}>
-                      {(partner.number_diapers || 0).toLocaleString()}
-                    </Text>
-                    <Text fz="10px" c="#2471A3" fw={500} mt={2}>
-                      distributed
-                    </Text>
+                    <Box style={{ paddingTop: 4 }}>
+                      <Text fz="24px" fw={900} c="#162C58" lh={1}>
+                        {(partner.number_diapers || 0).toLocaleString()}
+                      </Text>
+                      <Text fz="10px" c="#2471A3" fw={500} mt={2}>
+                        By Organization
+                      </Text>
+                    </Box>
                   </Box>
                 </Group>
               )}
