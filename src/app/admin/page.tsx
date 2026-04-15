@@ -527,7 +527,14 @@ function AdminPageContent() {
           </Tabs.Tab>
 
           <Group ml="auto" align="flex-start" gap="sm">
-            {!isPartnersTab && <DeleteDistributionDataButton onSuccess={fetchDistributions} />}
+            {!isPartnersTab && (
+              <DeleteDistributionDataButton
+                onSuccess={async () => {
+                  await fetchDistributions();
+                  await fetchTimelineData();
+                }}
+              />
+            )}
             {isPartnersTab && (
               <TextInput
                 placeholder="Search by name or cities..."

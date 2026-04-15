@@ -67,19 +67,19 @@ export async function GET(req: Request) {
     }
   } else {
     if (month) {
-    // return rows for month if requested
-    where = {
-      month,
-      ...(year ? { year } : {}),
-    };
-  } else if (year) {
-    // if no month data, return year
-    where = {
-      year,
-      month: null,
-    };
+      // return rows for month if requested
+      where = {
+        month,
+        ...(year ? { year } : {}),
+      };
+    } else if (year) {
+      // if no month data, return year
+      where = {
+        year,
+        month: null,
+      };
+    }
   }
-}
 
   const distributionsQuery = {
     where,
@@ -198,8 +198,7 @@ export async function DELETE(req: Request) {
       ),
     ]);
 
-    revalidateTag("cities", "max");
-
+    // revalidateTag("cities");
     return NextResponse.json({ deletedCount: result.count });
   } catch (error) {
     console.error("Error deleting distributions:", error);
