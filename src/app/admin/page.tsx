@@ -12,7 +12,6 @@ import {
   Title,
   Tabs,
   Button,
-  Drawer,
   Popover,
   Checkbox,
   TextInput,
@@ -112,6 +111,22 @@ const statuses = (Object.values(status) as string[]).map((s) => ({
   label: s.charAt(0).toUpperCase() + s.slice(1),
 }));
 
+const parseMonth = (str: string | null) => {
+  if (!str) return null;
+  const parts = str.split("-");
+  if (parts.length === 2) {
+    return new Date(Number(parts[0]), Number(parts[1]) - 1, 1);
+  }
+  return null;
+};
+
+const formatMonth = (d: Date | null) => {
+  if (!d) return null;
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  return `${y}-${m}`;
+};
+
 function AdminPageContent() {
   const { user } = useUser();
   const router = useRouter();
@@ -122,27 +137,59 @@ function AdminPageContent() {
   const handleTabChange = (tab: string | null) => {
     if (tab) router.replace(`/admin?tab=${tab}`);
   };
-  const [isDrawerOpen, drawerControls] = useDisclosure(false);
-  const [isPartnerFilterOpen, setPartnerFilterOpen] = useState(false);
+  const [isFilterOpen, setFilterOpen] = useState(false);
 
   const [distributionsError, setDistributionsError] = useState<string>();
   const [partnersError, setPartnersError] = useState<string>();
 
-  // partner filtering
-  const [partnerYearSince, setPartnerYearSince] = useState<string | null>("All");
-  const [partnerStatus, setPartnerStatus] = useState<string[]>([]);
+  // URL-driven filtering state
+  const partnerYearSince = searchParams.get("since") || "All";
+  const partnerStatusQuery = searchParams.get("status");
+  const partnerStatus = useMemo(
+    () => (partnerStatusQuery ? partnerStatusQuery.split(",") : []),
+    [partnerStatusQuery],
+  );
+
+  const dateRange = useMemo<[Date | null, Date | null]>(
+    () => [parseMonth(searchParams.get("from")), parseMonth(searchParams.get("to"))],
+    [searchParams],
+  );
 
   const [partners, setPartners] = useState<Partner[]>([]);
   const [filteredPartners, setFilteredPartners] = useState<Partner[]>([]);
   const [percentages, setPercentages] = useState<PartnerRegionWithCity[]>([]);
-  const [partnerSearch, setPartnerSearch] = useState("");
-  const [isLoadingPartners, setIsLoadingPartners] = useState(true);
 
-  const [valueFrom, setValueFrom] = useState<string | null>(null);
-  const [valueTo, setValueTo] = useState<string | null>(null);
+  const [partnerSearch, setPartnerSearch] = useState(searchParams.get("search") || "");
+  const [isLoadingPartners, setIsLoadingPartners] = useState(true);
 
   const [distributions, setDistributions] = useState<Distribution[]>([]);
   const [filteredDistributions, setFilteredDistributions] = useState<Distribution[]>([]);
+
+  // Sync back input to URL
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      const params = new URLSearchParams(searchParams.toString());
+      if (partnerSearch) params.set("search", partnerSearch);
+      else params.delete("search");
+      if (params.toString() !== searchParams.toString()) {
+        router.replace(`?${params.toString()}`, { scroll: false });
+      }
+    }, 300);
+    return () => clearTimeout(handler);
+  }, [partnerSearch, searchParams, router]);
+
+  useEffect(() => {
+    if (searchParams.get("search") !== partnerSearch) {
+      setPartnerSearch(searchParams.get("search") || "");
+    }
+  }, [searchParams]);
+
+  const setParamAndReplace = (key: string, value: string | null) => {
+    const params = new URLSearchParams(searchParams.toString());
+    if (value) params.set(key, value);
+    else params.delete(key);
+    router.replace(`?${params.toString()}`, { scroll: false });
+  };
 
   const fetchDistributions = useCallback(async () => {
     try {
@@ -256,7 +303,7 @@ function AdminPageContent() {
     fetchTimelineData();
   }, [fetchTimelineData]);
 
-  const filterDistributions = () => {
+  useEffect(() => {
     let filtered = [...distributions];
 
     const distToYYYYMM = (dist: Distribution) => {
@@ -266,17 +313,16 @@ function AdminPageContent() {
       return `${dist.year}-${monthNum}`;
     };
 
-    if (valueFrom) {
-      filtered = filtered.filter((dist) => distToYYYYMM(dist) >= valueFrom);
+    if (dateRange[0]) {
+      const fromStr = formatMonth(dateRange[0]);
+      filtered = filtered.filter((dist) => distToYYYYMM(dist) >= fromStr!);
     }
-
-    if (valueTo) {
-      filtered = filtered.filter((dist) => distToYYYYMM(dist) <= valueTo);
+    if (dateRange[1]) {
+      const toStr = formatMonth(dateRange[1]);
+      filtered = filtered.filter((dist) => distToYYYYMM(dist) <= toStr!);
     }
-
     setFilteredDistributions(filtered);
-    drawerControls.close();
-  };
+  }, [distributions, dateRange]);
 
   const partnerCitiesMap = useMemo(() => {
     const map = new Map<number, string[]>();
@@ -348,18 +394,32 @@ function AdminPageContent() {
   };
 
   const handleFilterClick = () => {
-    if (activeTab === "Partners") {
-      setPartnerFilterOpen((open) => !open);
-    } else {
-      drawerControls.open();
-    }
+    setFilterOpen((open) => !open);
   };
 
   const resetDistributionFilters = () => {
-    setValueFrom(null);
-    setValueTo(null);
-    setFilteredDistributions(distributions);
-    drawerControls.close();
+    const params = new URLSearchParams(searchParams.toString());
+    params.delete("from");
+    params.delete("to");
+    router.replace(`?${params.toString()}`, { scroll: false });
+  };
+
+  const handleDateRangeChange = (val: any) => {
+    const params = new URLSearchParams(searchParams.toString());
+    const fromDate: Date | null =
+      val[0] instanceof Date ? val[0] : val[0] ? new Date(val[0]) : null;
+    const toDate: Date | null = val[1] instanceof Date ? val[1] : val[1] ? new Date(val[1]) : null;
+
+    const fromStr = formatMonth(fromDate);
+    const toStr = formatMonth(toDate);
+
+    if (fromStr) params.set("from", fromStr);
+    else params.delete("from");
+
+    if (toStr) params.set("to", toStr);
+    else params.delete("to");
+
+    router.replace(`?${params.toString()}`, { scroll: false });
   };
 
   const renderTabIcon = (tab: "Partners" | "Diapers") => {
@@ -438,40 +498,6 @@ function AdminPageContent() {
             Diapers
           </Tabs.Tab>
 
-          <Drawer opened={isDrawerOpen} onClose={drawerControls.close} position="right" size="sm">
-            <h1 className="font-bold text-gray-900">Filter Data</h1>
-            <p className="text-gray-500 mb-6">Filter the diaper distribution data by date range.</p>
-            <h2 className="text-gray-900 font-semibold mb-2">Date Range</h2>
-            <h3 className="text-gray-900 font-medium">From</h3>
-            <MonthPickerInput
-              placeholder="Pick date"
-              value={valueFrom ? `${valueFrom}-01` : null}
-              onChange={(val) => setValueFrom(val ? (val as unknown as string).slice(0, 7) : null)}
-              className="mb-3"
-            />
-
-            <h3 className="text-gray-900 font-medium">To</h3>
-            <MonthPickerInput
-              placeholder="Pick date"
-              value={valueTo ? `${valueTo}-01` : null}
-              onChange={(val) => setValueTo(val ? (val as unknown as string).slice(0, 7) : null)}
-              className="mb-6"
-            />
-            <div className="flex justify-between">
-              <Button
-                onClick={resetDistributionFilters}
-                variant="outline"
-                color="#053766"
-                radius="md"
-              >
-                Clear Filters
-              </Button>
-              <Button onClick={filterDistributions} variant="filled" color="#053766" radius="md">
-                Apply Filters
-              </Button>
-            </div>
-          </Drawer>
-
           <Group ml="auto" align="flex-start" gap="sm">
             {!isPartnersTab && <DeleteDistributionDataButton onSuccess={fetchDistributions} />}
             {isPartnersTab && (
@@ -491,8 +517,8 @@ function AdminPageContent() {
             )}
 
             <Popover
-              opened={isPartnerFilterOpen && isPartnersTab}
-              onChange={setPartnerFilterOpen}
+              opened={isFilterOpen}
+              onChange={setFilterOpen}
               position="bottom-end"
               width={300}
               shadow="md"
@@ -511,50 +537,76 @@ function AdminPageContent() {
                 </Button>
               </Popover.Target>
               <Popover.Dropdown>
-                <Stack gap="xs">
-                  <h3>
-                    <strong>Year Since</strong>
-                  </h3>
-                  <Group gap={7} mb="xs">
-                    {years.map((year) => {
-                      const isSelected = partnerYearSince === year;
+                {isPartnersTab ? (
+                  <Stack gap="xs">
+                    <h3>
+                      <strong>Year Since</strong>
+                    </h3>
+                    <Group gap={7} mb="xs">
+                      {years.map((year) => {
+                        const isSelected = partnerYearSince === year;
 
-                      return (
-                        <Button
-                          key={year}
-                          variant={isSelected ? "filled" : "outline"}
+                        return (
+                          <Button
+                            key={year}
+                            variant={isSelected ? "filled" : "outline"}
+                            color="#053766"
+                            radius="md"
+                            onClick={() =>
+                              setParamAndReplace("since", year === "All" ? null : year)
+                            }
+                          >
+                            {year}
+                          </Button>
+                        );
+                      })}
+                    </Group>
+                    <h3>
+                      <strong>Status</strong>
+                    </h3>
+                    <Stack>
+                      {statuses.map((statusItem) => (
+                        <Checkbox
+                          key={statusItem.value}
+                          label={statusItem.label}
+                          checked={partnerStatus.includes(statusItem.value)}
                           color="#053766"
-                          radius="md"
-                          onClick={() => setPartnerYearSince(year)}
-                        >
-                          {year}
-                        </Button>
-                      );
-                    })}
-                  </Group>
-                  <h3>
-                    <strong>Status</strong>
-                  </h3>
-                  <Stack>
-                    {statuses.map((status) => (
-                      <Checkbox
-                        key={status.value}
-                        label={status.label}
-                        checked={partnerStatus.includes(status.value)}
-                        color="#053766"
-                        onChange={(e) => {
-                          const checked = e.currentTarget.checked;
-
-                          setPartnerStatus((prev) =>
-                            checked
-                              ? [...prev, status.value]
-                              : prev.filter((s) => s !== status.value),
-                          );
-                        }}
-                      />
-                    ))}
+                          onChange={(e) => {
+                            const checked = e.currentTarget.checked;
+                            const current = new Set(partnerStatus);
+                            if (checked) current.add(statusItem.value);
+                            else current.delete(statusItem.value);
+                            const arr = Array.from(current);
+                            setParamAndReplace("status", arr.length > 0 ? arr.join(",") : null);
+                          }}
+                        />
+                      ))}
+                    </Stack>
                   </Stack>
-                </Stack>
+                ) : (
+                  <Stack gap="xs">
+                    <h3>
+                      <strong>Date Range</strong>
+                    </h3>
+                    <MonthPickerInput
+                      type="range"
+                      placeholder="Pick dates range"
+                      value={dateRange}
+                      onChange={handleDateRangeChange}
+                    />
+                    <Group justify="flex-end" mt="sm">
+                      <Button
+                        onClick={resetDistributionFilters}
+                        variant="outline"
+                        color="#053766"
+                        radius="md"
+                        size="xs"
+                      >
+                        Clear Filters
+                      </Button>
+                    </Group>
+                  </Stack>
+                )}
               </Popover.Dropdown>
             </Popover>
           </Group>
