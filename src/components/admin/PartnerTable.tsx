@@ -1,7 +1,22 @@
 "use client";
 
 import { useState } from "react";
-import { Table, Modal, Pill, Mark, Text, Button, Loader, Center } from "@mantine/core";
+import {
+  Accordion,
+  Modal,
+  Pill,
+  Mark,
+  Text,
+  Loader,
+  Center,
+  ScrollArea,
+  Group,
+  Badge,
+  ActionIcon,
+  Grid,
+  Card,
+  Tooltip,
+} from "@mantine/core";
 import EditPartnerForm from "./EditPartnerForm";
 import { useDisclosure } from "@mantine/hooks";
 import { status } from "@/generated/prisma/enums";
@@ -66,152 +81,187 @@ export default function PartnerTable({
 
   return (
     <>
-      <div className="bg-white rounded-xl shadow-lg overflow-hidden flex flex-col">
-        <div className="overflow-x-auto flex-1">
-          <Table highlightOnHover withTableBorder tabularNums>
-            <Table.Thead bg="#F9FAFB" c="#667085">
-              <Table.Tr>
-                <Table.Th fw="normal" fz="14px" w="15%">
-                  Partner Name
-                </Table.Th>
-                <Table.Th fw="normal" fz="14px">
-                  Description
-                </Table.Th>
-                <Table.Th fw="normal" fz="14px">
-                  Since
-                </Table.Th>
-                <Table.Th fw="normal" fz="14px">
-                  Cities Served
-                </Table.Th>
-                <Table.Th fw="normal" fz="14px">
-                  Status
-                </Table.Th>
-                <Table.Th fw="normal" fz="14px">
-                  Address
-                </Table.Th>
-                <Table.Th fw="normal" fz="14px">
-                  Number of Babies Helped
-                </Table.Th>
-                <Table.Th></Table.Th>
-              </Table.Tr>
-            </Table.Thead>
-            <Table.Tbody>
-              {loading ? (
-                <Table.Tr>
-                  <Table.Td colSpan={8}>
-                    <Center py="lg">
-                      <Loader type="bars" />
-                    </Center>
-                  </Table.Td>
-                </Table.Tr>
-              ) : (
-                [...partners]
-                  .sort((a, b) => { // sorting: active partners first, then by start date
-                    if (a.status === "active" && b.status !== "active") return -1;
-                    if (a.status !== "active" && b.status === "active") return 1;
-                    const dateA = a.start_partner ? new Date(a.start_partner).getTime() : Infinity;
-                    const dateB = b.start_partner ? new Date(b.start_partner).getTime() : Infinity;
-                    return dateA - dateB;
-                  })
-                  .map((partner) => (
-                  <Table.Tr key={partner.id}>
-                    <Table.Td>
-                      <div className="flex items-center gap-3">
-                        {partner.logoUrl && (
-                          <img
-                            src={partner.logoUrl}
-                            alt={partner.name}
-                            className="h-10 w-10 object-contain"
-                            onError={(e) => {
-                              e.currentTarget.style.display = "none";
-                            }}
-                          />
-                        )}
-                        <Text c="#101828" fw={600} fz={"16px"}>
-                          {partner.name}
-                        </Text>
-                      </div>
-                    </Table.Td>
-                    <Table.Td className="text-sm text-gray-600">
-                      {partner.description || (
-                        <span className="text-gray-400 italic">No description</span>
-                      )}
-                    </Table.Td>
-                    <Table.Td className="text-sm text-gray-600">
-                      {partner.start_partner ? (
-                        formatDate(partner.start_partner)
-                      ) : (
-                        <span className="text-gray-400 italic">N/A</span>
-                      )}
-                    </Table.Td>
-                    <Table.Td>
-                      <span key={partner.id} className="text-sm text-gray-600">
-                        <span>
-                          {/* percentages for waitlisted orgs are optional and
-                          won't be displayed for now */}
-                          {percentages
-                            .filter((percentage) => Number(percentage.partnerId) === partner.id)
-                            .map((p) =>
-                              partner.status !== "waitlisted"
-                                ? `${p.city.name} (${formatPercentDisplay(p.percentage)})`
-                                : p.city.name,
-                            )
-                            .join(", ")}
-                        </span>
-                      </span>
-                    </Table.Td>
-                    <Table.Td align="center">
-                      <Pill
-                        // Fix me: colors
-                        ta="center"
-                        px="sm"
-                        radius="sm"
-                        fw="bold"
-                        c="white"
-                        fz="10px"
-                        bg={
-                          partner.status === "active"
-                            ? "#558D22"
-                            : partner.status === "inactive"
-                              ? "#E2383F"
-                              : "#98A2B3"
-                        }
-                      >
-                        {partner.status.charAt(0).toUpperCase() + partner.status.slice(1)}
-                      </Pill>
-                    </Table.Td>
-                    <Table.Td className="text-sm text-gray-600">
-                      {partner.address || <span className="text-gray-400 italic">N/A</span>}
-                    </Table.Td>
-                    <Table.Td className="text-sm text-gray-600">
-                      {partner.num_babies != null ? partner.num_babies.toLocaleString() : <span className="text-gray-400 italic">N/A</span>}
-                    </Table.Td>
+      <ScrollArea className="flex-1" type="auto" offsetScrollbars>
+        <Card withBorder>
+          <Grid columns={11} gutter="sm" align="center">
+            <Grid.Col span={4}>
+              <Text size="sm" fw={500}>
+                Partner Name
+              </Text>
+            </Grid.Col>
+            <Grid.Col span={2}>
+              <Text size="sm" fw={500}>
+                Since
+              </Text>
+            </Grid.Col>
+            <Grid.Col span={2}>
+              <Text size="sm" fw={500}>
+                Cities Served
+              </Text>
+            </Grid.Col>
+            <Grid.Col span={2} ta="center">
+              <Text size="sm" fw={500}>
+                Status
+              </Text>
+            </Grid.Col>
+            <Grid.Col span={1}></Grid.Col>
+          </Grid>
+        </Card>
 
-                    <Table.Td style={{ verticalAlign: "middle" }}>
-                      <Button
-                        variant="transparent"
-                        // size="14px"
-                        fz="14px"
-                        c="#14215A"
-                        onClick={() => {
-                          setPartner(partner);
-                          open();
-                        }}
-                        w="100px"
-                        rightSection={
-                          <Image src="/admin_view/pen.svg" alt="Edit" width={20} height={20} />
-                        }
-                      >
-                        Edit
-                      </Button>
-                    </Table.Td>
-                  </Table.Tr>
-                ))
-              )}
-            </Table.Tbody>
-          </Table>
-        </div>
-      </div>
+        {loading ? (
+          <Center py="xl">
+            <Loader type="bars" />
+          </Center>
+        ) : (
+          <Accordion variant="default" radius={0}>
+            {[...partners]
+              .sort((a, b) => {
+                if (a.status === "active" && b.status !== "active") return -1;
+                if (a.status !== "active" && b.status === "active") return 1;
+                const dateA = a.start_partner ? new Date(a.start_partner).getTime() : Infinity;
+                const dateB = b.start_partner ? new Date(b.start_partner).getTime() : Infinity;
+                return dateA - dateB;
+              })
+              .map((partner) => {
+                const partnerPercentages = percentages
+                  .filter((percentage) => Number(percentage.partnerId) === partner.id)
+                  .sort((a, b) => (b.percentage ?? 0) - (a.percentage ?? 0));
+
+                return (
+                  <Accordion.Item key={partner.id} value={partner.id.toString()}>
+                    <Accordion.Control>
+                      <Grid columns={11} gutter="sm" align="center">
+                        <Grid.Col span={4}>
+                          <div className="flex items-center gap-3">
+                            {partner.logoUrl && (
+                              <img
+                                src={partner.logoUrl}
+                                alt={partner.name}
+                                className="h-10 w-10 object-contain"
+                                onError={(e) => {
+                                  e.currentTarget.style.display = "none";
+                                }}
+                              />
+                            )}
+                            <Text c="#101828" fw={600} fz={"16px"} truncate>
+                              {partner.name}
+                            </Text>
+                          </div>
+                        </Grid.Col>
+
+                        <Grid.Col span={2}>
+                          {partner.start_partner ? (
+                            <Text size="sm" c="dimmed">
+                              {formatDate(partner.start_partner)}
+                            </Text>
+                          ) : (
+                            <Text size="sm" c="dimmed" fs="italic">
+                              N/A
+                            </Text>
+                          )}
+                        </Grid.Col>
+
+                        <Grid.Col span={2}>
+                          <Text size="sm" fw={500} c="dimmed">
+                            {partnerPercentages.length}{" "}
+                            {partnerPercentages.length === 1 ? "City" : "Cities"}
+                          </Text>
+                        </Grid.Col>
+
+                        <Grid.Col span={2}>
+                          <Group justify="center">
+                            <Pill
+                              ta="center"
+                              px="sm"
+                              radius="sm"
+                              fw="bold"
+                              c="white"
+                              fz="10px"
+                              bg={
+                                partner.status === "active"
+                                  ? "#558D22"
+                                  : partner.status === "inactive"
+                                    ? "#E2383F"
+                                    : "#98A2B3"
+                              }
+                            >
+                              {partner.status.charAt(0).toUpperCase() + partner.status.slice(1)}
+                            </Pill>
+                          </Group>
+                        </Grid.Col>
+
+                        <Grid.Col span={1}>
+                          <Tooltip label="Edit Partner">
+                            <ActionIcon
+                              variant="subtle"
+                              size="md"
+                              color="#14215A"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setPartner(partner);
+                                open();
+                              }}
+                            >
+                              <Image src="/admin_view/pen.svg" alt="Edit" width={16} height={16} />
+                            </ActionIcon>
+                          </Tooltip>
+                        </Grid.Col>
+                      </Grid>
+                    </Accordion.Control>
+
+                    <Accordion.Panel>
+                      <Grid gutter="xl">
+                        <Grid.Col span={12}>
+                          <Text size="sm" fw={600} mb={8} c="#101828">
+                            Description
+                          </Text>
+                          <Text size="sm" c="dimmed" lh={1.6}>
+                            {partner.description || "No description provided."}
+                          </Text>
+                        </Grid.Col>
+                        <Grid.Col span={3}>
+                          <Text size="sm" fw={600} mb={8} c="#101828">
+                            Address
+                          </Text>
+                          <Text size="sm" c="dimmed" lh={1.6}>
+                            {partner.address || "No address provided."}
+                          </Text>
+                        </Grid.Col>
+                        <Grid.Col span={9}>
+                          <Text size="sm" fw={600} mb={8} c="#101828">
+                            All Cities Served ({partnerPercentages.length})
+                          </Text>
+                          <Group gap="xs">
+                            {partnerPercentages.length > 0 ? (
+                              partnerPercentages.map((p) => (
+                                <Badge
+                                  key={p.cityId}
+                                  variant="light"
+                                  color="blue"
+                                  radius="sm"
+                                  fw={500}
+                                  tt="none"
+                                >
+                                  {partner.status !== "waitlisted" && p.percentage != null
+                                    ? `${p.city.name} (${formatPercentDisplay(p.percentage)})`
+                                    : p.city.name}
+                                </Badge>
+                              ))
+                            ) : (
+                              <Text size="sm" fs="italic" c="dimmed">
+                                None
+                              </Text>
+                            )}
+                          </Group>
+                        </Grid.Col>
+                      </Grid>
+                    </Accordion.Panel>
+                  </Accordion.Item>
+                );
+              })}
+          </Accordion>
+        )}
+      </ScrollArea>
 
       {partner && (
         <Modal

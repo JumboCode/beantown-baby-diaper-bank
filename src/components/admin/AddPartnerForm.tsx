@@ -4,11 +4,8 @@ import {
   Button,
   Group,
   TextInput,
-  ComboboxItem,
   Text,
-  TagsInput,
   Textarea,
-  Table,
   NumberInput,
   Radio,
   FileInput,
@@ -21,9 +18,10 @@ import {
 } from "@mantine/core";
 import { useForm } from "@mantine/form";
 import { MonthPickerInput } from "@mantine/dates";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import "@mantine/dates/styles.css";
 import { fetchCoordsFromAddress } from "@/lib/util";
+import CityPercentagesForm, { CityPercentage } from "./CityPercentagesForm";
 
 const countries = ["United States", "Canada"];
 const DEFAULT_COUNTRY = "United States";
@@ -89,16 +87,8 @@ type AddressFields = {
   country: string;
 };
 
-const buildAddressString = ({
-  addressLine,
-  city,
-  state,
-  zipCode,
-  country,
-}: AddressFields) =>
-  [addressLine, city, state, zipCode, country || DEFAULT_COUNTRY]
-    .filter((part) => Boolean(part))
-    .join(", ");
+const buildAddressString = ({ addressLine, city, state, zipCode, country }: AddressFields) =>
+  [addressLine, city, state, zipCode, country || DEFAULT_COUNTRY].filter(Boolean).join(", ");
 
 const requiredNumber = (label: string) => (value: unknown) => {
   const v = (value === 0 ? "0" : (value ?? "")).toString().trim();
@@ -119,47 +109,17 @@ export default function AddPartnerForm({
   opened: boolean;
   onClose: () => void;
 }) {
-  const [percentages, setPercentages] = useState<Record<string, number>>({});
-  const [citiesAPI, setCitiesAPI] = useState<string[]>([]);
-  const [isLoadingCities, setIsLoadingCities] = useState<boolean>(false);
+  const [cityEntries, setCityEntries] = useState<CityPercentage[]>([]);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [submitWarning, setSubmitWarning] = useState<string>("");
 
-  useEffect(() => {
-    const fetchCities = async () => {
-      setIsLoadingCities(true);
-      try {
-        const res = await fetch(
-          "https://secure.geonames.org/searchJSON?q=&adminCode1=MA&country=US&featureClass=P&username=jumbocodebbdb",
-        );
-        const data = await res.json();
-
-        if (data.geonames) {
-          const cityNames = data.geonames.map(
-            (city: { name: string }) => city.name,
-          );
-          const cityUniqueSorted = Array.from(new Set(cityNames)).sort();
-          setCitiesAPI(cityUniqueSorted as string[]);
-        }
-      } catch (err) {
-        console.log(`Failed to fetch cities: ${err}`);
-      } finally {
-        setIsLoadingCities(false);
-      }
-    };
-
-    fetchCities();
-  }, []);
-
   const form = useForm({
     mode: "controlled",
-    validateInputOnChange: true,
     validateInputOnBlur: true,
     initialValues: {
       organization: "",
       description: "",
       time: null as Date | null,
-      cities: [] as string[],
       status: "",
       latitude: "",
       longitude: "",
@@ -174,30 +134,16 @@ export default function AddPartnerForm({
     },
     validate: {
       organization: (value) =>
-        typeof value === "string" && value.trim()
-          ? null
-          : "Organization name is required",
+        typeof value === "string" && value.trim() ? null : "Organization name is required",
       time: (value, values) => {
         if (values.status === "waitlisted") return null;
         return value ? null : "Select a start time";
-      },
-      cities: (value, values) => {
-        if (value.length === 0) return "Pick at least one city";
-        if (values.status && values.status !== "waitlisted") {
-          const total = value.reduce((sum, city) => sum + (percentages[city] || 0), 0);
-          const roundedTotal = Math.round(total * 100) / 100;
-          if (Math.abs(roundedTotal - 100) > 0.01) {
-            return `Percentages must add up to 100% (currently ${roundedTotal.toFixed(2)}%)`;
-          }
-        }
-        return null;
       },
       latitude: requiredNumber("Latitude"),
       longitude: requiredNumber("Longitude"),
       state: (value) => (value ? null : "Select a state"),
       city: (value) => (value.trim() ? null : "City is required"),
-      addressLine: (value) =>
-        value.trim() ? null : "Address Line is required",
+      addressLine: (value) => (value.trim() ? null : "Address Line is required"),
       zipCode: requiredInteger("Zip Code"),
       country: (value) => (value ? null : "Select a country"),
       status: (value) => (value ? null : "Select a status"),
@@ -208,23 +154,24 @@ export default function AddPartnerForm({
     },
   });
 
+  const geocodeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => {
     const { addressLine, city, state, zipCode, country } = form.values;
     if (!addressLine || !city || !state || !zipCode) return;
 
-    const fullAddress = buildAddressString({
-      addressLine,
-      city,
-      state,
-      zipCode,
-      country,
-    });
+    if (geocodeTimer.current) clearTimeout(geocodeTimer.current);
+    geocodeTimer.current = setTimeout(() => {
+      const fullAddress = buildAddressString({ addressLine, city, state, zipCode, country });
+      fetchCoordsFromAddress(fullAddress).then((location) => {
+        if (!location) return;
+        form.setFieldValue("latitude", String(location.lat));
+        form.setFieldValue("longitude", String(location.lng));
+      });
+    }, 600);
 
-    fetchCoordsFromAddress(fullAddress).then((location) => {
-      if (!location) return;
-      form.setFieldValue("latitude", String(location.lat));
-      form.setFieldValue("longitude", String(location.lng));
-    });
+    return () => {
+      if (geocodeTimer.current) clearTimeout(geocodeTimer.current);
+    };
   }, [
     form.values.addressLine,
     form.values.city,
@@ -244,7 +191,6 @@ export default function AddPartnerForm({
       form.setFieldError("logoFile", "Only PNG or JPEG types are accepted");
       return;
     }
-
     form.setFieldValue("logoFile", file);
     form.clearFieldError("logoFile");
   };
@@ -253,37 +199,45 @@ export default function AddPartnerForm({
     setIsSubmitting(true);
     setSubmitWarning("");
 
-    // Check for duplicate partner name before submitting.
-    try {
-      const trimmedName = values.organization.trim();
-      const checkRes = await fetch(
-        `/api/partners?search=${encodeURIComponent(trimmedName)}`,
-      );
-      if (checkRes.ok) {
-        const checkData = await checkRes.json();
-        const duplicate = checkData.data?.find(
-          (p: { name: string }) =>
-            p.name.trim().toLowerCase() === trimmedName.toLowerCase(),
-        );
-        if (duplicate) {
-          const duplicateWarning = `The partner ${trimmedName} already exists.`;
-          form.setFieldError("organization", duplicateWarning);
-          setSubmitWarning(duplicateWarning);
-          setIsSubmitting(false);
-          return;
-        }
+    if (values.status !== "waitlisted") {
+      if (cityEntries.length === 0) {
+        setSubmitWarning("Please add at least one city.");
+        setIsSubmitting(false);
+        return;
       }
-    } catch {
-      // If the check fails, allow the submission to proceed.
+      const total = cityEntries.reduce((sum, e) => sum + e.percent, 0);
+      if (Math.abs(total - 100) > 0.01) {
+        setSubmitWarning(`City percentages must add up to 100% (currently ${total.toFixed(0)}%)`);
+        setIsSubmitting(false);
+        return;
+      }
     }
 
-    const cityPercentages = values.cities.map((city) => {
-      const raw = Number(percentages[city] ?? 0);
-      const normalized = Number.isFinite(raw)
-        ? Number((raw / 100).toFixed(4))
-        : 0;
-      return { city, percentage: normalized };
-    });
+    // // Check for duplicate partner name before submitting.
+    // try {
+    //   const trimmedName = values.organization.trim();
+    //   const checkRes = await fetch(`/api/partners?search=${encodeURIComponent(trimmedName)}`);
+    //   if (checkRes.ok) {
+    //     const checkData = await checkRes.json();
+    //     const duplicate = checkData.data?.find(
+    //       (p: { name: string }) => p.name.trim().toLowerCase() === trimmedName.toLowerCase(),
+    //     );
+    //     if (duplicate) {
+    //       const duplicateWarning = `The partner ${trimmedName} already exists.`;
+    //       form.setFieldError("organization", duplicateWarning);
+    //       setSubmitWarning(duplicateWarning);
+    //       setIsSubmitting(false);
+    //       return;
+    //     }
+    //   }
+    // } catch {
+    //   // If the check fails, allow the submission to proceed.
+    // }
+
+    const cityPercentages = cityEntries.map((e) => ({
+      city: e.city,
+      percentage: Number((e.percent / 100).toFixed(4)),
+    }));
 
     const partnerPayload = {
       name: values.organization,
@@ -309,22 +263,15 @@ export default function AddPartnerForm({
       }
 
       const response = await fetch("/api/partners", {
-        method: "PUT",
+        method: "POST",
         body: requestBody,
       });
 
       if (!response.ok) {
         const err = await response.json();
-        const warning =
-          typeof err?.error === "string"
-            ? err.error
-            : "Unable to submit partner.";
-        if (
-          response.status === 422 ||
-          warning === "Please check the entered cities."
-        ) {
+        const warning = typeof err?.error === "string" ? err.error : "Unable to submit partner.";
+        if (response.status === 422 || warning === "Please check the entered cities.") {
           const cityWarning = "Please check the entered cities.";
-          form.setFieldError("cities", cityWarning);
           setSubmitWarning(cityWarning);
           return;
         }
@@ -335,7 +282,7 @@ export default function AddPartnerForm({
 
       form.reset();
       form.setFieldValue("country", DEFAULT_COUNTRY);
-      setPercentages({});
+      setCityEntries([]);
       setSubmitWarning("");
       onClose();
 
@@ -382,16 +329,8 @@ export default function AddPartnerForm({
             >
               <Group gap="md" grow>
                 {[
-                  {
-                    value: "active",
-                    title: "Active",
-                    description: "Currently active",
-                  },
-                  {
-                    value: "waitlisted",
-                    title: "Waitlisted",
-                    description: "On the waitlist",
-                  },
+                  { value: "active", title: "Active", description: "Currently active" },
+                  { value: "waitlisted", title: "Waitlisted", description: "On the waitlist" },
                 ].map((option) => (
                   <Radio.Card
                     key={option.value}
@@ -452,96 +391,16 @@ export default function AddPartnerForm({
             />
           </Group>
 
-          <Group align="right" justify="space-between">
-            <Text c="#344054" fz={16} fw={600}>
-              Cities Served <span className="text-red-600">*</span>
-            </Text>
-            <TagsInput
-              placeholder={
-                isLoadingCities ? "Loading cities..." : "Select cities"
-              }
-              data={citiesAPI}
-              filter={({ options, search }) => {
-                const splittedSearch = search.toLowerCase().trim().split(" ");
-                return (options as ComboboxItem[]).filter((option) => {
-                  const words = option.label.toLowerCase().trim().split(" ");
-                  return splittedSearch.every((searchWord) =>
-                    words.some((word: string) => word.includes(searchWord)),
-                  );
-                });
-              }}
-              disabled={isLoadingCities}
-              key={form.key("cities")}
-              value={form.values.cities}
-              onChange={(values) => {
-                form.setFieldValue("cities", values);
-                setPercentages((prev) =>
-                  values.reduce(
-                    (acc, city) => {
-                      acc[city] = prev[city] ?? 0;
-                      return acc;
-                    },
-                    {} as Record<string, number>,
-                  ),
-                );
-              }}
-              error={form.errors.cities}
-              styles={{
-                input: form.errors.cities
-                  ? { borderColor: "var(--mantine-color-red-6)" }
-                  : undefined,
-              }}
-              size="md"
-              w={526}
-              radius="md"
-            />
-          </Group>
-
-          <Group w={526} ml="auto" justify="flex-end">
-            {form.values.cities.length > 0 &&
-              form.values.status !== "waitlisted" && (
-                <Table w="100%" striped highlightOnHover withTableBorder>
-                  <Table.Thead>
-                    <Table.Tr>
-                      <Table.Th>Cities</Table.Th>
-                      <Table.Th>Percentage</Table.Th>
-                    </Table.Tr>
-                  </Table.Thead>
-                  <Table.Tbody>
-                    {form.values.cities.map((city) => (
-                      <Table.Tr key={city}>
-                        <Table.Td>{city}</Table.Td>
-                        <Table.Td>
-                          <NumberInput
-                            placeholder="Enter %"
-                            min={0}
-                            max={100}
-                            suffix="%"
-                            value={percentages[city] || ""}
-                            onChange={(value) => {
-                              let result = 0;
-                              if (typeof value === "number") {
-                                result = value;
-                                const decimalPart = value
-                                  .toString()
-                                  .split(".")[1];
-                                if (decimalPart && decimalPart.length > 2) {
-                                  result = Math.round(value * 100) / 100;
-                                }
-                              }
-                              setPercentages((prev) => ({
-                                ...prev,
-                                [city]: result,
-                              }));
-                            }}
-                          />
-                        </Table.Td>
-                      </Table.Tr>
-                    ))}
-                  </Table.Tbody>
-                </Table>
-              )}
-          </Group>
+          {form.values.status !== "waitlisted" && (
+            <Group justify="space-between" align="flex-start">
+              <Text c="#344054" fz={16} fw={600}>
+                Cities Served <span className="text-red-600">*</span>
+              </Text>
+              <div style={{ width: 526 }}>
+                <CityPercentagesForm onChange={setCityEntries} />
+              </div>
+            </Group>
+          )}
 
           {form.values.status !== "waitlisted" && (
             <Group justify="space-between" align="flex-start">
@@ -589,7 +448,6 @@ export default function AddPartnerForm({
                 radius="md"
                 required
               />
-
               <SimpleGrid w={526} cols={2}>
                 <TextInput
                   placeholder="City"
@@ -615,9 +473,7 @@ export default function AddPartnerForm({
                   placeholder="Zip Code"
                   key={form.key("zipCode")}
                   value={form.values.zipCode}
-                  onChange={(event) =>
-                    form.setFieldValue("zipCode", event.currentTarget.value)
-                  }
+                  onChange={(event) => form.setFieldValue("zipCode", event.currentTarget.value)}
                   error={form.errors.zipCode}
                   size="md"
                   radius="md"
@@ -657,9 +513,7 @@ export default function AddPartnerForm({
                 placeholder="Longitude"
                 key={form.key("longitude")}
                 value={form.values.longitude}
-                onChange={(val) =>
-                  form.setFieldValue("longitude", String(val))
-                }
+                onChange={(val) => form.setFieldValue("longitude", String(val))}
                 error={form.errors.longitude}
                 size="md"
                 radius="md"
@@ -692,13 +546,13 @@ export default function AddPartnerForm({
             </Group>
           </Group>
 
-          {submitWarning ? (
+          {submitWarning && (
             <Group justify="flex-end" mt="xs">
               <Text c="red" size="sm">
                 {submitWarning}
               </Text>
             </Group>
-          ) : null}
+          )}
           <Group justify="flex-end" mt="md">
             <Button
               variant="outline"
@@ -709,7 +563,7 @@ export default function AddPartnerForm({
               onClick={() => {
                 form.reset();
                 form.setFieldValue("country", DEFAULT_COUNTRY);
-                setPercentages({});
+                setCityEntries([]);
                 onClose();
               }}
             >

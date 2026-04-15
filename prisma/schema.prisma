@@ -16,7 +16,7 @@ datasource db {
 model City {
   id             BigInt                    @id(map: "Regions_pkey") @default(autoincrement())
   createdAt      DateTime                  @default(now()) @map("created_at") @db.Timestamptz(6)
-  name           String?
+  name           String
   centroid       Unsupported("geometry")?
   boundary       Unsupported("geography")?
   distributions  Distribution[]
