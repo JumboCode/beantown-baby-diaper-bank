@@ -16,3 +16,8 @@ skills-lock.json
 .agents/skills
 tsconfig.tsbuild
 tsconfig.tsbuildinfo
+
+supabase/*
+
+AGENTS.md
+CLAUDE.md
