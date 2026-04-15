@@ -520,30 +520,6 @@ export default function EditPartnerForm({ partner, onClose }: EditPartnerFormPro
           </Group>
 
           <Group justify="space-between" align="flex-start">
-            <Text fw={600} c="#344054">
-              Coords <span className="text-red-600">*</span>
-            </Text>
-            <div className="gap-4 flex">
-              <NumberInput
-                placeholder="Latitude"
-                {...form.getInputProps("latitude")}
-                size="md"
-                className="min-w-83"
-                radius="md"
-                hideControls
-              />
-              <NumberInput
-                placeholder="Longitude"
-                {...form.getInputProps("longitude")}
-                size="md"
-                className="min-w-83"
-                radius="md"
-                hideControls
-              />
-            </div>
-          </Group>
-
-          <Group justify="space-between" align="flex-start">
             <Text c="#344054" fw={600}>
               Logo
             </Text>

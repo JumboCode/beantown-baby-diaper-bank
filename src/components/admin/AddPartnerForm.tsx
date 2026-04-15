@@ -498,34 +498,6 @@ export default function AddPartnerForm({
 
           <Group justify="space-between" align="flex-start">
             <Text c="#344054" fz={16} fw={600}>
-              Coords <span className="text-red-600">*</span>
-            </Text>
-            <Group w={526} grow>
-              <NumberInput
-                placeholder="Latitude"
-                key={form.key("latitude")}
-                value={form.values.latitude}
-                onChange={(val) => form.setFieldValue("latitude", String(val))}
-                error={form.errors.latitude}
-                size="md"
-                radius="md"
-                hideControls
-              />
-              <NumberInput
-                placeholder="Longitude"
-                key={form.key("longitude")}
-                value={form.values.longitude}
-                onChange={(val) => form.setFieldValue("longitude", String(val))}
-                error={form.errors.longitude}
-                size="md"
-                radius="md"
-                hideControls
-              />
-            </Group>
-          </Group>
-
-          <Group justify="space-between" align="flex-start">
-            <Text c="#344054" fz={16} fw={600}>
               Logo
             </Text>
             <div style={{ width: 526 }}>
