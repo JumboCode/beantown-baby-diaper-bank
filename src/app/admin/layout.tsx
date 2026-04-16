@@ -4,12 +4,16 @@ import Link from "next/link";
 
 export default async function Layout({ children }: { children: React.ReactNode }) {
   return (
-    <AppShell padding="md" header={{ height: 64 }}>
-      <AppShellHeader px="md">
+    <AppShell padding="md" header={{ height: 116 }}>
+      <AppShellHeader px={64}>
         <Group h="100%" justify="space-between">
-          <Text fw={700} c="blue.9">
-            Beantown Baby Admin
-          </Text>
+          <Link href="/admin" style={{ textDecoration: "none" }}>
+            <img
+              src="/beantown-logo.svg"
+              alt="Beantown Baby Diaper Bank"
+              style={{ height: 100, width: "auto" }}
+            />
+          </Link>
 
           <Group gap="xs">
             <Link href="/">View Map</Link>
