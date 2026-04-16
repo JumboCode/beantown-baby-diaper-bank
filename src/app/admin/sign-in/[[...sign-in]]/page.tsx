@@ -17,13 +17,17 @@ import {
   Checkbox,
   Group,
   Anchor,
+  Modal,
 } from "@mantine/core";
+import { useDisclosure } from "@mantine/hooks";
 
 export default function SignInPage() {
   const { isLoaded, signIn, setActive } = useSignIn();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
+  const [errorOpened, { open: openError, close: closeError }] = useDisclosure(false);
   const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -42,7 +46,9 @@ export default function SignInPage() {
         router.push("/admin");
       }
     } catch (err: any) {
-      console.error("Sign-in error:", err.errors[0].message);
+      const message = err?.errors?.[0]?.message ?? "Incorrect email or password. Please try again.";
+      setErrorMessage(message);
+      openError();
     } finally {
       setLoading(false);
     }
@@ -114,6 +120,22 @@ export default function SignInPage() {
           </form>
         </Paper>
       </Container>
+      <Modal
+        opened={errorOpened}
+        onClose={closeError}
+        title={
+          <Text fw={700} size="lg" c="red.7">
+            Sign-in Failed
+          </Text>
+        }
+        centered
+        radius="md"
+      >
+        <Text size="sm">{errorMessage}</Text>
+        <Button fullWidth mt="md" color="blue.7" radius="md" onClick={closeError}>
+          Try Again
+        </Button>
+      </Modal>
     </Center>
   );
 }
