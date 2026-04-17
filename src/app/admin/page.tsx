@@ -2,31 +2,40 @@
 
 import PartnerTable from "@/components/admin/PartnerTable";
 import {
+  Badge,
   Card,
+  Center,
+  CloseButton,
   Group,
   Stack,
   Text,
+  ThemeIcon,
   Title,
   Tabs,
   Button,
-  Drawer,
   Popover,
   Checkbox,
   TextInput,
+  ScrollArea,
 } from "@mantine/core";
+import { IconAlertCircle } from "@tabler/icons-react";
 import { MonthPickerInput } from "@mantine/dates";
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, Suspense } from "react";
 import Image from "next/image";
 import { Poppins } from "next/font/google";
+import { useRouter, useSearchParams } from "next/navigation";
 import DistributionsTable from "@/components/admin/DistributionsTable";
+import DistributionsSkeleton from "@/components/admin/DistributionsSkeleton";
+import PartnerTableSkeleton from "@/components/admin/PartnerTableSkeleton";
 import { useDisclosure } from "@mantine/hooks";
 import UploadNewData from "../../components/admin/UploadDistributionDataForm";
 import AddPartnerForm from "@/components/admin/AddPartnerForm";
 import classes from "./AdminPage.module.css";
 import { status } from "@/generated/prisma/enums";
-import { Search } from "lucide-react";
+import { Calendar, Search, SlidersHorizontal } from "lucide-react";
 
 import DeleteDistributionDataButton from "@/components/admin/DeleteDistributionDataButton";
+import { useUser } from "@clerk/nextjs";
 
 const poppins = Poppins({
   subsets: ["latin"],
@@ -61,6 +70,7 @@ type Partner = {
   address: string | null;
   coords?: { lat: number; lng: number };
   logoUrl: string | null;
+  num_babies: number | null;
 };
 
 type PartnerRegionWithCity = {
@@ -105,45 +115,95 @@ const statuses = (Object.values(status) as string[]).map((s) => ({
   label: s.charAt(0).toUpperCase() + s.slice(1),
 }));
 
-export default function Page() {
-  const hashToTab = (hash: string): string => (hash === "#diapers" ? "Diapers" : "Partners");
+const parseMonth = (str: string | null) => {
+  if (!str) return null;
+  const parts = str.split("-");
+  if (parts.length === 2) {
+    return new Date(Number(parts[0]), Number(parts[1]) - 1, 1);
+  }
+  return null;
+};
 
-  const [activeTab, setActiveTab] = useState<string | null>("Partners");
+const formatMonth = (d: Date | null) => {
+  if (!d) return null;
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  return `${y}-${m}`;
+};
 
-  useEffect(() => {
-    setActiveTab(hashToTab(window.location.hash));
+function AdminPageContent() {
+  const { user } = useUser();
+  const router = useRouter();
+  const searchParams = useSearchParams();
 
-    const onHashChange = () => setActiveTab(hashToTab(window.location.hash));
-    window.addEventListener("hashchange", onHashChange);
-    return () => window.removeEventListener("hashchange", onHashChange);
-  }, []);
+  const activeTab = searchParams.get("tab") ?? "Partners";
 
   const handleTabChange = (tab: string | null) => {
-    setActiveTab(tab);
-    if (tab) window.location.hash = tab.toLowerCase();
+    if (tab) {
+      const params = new URLSearchParams(searchParams.toString());
+      params.set("tab", tab);
+      router.replace(`?${params.toString()}`, { scroll: false });
+    }
   };
-  const [isDrawerOpen, drawerControls] = useDisclosure(false);
-  const [isPartnerFilterOpen, setPartnerFilterOpen] = useState(false);
+  const [isFilterOpen, setFilterOpen] = useState(false);
 
-  const [error, setError] = useState<string>();
+  const [distributionsError, setDistributionsError] = useState<string>();
+  const [partnersError, setPartnersError] = useState<string>();
 
-  // partner filtering
-  const [partnerYearSince, setPartnerYearSince] = useState<string | null>("All");
-  const [partnerStatus, setPartnerStatus] = useState<string[]>([]);
+  // URL-driven filtering state
+  const partnerYearSince = searchParams.get("since") || "All";
+  const partnerStatusQuery = searchParams.get("status");
+  const partnerStatus = useMemo(
+    () => (partnerStatusQuery ? partnerStatusQuery.split(",") : []),
+    [partnerStatusQuery],
+  );
+
+  const dateRange = useMemo<[Date | null, Date | null]>(
+    () => [parseMonth(searchParams.get("from")), parseMonth(searchParams.get("to"))],
+    [searchParams],
+  );
 
   const [partners, setPartners] = useState<Partner[]>([]);
   const [filteredPartners, setFilteredPartners] = useState<Partner[]>([]);
   const [percentages, setPercentages] = useState<PartnerRegionWithCity[]>([]);
-  const [partnerSearch, setPartnerSearch] = useState("");
-  const [isLoadingPartners, setIsLoadingPartners] = useState(false);
 
-  const [valueFrom, setValueFrom] = useState<string | null>(null);
-  const [valueTo, setValueTo] = useState<string | null>(null);
+  const [partnerSearch, setPartnerSearch] = useState(searchParams.get("search") || "");
+  const [isLoadingPartners, setIsLoadingPartners] = useState(true);
 
   const [distributions, setDistributions] = useState<Distribution[]>([]);
   const [filteredDistributions, setFilteredDistributions] = useState<Distribution[]>([]);
+  const [isLoadingDistributions, setIsLoadingDistributions] = useState(true);
+
+  // Sync back input to URL
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      const params = new URLSearchParams(searchParams.toString());
+      if (partnerSearch) params.set("search", partnerSearch);
+      else params.delete("search");
+      if (params.toString() !== searchParams.toString()) {
+        router.replace(`?${params.toString()}`, { scroll: false });
+      }
+    }, 300);
+    return () => clearTimeout(handler);
+  }, [partnerSearch, searchParams, router]);
+
+  useEffect(() => {
+    const urlSearch = searchParams.get("search") || "";
+    if (urlSearch !== partnerSearch) {
+      setPartnerSearch(urlSearch);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams]);
+
+  const setParamAndReplace = (key: string, value: string | null) => {
+    const params = new URLSearchParams(searchParams.toString());
+    if (value) params.set(key, value);
+    else params.delete(key);
+    router.replace(`?${params.toString()}`, { scroll: false });
+  };
 
   const fetchDistributions = useCallback(async () => {
+    setIsLoadingDistributions(true);
     try {
       const response = await fetch("/api/distributions");
       if (!response.ok) throw new Error("Failed to fetch distributions");
@@ -153,7 +213,9 @@ export default function Page() {
       setDistributions(distributions);
       setFilteredDistributions(distributions);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "An error occurred");
+      setDistributionsError(err instanceof Error ? err.message : "An error occurred");
+    } finally {
+      setIsLoadingDistributions(false);
     }
   }, []);
 
@@ -166,7 +228,7 @@ export default function Page() {
       setPartners(result.data);
       setFilteredPartners(result.data);
     } catch (err) {
-      console.error("Error fetching data:", err);
+      setPartnersError(err instanceof Error ? err.message : "An error occurred");
     } finally {
       setIsLoadingPartners(false);
     }
@@ -255,7 +317,7 @@ export default function Page() {
     fetchTimelineData();
   }, [fetchTimelineData]);
 
-  const filterDistributions = () => {
+  useEffect(() => {
     let filtered = [...distributions];
 
     const distToYYYYMM = (dist: Distribution) => {
@@ -265,17 +327,16 @@ export default function Page() {
       return `${dist.year}-${monthNum}`;
     };
 
-    if (valueFrom) {
-      filtered = filtered.filter((dist) => distToYYYYMM(dist) >= valueFrom);
+    if (dateRange[0]) {
+      const fromStr = formatMonth(dateRange[0]);
+      filtered = filtered.filter((dist) => distToYYYYMM(dist) >= fromStr!);
     }
-
-    if (valueTo) {
-      filtered = filtered.filter((dist) => distToYYYYMM(dist) <= valueTo);
+    if (dateRange[1]) {
+      const toStr = formatMonth(dateRange[1]);
+      filtered = filtered.filter((dist) => distToYYYYMM(dist) <= toStr!);
     }
-
     setFilteredDistributions(filtered);
-    drawerControls.close();
-  };
+  }, [distributions, dateRange]);
 
   const partnerCitiesMap = useMemo(() => {
     const map = new Map<number, string[]>();
@@ -347,18 +408,46 @@ export default function Page() {
   };
 
   const handleFilterClick = () => {
-    if (activeTab === "Partners") {
-      setPartnerFilterOpen((open) => !open);
-    } else {
-      drawerControls.open();
-    }
+    setFilterOpen((open) => !open);
   };
 
   const resetDistributionFilters = () => {
-    setValueFrom(null);
-    setValueTo(null);
-    setFilteredDistributions(distributions);
-    drawerControls.close();
+    const params = new URLSearchParams(searchParams.toString());
+    params.delete("from");
+    params.delete("to");
+    router.replace(`?${params.toString()}`, { scroll: false });
+  };
+
+  const resetPartnerFilters = () => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.delete("since");
+    params.delete("status");
+    params.delete("search");
+    router.replace(`?${params.toString()}`, { scroll: false });
+    setPartnerSearch("");
+  };
+
+  const activePartnerFilterCount =
+    (partnerYearSince !== "All" ? 1 : 0) + partnerStatus.length + (partnerSearch ? 1 : 0);
+
+  const activeDistributionFilterCount = (dateRange[0] ? 1 : 0) + (dateRange[1] ? 1 : 0);
+
+  const handleDateRangeChange = (val: any) => {
+    const params = new URLSearchParams(searchParams.toString());
+    const fromDate: Date | null =
+      val[0] instanceof Date ? val[0] : val[0] ? new Date(val[0]) : null;
+    const toDate: Date | null = val[1] instanceof Date ? val[1] : val[1] ? new Date(val[1]) : null;
+
+    const fromStr = formatMonth(fromDate);
+    const toStr = formatMonth(toDate);
+
+    if (fromStr) params.set("from", fromStr);
+    else params.delete("from");
+
+    if (toStr) params.set("to", toStr);
+    else params.delete("to");
+
+    router.replace(`?${params.toString()}`, { scroll: false });
   };
 
   const renderTabIcon = (tab: "Partners" | "Diapers") => {
@@ -375,216 +464,328 @@ export default function Page() {
     return <Image src={icon} alt={`${tab.toLowerCase()} tab icon`} height={16} width={16} />;
   };
 
+  const onDataUpload = async () => {
+    await fetchDistributions();
+    await fetchTimelineData();
+  };
+
+  const handleCloseUploadDataForm = () => {
+    fetchTimelineData();
+    closeUploadDataForm();
+  };
+
   return (
-    <Stack mx="72px" my="44px" gap="lg" className={poppins.className}>
-      {error ? (
-        <Text c="red">Error: {error}</Text>
-      ) : (
-        <>
-          <Card p={0}>
-            <Group justify="space-between" align="flex-start">
-              <Stack gap={4}>
-                <Title order={2}>Hello, Rachel 👋</Title>
-                <Group gap="xl" wrap="wrap">
-                  <Text size="sm" c="dimmed">
-                    Last data uploaded: {lastUploaded ?? "N/A"}
-                  </Text>
-                </Group>
-              </Stack>
-              <UploadNewData
-                opened={openedUploadDataForm}
-                onClose={closeUploadDataForm}
-                onUploaded={fetchDistributions}
-                uploadedMonths={uploadedMonths}
-              />
-              <AddPartnerForm opened={openedPartnerForm} onClose={closePartnerForm} />
-              <Button
-                onClick={handleAddClick}
-                variant="default"
-                radius="md"
-                c="#053766"
-                rightSection={
-                  <Image src="/admin_view/add_icon.svg" alt="add button" width={16} height={16} />
-                }
-              >
-                {isPartnersTab ? "Add A New Partner" : "Upload New Data"}
-              </Button>
+    <Stack gap="lg" className={poppins.className} p="md">
+      <Card p={0}>
+        <Group justify="space-between" align="flex-start">
+          <Stack gap={4}>
+            <Title order={2}>
+              Hello, {user && user.firstName} {user && "👋"}
+            </Title>
+            <Group gap="xl" wrap="wrap">
+              <Text size="sm" c="dimmed">
+                Last data uploaded: {lastUploaded}
+              </Text>
             </Group>
-          </Card>
-
-          <Tabs
-            classNames={classes}
-            value={activeTab}
-            onChange={handleTabChange}
-            styles={{
-              list: {
-                "--tabs-border-color": "transparent",
-              },
-            }}
+          </Stack>
+          <UploadNewData
+            opened={openedUploadDataForm}
+            onClose={handleCloseUploadDataForm}
+            onUploaded={onDataUpload}
+            uploadedMonths={uploadedMonths}
+          />
+          <AddPartnerForm opened={openedPartnerForm} onClose={closePartnerForm} />
+          <Button
+            onClick={handleAddClick}
+            variant="default"
+            radius="md"
+            c="#053766"
+            rightSection={
+              <Image src="/admin_view/add_icon.svg" alt="add button" width={16} height={16} />
+            }
           >
-            <Tabs.List mb="16px">
-              <Tabs.Tab value="Partners" leftSection={renderTabIcon("Partners")}>
-                Partners
-              </Tabs.Tab>
-              <Tabs.Tab value="Diapers" leftSection={renderTabIcon("Diapers")}>
-                Diapers
-              </Tabs.Tab>
+            {isPartnersTab ? "Add A New Partner" : "Upload New Data"}
+          </Button>
+        </Group>
+      </Card>
+      <Tabs
+        classNames={classes}
+        value={activeTab}
+        onChange={handleTabChange}
+        styles={{
+          list: {
+            "--tabs-border-color": "transparent",
+          },
+        }}
+      >
+        <Tabs.List mb="16px">
+          <Tabs.Tab value="Partners" leftSection={renderTabIcon("Partners")}>
+            Partners
+          </Tabs.Tab>
+          <Tabs.Tab value="Diapers" leftSection={renderTabIcon("Diapers")}>
+            Diapers
+          </Tabs.Tab>
 
-              <Drawer
-                opened={isDrawerOpen}
-                onClose={drawerControls.close}
-                position="right"
-                size="sm"
-              >
-                <h1 className="font-bold text-gray-900">Filter Data</h1>
-                <p className="text-gray-500 mb-6">
-                  Filter the diaper distribution data by date range.
-                </p>
-                <h2 className="text-gray-900 font-semibold mb-2">Date Range</h2>
-                <h3 className="text-gray-900 font-medium">From</h3>
-                <MonthPickerInput
-                  placeholder="Pick date"
-                  value={valueFrom ? `${valueFrom}-01` : null}
-                  onChange={(val) =>
-                    setValueFrom(val ? (val as unknown as string).slice(0, 7) : null)
+          <Group ml="auto" align="flex-start" gap="sm">
+            {!isPartnersTab && (
+              <DeleteDistributionDataButton
+                onSuccess={async () => {
+                  await fetchDistributions();
+                  await fetchTimelineData();
+                }}
+              />
+            )}
+            {isPartnersTab && (
+              <TextInput
+                placeholder="Search by name or cities..."
+                value={partnerSearch}
+                onChange={(e) => setPartnerSearch(e.currentTarget.value)}
+                radius="md"
+                w={240}
+                leftSection={<Search size={16} />}
+                rightSection={
+                  partnerSearch ? (
+                    <CloseButton size="sm" onClick={() => setPartnerSearch("")} />
+                  ) : null
+                }
+              />
+            )}
+
+            <Popover
+              opened={isFilterOpen}
+              onChange={setFilterOpen}
+              position="bottom-end"
+              width={300}
+              shadow="md"
+            >
+              <Popover.Target>
+                <Button
+                  variant="default"
+                  radius={5}
+                  onClick={handleFilterClick}
+                  rightSection={
+                    <Image src="/admin_view/filter.svg" alt="filter icon" width={16} height={16} />
                   }
-                  className="mb-3"
-                />
-
-                <h3 className="text-gray-900 font-medium">To</h3>
-                <MonthPickerInput
-                  placeholder="Pick date"
-                  value={valueTo ? `${valueTo}-01` : null}
-                  onChange={(val) =>
-                    setValueTo(val ? (val as unknown as string).slice(0, 7) : null)
-                  }
-                  className="mb-6"
-                />
-                <div className="flex justify-between">
-                  <Button
-                    onClick={resetDistributionFilters}
-                    variant="outline"
-                    color="#053766"
-                    radius="md"
-                  >
-                    Clear Filters
-                  </Button>
-                  <Button
-                    onClick={filterDistributions}
-                    variant="filled"
-                    color="#053766"
-                    radius="md"
-                  >
-                    Apply Filters
-                  </Button>
-                </div>
-              </Drawer>
-
-              <Group ml="auto" align="flex-start" gap="sm">
-                {!isPartnersTab && <DeleteDistributionDataButton onSuccess={fetchDistributions} />}
-                {isPartnersTab && (
-                  <TextInput
-                    placeholder="Search by name or cities..."
-                    value={partnerSearch}
-                    onChange={(e) => setPartnerSearch(e.currentTarget.value)}
-                    radius="md"
-                    w={240}
-                    leftSection={<Search size={16} />}
-                  />
-                )}
-
-                <Popover
-                  opened={isPartnerFilterOpen && isPartnersTab}
-                  onChange={setPartnerFilterOpen}
-                  position="bottom-end"
-                  width={300}
-                  shadow="md"
+                  className="mb-2"
                 >
-                  <Popover.Target>
-                    <Button
-                      variant="default"
-                      radius={5}
-                      onClick={handleFilterClick}
-                      rightSection={
-                        <Image
-                          src="/admin_view/filter.svg"
-                          alt="filter icon"
-                          width={16}
-                          height={16}
-                        />
-                      }
-                      className="mb-2"
-                    >
-                      Filter
-                    </Button>
-                  </Popover.Target>
-                  <Popover.Dropdown>
-                    <Stack gap="xs">
-                      <h3>
-                        <strong>Year Since</strong>
-                      </h3>
-                      <Group gap={7} mb="xs">
-                        {years.map((year) => {
-                          const isSelected = partnerYearSince === year;
+                  Filter
+                  {(isPartnersTab ? activePartnerFilterCount : activeDistributionFilterCount) >
+                    0 && (
+                    <Badge size="xs" circle color="#053766" ml={6}>
+                      {isPartnersTab ? activePartnerFilterCount : activeDistributionFilterCount}
+                    </Badge>
+                  )}
+                </Button>
+              </Popover.Target>
+              <Popover.Dropdown>
+                {isPartnersTab ? (
+                  <Stack gap="xs">
+                    <Group justify="space-between" align="center">
+                      <Text fw={600}>Year Since</Text>
+                      {activePartnerFilterCount > 0 && (
+                        <Button
+                          onClick={resetPartnerFilters}
+                          variant="subtle"
+                          color="#053766"
+                          radius="md"
+                          size="xs"
+                          p={0}
+                        >
+                          Clear Filters
+                        </Button>
+                      )}
+                    </Group>
+                    <Group gap={7} mb="xs">
+                      {years.map((year) => {
+                        const isSelected = partnerYearSince === year;
 
-                          return (
-                            <Button
-                              key={year}
-                              variant={isSelected ? "filled" : "outline"}
-                              color="#053766"
-                              radius="md"
-                              onClick={() => setPartnerYearSince(year)}
-                            >
-                              {year}
-                            </Button>
-                          );
-                        })}
-                      </Group>
-                      <h3>
-                        <strong>Status</strong>
-                      </h3>
-                      <Stack>
-                        {statuses.map((status) => (
-                          <Checkbox
-                            key={status.value}
-                            label={status.label}
-                            checked={partnerStatus.includes(status.value)}
+                        return (
+                          <Button
+                            key={year}
+                            variant={isSelected ? "filled" : "outline"}
                             color="#053766"
-                            onChange={(e) => {
-                              const checked = e.currentTarget.checked;
-
-                              setPartnerStatus((prev) =>
-                                checked
-                                  ? [...prev, status.value]
-                                  : prev.filter((s) => s !== status.value),
-                              );
-                            }}
-                          />
-                        ))}
-                      </Stack>
+                            radius="md"
+                            onClick={() =>
+                              setParamAndReplace("since", year === "All" ? null : year)
+                            }
+                          >
+                            {year}
+                          </Button>
+                        );
+                      })}
+                    </Group>
+                    <Text fw={600}>Status</Text>
+                    <Stack>
+                      {statuses.map((statusItem) => (
+                        <Checkbox
+                          key={statusItem.value}
+                          label={statusItem.label}
+                          checked={partnerStatus.includes(statusItem.value)}
+                          color="#053766"
+                          onChange={(e) => {
+                            const checked = e.currentTarget.checked;
+                            const current = new Set(partnerStatus);
+                            if (checked) current.add(statusItem.value);
+                            else current.delete(statusItem.value);
+                            const arr = Array.from(current);
+                            setParamAndReplace("status", arr.length > 0 ? arr.join(",") : null);
+                          }}
+                        />
+                      ))}
                     </Stack>
-                  </Popover.Dropdown>
-                </Popover>
-              </Group>
-            </Tabs.List>
+                  </Stack>
+                ) : (
+                  <Stack gap="xs">
+                    <h3>
+                      <strong>Date Range</strong>
+                    </h3>
+                    <MonthPickerInput
+                      defaultLevel="decade"
+                      leftSection={<Calendar size={18} />}
+                      type="range"
+                      placeholder="Pick dates range"
+                      value={dateRange}
+                      onChange={handleDateRangeChange}
+                      popoverProps={{ withinPortal: false }}
+                    />
+                    <Group justify="flex-end" mt="sm">
+                      <Button
+                        onClick={resetDistributionFilters}
+                        variant="outline"
+                        color="#053766"
+                        radius="md"
+                        size="xs"
+                      >
+                        Clear Filters
+                      </Button>
+                    </Group>
+                  </Stack>
+                )}
+              </Popover.Dropdown>
+            </Popover>
+          </Group>
+        </Tabs.List>
 
-            <Tabs.Panel value="Partners">
-              <PartnerTable
-                partners={filteredPartners}
-                refreshTable={refreshTable}
-                percentages={percentages}
-                loading={isLoadingPartners}
-              />
-            </Tabs.Panel>
-            <Tabs.Panel value="Diapers">
-              <DistributionsTable
-                distributionData={filteredDistributions}
-                onDataUpdated={fetchDistributions}
-              />
-            </Tabs.Panel>
-          </Tabs>
-        </>
-      )}
+        <Tabs.Panel value="Partners">
+          {partnersError ? (
+            <Center py={80}>
+              <Stack align="center" ta="center" gap="md">
+                <ThemeIcon size={80} radius="xl" variant="light" color="red">
+                  <IconAlertCircle size={48} stroke={1.5} />
+                </ThemeIcon>
+                <Title order={3} c="red.7">
+                  Failed to load partners
+                </Title>
+                <Text c="dimmed" maw={400}>
+                  {partnersError}
+                </Text>
+                <Button
+                  variant="default"
+                  radius="md"
+                  c="#053766"
+                  onClick={() => {
+                    setPartnersError(undefined);
+                    void fetchPartners();
+                  }}
+                >
+                  Try again
+                </Button>
+              </Stack>
+            </Center>
+          ) : isLoadingPartners ? (
+            <PartnerTableSkeleton />
+          ) : filteredPartners.length === 0 ? (
+            <Center py={80}>
+              <Stack align="center" ta="center" gap="md">
+                <ThemeIcon size={80} radius="xl" variant="light" color="blue">
+                  <SlidersHorizontal size={40} />
+                </ThemeIcon>
+                <Title order={3} c="dimmed">
+                  No partners match your filters
+                </Title>
+                <Text c="dimmed" maw={360}>
+                  Try adjusting your search or filter criteria.
+                </Text>
+                <Button variant="outline" color="#053766" radius="md" onClick={resetPartnerFilters}>
+                  Clear Filters
+                </Button>
+              </Stack>
+            </Center>
+          ) : (
+            <PartnerTable
+              partners={filteredPartners}
+              refreshTable={refreshTable}
+              percentages={percentages}
+              loading={false}
+            />
+          )}
+        </Tabs.Panel>
+        <Tabs.Panel value="Diapers">
+          {isLoadingDistributions ? (
+            <DistributionsSkeleton />
+          ) : distributionsError ? (
+            <Center py={80}>
+              <Stack align="center" ta="center" gap="md">
+                <ThemeIcon size={80} radius="xl" variant="light" color="red">
+                  <IconAlertCircle size={48} stroke={1.5} />
+                </ThemeIcon>
+                <Title order={3} c="red.7">
+                  Failed to load distributions
+                </Title>
+                <Text c="dimmed" maw={400}>
+                  {distributionsError}
+                </Text>
+                <Button
+                  variant="default"
+                  radius="md"
+                  c="#053766"
+                  onClick={() => {
+                    setDistributionsError(undefined);
+                    void fetchDistributions();
+                  }}
+                >
+                  Try again
+                </Button>
+              </Stack>
+            </Center>
+          ) : filteredDistributions.length === 0 && distributions.length > 0 ? (
+            <Center py={80}>
+              <Stack align="center" ta="center" gap="md">
+                <ThemeIcon size={80} radius="xl" variant="light" color="blue">
+                  <SlidersHorizontal size={40} />
+                </ThemeIcon>
+                <Title order={3} c="dimmed">
+                  No distributions match your filters
+                </Title>
+                <Text c="dimmed" maw={360}>
+                  Try adjusting the date range or clear the filters.
+                </Text>
+                <Button
+                  variant="outline"
+                  color="#053766"
+                  radius="md"
+                  onClick={resetDistributionFilters}
+                >
+                  Clear Filters
+                </Button>
+              </Stack>
+            </Center>
+          ) : (
+            <DistributionsTable
+              distributionData={filteredDistributions}
+              onDataUpdated={fetchDistributions}
+            />
+          )}
+        </Tabs.Panel>
+      </Tabs>
     </Stack>
+  );
+}
+
+export default function Page() {
+  return (
+    <Suspense>
+      <AdminPageContent />
+    </Suspense>
   );
 }

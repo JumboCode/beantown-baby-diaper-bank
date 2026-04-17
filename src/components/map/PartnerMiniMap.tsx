@@ -157,7 +157,7 @@ export function PartnerMiniMap({
           </MapContainer>
         ) : (
           <Center h="100%">
-            <Loader color="#51A3CC" size="sm" />
+            <Loader color="#003263" size="sm" />
           </Center>
         )}
       </div>

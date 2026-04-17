@@ -12,7 +12,7 @@ const normalizeDate = (dateString: string | null) => {
 
 async function getPartnerById(id: string) {
   "use cache";
-  cacheTag("cities");
+  cacheTag(`partner-${id}`);
   cacheLife("max");
 
   const partnerIncludeClause = {
@@ -55,7 +55,7 @@ async function getPartnerById(id: string) {
     status: partner.status,
     startPartner: partner.startPartner,
     endPartner: partner.endPartner,
-    number_babies_helped: Number(aggregate._sum.numberChildren),
+    number_babies_helped: partner.numBabies != null ? Number(partner.numBabies) : null,
     number_diapers: Number(aggregate._sum.numberDiapers),
     citiesServed: partner.partnerRegions.map((pr) => ({
       id: pr.city?.id,
@@ -110,7 +110,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       data: updateData,
     });
 
-    revalidateTag("cities", "max");
+    revalidateTag(`partner-${id}`, "max");
     return NextResponse.json({
       data: JSON.parse(stringifyWithBigInt(updatedPartner)),
     });

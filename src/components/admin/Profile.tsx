@@ -15,7 +15,7 @@ export default function Profile() {
     <>
       {isLoaded ? (
         <Group gap="xs" wrap="nowrap">
-          <UserButton afterSignOutUrl="/" />
+          <UserButton afterSignOutUrl="/admin/sign-in" />
           <Text size="xs" c="dimmed" tt="uppercase" fw={600}>
             {adminTypeLabel}
           </Text>

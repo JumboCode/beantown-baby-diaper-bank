@@ -8,23 +8,21 @@ import {
   Textarea,
   NumberInput,
   Radio,
-  FileInput,
   Select,
   Stack,
   LoadingOverlay,
   Box,
   SimpleGrid,
 } from "@mantine/core";
+import LogoDropzone from "./LogoDropzone";
 import { useForm } from "@mantine/form";
 import { MonthPickerInput } from "@mantine/dates";
 import { Partner } from "./PartnerTable";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { status } from "@/generated/prisma/enums";
-import OneTimeUpdateForm from "./OneTimeUpdateForm";
 import ContinuousUpdateForm from "./ContinuousUpdateForm";
 import type { CityPercentage } from "./CityPercentagesForm";
 import "@mantine/dates/styles.css";
-import { RiCalendarEventLine, RiLineChartLine } from "react-icons/ri";
 import { fetchCoordsFromAddress } from "@/lib/util";
 
 interface EditPartnerFormProps {
@@ -142,8 +140,6 @@ const requiredInput = (label: string) => (value: unknown) => {
   return /.+/.test(v) ? null : `${label} must be filled out`;
 };
 
-type UpdatePercentagesOptions = "one-time" | "continuous";
-
 const parseMonthDateForPicker = (rawDate: string | null | undefined): Date | null => {
   if (!rawDate) return null;
   const monthMatch = rawDate.match(/^(\d{4})-(\d{2})/);
@@ -177,9 +173,8 @@ const formatMonthDateForApi = (date: Date | string | null): string | null => {
 
 export default function EditPartnerForm({ partner, onClose }: EditPartnerFormProps) {
   const [loading, setLoading] = useState(false);
-  const [monthVerificationErrorMsg, setMonthVerificationErrorMsg] = useState<string | null>('');
   const [initialLogoUrl] = useState<string>(partner.logoUrl || "");
-  const [activePercentTab, setActivePercentTab] = useState<UpdatePercentagesOptions>("one-time");
+  const [cityEntries, setCityEntries] = useState<CityPercentage[]>([]);
   const [cityPercentages, setCityPercentages] = useState<
     {
       city: { id: number; name: string };
@@ -198,20 +193,20 @@ export default function EditPartnerForm({ partner, onClose }: EditPartnerFormPro
       });
   }, [partner.id]);
 
-  const initialCityPercentEntries: CityPercentage[] =
-    cityPercentages.length > 0
-      ? cityPercentages.map((entry, idx) => ({
-          id: `${entry.city.name}-${idx}`,
-          city: entry.city.name,
-          percent: Math.round((entry.percentage ?? 0) * 100),
-        }))
-      : [];
+  const initialCityPercentEntries = useMemo<CityPercentage[]>(
+    () =>
+      cityPercentages.map((entry, idx) => ({
+        id: `${entry.city.name}-${idx}`,
+        city: entry.city.name,
+        percent: Math.round((entry.percentage ?? 0) * 100),
+      })),
+    [cityPercentages],
+  );
 
   const addressFields = parseAddressFields(partner.address);
 
   const form = useForm({
     mode: "controlled",
-    validateInputOnChange: true,
     validateInputOnBlur: true,
     initialValues: {
       organization: partner.name,
@@ -228,7 +223,7 @@ export default function EditPartnerForm({ partner, onClose }: EditPartnerFormPro
       country: addressFields.country,
       logoFile: null as File | null,
       logoUrl: partner.logoUrl || "",
-      updatePercentagesType: "one-time" as UpdatePercentagesOptions,
+      numBabies: (partner.num_babies ?? "") as number | "",
     },
     validate: {
       organization: requiredInput("Name of Organization"),
@@ -252,23 +247,24 @@ export default function EditPartnerForm({ partner, onClose }: EditPartnerFormPro
     },
   });
 
+  const geocodeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => {
     const { addressLine, city, state, zipCode, country } = form.values;
     if (!addressLine || !city || !state || !zipCode) return;
 
-    const fullAddress = buildAddressString({
-      addressLine,
-      city,
-      state,
-      zipCode,
-      country,
-    });
+    if (geocodeTimer.current) clearTimeout(geocodeTimer.current);
+    geocodeTimer.current = setTimeout(() => {
+      const fullAddress = buildAddressString({ addressLine, city, state, zipCode, country });
+      fetchCoordsFromAddress(fullAddress).then((location) => {
+        if (!location) return;
+        form.setFieldValue("latitude", String(location.lat));
+        form.setFieldValue("longitude", String(location.lng));
+      });
+    }, 600);
 
-    fetchCoordsFromAddress(fullAddress).then((location) => {
-      if (!location) return;
-      form.setFieldValue("latitude", String(location.lat));
-      form.setFieldValue("longitude", String(location.lng));
-    });
+    return () => {
+      if (geocodeTimer.current) clearTimeout(geocodeTimer.current);
+    };
   }, [
     form.values.addressLine,
     form.values.city,
@@ -293,6 +289,7 @@ export default function EditPartnerForm({ partner, onClose }: EditPartnerFormPro
       },
       address: buildAddressString(values),
       logo: values.logoUrl,
+      num_babies: values.numBabies !== "" ? Number(values.numBabies) : null,
     };
 
     const logoAction = values.logoFile
@@ -318,6 +315,33 @@ export default function EditPartnerForm({ partner, onClose }: EditPartnerFormPro
         const err = await response.json();
         form.setFieldError("logoFile", err.error);
         return;
+      }
+
+      if (form.values.status !== "waitlisted" && cityEntries.length > 0) {
+        for (const entry of cityEntries) {
+          const cityRes = await fetch("/api/cities", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ name: entry.city }),
+          });
+          if (!cityRes.ok && cityRes.status !== 409) {
+            const err = await cityRes.json().catch(() => ({}));
+            form.setFieldError("organization", err.error || "Failed to save city percentages.");
+            return;
+          }
+        }
+
+        await fetch("/api/partners/percentages", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            partnerId: partner.id,
+            percentages: cityEntries.map((e) => ({
+              city: e.city,
+              percentage: e.percent / 100,
+            })),
+          }),
+        });
       }
 
       if (typeof window !== "undefined") {
@@ -496,131 +520,60 @@ export default function EditPartnerForm({ partner, onClose }: EditPartnerFormPro
           </Group>
 
           <Group justify="space-between" align="flex-start">
-            <Text fw={600} c="#344054">
-              Coords <span className="text-red-600">*</span>
+            <Text c="#344054" fw={600}>
+              Logo
             </Text>
-            <div className="gap-4 flex">
-              <NumberInput
-                placeholder="Latitude"
-                {...form.getInputProps("latitude")}
-                size="md"
-                className="min-w-83"
-                radius="md"
-                hideControls
-              />
-              <NumberInput
-                placeholder="Longitude"
-                {...form.getInputProps("longitude")}
-                size="md"
-                className="min-w-83"
-                radius="md"
-                hideControls
+            <div className="min-w-170 w-full max-w-[600px]">
+              <LogoDropzone
+                file={form.values.logoFile}
+                existingUrl={initialLogoUrl || undefined}
+                onChange={(file) => {
+                  form.setFieldValue("logoFile", file);
+                  if (!file) {
+                    form.clearFieldError("logoFile");
+                  }
+                }}
+                error={
+                  form.errors.logoFile
+                    ? String(form.errors.logoFile)
+                    : form.errors.logoUrl
+                      ? String(form.errors.logoUrl)
+                      : undefined
+                }
               />
             </div>
           </Group>
 
           <Group justify="space-between" align="flex-start">
-            <Text c="#344054" fw={600}>
-              Logo file or link
+            <Text fw={600} c="#344054" className="w-40">
+              Number of Babies Helped Per Month
             </Text>
-            <div className="gap-4 flex">
-              <FileInput
-                accept="image/png,image/jpeg"
-                placeholder="Upload image file"
-                radius="md"
-                clearable
-                onChange={(file) => {
-                  form.setFieldValue("logoFile", file);
-                  if (!file) {
-                    form.setFieldValue("logoUrl", "");
-                    form.clearFieldError("logoFile");
-                  }
-                }}
-                error={form.errors.logoFile || form.errors.logoUrl}
-                className="min-w-83"
-              />
-              <TextInput
-                placeholder="Logo URL"
-                key={form.key("logoUrl")}
-                {...form.getInputProps("logoUrl")}
-                radius="md"
-                className="min-w-83"
-              />
-            </div>
+            <NumberInput
+              placeholder="Approximate Number of Babies Helped Per Month (optional)"
+              min={0}
+              value={form.values.numBabies}
+              onChange={(val) =>
+                form.setFieldValue("numBabies", typeof val === "number" ? val : "")
+              }
+              size="md"
+              className="min-w-170 w-full max-w-[600px]"
+              radius="md"
+              hideControls
+            />
           </Group>
 
           {form.values.status !== "waitlisted" && (
             <Group justify="space-between" align="flex-start">
-              <Stack gap={4} className="w-40">
-                <Text fw={600} c="#344054">
-                  Update Logic
-                </Text>
-                <Text size="xs" c="dimmed">Choose how to update percentages</Text>
-              </Stack>
-
-              <Stack className="min-w-170 w-full max-w-[600px]" gap="xl">
-                <Radio.Group
-                  value={activePercentTab}
-                  onChange={(val) => {
-                    setActivePercentTab(val as UpdatePercentagesOptions);
-                    form.setFieldValue("updatePercentagesType", val as UpdatePercentagesOptions);
-                  }}
-                >
-                  <SimpleGrid cols={2} spacing="md">
-                    {[
-                      {
-                        value: "continuous",
-                        title: "Continuous Update",
-                        description: "Updates ongoing percentages (All future months)",
-                        icon: <RiLineChartLine size={22} />,
-                      },
-                      {
-                        value: "one-time",
-                        title: "One-Time Update",
-                        description: "Updates a specific historical month only",
-                        icon: <RiCalendarEventLine size={22} />,
-                      },
-                    ].map((option) => (
-                      <Radio.Card
-                        key={option.value}
-                        value={option.value}
-                        radius="lg"
-                        p="md"
-                        className={`border transition shadow-sm hover:shadow-md ${
-                          activePercentTab === option.value 
-                            ? "border-blue-600 bg-blue-50" 
-                            : "border-gray-200"
-                        }`}
-                      >
-                        <Group wrap="nowrap" align="flex-start">
-                          <Radio.Indicator />
-                          <Stack gap={4}>
-                            <Group gap="xs">
-                              {option.icon}
-                              <Text fw={700}>{option.title}</Text>
-                            </Group>
-                            <Text size="xs" c="dimmed">
-                              {option.description}
-                            </Text>
-                          </Stack>
-                        </Group>
-                      </Radio.Card>
-                    ))}
-                  </SimpleGrid>
-                </Radio.Group>
-                {activePercentTab === "one-time" ? (
-                  <OneTimeUpdateForm
-                    initialCityPercentages={initialCityPercentEntries}
-                    partnerId={`${partner.id}`}
-                    dataNotExistErrorMsg={monthVerificationErrorMsg}
-                  />
-                ) : (
-                  <ContinuousUpdateForm
-                    partnerId={`${partner.id}`}
-                    initialCityPercentages={initialCityPercentEntries}
-                  />
-                )}
-              </Stack>
+              <Text fw={600} c="#344054" className="w-40">
+                Update Percentages
+              </Text>
+              <div className="min-w-170 w-full max-w-[600px]">
+                <ContinuousUpdateForm
+                  partnerId={`${partner.id}`}
+                  initialCityPercentages={initialCityPercentEntries}
+                  onEntriesChange={setCityEntries}
+                />
+              </div>
             </Group>
           )}
 

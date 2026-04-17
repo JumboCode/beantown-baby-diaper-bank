@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { cacheLife, cacheTag } from "next/cache";
 
 const MONTH_ORDER: Record<string, number> = {
   January: 0,
@@ -23,10 +22,6 @@ type TimelineMonthRow = {
 };
 
 async function getTimelineData() {
-  "use cache";
-  cacheTag("cities");
-  cacheLife("max");
-
   const yearly_data = await prisma.yearlyData.findMany({
     distinct: ["year"],
     orderBy: {

@@ -1,7 +1,22 @@
 "use client";
 
 import { useState } from "react";
-import { Table, Modal, Pill, Mark, Text, Button, Loader, Center } from "@mantine/core";
+import {
+  Accordion,
+  Modal,
+  Mark,
+  Text,
+  Loader,
+  Center,
+  ScrollArea,
+  Group,
+  Badge,
+  ActionIcon,
+  Grid,
+  Card,
+  Tooltip,
+  Stack,
+} from "@mantine/core";
 import EditPartnerForm from "./EditPartnerForm";
 import { useDisclosure } from "@mantine/hooks";
 import { status } from "@/generated/prisma/enums";
@@ -17,6 +32,7 @@ export type Partner = {
   address: string | null;
   coords?: { lat: number; lng: number };
   logoUrl: string | null;
+  num_babies: number | null;
 };
 
 function formatDate(rawDate: string) {
@@ -65,138 +81,321 @@ export default function PartnerTable({
 
   return (
     <>
-      <div className="bg-white rounded-xl shadow-lg overflow-hidden flex flex-col">
-        <div className="overflow-x-auto flex-1">
-          <Table highlightOnHover withTableBorder tabularNums>
-            <Table.Thead bg="#F9FAFB" c="#667085">
-              <Table.Tr>
-                <Table.Th fw="normal" fz="14px" w="15%">
-                  Partner Name
-                </Table.Th>
-                <Table.Th fw="normal" fz="14px">
-                  Description
-                </Table.Th>
-                <Table.Th fw="normal" fz="14px">
-                  Since
-                </Table.Th>
-                <Table.Th fw="normal" fz="14px">
-                  Cities Served
-                </Table.Th>
-                <Table.Th fw="normal" fz="14px">
-                  Status
-                </Table.Th>
-                <Table.Th fw="normal" fz="14px">
-                  Address
-                </Table.Th>
-                <Table.Th></Table.Th>
-              </Table.Tr>
-            </Table.Thead>
-            <Table.Tbody>
-              {loading ? (
-                <Table.Tr>
-                  <Table.Td colSpan={7}>
-                    <Center py="lg">
-                      <Loader type="bars" />
-                    </Center>
-                  </Table.Td>
-                </Table.Tr>
-              ) : (
-                partners.map((partner) => (
-                  <Table.Tr key={partner.id}>
-                    <Table.Td>
-                      <div className="flex items-center gap-3">
-                        {partner.logoUrl && (
-                          <img
-                            src={partner.logoUrl}
-                            alt={partner.name}
-                            className="h-10 w-10 object-contain"
-                            onError={(e) => {
-                              e.currentTarget.style.display = "none";
-                            }}
-                          />
-                        )}
-                        <Text c="#101828" fw={600} fz={"16px"}>
-                          {partner.name}
-                        </Text>
-                      </div>
-                    </Table.Td>
-                    <Table.Td className="text-sm text-gray-600">
-                      {partner.description || (
-                        <span className="text-gray-400 italic">No description</span>
-                      )}
-                    </Table.Td>
-                    <Table.Td className="text-sm text-gray-600">
-                      {partner.start_partner ? (
-                        formatDate(partner.start_partner)
-                      ) : (
-                        <span className="text-gray-400 italic">N/A</span>
-                      )}
-                    </Table.Td>
-                    <Table.Td>
-                      <span key={partner.id} className="text-sm text-gray-600">
-                        <span>
-                          {/* percentages for waitlisted orgs are optional and
-                          won't be displayed for now */}
-                          {percentages
-                            .filter((percentage) => Number(percentage.partnerId) === partner.id)
-                            .map((p) =>
-                              partner.status !== "waitlisted"
-                                ? `${p.city.name} (${formatPercentDisplay(p.percentage)})`
-                                : p.city.name,
-                            )
-                            .join(", ")}
-                        </span>
-                      </span>
-                    </Table.Td>
-                    <Table.Td align="center">
-                      <Pill
-                        // Fix me: colors
-                        ta="center"
-                        px="sm"
-                        radius="sm"
-                        fw="bold"
-                        c="white"
-                        fz="10px"
-                        bg={
-                          partner.status === "active"
-                            ? "#558D22"
-                            : partner.status === "inactive"
-                              ? "#E2383F"
-                              : "#98A2B3"
-                        }
-                      >
-                        {partner.status.charAt(0).toUpperCase() + partner.status.slice(1)}
-                      </Pill>
-                    </Table.Td>
-                    <Table.Td className="text-sm text-gray-600">
-                      {partner.address || <span className="text-gray-400 italic">N/A</span>}
-                    </Table.Td>
-
-                    <Table.Td style={{ verticalAlign: "middle" }}>
-                      <Button
-                        variant="transparent"
-                        // size="14px"
-                        fz="14px"
-                        c="#14215A"
-                        onClick={() => {
-                          setPartner(partner);
-                          open();
-                        }}
-                        w="100px"
-                        rightSection={
-                          <Image src="/admin_view/pen.svg" alt="Edit" width={20} height={20} />
-                        }
-                      >
-                        Edit
-                      </Button>
-                    </Table.Td>
-                  </Table.Tr>
-                ))
-              )}
-            </Table.Tbody>
-          </Table>
+      <Card
+        withBorder
+        radius="md"
+        p={0}
+        shadow="sm"
+        className="flex flex-col flex-1 border-gray-200 bg-white overflow-hidden"
+      >
+        <div className="bg-gray-50 border-b border-gray-200 px-6 py-3 top-0 z-10 sticky">
+          <Grid columns={13} gutter="sm" align="center">
+            <Grid.Col span={4}>
+              <Text
+                size="xs"
+                fw={600}
+                c="#080b3c"
+                tt="uppercase"
+                style={{ letterSpacing: "0.05em" }}
+              >
+                Partner Name
+              </Text>
+            </Grid.Col>
+            <Grid.Col span={2}>
+              <Text
+                size="xs"
+                fw={600}
+                c="#080b3c"
+                tt="uppercase"
+                style={{ letterSpacing: "0.05em" }}
+              >
+                Since
+              </Text>
+            </Grid.Col>
+            <Grid.Col span={2}>
+              <Text
+                size="xs"
+                fw={600}
+                c="#080b3c"
+                tt="uppercase"
+                style={{ letterSpacing: "0.05em" }}
+              >
+                Cities Served
+              </Text>
+            </Grid.Col>
+            <Grid.Col span={2}>
+              <Text
+                size="xs"
+                fw={600}
+                c="#080b3c"
+                tt="uppercase"
+                style={{ letterSpacing: "0.05em" }}
+              >
+                Babies / Month
+              </Text>
+            </Grid.Col>
+            <Grid.Col span={2} ta="center">
+              <Text
+                size="xs"
+                fw={600}
+                c="#080b3c"
+                tt="uppercase"
+                style={{ letterSpacing: "0.05em" }}
+              >
+                Status
+              </Text>
+            </Grid.Col>
+            <Grid.Col span={1} />
+          </Grid>
         </div>
-      </div>
+        <ScrollArea h="68vh">
+          {loading ? (
+            <Center py="xl">
+              <Loader type="bars" />
+            </Center>
+          ) : (
+            <Accordion
+              variant="filled"
+              radius={0}
+              chevronPosition="right"
+              order={3}
+              classNames={{
+                item: "border-b border-gray-200 last:border-b-0 bg-white overflow-hidden",
+                control: "hover:bg-gray-50/50 transition-colors duration-200 px-6 py-4",
+                panel: "bg-gray-50/50 border-t border-gray-100",
+                // content: "p-6",
+              }}
+            >
+              {[...partners]
+                .sort((a, b) => {
+                  if (a.status === "active" && b.status !== "active") return -1;
+                  if (a.status !== "active" && b.status === "active") return 1;
+                  const dateA = a.start_partner ? new Date(a.start_partner).getTime() : Infinity;
+                  const dateB = b.start_partner ? new Date(b.start_partner).getTime() : Infinity;
+                  return dateA - dateB;
+                })
+                .map((partner) => {
+                  const partnerPercentages = percentages
+                    .filter((percentage) => Number(percentage.partnerId) === partner.id)
+                    .sort((a, b) => (b.percentage ?? 0) - (a.percentage ?? 0));
+
+                  return (
+                    <Accordion.Item key={partner.id} value={partner.id.toString()}>
+                      <div style={{ position: "relative" }}>
+                        <Accordion.Control>
+                          <Grid columns={13} gutter="sm" align="center">
+                            <Grid.Col span={4}>
+                              <div className="flex items-center gap-3">
+                                {partner.logoUrl ? (
+                                  <div className="h-10 w-10 flex-shrink-0 rounded-full overflow-hidden border border-gray-200 flex items-center justify-center bg-white shadow-sm">
+                                    <img
+                                      src={partner.logoUrl}
+                                      alt={partner.name}
+                                      className="h-full w-full object-contain p-1"
+                                      onError={(e) => {
+                                        e.currentTarget.parentElement!.style.display = "none";
+                                      }}
+                                    />
+                                  </div>
+                                ) : (
+                                  <div className="h-10 w-10 flex-shrink-0 rounded-full border border-gray-200 bg-linear-to-br from-gray-50 to-gray-100 flex items-center justify-center text-gray-500 text-sm font-bold shadow-sm">
+                                    {partner.name.charAt(0).toUpperCase()}
+                                  </div>
+                                )}
+                                <Text c="#000000" fw={600} fz="sm" truncate>
+                                  {partner.name}
+                                </Text>
+                              </div>
+                            </Grid.Col>
+
+                            <Grid.Col span={2}>
+                              <Text size="sm" c="#4B5563">
+                                {partner.start_partner ? (
+                                  formatDate(partner.start_partner)
+                                ) : (
+                                  <Text size="sm" c="#D1D5DB" fs="italic" span>
+                                    —
+                                  </Text>
+                                )}
+                              </Text>
+                            </Grid.Col>
+
+                            <Grid.Col span={2}>
+                              <Text size="sm" c="#4B5563" fw={500}>
+                                {partnerPercentages.length}{" "}
+                                <Text span c="#9CA3AF" fw={400}>
+                                  {partnerPercentages.length === 1 ? "city" : "cities"}
+                                </Text>
+                              </Text>
+                            </Grid.Col>
+
+                            <Grid.Col span={2}>
+                              <Text size="sm" c="#4B5563" fw={500}>
+                                {partner.num_babies != null ? (
+                                  partner.num_babies.toLocaleString()
+                                ) : (
+                                  <Text size="sm" c="#D1D5DB" fs="italic" span>
+                                    —
+                                  </Text>
+                                )}
+                              </Text>
+                            </Grid.Col>
+
+                            <Grid.Col span={2}>
+                              <Group justify="center">
+                                <Badge
+                                  color={
+                                    partner.status === "active"
+                                      ? "#080d46"
+                                      : partner.status === "inactive"
+                                        ? "#f0151f"
+                                        : "gray"
+                                  }
+                                  variant="light"
+                                  size="md"
+                                  radius="xl"
+                                  fw={600}
+                                  styles={{ label: { textTransform: "capitalize" } }}
+                                >
+                                  {partner.status}
+                                </Badge>
+                              </Group>
+                            </Grid.Col>
+
+                            <Grid.Col span={1}>
+                              <Group justify="flex-end">
+                                <div style={{ width: 28, height: 28 }} />
+                              </Group>
+                            </Grid.Col>
+                          </Grid>
+                        </Accordion.Control>
+
+                        <div
+                          style={{
+                            position: "absolute",
+                            right: "52px",
+                            top: 0,
+                            bottom: 0,
+                            display: "flex",
+                            alignItems: "center",
+                            zIndex: 2,
+                          }}
+                        >
+                          <Tooltip label="Edit Partner" withArrow closeDelay={0}>
+                            <ActionIcon
+                              variant="subtle"
+                              size="lg"
+                              color="gray"
+                              radius="xl"
+                              className="hover:bg-gray-100"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setPartner(partner);
+                                open();
+                              }}
+                            >
+                              <Image
+                                src="/admin_view/pen.svg"
+                                alt="Edit"
+                                width={18}
+                                height={18}
+                                style={{ opacity: 0.6 }}
+                              />
+                            </ActionIcon>
+                          </Tooltip>
+                        </div>
+                      </div>
+
+                      <Accordion.Panel>
+                        <Grid gutter="xl">
+                          <Grid.Col span={12} pb={0}>
+                            <Stack gap={6}>
+                              <Text
+                                size="xs"
+                                fw={600}
+                                c="#080b3c"
+                                tt="uppercase"
+                                style={{ letterSpacing: "0.05em" }}
+                              >
+                                Description
+                              </Text>
+                              <Text size="sm" c="#374151" lh={1.6}>
+                                {partner.description || (
+                                  <Text size="sm" c="dimmed" fs="italic" span>
+                                    No description provided.
+                                  </Text>
+                                )}
+                              </Text>
+                            </Stack>
+                          </Grid.Col>
+
+                          <Grid.Col span={4}>
+                            <Stack gap={6}>
+                              <Text
+                                size="xs"
+                                fw={600}
+                                c="#080b3c"
+                                tt="uppercase"
+                                style={{ letterSpacing: "0.05em" }}
+                              >
+                                Address
+                              </Text>
+                              <Text size="sm" c="#374151" lh={1.6}>
+                                {partner.address || (
+                                  <Text size="sm" c="dimmed" fs="italic" span>
+                                    No address provided.
+                                  </Text>
+                                )}
+                              </Text>
+                            </Stack>
+                          </Grid.Col>
+
+                          <Grid.Col span={8}>
+                            <Stack gap={6}>
+                              <Text
+                                size="xs"
+                                fw={600}
+                                c="#080b3c"
+                                tt="uppercase"
+                                style={{ letterSpacing: "0.05em" }}
+                              >
+                                Cities Served ({partnerPercentages.length})
+                              </Text>
+                              <Group gap="xs">
+                                {partnerPercentages.length > 0 ? (
+                                  partnerPercentages.map((p) => (
+                                    <Badge
+                                      key={p.cityId}
+                                      variant="outline"
+                                      color="#080d46"
+                                      radius="md"
+                                      fw={500}
+                                      tt="none"
+                                      size="md"
+                                      className="border-gray-200 bg-white"
+                                    >
+                                      {partner.status !== "waitlisted" && p.percentage != null
+                                        ? `${p.city.name} · ${formatPercentDisplay(p.percentage)}`
+                                        : p.city.name}
+                                    </Badge>
+                                  ))
+                                ) : (
+                                  <Text size="sm" fs="italic" c="dimmed">
+                                    None
+                                  </Text>
+                                )}
+                              </Group>
+                            </Stack>
+                          </Grid.Col>
+                        </Grid>
+                      </Accordion.Panel>
+                    </Accordion.Item>
+                  );
+                })}
+            </Accordion>
+          )}
+        </ScrollArea>
+      </Card>
 
       {partner && (
         <Modal
