@@ -1,6 +1,7 @@
 import Papa from "papaparse";
 import { month, Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
+import { allocateLargestRemainder } from "@/lib/server/distribution-update";
 
 type ParsedPartnerRow = {
   partnerName: string;
@@ -138,24 +139,36 @@ export async function processDistributionUpload(input: {
         `Invalid numeric values for partner "${row.partnerName}" in uploaded CSV.`,
       );
     }
-
+    
+    const roundedTotalDiapers = Math.round(totalDiapers);
     monthlyRows.push({
       id: crypto.randomUUID(),
       partnerId: partner.id,
       year: targetYear,
       month: targetMonth,
-      numDiapers: BigInt(Math.round(totalDiapers)),
+      numDiapers: BigInt(roundedTotalDiapers),
     });
 
-    for (const partnerRegion of partner.partnerRegions) {
-      const percentage = partnerRegion.percentage ?? 0;
+    const normalizedPartnerRegions = [...partner.partnerRegions]
+      .sort((a, b) => Number(a.cityId - b.cityId))
+      .map((partnerRegion) => ({
+        cityId: partnerRegion.cityId,
+        percentage: partnerRegion.percentage ?? 0,
+      }));
+
+    const diaperArr = allocateLargestRemainder(
+      roundedTotalDiapers,
+      normalizedPartnerRegions.map((partnerRegion) => partnerRegion.percentage),
+    );
+
+    for (const [idx, partnerRegion] of normalizedPartnerRegions.entries()) {
       distributionRows.push({
         partnerId: partner.id,
         cityId: partnerRegion.cityId,
         year: targetYear,
         month: targetMonth,
-        percentage,
-        numberDiapers: BigInt(Math.round(totalDiapers * percentage)),
+        percentage: partnerRegion.percentage,
+        numberDiapers: BigInt(diaperArr[idx]),
       });
     }
   }
