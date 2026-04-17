@@ -6,7 +6,7 @@ import Link from "next/link";
 export default async function Layout({ children }: { children: React.ReactNode }) {
   return (
     <ClerkProvider>
-      <AppShell padding="md" header={{ height: 64 }}>
+      <AppShell header={{ height: 64 }}>
         <AppShellHeader px="md">
           <Group h="100%" justify="space-between">
             <Text fw={700} c="blue.9">
