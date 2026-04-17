@@ -1,7 +1,9 @@
 import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { month, Prisma as PrismaTypes } from "@/generated/prisma/client";
-import { cacheLife, cacheTag } from "next/cache";
+import { cacheLife, cacheTag, revalidateTag } from "next/cache";
+import { fetchCityGeoDataFromNominatim } from "@/lib/server/city";
+import { capitalize } from "lodash";
 
 async function getCities(cityName: string | null, month: string | null, year: string | null) {
   "use cache";
@@ -170,4 +172,68 @@ export async function GET(request: NextRequest) {
   const data = await getCities(cityName, month, year);
 
   return Response.json({ data });
+}
+
+/**
+ * Creates a new city. Expects a JSON body with a "name" field. Will fetch the city's centroid and boundary from Nominatim and store them in the database.
+ * @param request
+ * @returns
+ */
+export async function POST(request: NextRequest) {
+  const body = await request.json();
+  const name: string = capitalize(body?.name?.trim());
+
+  if (!name) {
+    return Response.json({ error: "name is required" }, { status: 400 });
+  }
+
+  // 1. Check if it already exists
+  const existing = await prisma.city.findFirst({
+    where: { name: { equals: name, mode: "insensitive" } },
+  });
+  if (existing) {
+    return Response.json({ error: "City already exists" }, { status: 409 });
+  }
+
+  // 2. Fetch centroid + boundary from Nominatim
+  let geo: Awaited<ReturnType<typeof fetchCityGeoDataFromNominatim>>;
+  try {
+    geo = await fetchCityGeoDataFromNominatim(name);
+  } catch (error: unknown) {
+    const message =
+      error instanceof Error && error.message
+        ? error.message
+        : "An unexpected error occurred while looking up the city.";
+    const status =
+      error instanceof Error && typeof error.cause === "number" ? Number(error.cause) : 502;
+    return Response.json({ error: message }, { status });
+  }
+
+  // 3. Insert the city row, then set geometry columns via raw SQL
+  let city: { id: bigint; name: string };
+  try {
+    city = await prisma.$transaction(async (tx) => {
+      const newCity = await tx.city.create({ data: { name } });
+
+      await tx.$executeRaw`
+         UPDATE "Cities"
+         SET
+           "centroid" = ST_SetSRID(ST_GeomFromGeoJSON(${geo.centroidGeoJson}), 4326),
+           "boundary" = ST_SetSRID(ST_GeomFromGeoJSON(${geo.boundaryGeoJson}), 4326)::geography
+         WHERE id = ${newCity.id}
+       `;
+
+      return newCity;
+    });
+  } catch (error: unknown) {
+    console.error("Error creating city:", error);
+    return Response.json(
+      { error: "An unexpected error occurred while creating the city." },
+      { status: 500 },
+    );
+  }
+
+  revalidateTag("cities", "max");
+
+  return Response.json({ data: { id: Number(city.id), name: city.name } }, { status: 201 });
 }

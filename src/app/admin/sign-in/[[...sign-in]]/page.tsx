@@ -1,7 +1,7 @@
 "use client";
 
-import { useSignIn } from "@clerk/nextjs";
-import { useState } from "react";
+import { useSignIn, useAuth } from "@clerk/nextjs";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import {
@@ -14,23 +14,30 @@ import {
   Stack,
   Center,
   Text,
-  Checkbox,
-  Group,
-  Anchor,
+  Loader,
 } from "@mantine/core";
 
 export default function SignInPage() {
   const { isLoaded, signIn, setActive } = useSignIn();
+  const { isLoaded: isAuthLoaded, isSignedIn } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
   const router = useRouter();
+
+  useEffect(() => {
+    if (isAuthLoaded && isSignedIn) {
+      router.push("/admin");
+    }
+  }, [isAuthLoaded, isSignedIn, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!isLoaded) return;
 
     setLoading(true);
+    setErrorMessage("");
     try {
       const result = await signIn.create({
         identifier: email,
@@ -42,11 +49,31 @@ export default function SignInPage() {
         router.push("/admin");
       }
     } catch (err: any) {
-      console.error("Sign-in error:", err.errors[0].message);
+      const message = err?.errors?.[0]?.message ?? "Incorrect email or password. Please try again.";
+      setErrorMessage(message);
     } finally {
       setLoading(false);
     }
   };
+
+  if (!isLoaded || !isAuthLoaded) {
+    return (
+      <Center style={{ height: "100vh", backgroundColor: "#f8f9fa" }}>
+        <Loader color="#003263" size="md" />
+      </Center>
+    );
+  }
+
+  if (isSignedIn) {
+    return (
+      <Center style={{ height: "100vh", backgroundColor: "#f8f9fa" }}>
+        <Stack align="center">
+          <Loader color="#003263" size="md" />
+          <Text c="dimmed" size="sm">You are already signed in. Redirecting...</Text>
+        </Stack>
+      </Center>
+    );
+  }
 
   return (
     <Center style={{ height: "100vh", backgroundColor: "#f8f9fa" }}>
@@ -64,10 +91,10 @@ export default function SignInPage() {
         <Paper withBorder shadow="sm" p={40} radius="lg">
           <Stack align="center" gap={4} mb="xl">
             <Title order={2} fw={700}>
-              Welcome !
+              Welcome!
             </Title>
             <Text c="dimmed" size="sm">
-              Please enter your details.
+              Sign in to your account
             </Text>
           </Stack>
 
@@ -81,6 +108,7 @@ export default function SignInPage() {
                 onChange={(e) => setEmail(e.target.value)}
                 radius="md"
                 size="md"
+                error={errorMessage ? true : false}
               />
               <PasswordInput
                 label="Password"
@@ -90,20 +118,20 @@ export default function SignInPage() {
                 onChange={(e) => setPassword(e.target.value)}
                 radius="md"
                 size="md"
+                error={errorMessage ? true : false}
               />
 
-              <Group justify="space-between" mt="xs">
-                <Checkbox label="Remember me" size="sm" />
-                <Anchor href="#" size="sm" fw={600} c="blue.7">
-                  Forgot password?
-                </Anchor>
-              </Group>
+              {errorMessage && (
+                <Text c="red" size="sm" ta="center">
+                  {errorMessage}
+                </Text>
+              )}
 
               <Button
                 type="submit"
                 fullWidth
                 loading={loading}
-                color="blue.3"
+                color="#003263"
                 radius="md"
                 size="md"
                 mt="md"
