@@ -1,11 +1,12 @@
 import type { Metadata, Viewport } from "next";
 import { Suspense } from "react";
 import { Poppins } from "next/font/google";
-import { createTheme, MantineProvider, Skeleton, type MantineColorsTuple } from "@mantine/core";
+import { createTheme, MantineProvider, type MantineColorsTuple } from "@mantine/core";
 import { ModalsProvider } from "@mantine/modals";
 import "@mantine/core/styles.css";
 import "./globals.css";
 import "leaflet/dist/leaflet.css";
+import { ClerkProvider } from "@clerk/nextjs";
 
 const poppins = Poppins({
   subsets: ["latin"],
@@ -71,11 +72,13 @@ export default function RootLayout({
   return (
     <html lang="en" className={poppins.variable}>
       <body>
-        <MantineProvider theme={theme}>
-          <ModalsProvider>
-            <Suspense fallback={<Skeleton />}>{children}</Suspense>
-          </ModalsProvider>
-        </MantineProvider>
+        <Suspense fallback={<div></div>}>
+          <ClerkProvider afterSignOutUrl="/sign-in">
+            <MantineProvider theme={theme}>
+              <ModalsProvider>{children}</ModalsProvider>
+            </MantineProvider>
+          </ClerkProvider>
+        </Suspense>
       </body>
     </html>
   );
