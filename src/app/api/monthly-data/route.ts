@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
 import { month, Prisma } from "@/generated/prisma/client";
+import { allocateLargestRemainder } from "@/lib/server/distribution-update";
 
 const MONTH_NAMES = [
   "January",
@@ -247,6 +248,7 @@ export async function PUT(request: Request) {
         orderBy: { id: "asc" },
       });
 
+      // selects all the cities that are included under (pId, year, month) combo
       const distributionSeedRows =
         existingDistributions.length > 0
           ? existingDistributions.map((dist) => ({
@@ -261,6 +263,17 @@ export async function PUT(request: Request) {
               },
               orderBy: { cityId: "asc" },
             });
+      const normalizedSeedRows = distributionSeedRows.map((row) => ({
+        cityId: row.cityId,
+        percentage: row.percentage ?? 0,
+      }));
+      const diapersArr =
+        nextNumDiapers === null
+          ? null
+          : allocateLargestRemainder(
+              Number(nextNumDiapers),
+              normalizedSeedRows.map((row) => row.percentage),
+            );
 
       if (existingDistributions.length > 0) {
         await tx.distribution.deleteMany({
@@ -272,9 +285,9 @@ export async function PUT(request: Request) {
         });
       }
 
-      if (distributionSeedRows.length > 0) {
+      if (normalizedSeedRows.length > 0) {
         await tx.distribution.createMany({
-          data: distributionSeedRows.map((row) => ({
+          data: normalizedSeedRows.map((row, idx) => ({
             partnerId,
             cityId: row.cityId,
             year: body.year,
@@ -283,14 +296,12 @@ export async function PUT(request: Request) {
             numberDiapers:
               nextNumDiapers === null
                 ? null
-                : BigInt(
-                    Math.round(Number(nextNumDiapers) * (row.percentage ?? 0)),
-                  ),
+                : BigInt(diapersArr![idx]),
             numberChildren:
               nextNumBabies === null
                 ? null
                 : BigInt(
-                    Math.round(Number(nextNumBabies) * (row.percentage ?? 0)),
+                    Math.round(Number(nextNumBabies) * row.percentage),
                   ),
           })),
         });
