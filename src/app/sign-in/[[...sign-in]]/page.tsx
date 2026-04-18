@@ -69,32 +69,34 @@ export default function SignInPage() {
       <Center style={{ height: "100vh", backgroundColor: "#f8f9fa" }}>
         <Stack align="center">
           <Loader color="#003263" size="md" />
-          <Text c="dimmed" size="sm">You are already signed in. Redirecting...</Text>
+          <Text c="dimmed" size="sm">
+            You are already signed in. Redirecting...
+          </Text>
         </Stack>
       </Center>
     );
   }
 
   return (
-    <Center style={{ height: "100vh", backgroundColor: "#f8f9fa" }}>
-      <Container size={460} w="100%">
-        <Stack align="center" mb="xl">
-          <Image
-            src="/beantown-logo.svg"
-            alt="Beantown Baby Diaper Bank"
-            width={300}
-            height={80}
-            style={{ objectFit: "contain" }}
-          />
-        </Stack>
-
+    <Center bg="gray.0" h="100vh">
+      <Container size={550} w="100%">
         <Paper withBorder shadow="sm" p={40} radius="lg">
+          <Center mb="sm">
+            <Image
+              src="/beantown-logo.svg"
+              alt="Beantown Baby Diaper Bank"
+              width={300}
+              height={80}
+              priority
+              style={{ height: "auto" }}
+            />
+          </Center>
           <Stack align="center" gap={4} mb="xl">
-            <Title order={2} fw={700}>
-              Welcome!
+            <Title order={2} fw={700} ta="center">
+              Welcome to the Admin Portal!
             </Title>
             <Text c="dimmed" size="sm">
-              Sign in to your account
+              Sign in with your email and password
             </Text>
           </Stack>
 
