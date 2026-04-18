@@ -409,7 +409,6 @@ function AdminPageContent() {
   const handleFilterClick = () => {
     setFilterOpen((open) => !open);
   };
-  ``;
 
   const resetDistributionFilters = () => {
     const params = new URLSearchParams(searchParams.toString());
