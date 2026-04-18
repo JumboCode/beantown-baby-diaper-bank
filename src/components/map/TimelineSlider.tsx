@@ -143,7 +143,7 @@ export default function TimelineSlider({
         p={isMobile ? "xs" : "md"}
         style={{
           border: "1px solid #E4E7EC",
-          borderRadius: isMobile ? 12 : 18,
+          borderRadius: 12,
           background: "linear-gradient(180deg, #F4F7FC 0%, #FFFFFF 100%)",
           boxShadow: "inset 0 1px 0 rgba(255,255,255,0.9)",
         }}

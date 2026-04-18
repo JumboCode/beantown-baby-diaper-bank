@@ -96,11 +96,6 @@ const requiredNumber = (label: string) => (value: unknown) => {
   return /^-?\d+(\.\d+)?$/.test(v) ? null : `${label} must be a number`;
 };
 
-const requiredInteger = (label: string) => (value: unknown) => {
-  const v = (value === 0 ? "0" : (value ?? "")).toString().trim();
-  if (v === "") return `${label} is required`;
-  return /^\d+$/.test(v) ? null : `${label} must be a number`;
-};
 
 export default function AddPartnerForm({
   opened,
@@ -143,8 +138,10 @@ export default function AddPartnerForm({
       longitude: requiredNumber("Longitude"),
       state: (value) => (value ? null : "Select a state"),
       city: (value) => (value.trim() ? null : "City is required"),
-      addressLine: (value) => (value.trim() ? null : "Address Line is required"),
-      zipCode: requiredInteger("Zip Code"),
+      addressLine: (value) =>
+        value.trim() ? null : "Address Line is required",
+      zipCode: (value: string) =>
+        /^\d{5}(-\d{4})?$/.test(value.trim()) ? null : "Zip Code must be a valid US zip code (e.g. 02101)",
       country: (value) => (value ? null : "Select a country"),
       status: (value) => (value ? null : "Select a status"),
       logoUrl: (value, values) => {

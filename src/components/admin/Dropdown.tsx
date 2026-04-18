@@ -144,7 +144,7 @@ export function CollapsibleDropdown<T>({
               <button
                 type="button"
                 onClick={() => void fetchData()}
-                className="rounded-md border border-gray-300 px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-50"
+                className="rounded-lg border border-gray-300 px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-50"
               >
                 Retry
               </button>

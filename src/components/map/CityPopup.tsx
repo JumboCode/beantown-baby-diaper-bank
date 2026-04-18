@@ -99,7 +99,7 @@ export function CityPopup({ city, year, onPartnerSelect, onClose }: CityPopupPro
               style={{
                 background: "rgba(255,255,255,0.12)",
                 border: "1px solid rgba(255,255,255,0.2)",
-                borderRadius: 6,
+                borderRadius: 8,
                 cursor: "pointer",
                 padding: "3px 4px",
                 color: "rgba(255,255,255,0.8)",
@@ -123,7 +123,7 @@ export function CityPopup({ city, year, onPartnerSelect, onClose }: CityPopupPro
               background: "#edf1f8",
               border: "1px solid #c5d2e9",
               borderLeft: "4px solid #1B3668",
-              borderRadius: 10,
+              borderRadius: 12,
               padding: "10px 12px",
             }}
           >
@@ -145,7 +145,7 @@ export function CityPopup({ city, year, onPartnerSelect, onClose }: CityPopupPro
               background: "#e0e8f5",
               border: "1px solid #c5d2e9",
               borderLeft: "4px solid #2471A3",
-              borderRadius: 10,
+              borderRadius: 12,
               padding: "10px 12px",
             }}
           >
@@ -282,7 +282,7 @@ export function CityPopup({ city, year, onPartnerSelect, onClose }: CityPopupPro
           <Box
             style={{
               border: "1px solid #EAECF0",
-              borderRadius: 10,
+              borderRadius: 12,
               overflow: "hidden",
             }}
           >

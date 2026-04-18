@@ -158,7 +158,7 @@ function DropdownContent() {
               color: "#1B3668",
               fontSize: "14px",
               fontWeight: 900,
-              borderRadius: "8px",
+              borderRadius: 8,
               letterSpacing: "0.01em",
               boxShadow: "0 3px 10px rgba(245, 194, 0, 0.35)",
               "&:hover": { backgroundColor: "#DBA900" },
@@ -180,6 +180,7 @@ export default function MakeAnImpact() {
   const ref = useRef<HTMLDivElement>(null);
   const isMobile = useMediaQuery("(max-width: 768px)");
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [popoverOpen, setPopoverOpen] = useState(false);
 
   useEffect(() => {
     const el = ref.current;
@@ -193,10 +194,21 @@ export default function MakeAnImpact() {
     };
   }, []);
 
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setPopoverOpen(false);
+        setMobileOpen(false);
+      }
+    };
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, []);
+
   const triggerButton = (
     <Button
       leftSection={<IconHeartHandshake size={16} />}
-      onClick={isMobile ? () => setMobileOpen(true) : undefined}
+      onClick={isMobile ? () => setMobileOpen(true) : () => setPopoverOpen((o) => !o)}
       styles={{
         root: {
           color: "#1B3668",
@@ -226,7 +238,7 @@ export default function MakeAnImpact() {
             withCloseButton={false}
             centered
             padding={0}
-            radius="lg"
+            radius="xl"
             size="calc(100vw - 32px)"
             zIndex={10001}
             styles={{
@@ -246,6 +258,9 @@ export default function MakeAnImpact() {
           radius="lg"
           zIndex={10001}
           width={460}
+          opened={popoverOpen}
+          onChange={setPopoverOpen}
+          closeOnEscape
         >
           <Popover.Target>{triggerButton}</Popover.Target>
           <Popover.Dropdown p={0} style={{ overflow: "hidden" }}>
