@@ -67,19 +67,19 @@ export async function GET(req: Request) {
     }
   } else {
     if (month) {
-    // return rows for month if requested
-    where = {
-      month,
-      ...(year ? { year } : {}),
-    };
-  } else if (year) {
-    // if no month data, return year
-    where = {
-      year,
-      month: null,
-    };
+      // return rows for month if requested
+      where = {
+        month,
+        ...(year ? { year } : {}),
+      };
+    } else if (year) {
+      // if no month data, return year
+      where = {
+        year,
+        month: null,
+      };
+    }
   }
-}
 
   const distributionsQuery = {
     where,
@@ -198,8 +198,7 @@ export async function DELETE(req: Request) {
       ),
     ]);
 
-    revalidateTag("cities", "max");
-
+    // revalidateTag("cities");
     return NextResponse.json({ deletedCount: result.count });
   } catch (error) {
     console.error("Error deleting distributions:", error);
@@ -217,6 +216,7 @@ export async function PUT(req: Request) {
     };
 
     const partnerIdBig = BigInt(partnerId);
+    // The Math.round() here should be fine since numDiapers is int
     const numDiapersBig = numDiapers === null ? null : BigInt(Math.round(Number(numDiapers)));
 
     const result = await prisma.$transaction(async (tx) => {
@@ -233,6 +233,17 @@ export async function PUT(req: Request) {
               select: { cityId: true, percentage: true },
               orderBy: { cityId: "asc" },
             });
+      const normalizedSeedRows = seedRows.map((row) => ({
+        cityId: row.cityId,
+        percentage: row.percentage ?? 0,
+      }));
+      const diapersArr =
+        numDiapersBig === null
+          ? null
+          : allocateLargestRemainder(
+              Number(numDiapersBig),
+              normalizedSeedRows.map((row) => row.percentage),
+            );
 
       if (existingDistributions.length > 0) {
         await tx.distribution.deleteMany({
@@ -240,9 +251,9 @@ export async function PUT(req: Request) {
         });
       }
 
-      if (seedRows.length > 0) {
+      if (normalizedSeedRows.length > 0) {
         await tx.distribution.createMany({
-          data: seedRows.map((row) => ({
+          data: normalizedSeedRows.map((row, idx) => ({
             partnerId: partnerIdBig,
             cityId: row.cityId,
             year: String(year),
@@ -251,7 +262,7 @@ export async function PUT(req: Request) {
             numberDiapers:
               numDiapersBig === null
                 ? null
-                : BigInt(Math.round(Number(numDiapersBig) * (row.percentage ?? 0))),
+                : BigInt(diapersArr![idx]),
           })),
         });
       }

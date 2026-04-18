@@ -12,7 +12,7 @@ type Partner = {
   address: string | null;
   coords: { lat: number; lng: number };
   logoUrl: string | null;
-  number_babies_helped: number;
+  number_babies_helped: number | null;
   number_diapers: number;
 };
 
@@ -61,6 +61,8 @@ export default function PartnerInfo({
   const statCardStyle = {
     ...infoCardStyle,
     background: "#F8FAFC",
+    display: "flex",
+    flexDirection: "column" as const,
   };
 
   const statValueStyle = {
@@ -284,16 +286,22 @@ export default function PartnerInfo({
                 }}
               >
                 <div style={statCardStyle}>
-                  <div style={infoLabelStyle}>Babies Helped</div>
-                  <div style={statValueStyle}>
-                    {selectedPartner.number_babies_helped.toLocaleString()}
+                  <div style={{ ...infoLabelStyle, minHeight: "2.8rem" }}>Approx. Number of Babies Helped</div>
+                  <div style={{ paddingTop: "0.25rem" }}>
+                    <div style={statValueStyle}>
+                      {selectedPartner.number_babies_helped != null ? selectedPartner.number_babies_helped.toLocaleString() : "N/A"}
+                    </div>
+                    <div style={{ ...infoLabelStyle, marginTop: "0.2rem" }}>Per Month</div>
                   </div>
                 </div>
 
                 <div style={statCardStyle}>
-                  <div style={infoLabelStyle}>Diapers Provided</div>
-                  <div style={statValueStyle}>
-                    {selectedPartner.number_diapers.toLocaleString()}
+                  <div style={{ ...infoLabelStyle, minHeight: "2.8rem" }}>Total Number of Diapers Distributed</div>
+                  <div style={{ paddingTop: "0.25rem" }}>
+                    <div style={statValueStyle}>
+                      {selectedPartner.number_diapers.toLocaleString()}
+                    </div>
+                    <div style={{ ...infoLabelStyle, marginTop: "0.2rem" }}>By Organization</div>
                   </div>
                 </div>
               </div>

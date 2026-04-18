@@ -16,6 +16,7 @@
   "dependencies": {
     "@clerk/nextjs": "^6.31.0",
     "@mantine/dates": "^8.3.2",
+    "@mantine/dropzone": "^8.3.18",
     "@mantine/form": "^8.3.2",
     "@mantine/modals": "^8.3.2",
     "@prisma/adapter-pg": "^6.19.0",

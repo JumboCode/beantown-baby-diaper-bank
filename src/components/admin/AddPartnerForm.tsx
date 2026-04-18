@@ -8,7 +8,6 @@ import {
   Textarea,
   NumberInput,
   Radio,
-  FileInput,
   Select,
   Modal,
   Title,
@@ -16,6 +15,7 @@ import {
   SimpleGrid,
   LoadingOverlay,
 } from "@mantine/core";
+import LogoDropzone from "./LogoDropzone";
 import { useForm } from "@mantine/form";
 import { MonthPickerInput } from "@mantine/dates";
 import { useEffect, useRef, useState } from "react";
@@ -125,6 +125,7 @@ export default function AddPartnerForm({
       country: DEFAULT_COUNTRY,
       logoFile: null as File | null,
       logoUrl: "",
+      numBabies: "" as number | "",
     },
     validate: {
       organization: (value) =>
@@ -247,6 +248,7 @@ export default function AddPartnerForm({
       address: buildAddressString(values),
       logo: values.logoUrl || "",
       cities: cityPercentages,
+      num_babies: values.numBabies !== "" ? Number(values.numBabies) : null,
     };
 
     try {
@@ -415,6 +417,24 @@ export default function AddPartnerForm({
 
           <Group justify="space-between" align="flex-start">
             <Text c="#344054" fz={16} fw={600}>
+              Number of Babies Helped Per Month
+            </Text>
+            <NumberInput
+              placeholder="Approximate Number of Babies Helped Per Month"
+              min={0}
+              value={form.values.numBabies}
+              onChange={(val) =>
+                form.setFieldValue("numBabies", typeof val === "number" ? val : "")
+              }
+              size="md"
+              w={526}
+              radius="md"
+              hideControls
+            />
+          </Group>
+
+          <Group justify="space-between" align="flex-start">
+            <Text c="#344054" fz={16} fw={600}>
               Address <span className="text-red-600">*</span>
             </Text>
             <Stack>
@@ -475,54 +495,21 @@ export default function AddPartnerForm({
 
           <Group justify="space-between" align="flex-start">
             <Text c="#344054" fz={16} fw={600}>
-              Coords <span className="text-red-600">*</span>
+              Logo
             </Text>
-            <Group w={526} grow>
-              <NumberInput
-                placeholder="Latitude"
-                key={form.key("latitude")}
-                value={form.values.latitude}
-                onChange={(val) => form.setFieldValue("latitude", String(val))}
-                error={form.errors.latitude}
-                size="md"
-                radius="md"
-                hideControls
-              />
-              <NumberInput
-                placeholder="Longitude"
-                key={form.key("longitude")}
-                value={form.values.longitude}
-                onChange={(val) => form.setFieldValue("longitude", String(val))}
-                error={form.errors.longitude}
-                size="md"
-                radius="md"
-                hideControls
-              />
-            </Group>
-          </Group>
-
-          <Group justify="space-between" align="flex-start">
-            <Text c="#344054" fz={16} fw={600}>
-              Logo file or link
-            </Text>
-            <Group w={526} grow>
-              <FileInput
-                accept="image/png,image/jpeg"
-                placeholder="Upload image file"
-                radius="md"
-                clearable
+            <div style={{ width: 526 }}>
+              <LogoDropzone
+                file={form.values.logoFile}
                 onChange={(file) => handleFileChange(file)}
-                error={form.errors.logoFile || form.errors.logoUrl}
-                size="md"
+                error={
+                  form.errors.logoFile
+                    ? String(form.errors.logoFile)
+                    : form.errors.logoUrl
+                      ? String(form.errors.logoUrl)
+                      : undefined
+                }
               />
-              <TextInput
-                placeholder="Logo URL"
-                key={form.key("logoUrl")}
-                {...form.getInputProps("logoUrl")}
-                radius="md"
-                size="md"
-              />
-            </Group>
+            </div>
           </Group>
 
           {submitWarning && (

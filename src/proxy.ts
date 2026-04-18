@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 
 const isSuperAdminOnlyRoute = createRouteMatcher(["/admin/controls(.*)"]);
 
+const isSignInRoute = createRouteMatcher(["/admin/sign-in(.*)"]);
 const isAdminRoute = createRouteMatcher(["/admin(.*)"]);
 const isAdminApiRoute = createRouteMatcher([
   "/api/admin(.*)",
@@ -13,6 +14,10 @@ const isAdminApiRoute = createRouteMatcher([
 ]);
 
 export default clerkMiddleware(async (auth, req) => {
+  if (isSignInRoute(req)) {
+    return;
+  }
+
   if (!(isAdminRoute(req) || isAdminApiRoute(req) || isSuperAdminOnlyRoute(req))) {
     return;
   }

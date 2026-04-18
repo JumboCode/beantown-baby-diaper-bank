@@ -8,13 +8,13 @@ import {
   Textarea,
   NumberInput,
   Radio,
-  FileInput,
   Select,
   Stack,
   LoadingOverlay,
   Box,
   SimpleGrid,
 } from "@mantine/core";
+import LogoDropzone from "./LogoDropzone";
 import { useForm } from "@mantine/form";
 import { MonthPickerInput } from "@mantine/dates";
 import { Partner } from "./PartnerTable";
@@ -218,6 +218,7 @@ export default function EditPartnerForm({ partner, onClose }: EditPartnerFormPro
       country: addressFields.country,
       logoFile: null as File | null,
       logoUrl: partner.logoUrl || "",
+      numBabies: (partner.num_babies ?? "") as number | "",
     },
     validate: {
       organization: requiredInput("Name of Organization"),
@@ -284,6 +285,7 @@ export default function EditPartnerForm({ partner, onClose }: EditPartnerFormPro
       },
       address: buildAddressString(values),
       logo: values.logoUrl,
+      num_babies: values.numBabies !== "" ? Number(values.numBabies) : null,
     };
 
     const logoAction = values.logoFile
@@ -514,57 +516,46 @@ export default function EditPartnerForm({ partner, onClose }: EditPartnerFormPro
           </Group>
 
           <Group justify="space-between" align="flex-start">
-            <Text fw={600} c="#344054">
-              Coords <span className="text-red-600">*</span>
+            <Text c="#344054" fw={600}>
+              Logo
             </Text>
-            <div className="gap-4 flex">
-              <NumberInput
-                placeholder="Latitude"
-                {...form.getInputProps("latitude")}
-                size="md"
-                className="min-w-83"
-                radius="md"
-                hideControls
-              />
-              <NumberInput
-                placeholder="Longitude"
-                {...form.getInputProps("longitude")}
-                size="md"
-                className="min-w-83"
-                radius="md"
-                hideControls
+            <div className="min-w-170 w-full max-w-[600px]">
+              <LogoDropzone
+                file={form.values.logoFile}
+                existingUrl={initialLogoUrl || undefined}
+                onChange={(file) => {
+                  form.setFieldValue("logoFile", file);
+                  if (!file) {
+                    form.clearFieldError("logoFile");
+                  }
+                }}
+                error={
+                  form.errors.logoFile
+                    ? String(form.errors.logoFile)
+                    : form.errors.logoUrl
+                      ? String(form.errors.logoUrl)
+                      : undefined
+                }
               />
             </div>
           </Group>
 
           <Group justify="space-between" align="flex-start">
-            <Text c="#344054" fw={600}>
-              Logo file or link
+            <Text fw={600} c="#344054" className="w-40">
+              Number of Babies Helped Per Month
             </Text>
-            <div className="gap-4 flex">
-              <FileInput
-                accept="image/png,image/jpeg"
-                placeholder="Upload image file"
-                radius="md"
-                clearable
-                onChange={(file) => {
-                  form.setFieldValue("logoFile", file);
-                  if (!file) {
-                    form.setFieldValue("logoUrl", "");
-                    form.clearFieldError("logoFile");
-                  }
-                }}
-                error={form.errors.logoFile || form.errors.logoUrl}
-                className="min-w-83"
-              />
-              <TextInput
-                placeholder="Logo URL"
-                key={form.key("logoUrl")}
-                {...form.getInputProps("logoUrl")}
-                radius="md"
-                className="min-w-83"
-              />
-            </div>
+            <NumberInput
+              placeholder="Approximate Number of Babies Helped Per Month (optional)"
+              min={0}
+              value={form.values.numBabies}
+              onChange={(val) =>
+                form.setFieldValue("numBabies", typeof val === "number" ? val : "")
+              }
+              size="md"
+              className="min-w-170 w-full max-w-[600px]"
+              radius="md"
+              hideControls
+            />
           </Group>
 
           {form.values.status !== "waitlisted" && (

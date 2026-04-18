@@ -33,6 +33,7 @@ type PartnerPayload = {
   address: string;
   logo?: string;
   cities?: CityPercentage[]; // required for create, ignored for update
+  num_babies?: number | null;
 };
 
 class PartnerRequestError extends Error {
@@ -76,6 +77,7 @@ async function getPartners(search: string | null, waitlisted: string | null) {
     address: partner.address,
     coords: partner.coords,
     logoUrl: partner.logoUrl,
+    num_babies: partner.numBabies != null ? Number(partner.numBabies) : null,
   }));
 }
 
@@ -202,6 +204,7 @@ async function createPartner(
           coords: payload.coordinates,
           address: payload.address,
           logoUrl,
+          numBabies: payload.num_babies != null ? BigInt(payload.num_babies) : null,
         },
       });
 
@@ -276,6 +279,7 @@ async function updatePartner(
         coords: payload.coordinates,
         address: payload.address,
         logoUrl,
+        numBabies: payload.num_babies != null ? BigInt(payload.num_babies) : null,
       },
     });
 
