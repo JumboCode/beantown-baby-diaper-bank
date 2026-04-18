@@ -2,17 +2,17 @@
 
 import dynamic from "next/dynamic";
 import { useCountUp } from "./useCountUp";
-import { useLeafletMap } from "./useLeafletMap";
+import { useLeafletMap, DEFAULT_CENTER, DEFAULT_ZOOM } from "./useLeafletMap";
 import { useBaseTileLayer } from "./useBaseTileLayer";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { CityPopup } from "./CityPopup";
 import PartnerDrawer from "./PartnerDrawer";
 import { cityScore, getScoreColor, LEVEL_COLORS } from "@/lib/hotmap";
-import { IconMapPin } from "@tabler/icons-react";
+import { IconMapPin, IconHome } from "@tabler/icons-react";
 import { LatLngExpression } from "leaflet";
 import { Text, Stack, Group, Box, Badge, ThemeIcon } from "@mantine/core";
 import { useMediaQuery } from "@mantine/hooks";
-import { TileLayer, MapContainer, Tooltip } from "react-leaflet";
+import { TileLayer, MapContainer, Tooltip, useMap } from "react-leaflet";
 import MakeAnImpact from "./MakeAnImpact";
 import { Polygon as ReactLeafletPolygon } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
@@ -27,6 +27,25 @@ export const ZoomControl = dynamic(
   () => import("react-leaflet").then((module) => module.ZoomControl),
   { ssr: false },
 );
+
+function ResetViewControl() {
+  const map = useMap();
+  return (
+    <div className="leaflet-top leaflet-left" style={{ marginTop: 74 }}>
+      <div className="leaflet-control leaflet-bar">
+        <a
+          role="button"
+          title="Reset view"
+          aria-label="Reset view"
+          onClick={() => map.setView(DEFAULT_CENTER, DEFAULT_ZOOM)}
+          style={{ display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}
+        >
+          <IconHome size={16} />
+        </a>
+      </div>
+    </div>
+  );
+}
 
 export interface MapProps {
   boundaries: GeoJsonBoundaries;
@@ -142,6 +161,7 @@ export default function Map({
       {/* Map */}
       <MapContainer {...mapOptions} zoomControl={false} style={mapStyle}>
         <ZoomControl position="topleft" />
+        <ResetViewControl />
         <TileLayer {...tileLayerProps} />
         {visibleBoundaries.map((boundary, index) => {
           const boundaryId = String(boundary.id || index);
