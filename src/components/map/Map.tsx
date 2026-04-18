@@ -312,7 +312,7 @@ export default function Map({
           pointerEvents: "none",
           minWidth: isMobile ? 0 : 240,
           background: "#1B3668",
-          borderRadius: isMobile ? 10 : 14,
+          borderRadius: 12,
           boxShadow: "0 8px 32px rgba(27, 54, 104, 0.4)",
           padding: isMobile ? "8px 12px" : "14px 18px",
         }}
@@ -370,7 +370,7 @@ export default function Map({
                   maxHeight: "60vh",
                   overflowY: "auto",
                   background: "rgba(255, 255, 255, 0.99)",
-                  borderRadius: "16px 16px 0 0",
+                  borderRadius: "12px 12px 0 0",
                   boxShadow: "0 -4px 24px rgba(16, 24, 40, 0.18)",
                 }
               : {
@@ -412,7 +412,7 @@ export default function Map({
             pointerEvents: "none",
             background: "rgba(255, 255, 255, 0.96)",
             border: "1px solid #E4E7EC",
-            borderRadius: isMobile ? 10 : 12,
+            borderRadius: 12,
             boxShadow: "0 8px 24px rgba(16, 24, 40, 0.12)",
             padding: isMobile ? "8px 10px" : "12px 14px",
             backdropFilter: "blur(8px)",
@@ -428,7 +428,7 @@ export default function Map({
           <Box
             style={{
               height: isMobile ? 6 : 8,
-              borderRadius: 4,
+              borderRadius: 8,
               width: "100%",
               background: `linear-gradient(to right, ${LEVEL_COLORS.join(", ")})`,
               marginBottom: isMobile ? 4 : 6,

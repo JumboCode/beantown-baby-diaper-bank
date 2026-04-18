@@ -27,7 +27,7 @@ export default function MapSkeleton() {
     }
 
     return (
-        <Box h="100%" w="100%" pos="relative" style={{ borderRadius: "8px", overflow: "hidden" }}>
+        <Box h="100%" w="100%" pos="relative" style={{ borderRadius: 8, overflow: "hidden" }}>
             {/* Grey overlay that Pulses to simulate loading */}
             <Box
                 pos="absolute"

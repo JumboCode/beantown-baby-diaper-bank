@@ -7,6 +7,9 @@ import { CollapsibleSection } from "./CollapsibleSection";
 import { EditableDistributionRow } from "./EditableDistributionRow";
 import DistributionsSkeleton from "./DistributionsSkeleton";
 
+const pluralizeDiapers = (count: number) =>
+  `${count.toLocaleString()} ${count === 1 ? "diaper" : "diapers"}`;
+
 const MONTH_ORDER: Record<string, number> = {
   January: 1,
   February: 2,
@@ -297,8 +300,7 @@ export default function DistributionsTable({
             <span className="flex items-center gap-3">
               <span>{yearGroup.year}</span>
               <span className="rounded-full bg-blue-50 px-3 py-1 text-sm font-medium text-[#053766]">
-                {(displayedYearTotals[yearGroup.year] ?? yearGroup.totalDiapers).toLocaleString()}{" "}
-                diapers
+                {pluralizeDiapers(displayedYearTotals[yearGroup.year] ?? yearGroup.totalDiapers)}
               </span>
             </span>
           }
