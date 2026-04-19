@@ -213,7 +213,7 @@ export default function DeleteDistributionDataButton({ onSuccess }: MonthSelecti
         }
         withCloseButton
         centered
-        radius="lg"
+        radius="xl"
         padding={28}
       >
         <Stack gap="lg">
@@ -404,7 +404,7 @@ export default function DeleteDistributionDataButton({ onSuccess }: MonthSelecti
           )}
         </Stack>
       </Modal>
-      <Button variant="default" radius={5} onClick={open}>
+      <Button variant="default" radius="md" onClick={open}>
         Delete
       </Button>
     </>

@@ -120,7 +120,7 @@ export default function OneTimeUpdateForm({
   };
 
   return (
-    <Paper withBorder radius="lg" p="lg" className="bg-gray-50/50">
+    <Paper withBorder radius="xl" p="lg" className="bg-gray-50/50">
       <Stack gap="md">
         <Group gap="xs">
           <RiCalendarEventLine size={20} color="#0B3A79" />
