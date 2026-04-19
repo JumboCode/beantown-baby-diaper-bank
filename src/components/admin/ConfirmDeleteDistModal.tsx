@@ -27,7 +27,7 @@ export function ConfirmDeletion({ count, onConfirm }: ConfirmDeletionProps) {
         </Text>
       ),
       labels: { confirm: "Delete", cancel: "Cancel" },
-      confirmProps: { color: "#163663" },
+      confirmProps: { color: "brand" },
       onCancel: () => console.log("Cancel"),
       onConfirm,
       groupProps: {
@@ -38,7 +38,7 @@ export function ConfirmDeletion({ count, onConfirm }: ConfirmDeletionProps) {
     });
 
   return (
-    <Button onClick={openDeleteModal} color="#163663" fullWidth mt="md">
+    <Button onClick={openDeleteModal} color="brand" fullWidth mt="md">
       Delete
     </Button>
   );

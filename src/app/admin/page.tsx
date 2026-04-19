@@ -191,7 +191,6 @@ function AdminPageContent() {
     if (urlSearch !== partnerSearch) {
       setPartnerSearch(urlSearch);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams]);
 
   const setParamAndReplace = (key: string, value: string | null) => {
@@ -474,7 +473,7 @@ function AdminPageContent() {
   };
 
   return (
-    <Stack gap="lg" className={poppins.className} px="lg" pt="md">
+    <Stack gap="lg" px="lg" pt="md">
       <Card p={0}>
         <Group justify="space-between" align="flex-start">
           <Stack gap={4}>
@@ -501,9 +500,7 @@ function AdminPageContent() {
           />
           <Button
             onClick={handleAddClick}
-            variant="default"
-            radius="md"
-            c="#053766"
+            variant="outline"
             rightSection={
               <Image src="/admin_view/add_icon.svg" alt="add button" width={16} height={16} />
             }
@@ -575,7 +572,7 @@ function AdminPageContent() {
                   Filter
                   {(isPartnersTab ? activePartnerFilterCount : activeDistributionFilterCount) >
                     0 && (
-                    <Badge size="xs" circle color="#053766" ml={6}>
+                    <Badge size="xs" circle color="var(--color-brand)" ml={6}>
                       {isPartnersTab ? activePartnerFilterCount : activeDistributionFilterCount}
                     </Badge>
                   )}
@@ -590,7 +587,7 @@ function AdminPageContent() {
                         <Button
                           onClick={resetPartnerFilters}
                           variant="subtle"
-                          color="#053766"
+                          color="brand"
                           radius="md"
                           size="xs"
                           p={0}
@@ -607,7 +604,7 @@ function AdminPageContent() {
                           <Button
                             key={year}
                             variant={isSelected ? "filled" : "outline"}
-                            color="#053766"
+                            color="brand"
                             radius="md"
                             onClick={() =>
                               setParamAndReplace("since", year === "All" ? null : year)
@@ -625,7 +622,7 @@ function AdminPageContent() {
                           key={statusItem.value}
                           label={statusItem.label}
                           checked={partnerStatus.includes(statusItem.value)}
-                          color="#053766"
+                          color="brand"
                           onChange={(e) => {
                             const checked = e.currentTarget.checked;
                             const current = new Set(partnerStatus);
@@ -656,7 +653,7 @@ function AdminPageContent() {
                       <Button
                         onClick={resetDistributionFilters}
                         variant="outline"
-                        color="#053766"
+                        color="brand"
                         radius="md"
                         size="xs"
                       >
@@ -686,7 +683,7 @@ function AdminPageContent() {
                 <Button
                   variant="default"
                   radius="md"
-                  c="#053766"
+                  c="brand"
                   onClick={() => {
                     setPartnersError(undefined);
                     void fetchPartners();
@@ -710,7 +707,7 @@ function AdminPageContent() {
                 <Text c="dimmed" maw={360}>
                   Try adjusting your search or filter criteria.
                 </Text>
-                <Button variant="outline" color="#053766" radius="md" onClick={resetPartnerFilters}>
+                <Button variant="outline" color="brand" radius="md" onClick={resetPartnerFilters}>
                   Clear Filters
                 </Button>
               </Stack>
@@ -742,7 +739,7 @@ function AdminPageContent() {
                 <Button
                   variant="default"
                   radius="md"
-                  c="#053766"
+                  c="brand"
                   onClick={() => {
                     setDistributionsError(undefined);
                     void fetchDistributions();
@@ -766,7 +763,7 @@ function AdminPageContent() {
                 </Text>
                 <Button
                   variant="outline"
-                  color="#053766"
+                  color="brand"
                   radius="md"
                   onClick={resetDistributionFilters}
                 >

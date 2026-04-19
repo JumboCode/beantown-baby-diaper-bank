@@ -68,7 +68,7 @@ export function EditableDistributionRow({
         </>
       ) : (
         <>
-          <span className="text-sm font-medium text-[#053766]">
+          <span className="text-sm font-medium text-[var(--color-brand)]">
             {displayDiapers.toLocaleString()} diapers
           </span>
           <Button

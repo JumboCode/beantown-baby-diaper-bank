@@ -94,7 +94,7 @@ export default function PartnerTable({
               <Text
                 size="xs"
                 fw={600}
-                c="#080b3c"
+                c="var(--color-brand)"
                 tt="uppercase"
                 style={{ letterSpacing: "0.05em" }}
               >
@@ -105,7 +105,7 @@ export default function PartnerTable({
               <Text
                 size="xs"
                 fw={600}
-                c="#080b3c"
+                c="var(--color-brand)"
                 tt="uppercase"
                 style={{ letterSpacing: "0.05em" }}
               >
@@ -116,7 +116,7 @@ export default function PartnerTable({
               <Text
                 size="xs"
                 fw={600}
-                c="#080b3c"
+                c="var(--color-brand)"
                 tt="uppercase"
                 style={{ letterSpacing: "0.05em" }}
               >
@@ -127,7 +127,7 @@ export default function PartnerTable({
               <Text
                 size="xs"
                 fw={600}
-                c="#080b3c"
+                c="var(--color-brand)"
                 tt="uppercase"
                 style={{ letterSpacing: "0.05em" }}
               >
@@ -138,7 +138,7 @@ export default function PartnerTable({
               <Text
                 size="xs"
                 fw={600}
-                c="#080b3c"
+                c="var(--color-brand)"
                 tt="uppercase"
                 style={{ letterSpacing: "0.05em" }}
               >
@@ -202,18 +202,18 @@ export default function PartnerTable({
                                     {partner.name.charAt(0).toUpperCase()}
                                   </div>
                                 )}
-                                <Text c="#000000" fw={600} fz="sm" truncate>
+                                <Text c="var(--color-text-heading)" fw={600} fz="sm" truncate>
                                   {partner.name}
                                 </Text>
                               </div>
                             </Grid.Col>
 
                             <Grid.Col span={2}>
-                              <Text size="sm" c="#4B5563">
+                              <Text size="sm" c="var(--color-text-secondary)">
                                 {partner.start_partner ? (
                                   formatDate(partner.start_partner)
                                 ) : (
-                                  <Text size="sm" c="#D1D5DB" fs="italic" span>
+                                  <Text size="sm" c="dimmed" fs="italic" span>
                                     —
                                   </Text>
                                 )}
@@ -221,20 +221,20 @@ export default function PartnerTable({
                             </Grid.Col>
 
                             <Grid.Col span={2}>
-                              <Text size="sm" c="#4B5563" fw={500}>
+                              <Text size="sm" c="var(--color-text-secondary)" fw={500}>
                                 {partnerPercentages.length}{" "}
-                                <Text span c="#9CA3AF" fw={400}>
+                                <Text span c="dimmed" fw={400}>
                                   {partnerPercentages.length === 1 ? "city" : "cities"}
                                 </Text>
                               </Text>
                             </Grid.Col>
 
                             <Grid.Col span={2}>
-                              <Text size="sm" c="#4B5563" fw={500}>
+                              <Text size="sm" c="var(--color-text-secondary)" fw={500}>
                                 {partner.num_babies != null ? (
                                   partner.num_babies.toLocaleString()
                                 ) : (
-                                  <Text size="sm" c="#D1D5DB" fs="italic" span>
+                                  <Text size="sm" c="dimmed" fs="italic" span>
                                     —
                                   </Text>
                                 )}
@@ -246,9 +246,9 @@ export default function PartnerTable({
                                 <Badge
                                   color={
                                     partner.status === "active"
-                                      ? "#080d46"
+                                      ? "brand"
                                       : partner.status === "inactive"
-                                        ? "#f0151f"
+                                        ? "brandRed"
                                         : "gray"
                                   }
                                   variant="light"
@@ -313,13 +313,13 @@ export default function PartnerTable({
                               <Text
                                 size="xs"
                                 fw={600}
-                                c="#080b3c"
+                                c="var(--color-brand)"
                                 tt="uppercase"
                                 style={{ letterSpacing: "0.05em" }}
                               >
                                 Description
                               </Text>
-                              <Text size="sm" c="#374151" lh={1.6}>
+                              <Text size="sm" c="var(--color-text-secondary)" lh={1.6}>
                                 {partner.description || (
                                   <Text size="sm" c="dimmed" fs="italic" span>
                                     No description provided.
@@ -334,13 +334,13 @@ export default function PartnerTable({
                               <Text
                                 size="xs"
                                 fw={600}
-                                c="#080b3c"
+                                c="var(--color-brand)"
                                 tt="uppercase"
                                 style={{ letterSpacing: "0.05em" }}
                               >
                                 Address
                               </Text>
-                              <Text size="sm" c="#374151" lh={1.6}>
+                              <Text size="sm" c="var(--color-text-secondary)" lh={1.6}>
                                 {partner.address || (
                                   <Text size="sm" c="dimmed" fs="italic" span>
                                     No address provided.
@@ -355,7 +355,7 @@ export default function PartnerTable({
                               <Text
                                 size="xs"
                                 fw={600}
-                                c="#080b3c"
+                                c="var(--color-brand)"
                                 tt="uppercase"
                                 style={{ letterSpacing: "0.05em" }}
                               >
@@ -367,7 +367,7 @@ export default function PartnerTable({
                                     <Badge
                                       key={p.cityId}
                                       variant="outline"
-                                      color="#080d46"
+                                      color="brand"
                                       radius="md"
                                       fw={500}
                                       tt="none"
@@ -401,13 +401,13 @@ export default function PartnerTable({
         <Modal
           opened={opened}
           title={
-            <Text fw={700} fz={30} c="#101828" ml="xl">
+            <>
               Edit{" "}
-              <Mark bg="none" c="#053766">
+              <Mark>
                 {partner.name}
               </Mark>{" "}
               Partner Information
-            </Text>
+            </>
           }
           onClose={() => setPartner(null)}
           size="75%"

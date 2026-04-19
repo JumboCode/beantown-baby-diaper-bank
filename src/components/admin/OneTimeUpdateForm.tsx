@@ -123,8 +123,8 @@ export default function OneTimeUpdateForm({
     <Paper withBorder radius="xl" p="lg" className="bg-gray-50/50">
       <Stack gap="md">
         <Group gap="xs">
-          <RiCalendarEventLine size={20} color="#0B3A79" />
-          <Text fw={700} size="lg" c="#0B3A79">
+          <RiCalendarEventLine size={20} color="var(--color-brand)" />
+          <Text fw={700} size="lg" c="brand">
             One-Time Update
           </Text>
         </Group>

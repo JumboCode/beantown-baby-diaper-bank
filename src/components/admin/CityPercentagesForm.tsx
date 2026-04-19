@@ -4,13 +4,14 @@ import {
   Group,
   Text,
   TagsInput,
-  Table,
   NumberInput,
+  ActionIcon,
   Button,
   Divider,
   Modal,
+  Mark,
 } from "@mantine/core";
-import { RiCheckLine } from "react-icons/ri";
+import { RiCheckLine, RiCloseLine } from "react-icons/ri";
 import { capitalize } from "lodash";
 
 export type CityPercentage = {
@@ -92,9 +93,18 @@ export default function CityPercentagesForm({
     onChange?.(entries);
   }, [selectedCities, percentages]); // onChange intentionally omitted
 
+  const removeCityFromSelection = (city: string) => {
+    setSelectedCities((prev) => prev.filter((c) => c !== city));
+    setPercentages((prev) => {
+      const next = { ...prev };
+      delete next[city];
+      return next;
+    });
+  };
+
   const addCityToSelection = (city: string) => {
     setSelectedCities((prev) => [...prev, city]);
-    setPercentages((prev) => ({ ...prev, [city]: 0 }));
+    setPercentages((prev) => ({ ...prev, [city]: Math.max(0, 100 - totalPercent) }));
   };
 
   const handleCitiesChange = (values: string[]) => {
@@ -110,16 +120,27 @@ export default function CityPercentagesForm({
       return;
     }
 
+    // For newly added known cities, default to remaining percentage
+    const newTotalBefore = normalized
+      .filter((c) => selectedCities.includes(c))
+      .reduce((sum, c) => sum + (percentages[c] ?? 0), 0);
+
     setSelectedCities(normalized);
-    setPercentages((prev) =>
-      normalized.reduce(
+    setPercentages((prev) => {
+      let runningTotal = newTotalBefore;
+      return normalized.reduce(
         (acc, city) => {
-          acc[city] = prev[city] ?? 0;
+          if (prev[city] !== undefined) {
+            acc[city] = prev[city];
+          } else {
+            acc[city] = Math.max(0, 100 - runningTotal);
+            runningTotal += acc[city];
+          }
           return acc;
         },
         {} as Record<string, number>,
-      ),
-    );
+      );
+    });
   };
 
   const handlePercentChange = (city: string, value: number | string) => {
@@ -175,13 +196,19 @@ export default function CityPercentagesForm({
       <Modal
         opened={pendingCity !== null}
         onClose={handleCancelAddCity}
-        title={<Text fw={700}>Add New City</Text>}
+        title="Add new city"
+        styles={{
+          title: {
+            fontWeight: 700,
+            fontSize: 24,
+          },
+        }}
         centered
         size="sm"
       >
         <Stack gap="md">
           <Text size="sm">
-            <strong>{pendingCity}</strong> is not in the system yet. Would you like to add it?
+            <Mark fw={700}>{pendingCity}</Mark> is not in the system yet. Would you like to add it?
           </Text>
           {addCityError && (
             <Text size="sm" c="red">
@@ -189,15 +216,10 @@ export default function CityPercentagesForm({
             </Text>
           )}
           <Group justify="flex-end">
-            <Button
-              variant="outline"
-              radius="md"
-              onClick={handleCancelAddCity}
-              disabled={addCityLoading}
-            >
+            <Button variant="outline" onClick={handleCancelAddCity} disabled={addCityLoading}>
               Cancel
             </Button>
-            <Button radius="md" loading={addCityLoading} onClick={handleConfirmAddCity}>
+            <Button loading={addCityLoading} onClick={handleConfirmAddCity}>
               Add City
             </Button>
           </Group>
@@ -205,60 +227,96 @@ export default function CityPercentagesForm({
       </Modal>
 
       <Stack gap="sm">
-        <Stack gap={6}>
-          <Text fw={600} size="sm">
-            City Distribution Percentage
-          </Text>
-          <TagsInput
-            placeholder={isLoadingCities ? "Loading cities..." : "Select cities"}
-            data={citiesFromDB}
-            filter={({ options, search }) => {
-              const terms = search.toLowerCase().trim().split(" ");
-              return (options as { value: string; label: string }[]).filter((option) => {
-                const words = option.label.toLowerCase().trim().split(" ");
-                return terms.every((term) => words.some((word) => word.includes(term)));
-              });
-            }}
-            disabled={disabled || isLoadingCities}
-            value={selectedCities}
-            onChange={handleCitiesChange}
-            radius="md"
-          />
-        </Stack>
+        <TagsInput
+          placeholder={isLoadingCities ? "Loading cities..." : "Select cities"}
+          data={citiesFromDB}
+          filter={({ options, search }) => {
+            const terms = search.toLowerCase().trim().split(" ");
+            return (options as { value: string; label: string }[]).filter((option) => {
+              const words = option.label.toLowerCase().trim().split(" ");
+              return terms.every((term) => words.some((word) => word.includes(term)));
+            });
+          }}
+          disabled={disabled || isLoadingCities}
+          value={selectedCities}
+          onChange={handleCitiesChange}
+          radius="md"
+        />
 
         {selectedCities.length > 0 && (
-          <Table striped highlightOnHover withTableBorder>
-            <Table.Thead>
-              <Table.Tr>
-                <Table.Th>City</Table.Th>
-                <Table.Th>Percentage</Table.Th>
-              </Table.Tr>
-            </Table.Thead>
-            <Table.Tbody>
-              {selectedCities.map((city) => (
-                <Table.Tr key={city}>
-                  <Table.Td>{city}</Table.Td>
-                  <Table.Td>
-                    <NumberInput
-                      placeholder="Enter %"
-                      min={0}
-                      max={100}
-                      suffix="%"
-                      value={percentages[city] || ""}
-                      onChange={(value) => handlePercentChange(city, value)}
-                      disabled={disabled}
-                    />
-                  </Table.Td>
-                </Table.Tr>
-              ))}
-            </Table.Tbody>
-          </Table>
-        )}
-
-        {!disabled && (
-          <Text fw={600} c={totalPercent === 100 ? "green" : "red"} size="sm">
-            Total: {totalPercent.toFixed(0)}%{totalPercent !== 100 && " (Must equal 100%)"}
-          </Text>
+          <Stack gap={6}>
+            {selectedCities.map((city) => {
+              const pct = percentages[city] ?? 0;
+              return (
+                <div
+                  key={city}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 12,
+                    padding: "8px 12px",
+                    border: "1px solid var(--mantine-color-gray-3)",
+                    borderRadius: "var(--mantine-radius-md)",
+                    backgroundColor: "var(--mantine-color-gray-0)",
+                  }}
+                >
+                  <Text fw={600} fz="sm" c="var(--color-text-heading)" style={{ flex: 1 }}>
+                    {city}
+                  </Text>
+                  <NumberInput
+                    placeholder="0"
+                    min={0}
+                    max={100}
+                    suffix="%"
+                    size="sm"
+                    radius="md"
+                    hideControls
+                    value={pct}
+                    onChange={(value) => handlePercentChange(city, value)}
+                    disabled={disabled}
+                    style={{ width: 100 }}
+                    styles={{
+                      input: {
+                        fontWeight: 600,
+                        textAlign: "right",
+                        color:
+                          pct === 0 ? "var(--mantine-color-gray-5)" : "var(--color-text-heading)",
+                      },
+                    }}
+                  />
+                  {!disabled && (
+                    <ActionIcon
+                      variant="subtle"
+                      color="gray"
+                      size="sm"
+                      radius="xl"
+                      onClick={() => removeCityFromSelection(city)}
+                      aria-label={`Remove ${city}`}
+                    >
+                      <RiCloseLine size={14} />
+                    </ActionIcon>
+                  )}
+                </div>
+              );
+            })}
+            {!disabled && (
+              <Group justify="flex-end" gap={6}>
+                <Text
+                  fw={700}
+                  fz="sm"
+                  c={totalPercent === 100 ? "green.7" : totalPercent > 100 ? "red.7" : "dimmed"}
+                >
+                  Total: {totalPercent.toFixed(0)}%
+                </Text>
+                {totalPercent !== 100 && (
+                  <Text fz="sm" c={totalPercent > 100 ? "red.7" : "dimmed"}>
+                    ({totalPercent > 100 ? "over by" : "remaining:"}{" "}
+                    {Math.abs(100 - totalPercent).toFixed(0)}%)
+                  </Text>
+                )}
+              </Group>
+            )}
+          </Stack>
         )}
 
         {onSave && (
