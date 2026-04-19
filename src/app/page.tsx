@@ -1,12 +1,13 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { Box, Skeleton } from "@mantine/core";
+import { Alert, Box, Skeleton } from "@mantine/core";
 import TimelineSlider from "@/components/map/TimelineSlider";
 import { useTimelinePeriod } from "@/components/map/useTimelinePeriod";
 import { useState, useCallback } from "react";
 import { FeatureCollection, MultiPolygon, Polygon } from "geojson";
 import { GeoJsonBoundaries, CityWithStats } from "@/lib/types";
+import Error from "./error";
 
 const LeafletMap = dynamic(() => import("@/components/map/Map"), {
   ssr: false,
@@ -62,9 +63,12 @@ export default function Page() {
   const [cachedBoundaries, setCachedBoundaries] = useState<FeatureCollection<
     Polygon | MultiPolygon
   > | null>(null);
+  const [mapLoadingError, setMapLoadingError] = useState<string | null>(null);
+  const [mapError, setMapError] = useState<Error | null>(null);
 
   const handleTimelineChange = useCallback(
     async (year: string) => {
+      setMapLoadingError(null);
       try {
         const boundariesPromise = cachedBoundaries
           ? Promise.resolve(cachedBoundaries)
@@ -87,12 +91,17 @@ export default function Page() {
         setSelectedYear(year);
         setCumulativeTotalDiapers(totalDiapersResponse.totalDiapers ?? 0);
       } catch (error) {
+        // After
+        setMapError(error as Error);
         console.error("Error fetching map data:", error);
+        setMapLoadingError("Error loading map data. Please try again later.");
         setCumulativeTotalDiapers(0);
       }
     },
     [cachedBoundaries],
   );
+
+  if (mapError) throw mapError;
 
   return (
     <Box
