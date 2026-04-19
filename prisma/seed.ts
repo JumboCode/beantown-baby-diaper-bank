@@ -5,7 +5,6 @@ import { parse } from "csv-parse";
 import { prisma } from "../src/lib/prisma";
 import { YearlyDataCreateManyInput } from "@/generated/prisma/models";
 import { randomUUID } from "node:crypto";
-import { promises as fs } from "node:fs";
 import { status as PartnerStatus, month } from "@/generated/prisma/client";
 
 const parseStatus = (value: string | undefined): PartnerStatus | undefined => {
@@ -29,28 +28,12 @@ async function loadCsv<T extends Record<string, string | undefined>>(file: strin
 }
 
 const toBigInt = (value: string | undefined) =>
-  value && value.length > 0 ? BigInt(value) : undefined;
+  value !== undefined && value.length > 0 ? BigInt(value) : undefined;
 const toNumber = (value: string | undefined) =>
   value && value.length > 0 ? Number(value) : undefined;
 const toDate = (value: string | undefined) =>
   value && value.length > 0 ? new Date(value) : undefined;
 const toStringOrNull = (value: string | undefined) => (value && value.length > 0 ? value : null);
-
-async function loadBoundaryGeometry(cityName?: string) {
-  if (!cityName) return null;
-  const slug = cityName.toLowerCase().replace(/\s+/g, "-");
-  const file = path.join(__dirname, "data/geojson", `${slug}.geojson`);
-  try {
-    const raw = await fs.readFile(file, "utf8");
-    const json = JSON.parse(raw);
-    const feature = json.type === "FeatureCollection" ? json.features?.[0] : json;
-    if (!feature?.geometry) return null;
-    return JSON.stringify(feature.geometry);
-  } catch (err) {
-    console.warn(`No boundary file for ${cityName}:`, err);
-    return null;
-  }
-}
 
 async function seedCities() {
   type Row = {
@@ -60,33 +43,25 @@ async function seedCities() {
     centroid?: string;
   };
 
-  const rows = await loadCsv<Row>(path.join(__dirname, "data/cities.csv"));
+  const rows = await loadCsv<Row>(path.join(__dirname, "data/Cities_rows.csv"));
   await prisma.city.createMany({
     data: rows.map((row) => ({
       id: toBigInt(row.id),
       createdAt: toDate(row.created_at),
       name: row.name,
-      // centroid: row.centroid ? JSON.parse(row.centroid) : undefined,
     })),
     skipDuplicates: true,
   });
   for (const row of rows) {
     if (!row.centroid) continue;
     await prisma.$executeRaw`
-    UPDATE "Cities"
-    SET "centroid" = ${row.centroid}::geometry
-    WHERE id = ${toBigInt(row.id)}
-  `;
+      UPDATE "Cities"
+      SET "centroid" = ${row.centroid}::geometry
+      WHERE id = ${toBigInt(row.id)}
+    `;
   }
-  for (const row of rows) {
-    const boundary = await loadBoundaryGeometry(row.name);
-    if (!boundary) continue;
-    await prisma.$executeRaw`
-  UPDATE "Cities"
-  SET "boundary" = ST_SetSRID(ST_GeomFromGeoJSON(${boundary}), 4326)::geography
-  WHERE id = ${toBigInt(row.id)}
-`;
-  }
+  // Boundaries are seeded separately via `npm run prisma:seed:city-boundaries`
+  // because Supabase CSV exports truncate large geometry fields at 5120 bytes.
 }
 
 async function seedPartners() {
@@ -96,13 +71,15 @@ async function seedPartners() {
     name?: string;
     description?: string;
     start_partner?: string;
+    end_partner?: string;
     address?: string;
     coords?: string;
     logo_url?: string;
     status?: string;
+    num_babies?: string;
   };
 
-  const rows = await loadCsv<Row>(path.join(__dirname, "data/partners.csv"));
+  const rows = await loadCsv<Row>(path.join(__dirname, "data/Partners_rows.csv"));
   await prisma.partner.createMany({
     data: rows.map((row) => ({
       id: toBigInt(row.id),
@@ -110,10 +87,12 @@ async function seedPartners() {
       name: toStringOrNull(row.name),
       description: toStringOrNull(row.description),
       startPartner: toDate(row.start_partner),
+      endPartner: toDate(row.end_partner),
       address: toStringOrNull(row.address),
       coords: row.coords ? JSON.parse(row.coords) : undefined,
       logoUrl: toStringOrNull(row.logo_url),
-      status: parseStatus(row.status), // NEW
+      status: parseStatus(row.status),
+      numBabies: toBigInt(row.num_babies),
     })),
     skipDuplicates: true,
   });
@@ -132,7 +111,7 @@ async function seedDistributions() {
     percentage?: string;
   };
 
-  const rows = await loadCsv<Row>(path.join(__dirname, "data/distributions.csv"));
+  const rows = await loadCsv<Row>(path.join(__dirname, "data/Distributions_rows.csv"));
   await prisma.distribution.createMany({
     data: rows.map((row) => ({
       id: toBigInt(row.id),
@@ -155,7 +134,7 @@ async function seedPartnerRegions() {
     percentage?: string;
   };
 
-  const rows = await loadCsv<Row>(path.join(__dirname, "data/partner_regions.csv"));
+  const rows = await loadCsv<Row>(path.join(__dirname, "data/partner_regions_rows.csv"));
 
   let data: { partnerId: bigint; cityId: bigint; percentage: number | null }[] = [];
 
@@ -163,7 +142,7 @@ async function seedPartnerRegions() {
     data = rows.map((row) => {
       const partnerId = toBigInt(row.partner_id);
       const cityId = toBigInt(row.city_id);
-      if (!partnerId || !cityId) {
+      if (partnerId === undefined || cityId === undefined) {
         throw new Error(`Invalid partnerId or cityId in row: ${JSON.stringify(row)}`);
       }
 
@@ -188,13 +167,14 @@ async function seedPartnerRegions() {
 async function seedYearlyData() {
   // SSeed yearly data
   type Row = {
+    id?: string;
     city_id: string;
     year: string;
     num_diapers: string;
     num_babies: string;
   };
 
-  const rows = await loadCsv<Row>(path.join(__dirname, "data/yearly_data.csv"));
+  const rows = await loadCsv<Row>(path.join(__dirname, "data/Yearly Data_rows.csv"));
   let data: YearlyDataCreateManyInput[] = [];
   try {
     data = rows.map((row) => {
@@ -202,13 +182,11 @@ async function seedYearlyData() {
       const year = toStringOrNull(row.year);
       const numDiapers = toBigInt(row.num_diapers);
       const numBabies = toBigInt(row.num_babies);
-      if (!cityId || !year || !numDiapers || !numBabies) {
-        throw new Error(
-          `Invalid cityId, year, numDiapers, or numBabies in row: ${JSON.stringify(row)}`,
-        );
+      if (cityId === undefined || !year || numDiapers === undefined) {
+        throw new Error(`Invalid cityId, year, or numDiapers in row: ${JSON.stringify(row)}`);
       }
       return {
-        id: randomUUID(),
+        id: row.id || randomUUID(),
         cityId,
         year,
         numDiapers,
@@ -225,28 +203,25 @@ async function seedYearlyData() {
 }
 
 async function seedMonthlyData() {
-  const grouped = await prisma.distribution.groupBy({
-    by: ["partnerId", "year", "month"],
-    where: {
-      partnerId: { not: null },
-      year: { not: null },
-      month: { not: null },
-    },
-    _sum: {
-      numberDiapers: true,
-      numberChildren: true,
-    },
-  });
+  type Row = {
+    id: string;
+    partner_id: string;
+    year: string;
+    month: string;
+    num_diapers?: string;
+    num_babies?: string;
+  };
 
-  const data = grouped
-    .filter((row) => row.partnerId && row.year && row.month)
+  const rows = await loadCsv<Row>(path.join(__dirname, "data/Monthly Data_rows.csv"));
+  const data = rows
+    .filter((row) => row.partner_id && row.year && row.month)
     .map((row) => ({
-      id: randomUUID(),
-      partnerId: row.partnerId as bigint,
-      year: row.year as string,
+      id: row.id || randomUUID(),
+      partnerId: toBigInt(row.partner_id) as bigint,
+      year: row.year,
       month: row.month as month,
-      numDiapers: row._sum.numberDiapers ?? BigInt(0),
-      numBabies: row._sum.numberChildren ?? BigInt(0),
+      numDiapers: toBigInt(row.num_diapers),
+      numBabies: toBigInt(row.num_babies),
     }));
 
   if (data.length === 0) return;
