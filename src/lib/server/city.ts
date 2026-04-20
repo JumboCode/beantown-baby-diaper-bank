@@ -15,7 +15,7 @@ export async function fetchCityGeoDataFromNominatim(cityName: string) {
 
   const response = await fetch(`${NOMINATIM_BASE_URL}?${query.toString()}`, {
     headers: {
-      "User-Agent": "beantown-baby-diaper-bank/1.0 (contact: your-email@domain.com)",
+      "User-Agent": `beantown-baby-diaper-bank/1.0 (contact: ${process.env.NEXT_PUBLIC_ADMIN_CONTACT_EMAIL})`,
       Accept: "application/json",
     },
   });

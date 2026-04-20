@@ -493,7 +493,12 @@ function AdminPageContent() {
             onUploaded={onDataUpload}
             uploadedMonths={uploadedMonths}
           />
-          <AddPartnerForm opened={openedPartnerForm} onClose={closePartnerForm} />
+          <AddPartnerForm
+            opened={openedPartnerForm}
+            onClose={() => {
+              closePartnerForm();
+            }}
+          />
           <Button
             onClick={handleAddClick}
             variant="default"
