@@ -14,16 +14,17 @@ import {
   SimpleGrid,
   LoadingOverlay,
   Grid,
+  Title,
 } from "@mantine/core";
 import LogoDropzone from "./LogoDropzone";
 import { useForm } from "@mantine/form";
 import { MonthPickerInput } from "@mantine/dates";
+import "@mantine/dates/styles.css";
 import { useEffect, useRef, useState } from "react";
 import { fetchCoordsFromAddress } from "@/lib/util";
 import CityPercentagesForm, { CityPercentage } from "./CityPercentagesForm";
 import { US_STATES } from "@/lib/types";
 import { buildAddressString, usePartnerSubmit } from "@/hooks/admin/usePartnerSubmit";
-import "@mantine/dates/styles.css";
 
 const countries = ["United States", "Canada"];
 const DEFAULT_COUNTRY = "United States";
@@ -101,7 +102,11 @@ export default function AddPartnerForm({
     },
   });
 
-  const { submit, isSubmitting } = usePartnerSubmit({
+  const {
+    submit,
+    isSubmitting,
+    warning: submitWarning,
+  } = usePartnerSubmit({
     cityEntries,
     onSuccess: () => {
       form.reset();
@@ -113,6 +118,10 @@ export default function AddPartnerForm({
     },
     onFieldError: (field, message) => form.setFieldError(field, message),
   });
+
+  function handleClose() {
+    onClose();
+  }
 
   const geocodeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const fieldRefs = useRef<Record<string, HTMLElement | null>>({});
@@ -171,7 +180,20 @@ export default function AddPartnerForm({
   };
 
   return (
-    <Modal opened={opened} onClose={onClose} title="Add New Partner">
+    <Modal
+      opened={opened}
+      onClose={handleClose}
+      size={990}
+      padding={32}
+      title={
+        <Text fw={700} size="30px" c="#101828">
+          Add New Partner
+        </Text>
+      }
+    >
+      <Title order={2} c="#667085" fw="normal" fz={18} mb="md">
+        Add your new partner data
+      </Title>
       <LoadingOverlay
         visible={isSubmitting}
         zIndex={1000}
@@ -387,6 +409,7 @@ export default function AddPartnerForm({
               />
             </div>
           </Grid.Col>
+
           <Grid.Col span={5}>
             <Text c="var(--color-text-heading)" fz={16} fw={600}>
               Babies Helped Per Month
@@ -406,7 +429,16 @@ export default function AddPartnerForm({
               hideControls
             />
           </Grid.Col>
+
+          {submitWarning && (
+            <Grid.Col span={12}>
+              <Text c="red" size="sm">
+                {submitWarning}
+              </Text>
+            </Grid.Col>
+          )}
         </Grid>
+
         <Group
           justify="flex-end"
           style={{

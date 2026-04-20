@@ -27,9 +27,7 @@ export async function GET(req: Request) {
   const startYear: string | null = searchParams.get("startYear");
   const endYear: string | null = searchParams.get("endYear");
 
-  const startMonth: month | null = searchParams.get(
-    "startMonth",
-  ) as month | null;
+  const startMonth: month | null = searchParams.get("startMonth") as month | null;
   const endMonth: month | null = searchParams.get("endMonth") as month | null;
 
   let where: Prisma.MonthlyDataWhereInput = {};
@@ -41,20 +39,14 @@ export async function GET(req: Request) {
     const eMonthIdx = MONTH_NAMES.indexOf(endMonth);
 
     if (sYear === eYear) {
-      const monthsInRange: month[] = MONTH_NAMES.slice(
-        sMonthIdx,
-        eMonthIdx + 1,
-      ) as month[];
+      const monthsInRange: month[] = MONTH_NAMES.slice(sMonthIdx, eMonthIdx + 1) as month[];
       where = {
         year: startYear,
         month: { in: monthsInRange },
       };
     } else {
       const startYearMonths: month[] = MONTH_NAMES.slice(sMonthIdx) as month[];
-      const endYearMonths: month[] = MONTH_NAMES.slice(
-        0,
-        eMonthIdx + 1,
-      ) as month[];
+      const endYearMonths: month[] = MONTH_NAMES.slice(0, eMonthIdx + 1) as month[];
 
       where = {
         OR: [
@@ -88,8 +80,7 @@ export async function GET(req: Request) {
   };
 
   try {
-    const distributionsArr =
-      await prisma.monthlyData.findMany(monthlyDataQuery);
+    const distributionsArr = await prisma.monthlyData.findMany(monthlyDataQuery);
 
     const formattedData = distributionsArr.map((dist) => ({
       id: dist.id,
@@ -104,10 +95,7 @@ export async function GET(req: Request) {
     return NextResponse.json(formattedData);
   } catch (error) {
     console.error("Error fetching distributions:", error);
-    return NextResponse.json(
-      { error: "Failed to fetch distributions" },
-      { status: 500 },
-    );
+    return NextResponse.json({ error: "Failed to fetch distributions" }, { status: 500 });
   }
 }
 
@@ -130,22 +118,16 @@ export async function POST(request: Request) {
       );
     }
 
-    const data: Prisma.MonthlyDataCreateManyInput[] = newMonthlyData.map(
-      (row) => ({
-        id: crypto.randomUUID(),
-        partnerId: BigInt(row.partnerId),
-        year: row.year,
-        month: row.month,
-        numDiapers:
-          row.numDiapers === null || row.numDiapers === undefined
-            ? null
-            : BigInt(row.numDiapers),
-        numBabies:
-          row.numBabies === null || row.numBabies === undefined
-            ? null
-            : BigInt(row.numBabies),
-      }),
-    );
+    const data: Prisma.MonthlyDataCreateManyInput[] = newMonthlyData.map((row) => ({
+      id: crypto.randomUUID(),
+      partnerId: BigInt(row.partnerId),
+      year: row.year,
+      month: row.month,
+      numDiapers:
+        row.numDiapers === null || row.numDiapers === undefined ? null : BigInt(row.numDiapers),
+      numBabies:
+        row.numBabies === null || row.numBabies === undefined ? null : BigInt(row.numBabies),
+    }));
 
     await prisma.monthlyData.createMany({
       data,
@@ -189,13 +171,13 @@ export async function PUT(request: Request) {
       const primaryRow = existingRows[0];
       const nextNumDiapers =
         body.numDiapers === undefined
-          ? primaryRow?.numDiapers ?? null
+          ? (primaryRow?.numDiapers ?? null)
           : body.numDiapers === null
             ? null
             : BigInt(body.numDiapers);
       const nextNumBabies =
         body.numBabies === undefined
-          ? primaryRow?.numBabies ?? null
+          ? (primaryRow?.numBabies ?? null)
           : body.numBabies === null
             ? null
             : BigInt(body.numBabies);
@@ -293,16 +275,11 @@ export async function PUT(request: Request) {
             year: body.year,
             month: body.month,
             percentage: row.percentage,
-            numberDiapers:
-              nextNumDiapers === null
-                ? null
-                : BigInt(diapersArr![idx]),
+            numberDiapers: nextNumDiapers === null ? null : BigInt(diapersArr![idx]),
             numberChildren:
               nextNumBabies === null
                 ? null
-                : BigInt(
-                    Math.round(Number(nextNumBabies) * row.percentage),
-                  ),
+                : BigInt(Math.round(Number(nextNumBabies) * row.percentage)),
           })),
         });
       }

@@ -6,11 +6,7 @@ import { useForm } from "@mantine/form";
 import { Button, Group, TextInput, PasswordInput } from "@mantine/core";
 import { useSignIn } from "@clerk/nextjs";
 
-export default function AddNewAdminForm({
-  onAdminAdded,
-}: {
-  onAdminAdded?: () => void;
-}) {
+export default function AddNewAdminForm({ onAdminAdded }: { onAdminAdded?: () => void }) {
   const [opened, { open, close }] = useDisclosure(false);
   const { isLoaded } = useSignIn();
 
@@ -29,8 +25,7 @@ export default function AddNewAdminForm({
       first: (value) => (value ? null : "First name is required"),
       last: (value) => (value ? null : "Last name is required"),
       email: (value) => (/^\S+@\S+$/.test(value) ? null : "Invalid email"),
-      password: (value) =>
-        value.length >=  8? null : "Password must be at least 8 characters",
+      password: (value) => (value.length >= 8 ? null : "Password must be at least 8 characters"),
     },
   });
 
@@ -54,9 +49,7 @@ export default function AddNewAdminForm({
 
       if (!response.ok) {
         const errorData = await response.json();
-        const details = errorData?.errors
-          ?.map((e: any) => e.longMessage || e.message)
-          .join(" | ");
+        const details = errorData?.errors?.map((e: any) => e.longMessage || e.message).join(" | ");
         throw new Error(details || errorData.message || "Failed to add admin");
       }
 
@@ -64,8 +57,7 @@ export default function AddNewAdminForm({
       close();
       onAdminAdded?.();
     } catch (err) {
-      const errorMessage =
-        err instanceof Error ? err.message : "An error occurred";
+      const errorMessage = err instanceof Error ? err.message : "An error occurred";
       console.error(errorMessage);
     }
   };

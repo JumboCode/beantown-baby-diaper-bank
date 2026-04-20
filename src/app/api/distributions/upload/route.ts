@@ -1,9 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import {
-  parsePartnerRows,
-  processDistributionUpload,
-} from "@/lib/server/distribution-upload";
+import { parsePartnerRows, processDistributionUpload } from "@/lib/server/distribution-upload";
 import { revalidateTag } from "next/cache";
 import { month } from "@/generated/prisma/client";
 
@@ -33,18 +30,12 @@ export async function POST(request: Request) {
     const body = (await request.json()) as UploadRequestBody;
 
     if (!body?.csv || !body?.selectedDate) {
-      return NextResponse.json(
-        { error: "csv and selectedDate are required." },
-        { status: 400 },
-      );
+      return NextResponse.json({ error: "csv and selectedDate are required." }, { status: 400 });
     }
 
     const parsedDate = new Date(body.selectedDate);
     if (Number.isNaN(parsedDate.getTime())) {
-      return NextResponse.json(
-        { error: "Invalid selectedDate provided." },
-        { status: 400 },
-      );
+      return NextResponse.json({ error: "Invalid selectedDate provided." }, { status: 400 });
     }
 
     const { parsed: partnerRows } = parsePartnerRows(body.csv);
@@ -88,7 +79,9 @@ export async function POST(request: Request) {
 
     for (const row of partnerRows) {
       const name = row.partnerName?.trim();
-      const totalDiapersStr = String(row.totalDiapers ?? "").replace(/,/g, "").trim();
+      const totalDiapersStr = String(row.totalDiapers ?? "")
+        .replace(/,/g, "")
+        .trim();
 
       // Check for missing fields
       if (!name || totalDiapersStr === "") {
@@ -100,7 +93,9 @@ export async function POST(request: Request) {
       const isInvalidDiapers = totalDiapersStr !== "" && !/^\d+$/.test(totalDiapersStr);
 
       if (isInvalidDiapers) {
-        errors.add("There are non-numeric or negative values for number of diapers in the spreadsheet. Please fix and reupload.");
+        errors.add(
+          "There are non-numeric or negative values for number of diapers in the spreadsheet. Please fix and reupload.",
+        );
       }
 
       const displayName = row.partnerName;
@@ -128,15 +123,11 @@ export async function POST(request: Request) {
 
       // Check status of partners
       if (partner.status === "inactive") {
-        errors.add(
-          `Organization ${displayName} is inactive. Consider editing its status.`,
-        );
+        errors.add(`Organization ${displayName} is inactive. Consider editing its status.`);
       }
 
       if (partner.status === "waitlisted") {
-        errors.add(
-          `Organization ${displayName} is waitlisted. Consider editing its status.`,
-        );
+        errors.add(`Organization ${displayName} is waitlisted. Consider editing its status.`);
       }
     }
 
@@ -147,7 +138,6 @@ export async function POST(request: Request) {
     );
 
     if (monthExists) {
-      
       // TODO
       // errors.add(`Data for ${targetMonth} has previously been uploaded`);
       // find existing distributions for that month/year, send their ids to delete_old
@@ -172,7 +162,6 @@ export async function POST(request: Request) {
           return deleteResp;
         }
       }
-
     }
 
     const errorList = Array.from(errors);
@@ -193,19 +182,15 @@ export async function POST(request: Request) {
 
     revalidateTag("cities", "max");
     revalidateTag("timeline-slider", "max");
-    
 
     return NextResponse.json({ data: result }, { status: 200 });
   } catch (error) {
     const message =
-      error instanceof Error
-        ? error.message
-        : "Failed to process uploaded distribution data.";
+      error instanceof Error ? error.message : "Failed to process uploaded distribution data.";
 
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }
-
 
 export async function delete_old(req: Request) {
   try {

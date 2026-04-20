@@ -41,7 +41,9 @@ function assert(condition: unknown, message: string): asserts condition {
 }
 
 function normalizeCityName(value: string | null | undefined) {
-  return String(value ?? "").trim().toLowerCase();
+  return String(value ?? "")
+    .trim()
+    .toLowerCase();
 }
 
 function serializeDistributionRows(rows: DistributionSnapshotRow[]) {
@@ -72,9 +74,7 @@ function serializeYearlyRows(rows: YearlySnapshotRow[]) {
 async function main() {
   const { prisma } = await import("../src/lib/prisma");
   const { PUT } = await import("../src/app/api/distributions/route");
-  const { allocateLargestRemainder } = await import(
-    "../src/lib/server/distribution-update"
-  );
+  const { allocateLargestRemainder } = await import("../src/lib/server/distribution-update");
 
   const TEST_CASES: TestCase[] = [
     {
@@ -219,10 +219,7 @@ async function main() {
       assert(cityId, `${label}: encountered row with null cityId`);
 
       const expected = expectedMap.get(cityId);
-      assert(
-        expected !== undefined,
-        `${label}: unexpected city in final distributions: ${cityId}`,
-      );
+      assert(expected !== undefined, `${label}: unexpected city in final distributions: ${cityId}`);
 
       assert(
         Number(row.numberDiapers ?? BigInt(0)) === expected,
@@ -326,9 +323,9 @@ async function main() {
             percentage: row.percentage,
           }));
 
-    const affectedCityIds = [
-      ...new Set(seedRows.map((row) => row.cityId.toString())),
-    ].map((value) => BigInt(value));
+    const affectedCityIds = [...new Set(seedRows.map((row) => row.cityId.toString()))].map(
+      (value) => BigInt(value),
+    );
 
     const beforeYearlyRows = await fetchYearlyRows(testCase.year, affectedCityIds);
 
@@ -373,12 +370,7 @@ async function main() {
 
       console.log(`PASS ${testCase.name}`);
     } finally {
-      await restoreState(
-        testCase,
-        beforeDistributionRows,
-        beforeYearlyRows,
-        affectedCityIds,
-      );
+      await restoreState(testCase, beforeDistributionRows, beforeYearlyRows, affectedCityIds);
 
       const restoredDistributionRows = await fetchDistributionRows(testCase);
       const restoredYearlyRows = await fetchYearlyRows(testCase.year, affectedCityIds);

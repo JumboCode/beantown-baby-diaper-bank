@@ -54,11 +54,9 @@ function assert(condition: unknown, message: string): asserts condition {
 }
 
 function normalizeCityName(value: string | null | undefined) {
-  return String(value ?? "").trim().toLowerCase();
-}
-
-function nearlyEqual(a: number, b: number, tolerance = FLOAT_TOLERANCE) {
-  return Math.abs(a - b) <= tolerance;
+  return String(value ?? "")
+    .trim()
+    .toLowerCase();
 }
 
 function serializeMonthlyRows(rows: MonthlySnapshotRow[]) {
@@ -100,9 +98,7 @@ function serializeYearlyRows(rows: YearlySnapshotRow[]) {
 async function main() {
   const { prisma } = await import("../src/lib/prisma");
   const { PUT } = await import("../src/app/api/monthly-data/route");
-  const { allocateLargestRemainder } = await import(
-    "../src/lib/server/distribution-update"
-  );
+  const { allocateLargestRemainder } = await import("../src/lib/server/distribution-update");
 
   const TEST_CASES: TestCase[] = [
     {
@@ -261,10 +257,7 @@ async function main() {
       assert(cityId, `${label}: encountered row with null cityId`);
 
       const expected = expectedMap.get(cityId);
-      assert(
-        expected !== undefined,
-        `${label}: unexpected city in final distributions: ${cityId}`,
-      );
+      assert(expected !== undefined, `${label}: unexpected city in final distributions: ${cityId}`);
 
       assert(
         Number(row.numberDiapers ?? BigInt(0)) === expected,

@@ -1,13 +1,12 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { Alert, Box, Skeleton } from "@mantine/core";
 import TimelineSlider from "@/components/map/TimelineSlider";
 import { useTimelinePeriod } from "@/components/map/useTimelinePeriod";
 import { useState, useCallback } from "react";
 import { FeatureCollection, MultiPolygon, Polygon } from "geojson";
 import { GeoJsonBoundaries, CityWithStats } from "@/lib/types";
-import Error from "./error";
+import { Box, Skeleton } from "@mantine/core";
 
 const LeafletMap = dynamic(() => import("@/components/map/Map"), {
   ssr: false,

@@ -254,8 +254,12 @@ export default function UploadNewData({
                       alignItems: "flex-start",
                       justifyContent: "center",
                       gap: 4,
-                      backgroundColor: isUploaded ? "var(--mantine-color-green-0)" : "var(--mantine-color-white)",
-                      borderColor: isUploaded ? "var(--mantine-color-green-3)" : "var(--mantine-color-gray-2)",
+                      backgroundColor: isUploaded
+                        ? "var(--mantine-color-green-0)"
+                        : "var(--mantine-color-white)",
+                      borderColor: isUploaded
+                        ? "var(--mantine-color-green-3)"
+                        : "var(--mantine-color-gray-2)",
                       transition: "transform 150ms ease, box-shadow 150ms ease",
                     }}
                     onMouseEnter={(e) => {
@@ -455,13 +459,7 @@ export default function UploadNewData({
             >
               Download Template
             </Button>
-            <Button
-              variant="outline"
-              color="brand"
-              radius="md"
-              type="button"
-              onClick={handleClose}
-            >
+            <Button variant="outline" color="brand" radius="md" type="button" onClick={handleClose}>
               Cancel
             </Button>
             <Button
