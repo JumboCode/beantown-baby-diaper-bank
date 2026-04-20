@@ -241,6 +241,7 @@ export default function CityPercentagesForm({
           value={selectedCities}
           onChange={handleCitiesChange}
           radius="md"
+          size="md"
         />
 
         {selectedCities.length > 0 && (

@@ -60,6 +60,9 @@ export const theme = createTheme({
           fontWeight: 800,
           fontSize: 32,
         },
+        body: {
+          overscrollBehavior: "none",
+        },
       },
     },
     Mark: {

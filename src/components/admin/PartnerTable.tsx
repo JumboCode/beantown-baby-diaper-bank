@@ -402,16 +402,11 @@ export default function PartnerTable({
           opened={opened}
           title={
             <>
-              Edit{" "}
-              <Mark>
-                {partner.name}
-              </Mark>{" "}
-              Partner Information
+              Edit <Mark>{partner.name}</Mark> Partner Information
             </>
           }
           onClose={() => setPartner(null)}
           size="75%"
-          centered
         >
           <EditPartnerForm
             partner={partner}

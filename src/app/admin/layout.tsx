@@ -21,8 +21,8 @@ export default async function Layout({ children }: { children: React.ReactNode }
           </Link>
 
           <Group gap="lg" p="md">
-            <Button leftSection={<MapIcon />} size="sm">
-              <Link href="/">View Hot Map</Link>
+            <Button component="a" href="/" leftSection={<MapIcon />} size="sm">
+              View Hot Map
             </Button>
             <UserButton fallback={<Skeleton height={28} width={28} radius="xl" />} />
           </Group>

@@ -13,7 +13,7 @@ export default function ContinuousUpdateForm({
   onEntriesChange,
 }: ContinuousUpdateFormProps) {
   return (
-    <Paper withBorder radius="xl" p="lg">
+    <Paper withBorder p="lg">
       <Stack gap="md">
         <Group gap="xs">
           <RiLineChartLine size={20} color="var(--color-brand)" />

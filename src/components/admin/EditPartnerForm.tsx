@@ -25,6 +25,7 @@ import type { CityPercentage } from "./CityPercentagesForm";
 import "@mantine/dates/styles.css";
 import { fetchCoordsFromAddress } from "@/lib/util";
 import { US_STATES } from "@/lib/types";
+import { buildAddressString, usePartnerSubmit } from "@/hooks/admin/usePartnerSubmit";
 
 interface EditPartnerFormProps {
   partner: Partner;
@@ -65,11 +66,6 @@ const parseAddressFields = (address: string | null): AddressFields => {
   };
 };
 
-const buildAddressString = ({ addressLine, city, state, zipCode, country }: AddressFields) =>
-  [addressLine, city, state, zipCode, country || DEFAULT_COUNTRY]
-    .filter((part) => Boolean(part))
-    .join(", ");
-
 const requiredNumber = (label: string) => (value: unknown) => {
   const v = (value === 0 ? "0" : (value ?? "")).toString().trim();
   if (v === "") return `${label} is required`;
@@ -89,50 +85,23 @@ const parseMonthDateForPicker = (rawDate: string | null | undefined): Date | nul
     const parsed = new Date(rawDate);
     return Number.isNaN(parsed.getTime()) ? null : parsed;
   }
-
   const year = Number(monthMatch[1]);
   const monthIndex = Number(monthMatch[2]) - 1;
   return new Date(Date.UTC(year, monthIndex, 1, 12));
 };
 
-const formatMonthDateForApi = (date: Date | string | null): string | null => {
-  if (!date) return null;
-
-  if (typeof date === "string") {
-    const monthMatch = date.match(/^(\d{4})-(\d{2})/);
-    if (monthMatch) {
-      return `${monthMatch[1]}-${monthMatch[2]}-01`;
-    }
-  }
-
-  const parsed = date instanceof Date ? date : new Date(date);
-  if (Number.isNaN(parsed.getTime())) return null;
-
-  const year = parsed.getUTCFullYear();
-  const month = String(parsed.getUTCMonth() + 1).padStart(2, "0");
-  return `${year}-${month}-01`;
-};
-
 export default function EditPartnerForm({ partner, onClose }: EditPartnerFormProps) {
-  const [loading, setLoading] = useState(false);
   const [initialLogoUrl] = useState<string>(partner.logoUrl || "");
   const [cityEntries, setCityEntries] = useState<CityPercentage[]>([]);
   const [cityPercentages, setCityPercentages] = useState<
-    {
-      city: { id: number; name: string };
-      percentage: number;
-    }[]
+    { city: { id: number; name: string }; percentage: number }[]
   >([]);
 
   useEffect(() => {
     fetch(`/api/partners/percentages?partnerId=${partner.id}`)
       .then((res) => res.json())
-      .then((data) => {
-        setCityPercentages(data.data);
-      })
-      .catch((error) => {
-        console.error("Error fetching partner percentages:", error);
-      });
+      .then((data) => setCityPercentages(data.data))
+      .catch((error) => console.error("Error fetching partner percentages:", error));
   }, [partner.id]);
 
   const initialCityPercentEntries = useMemo<CityPercentage[]>(
@@ -192,6 +161,18 @@ export default function EditPartnerForm({ partner, onClose }: EditPartnerFormPro
     },
   });
 
+  const { submit, isSubmitting, warning } = usePartnerSubmit({
+    cityEntries,
+    partnerId: partner.id,
+    onSuccess: () => {
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new Event("partners:refresh"));
+      }
+      onClose();
+    },
+    onFieldError: (field, message) => form.setFieldError(field, message),
+  });
+
   const geocodeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => {
     const { addressLine, city, state, zipCode, country } = form.values;
@@ -218,92 +199,16 @@ export default function EditPartnerForm({ partner, onClose }: EditPartnerFormPro
     form.values.country,
   ]);
 
-  async function submitEditPartner(values: typeof form.values) {
-    setLoading(true);
-
-    const formData = {
-      id: partner.id,
-      name: values.organization,
-      description: values.description,
-      start_partner: values.status !== "waitlisted" ? formatMonthDateForApi(values.time) : null,
-      end_partner: values.status === "inactive" ? formatMonthDateForApi(values.endTime) : null,
-      status: values.status,
-      coordinates: {
-        lat: Number(values.latitude),
-        lng: Number(values.longitude),
-      },
-      address: buildAddressString(values),
-      logo: values.logoUrl,
-      num_babies: values.numBabies !== "" ? Number(values.numBabies) : null,
-    };
-
-    const logoAction = values.logoFile
-      ? "replace"
-      : initialLogoUrl && values.logoUrl.trim() === ""
-        ? "remove"
-        : "keep";
-
-    try {
-      const requestBody = new FormData();
-      requestBody.append("partner", JSON.stringify(formData));
-      requestBody.append("logoAction", logoAction);
-      if (values.logoFile) {
-        requestBody.append("file", values.logoFile);
-      }
-
-      const response = await fetch("/api/partners", {
-        method: "POST",
-        body: requestBody,
-      });
-
-      if (!response.ok) {
-        const err = await response.json();
-        form.setFieldError("logoFile", err.error);
-        return;
-      }
-
-      if (form.values.status !== "waitlisted" && cityEntries.length > 0) {
-        for (const entry of cityEntries) {
-          const cityRes = await fetch("/api/cities", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ name: entry.city }),
-          });
-          if (!cityRes.ok && cityRes.status !== 409) {
-            const err = await cityRes.json().catch(() => ({}));
-            form.setFieldError("organization", err.error || "Failed to save city percentages.");
-            return;
-          }
-        }
-
-        await fetch("/api/partners/percentages", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            partnerId: partner.id,
-            percentages: cityEntries.map((e) => ({
-              city: e.city,
-              percentage: e.percent / 100,
-            })),
-          }),
-        });
-      }
-
-      if (typeof window !== "undefined") {
-        window.dispatchEvent(new Event("partners:refresh"));
-      }
-      onClose();
-    } finally {
-      setLoading(false);
-    }
-  }
-
   return (
     <>
-      <LoadingOverlay visible={loading} zIndex={1000} overlayProps={{ radius: "sm", blur: 2 }} />
+      <LoadingOverlay
+        visible={isSubmitting}
+        zIndex={1000}
+        overlayProps={{ radius: "sm", blur: 2 }}
+      />
 
-      <form onSubmit={form.onSubmit(submitEditPartner)}>
-        <Grid>
+      <form onSubmit={form.onSubmit(submit)}>
+        <Grid pb={80}>
           <Grid.Col span={5}>
             <Text fw={600} c="var(--color-text-heading)" fz={16}>
               Name of Organization <span className="text-red-600">*</span>
@@ -325,6 +230,7 @@ export default function EditPartnerForm({ partner, onClose }: EditPartnerFormPro
           </Grid.Col>
           <Grid.Col span={7}>
             <Textarea
+              key={form.key("description")}
               {...form.getInputProps("description")}
               size="md"
               radius="md"
@@ -388,6 +294,7 @@ export default function EditPartnerForm({ partner, onClose }: EditPartnerFormPro
                   placeholder="Pick date"
                   {...form.getInputProps("time")}
                   required
+                  size="md"
                 />
               </Grid.Col>
             </>
@@ -405,6 +312,7 @@ export default function EditPartnerForm({ partner, onClose }: EditPartnerFormPro
                   placeholder="Pick end date"
                   {...form.getInputProps("endTime")}
                   required
+                  size="md"
                 />
               </Grid.Col>
             </>
@@ -465,25 +373,21 @@ export default function EditPartnerForm({ partner, onClose }: EditPartnerFormPro
             </Text>
           </Grid.Col>
           <Grid.Col span={7}>
-            <div style={{ flex: 1 }}>
-              <LogoDropzone
-                file={form.values.logoFile}
-                existingUrl={initialLogoUrl || undefined}
-                onChange={(file) => {
-                  form.setFieldValue("logoFile", file);
-                  if (!file) {
-                    form.clearFieldError("logoFile");
-                  }
-                }}
-                error={
-                  form.errors.logoFile
-                    ? String(form.errors.logoFile)
-                    : form.errors.logoUrl
-                      ? String(form.errors.logoUrl)
-                      : undefined
-                }
-              />
-            </div>
+            <LogoDropzone
+              file={form.values.logoFile}
+              existingUrl={initialLogoUrl || undefined}
+              onChange={(file) => {
+                form.setFieldValue("logoFile", file);
+                if (!file) form.clearFieldError("logoFile");
+              }}
+              error={
+                form.errors.logoFile
+                  ? String(form.errors.logoFile)
+                  : form.errors.logoUrl
+                    ? String(form.errors.logoUrl)
+                    : undefined
+              }
+            />
           </Grid.Col>
 
           <Grid.Col span={5}>
@@ -521,7 +425,16 @@ export default function EditPartnerForm({ partner, onClose }: EditPartnerFormPro
               </Grid.Col>
             </>
           )}
+
+          {warning && (
+            <Grid.Col span={12}>
+              <Text c="red" size="sm">
+                {warning}
+              </Text>
+            </Grid.Col>
+          )}
         </Grid>
+
         <Group
           justify="flex-end"
           style={{
@@ -540,7 +453,7 @@ export default function EditPartnerForm({ partner, onClose }: EditPartnerFormPro
           <Button variant="outline" color="brand" radius="md" type="button" onClick={onClose}>
             Cancel
           </Button>
-          <Button variant="filled" color="brand" radius="md" type="submit" loading={loading}>
+          <Button variant="filled" color="brand" radius="md" type="submit" loading={isSubmitting}>
             Submit
           </Button>
         </Group>

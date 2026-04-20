@@ -1,7 +1,6 @@
 "use client";
 
 import {
-  Alert,
   Button,
   Group,
   TextInput,
@@ -11,13 +10,11 @@ import {
   Radio,
   Select,
   Modal,
-  Title,
   Stack,
   SimpleGrid,
   LoadingOverlay,
   Grid,
 } from "@mantine/core";
-import { IconAlertTriangle } from "@tabler/icons-react";
 import LogoDropzone from "./LogoDropzone";
 import { useForm } from "@mantine/form";
 import { MonthPickerInput } from "@mantine/dates";
@@ -65,7 +62,9 @@ export default function AddPartnerForm({
       logoFile: null as File | null,
       logoUrl: "",
       numBabies: "" as number | "",
+      cityPercents: [] as CityPercentage[],
     },
+
     validate: {
       organization: (value) =>
         typeof value === "string" && value.trim() ? null : "Organization name is required",
@@ -90,21 +89,24 @@ export default function AddPartnerForm({
         if (!value.trim() && !values.logoFile) return null;
         return typeof value === "string" ? null : "Enter a valid URL";
       },
+      cityPercents: (_, values) => {
+        if (values.status === "waitlisted") return null;
+        const total = values.cityPercents.reduce(
+          (s: number, e: CityPercentage) => s + e.percent,
+          0,
+        );
+        if (values.cityPercents.length === 0) return "Add at least one city";
+        return total === 100 ? null : `Percentages must add up to 100% (currently ${total}%)`;
+      },
     },
   });
 
-  const {
-    submit,
-    confirmAndSubmit,
-    clearSimilarMatch,
-    isSubmitting,
-    warning: submitWarning,
-    similarMatch,
-  } = usePartnerSubmit({
+  const { submit, isSubmitting } = usePartnerSubmit({
     cityEntries,
     onSuccess: () => {
       form.reset();
       form.setFieldValue("country", DEFAULT_COUNTRY);
+      form.setFieldValue("cityPercents", []);
       setCityEntries([]);
       window.dispatchEvent(new CustomEvent("partners:refresh"));
       onClose();
@@ -112,12 +114,22 @@ export default function AddPartnerForm({
     onFieldError: (field, message) => form.setFieldError(field, message),
   });
 
-  function handleClose() {
-    clearSimilarMatch();
-    onClose();
+  const geocodeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const fieldRefs = useRef<Record<string, HTMLElement | null>>({});
+
+  function handleSubmit(values: typeof form.values) {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { cityPercents: _cityPercents, ...rest } = values;
+    submit(rest);
   }
 
-  const geocodeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  function handleSubmitError(errors: typeof form.errors) {
+    const firstKey = Object.keys(errors)[0];
+    if (firstKey && fieldRefs.current[firstKey]) {
+      fieldRefs.current[firstKey]!.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+  }
+
   useEffect(() => {
     const { addressLine, city, state, zipCode, country } = form.values;
     if (!addressLine || !city || !state || !zipCode) return;
@@ -159,15 +171,15 @@ export default function AddPartnerForm({
   };
 
   return (
-    <Modal opened={opened} onClose={handleClose} title="Add New Partner">
+    <Modal opened={opened} onClose={onClose} title="Add New Partner">
       <LoadingOverlay
         visible={isSubmitting}
         zIndex={1000}
         overlayProps={{ radius: "sm", blur: 2 }}
       />
 
-      <form onSubmit={form.onSubmit(submit)}>
-        <Grid>
+      <form onSubmit={form.onSubmit(handleSubmit, handleSubmitError)}>
+        <Grid pb={80} pt={2}>
           <Grid.Col span={5}>
             <Text c="var(--color-text-heading)" fz={16} fw={600}>
               Status <span className="text-red-600">*</span>
@@ -250,7 +262,24 @@ export default function AddPartnerForm({
               </Grid.Col>
 
               <Grid.Col span={7}>
-                <CityPercentagesForm onChange={setCityEntries} />
+                <div
+                  ref={(el) => {
+                    fieldRefs.current.cityPercents = el;
+                  }}
+                >
+                  <CityPercentagesForm
+                    onChange={(entries) => {
+                      setCityEntries(entries);
+                      form.setFieldValue("cityPercents", entries);
+                      if (form.errors.cityPercents) form.validateField("cityPercents");
+                    }}
+                  />
+                  {form.errors.cityPercents && (
+                    <Text c="red" size="sm" mt={6}>
+                      {form.errors.cityPercents}
+                    </Text>
+                  )}
+                </div>
               </Grid.Col>
             </>
           )}
@@ -270,30 +299,11 @@ export default function AddPartnerForm({
                   onChange={(val) => form.setFieldValue("time", val as Date | null)}
                   error={form.errors.time}
                   required
+                  size="md"
                 />
               </Grid.Col>
             </>
           )}
-
-          <Grid.Col span={5}>
-            <Text c="var(--color-text-heading)" fz={16} fw={600}>
-              Babies Helped Per Month
-            </Text>
-          </Grid.Col>
-
-          <Grid.Col span={7}>
-            <NumberInput
-              placeholder="Approximate number (optional)"
-              min={0}
-              value={form.values.numBabies}
-              onChange={(val) =>
-                form.setFieldValue("numBabies", typeof val === "number" ? val : "")
-              }
-              size="md"
-              radius="md"
-              hideControls
-            />
-          </Grid.Col>
 
           <Grid.Col span={5}>
             <Text c="var(--color-text-heading)" fz={16} fw={600}>
@@ -377,37 +387,25 @@ export default function AddPartnerForm({
               />
             </div>
           </Grid.Col>
+          <Grid.Col span={5}>
+            <Text c="var(--color-text-heading)" fz={16} fw={600}>
+              Babies Helped Per Month
+            </Text>
+          </Grid.Col>
 
-          {submitWarning && (
-            <Group justify="flex-end" mt="xs">
-              <Text c="red" size="sm">
-                {submitWarning}
-              </Text>
-            </Group>
-          )}
-
-          {similarMatch && (
-            <Alert
-              icon={<IconAlertTriangle size={16} />}
-              title="Possible duplicate partner"
-              color="yellow"
+          <Grid.Col span={7}>
+            <NumberInput
+              placeholder="Approximate number (optional)"
+              min={0}
+              value={form.values.numBabies}
+              onChange={(val) =>
+                form.setFieldValue("numBabies", typeof val === "number" ? val : "")
+              }
+              size="md"
               radius="md"
-              mt="xs"
-            >
-              <Text size="sm" mb="sm">
-                A partner named <strong>&ldquo;{similarMatch}&rdquo;</strong> already exists with a
-                similar name. Double-check this is a new organization before continuing.
-              </Text>
-              <Group gap="sm">
-                <Button size="xs" variant="outline" color="gray" onClick={clearSimilarMatch}>
-                  Go Back
-                </Button>
-                <Button size="xs" color="orange" onClick={confirmAndSubmit} loading={isSubmitting}>
-                  Submit Anyway
-                </Button>
-              </Group>
-            </Alert>
-          )}
+              hideControls
+            />
+          </Grid.Col>
         </Grid>
         <Group
           justify="flex-end"
@@ -431,7 +429,6 @@ export default function AddPartnerForm({
             type="button"
             disabled={isSubmitting}
             onClick={() => {
-              clearSimilarMatch();
               form.reset();
               form.setFieldValue("country", DEFAULT_COUNTRY);
               setCityEntries([]);
@@ -446,7 +443,7 @@ export default function AddPartnerForm({
             radius="md"
             type="submit"
             loading={isSubmitting}
-            disabled={isSubmitting || !!similarMatch}
+            disabled={isSubmitting}
           >
             Submit
           </Button>
