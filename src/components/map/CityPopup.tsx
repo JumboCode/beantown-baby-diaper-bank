@@ -70,12 +70,12 @@ export function CityPopup({ city, year, onPartnerSelect, onClose }: CityPopupPro
         <Group justify="space-between" align="flex-start" wrap="nowrap">
           <Stack gap={3}>
             <Group gap={8} wrap="nowrap" align="center">
-              <IconMapPin size={15} color="rgba(255,255,255,0.75)" />
+              <IconMapPin size={15} color="white" />
               <Title order={3} fz="20px" fw={800} c="white" lh={1}>
                 {city.name}
               </Title>
             </Group>
-            <Text fz="11px" c="rgba(255,255,255,0.6)" fw={500} ml={23}>
+            <Text fz="11px" c="white" fw={500} ml={23}>
               Partner snapshot · {year}
             </Text>
           </Stack>
@@ -83,13 +83,16 @@ export function CityPopup({ city, year, onPartnerSelect, onClose }: CityPopupPro
             <Badge
               radius="xl"
               fw={700}
-              size="sm"
-              style={{
-                background: "rgba(255,255,255,0.15)",
-                color: "white",
-                border: "1px solid rgba(255,255,255,0.3)",
-                backdropFilter: "blur(4px)",
-              }}
+              size="md"
+              c="var(--color-brand-red)"
+              variant="outline"
+              // bg="white"
+              // style={{
+              //   background: "rgba(255,255,255,0.15)",
+              //   color: "white",
+              //   border: "1px solid rgba(255,255,255,0.3)",
+              //   backdropFilter: "blur(4px)",
+              // }}
             >
               {year}
             </Badge>
