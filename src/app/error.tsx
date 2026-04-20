@@ -21,7 +21,7 @@ export default function Error({
           Something went wrong
         </Title>
         <Text c="dimmed" maw={500} size="lg">
-          An unexpected error occurred while loading the map. Please try again later.
+          An unexpected error occurred. Please try again later.
         </Text>
         <Group mt="xl">
           <Button

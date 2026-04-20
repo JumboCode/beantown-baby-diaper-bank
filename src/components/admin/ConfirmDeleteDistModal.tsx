@@ -22,14 +22,15 @@ export function ConfirmDeletion({ count, onConfirm }: ConfirmDeletionProps) {
             {" "}
             delete {count} records
           </Mark>
-          ? This action cannot be undone. This will permanently delete these
-          records from the database.
+          ? This action cannot be undone. This will permanently delete these records from the
+          database.
         </Text>
       ),
       labels: { confirm: "Delete", cancel: "Cancel" },
       confirmProps: { color: "brand" },
       onCancel: () => console.log("Cancel"),
       onConfirm,
+      size: "lg",
       groupProps: {
         justify: "center",
         grow: true, // each button expands

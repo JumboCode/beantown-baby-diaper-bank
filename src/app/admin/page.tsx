@@ -18,10 +18,9 @@ import {
   TextInput,
 } from "@mantine/core";
 import { IconAlertCircle } from "@tabler/icons-react";
-import { MonthPickerInput } from "@mantine/dates";
+import { DateValue, MonthPickerInput, YearPickerInput } from "@mantine/dates";
 import { useState, useEffect, useCallback, useMemo, Suspense } from "react";
 import Image from "next/image";
-import { Poppins } from "next/font/google";
 import { useRouter, useSearchParams } from "next/navigation";
 import DistributionsTable from "@/components/admin/DistributionsTable";
 import DistributionsSkeleton from "@/components/admin/DistributionsSkeleton";
@@ -35,11 +34,6 @@ import { Calendar, Search, SlidersHorizontal } from "lucide-react";
 
 import DeleteDistributionDataButton from "@/components/admin/DeleteDistributionDataButton";
 import { useUser } from "@clerk/nextjs";
-
-const poppins = Poppins({
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
-});
 
 interface Distribution {
   id: string;
@@ -125,9 +119,15 @@ const parseMonth = (str: string | null) => {
 
 const formatMonth = (d: Date | null) => {
   if (!d) return null;
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const y = d.getUTCFullYear();
+  const m = String(d.getUTCMonth() + 1).padStart(2, "0");
   return `${y}-${m}`;
+};
+
+const parseSinceYear = (str: string | null): Date | null => {
+  if (!str || str === "All") return null;
+  const y = Number(str);
+  return isNaN(y) ? null : new Date(y, 0, 1);
 };
 
 function AdminPageContent() {
@@ -274,7 +274,7 @@ function AdminPageContent() {
 
   const [uploadedMonths, setUploadedMonths] = useState<number[]>([]);
   const [lastUploaded, setLastUploaded] = useState<string | null>(null);
-  const [years, setYears] = useState<string[]>(["All"]);
+  const [timelineYears, setTimelineYears] = useState<string[]>([]);
   const currentYear = new Date().getFullYear();
 
   const fetchTimelineData = useCallback(async () => {
@@ -282,7 +282,7 @@ function AdminPageContent() {
       const res = await fetch(`/api/timeline-slider?year=${currentYear}`);
       const data = await res.json();
       if (data.years) {
-        setYears(["All", ...data.years.map(String)]);
+        setTimelineYears(data.years.map(String));
       }
       if (data.months) {
         const validMonths = data.months.filter(
@@ -318,21 +318,30 @@ function AdminPageContent() {
   useEffect(() => {
     let filtered = [...distributions];
 
-    const distToYYYYMM = (dist: Distribution) => {
-      if (!dist.month) return "0000-00";
-      const monthNum = monthMap[dist.month.trim()];
-      if (!monthNum) return "0000-00";
-      return `${dist.year}-${monthNum}`;
-    };
+    const fromStr = dateRange[0] ? formatMonth(dateRange[0]) : null;
+    const toStr = dateRange[1] ? formatMonth(dateRange[1]) : null;
 
-    if (dateRange[0]) {
-      const fromStr = formatMonth(dateRange[0]);
-      filtered = filtered.filter((dist) => distToYYYYMM(dist) >= fromStr!);
+    if (fromStr || toStr) {
+      const fromYear = fromStr ? fromStr.substring(0, 4) : null;
+      const toYear = toStr ? toStr.substring(0, 4) : null;
+
+      filtered = filtered.filter((dist) => {
+        if (!dist.month) {
+          // Yearly-only records: compare by year alone
+          const distYear = dist.year ?? "";
+          if (fromYear && distYear < fromYear) return false;
+          if (toYear && distYear > toYear) return false;
+          return true;
+        }
+        const monthNum = monthMap[dist.month.trim()];
+        if (!monthNum) return false;
+        const yymm = `${dist.year}-${monthNum}`;
+        if (fromStr && yymm < fromStr) return false;
+        if (toStr && yymm > toStr) return false;
+        return true;
+      });
     }
-    if (dateRange[1]) {
-      const toStr = formatMonth(dateRange[1]);
-      filtered = filtered.filter((dist) => distToYYYYMM(dist) <= toStr!);
-    }
+
     setFilteredDistributions(filtered);
   }, [distributions, dateRange]);
 
@@ -361,7 +370,7 @@ function AdminPageContent() {
     if (partnerYearSince && partnerYearSince !== "All") {
       filtered = filtered.filter((p) => {
         if (!p.start_partner) return false;
-        return new Date(p.start_partner).getUTCFullYear() <= Number(partnerYearSince);
+        return new Date(p.start_partner).getUTCFullYear() === Number(partnerYearSince);
       });
     }
 
@@ -407,6 +416,15 @@ function AdminPageContent() {
 
   const handleFilterClick = () => {
     setFilterOpen((open) => !open);
+  };
+
+  const handleSinceYearChange = (val: DateValue) => {
+    if (!val) {
+      setParamAndReplace("since", null);
+    } else {
+      const year = (val instanceof Date ? val : new Date(val)).getUTCFullYear();
+      setParamAndReplace("since", String(year));
+    }
   };
 
   const resetDistributionFilters = () => {
@@ -582,7 +600,7 @@ function AdminPageContent() {
                 {isPartnersTab ? (
                   <Stack gap="xs">
                     <Group justify="space-between" align="center">
-                      <Text fw={600}>Year Since</Text>
+                      <Text fw={600}>Joined in year</Text>
                       {activePartnerFilterCount > 0 && (
                         <Button
                           onClick={resetPartnerFilters}
@@ -596,25 +614,24 @@ function AdminPageContent() {
                         </Button>
                       )}
                     </Group>
-                    <Group gap={7} mb="xs">
-                      {years.map((year) => {
-                        const isSelected = partnerYearSince === year;
-
-                        return (
-                          <Button
-                            key={year}
-                            variant={isSelected ? "filled" : "outline"}
-                            color="brand"
-                            radius="md"
-                            onClick={() =>
-                              setParamAndReplace("since", year === "All" ? null : year)
-                            }
-                          >
-                            {year}
-                          </Button>
-                        );
-                      })}
-                    </Group>
+                    <YearPickerInput
+                      placeholder="Any year"
+                      value={parseSinceYear(partnerYearSince)}
+                      onChange={handleSinceYearChange}
+                      clearable
+                      minDate={
+                        timelineYears.length > 0
+                          ? new Date(Number(timelineYears[0]), 0, 1)
+                          : new Date(2000, 0, 1)
+                      }
+                      maxDate={
+                        timelineYears.length > 0
+                          ? new Date(Number(timelineYears[timelineYears.length - 1]), 11, 31)
+                          : new Date(currentYear, 11, 31)
+                      }
+                      popoverProps={{ withinPortal: false }}
+                      mb="xs"
+                    />
                     <Text fw={600}>Status</Text>
                     <Stack>
                       {statuses.map((statusItem) => (
