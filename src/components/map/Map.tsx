@@ -67,7 +67,8 @@ export default function Map({
   totalDiapersForYear,
   selectedYear,
 }: MapProps) {
-  const { mapConfig } = useLeafletMap();
+  const isMobile = useMediaQuery("(max-width: 768px)");
+  const { mapConfig } = useLeafletMap(isMobile ? 8 : DEFAULT_ZOOM);
   const { style: mapStyle, ...mapOptions } = mapConfig;
   const { tileLayerProps } = useBaseTileLayer();
   const [hoveredCityId, setHoveredCityId] = useState<string>();
@@ -76,7 +77,6 @@ export default function Map({
   const [selectedPartnerId, setSelectedPartnerId] = useState<number>();
 
   const animatedRunningTotal = useCountUp(totalDiapersForYear, 1400);
-  const isMobile = useMediaQuery("(max-width: 768px)");
 
   const activeCityWithStats = cities.find((c) => c.name === activeCityName);
 
