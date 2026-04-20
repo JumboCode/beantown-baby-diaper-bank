@@ -114,6 +114,8 @@ export default function PartnerDrawer({ partnerId, onClose, boundaries }: Partne
     return partner;
   }
 
+  const headerHeight = isMobile ? 52 : 64;
+
   return (
     <Drawer
       opened={!!partnerId}
@@ -122,12 +124,18 @@ export default function PartnerDrawer({ partnerId, onClose, boundaries }: Partne
       padding={0}
       size={isMobile ? "85%" : "35%"}
       withCloseButton={false}
-      overlayProps={{ opacity: 0.2 }}
+      overlayProps={{ opacity: 0.2, top: headerHeight }}
+      styles={{
+        inner: {
+          top: headerHeight,
+          height: `calc(100% - ${headerHeight}px)`,
+        },
+      }}
     >
       {/* Gradient header */}
       <Box
         style={{
-          background: "linear-gradient(135deg, #1B3668 0%, #162C58 55%, #2471A3 100%)",
+          background: "#1B3668",
           borderRadius: "0 0 0 0",
           padding: "20px 20px 18px",
           position: "sticky",
@@ -271,7 +279,7 @@ export default function PartnerDrawer({ partnerId, onClose, boundaries }: Partne
               >
                 <Box
                   style={{
-                    background: "linear-gradient(90deg, #e0e8f5 0%, #edf1f8 100%)",
+                    background: "#edf1f8",
                     borderBottom: "1px solid #c5d2e9",
                     padding: "8px 12px",
                   }}
@@ -385,7 +393,7 @@ export default function PartnerDrawer({ partnerId, onClose, boundaries }: Partne
               >
                 <Box
                   style={{
-                    background: "linear-gradient(90deg, #e0e8f5 0%, #edf1f8 100%)",
+                    background: "#edf1f8",
                     borderBottom: "1px solid #c5d2e9",
                     padding: "8px 12px",
                   }}

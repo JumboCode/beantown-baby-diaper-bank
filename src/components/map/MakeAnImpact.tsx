@@ -41,7 +41,7 @@ function TierCard({ tier }: { tier: (typeof tiers)[0] }) {
         display: "flex",
         alignItems: "center",
         gap: 12,
-        background: "linear-gradient(135deg, #edf1f8 0%, #e0e8f5 100%)",
+        background: "#edf1f8",
         border: "1.5px solid #c5d2e9",
         borderRadius: 12,
         padding: "12px 16px",
@@ -91,7 +91,7 @@ function DropdownContent({ onClose }: { onClose?: () => void }) {
       {/* Branded header */}
       <Box
         style={{
-          background: "linear-gradient(135deg, #1B3668 0%, #162C58 60%, #2471A3 100%)",
+          background: "#1B3668",
           padding: "20px 20px 16px",
         }}
       >

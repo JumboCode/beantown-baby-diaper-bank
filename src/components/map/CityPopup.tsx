@@ -59,7 +59,7 @@ export function CityPopup({ city, year, onPartnerSelect, onClose }: CityPopupPro
       {/* Gradient header banner */}
       <Box
         style={{
-          background: "linear-gradient(135deg, #1B3668 0%, #162C58 55%, #2471A3 100%)",
+          background: "#1B3668",
           borderRadius: "12px 12px 0 0",
           padding: "16px 16px 14px",
           position: "sticky",
@@ -179,7 +179,7 @@ export function CityPopup({ city, year, onPartnerSelect, onClose }: CityPopupPro
         >
           <Box
             style={{
-              background: "linear-gradient(90deg, #e0e8f5 0%, #edf1f8 100%)",
+              background: "#edf1f8",
               borderBottom: activePartners.length > 0 ? "1px solid #c5d2e9" : undefined,
               padding: "8px 12px",
             }}
