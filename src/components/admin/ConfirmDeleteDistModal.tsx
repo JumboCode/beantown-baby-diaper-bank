@@ -22,12 +22,12 @@ export function ConfirmDeletion({ count, onConfirm }: ConfirmDeletionProps) {
             {" "}
             delete {count} records
           </Mark>
-          ? This action cannot be undone. This will permanently delete these
-          records from the database.
+          ? This action cannot be undone. This will permanently delete these records from the
+          database.
         </Text>
       ),
       labels: { confirm: "Delete", cancel: "Cancel" },
-      confirmProps: { color: "#163663" },
+      confirmProps: { color: "brand" },
       onCancel: () => console.log("Cancel"),
       onConfirm,
       groupProps: {
@@ -38,7 +38,7 @@ export function ConfirmDeletion({ count, onConfirm }: ConfirmDeletionProps) {
     });
 
   return (
-    <Button onClick={openDeleteModal} color="#163663" fullWidth mt="md">
+    <Button onClick={openDeleteModal} color="brand" fullWidth mt="md">
       Delete
     </Button>
   );

@@ -5,7 +5,6 @@ import { IconAlertTriangle, IconMap, IconRefresh } from "@tabler/icons-react";
 import Link from "next/link";
 
 export default function Error({
-  error,
   reset,
 }: {
   error: Error & { digest?: string };

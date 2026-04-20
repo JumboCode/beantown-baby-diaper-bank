@@ -41,11 +41,7 @@ export function CollapsibleSection({
         {right ? <div className="shrink-0">{right}</div> : null}
       </div>
 
-      {open ? (
-        <div className="border-t border-gray-100 p-3">
-          {children}
-        </div>
-      ) : null}
+      {open ? <div className="border-t border-gray-100 p-3">{children}</div> : null}
     </div>
   );
 }

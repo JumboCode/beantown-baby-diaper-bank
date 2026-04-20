@@ -1,6 +1,6 @@
 .hero {
-  border: 1px solid rgba(5, 55, 102, 0.1);
-  box-shadow: 0 24px 60px rgba(5, 55, 102, 0.08);
+  border: 1px solid color-mix(in srgb, var(--color-brand) 10%, transparent);
+  box-shadow: 0 24px 60px color-mix(in srgb, var(--color-brand) 8%, transparent);
 }
 
 .backButton {
@@ -9,7 +9,7 @@
 
 .eyebrow {
   margin-bottom: 8px;
-  color: #35658f;
+  color: var(--color-text-accent);
   font-size: 0.78rem;
   font-weight: 700;
   letter-spacing: 0.12em;
@@ -17,33 +17,31 @@
 }
 
 .myAccessCard {
-  border: 1px solid rgba(5, 55, 102, 0.08);
+  border: 1px solid color-mix(in srgb, var(--color-brand) 8%, transparent);
   background: rgba(255, 255, 255, 0.88);
   backdrop-filter: blur(6px);
-
 }
 
-
 .heroTitle {
-  color: #14324e;
+  color: var(--color-text-heading);
   line-height: 1.05;
 }
 
 .heroSubtitle {
   margin-top: 10px;
-  color: #4c647b;
+  color: var(--color-text-muted);
   font-size: 0.98rem;
   line-height: 1.6;
 }
 
 .statCard {
-  border: 1px solid rgba(5, 55, 102, 0.08);
+  border: 1px solid color-mix(in srgb, var(--color-brand) 8%, transparent);
   background: rgba(255, 255, 255, 0.88);
   backdrop-filter: blur(6px);
 }
 
 .statLabel {
-  color: #5f7286;
+  color: var(--color-text-subtle);
   font-size: 0.8rem;
   font-weight: 600;
   text-transform: uppercase;
@@ -52,30 +50,30 @@
 
 .statValue {
   margin-top: 6px;
-  color: #102a43;
+  color: var(--color-brand-dark);
   font-size: clamp(1.5rem, 3vw, 2.15rem);
   font-weight: 700;
   line-height: 1;
 }
 
 .tableCard {
-  border-color: rgba(5, 55, 102, 0.1);
+  border-color: color-mix(in srgb, var(--color-brand) 10%, transparent);
   box-shadow: 0 16px 38px rgba(17, 24, 39, 0.06);
 }
 
 .sectionTitle {
-  color: #17324d;
+  color: var(--color-text-heading);
 }
 
 .tableWrap {
   overflow-x: auto;
-  border: 1px solid rgba(5, 55, 102, 0.08);
+  border: 1px solid color-mix(in srgb, var(--color-brand) 8%, transparent);
   border-radius: 20px;
 }
 
 .tableHead th {
   background: #f4f8fc;
-  color: #597187;
+  color: var(--color-text-subtle);
   font-size: 0.77rem;
   font-weight: 700;
   letter-spacing: 0.08em;

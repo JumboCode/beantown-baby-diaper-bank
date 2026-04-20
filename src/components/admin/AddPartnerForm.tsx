@@ -1,7 +1,6 @@
 "use client";
 
 import {
-  Alert,
   Button,
   Group,
   TextInput,
@@ -11,17 +10,17 @@ import {
   Radio,
   Select,
   Modal,
-  Title,
   Stack,
   SimpleGrid,
   LoadingOverlay,
+  Grid,
+  Title,
 } from "@mantine/core";
-import { IconAlertTriangle } from "@tabler/icons-react";
 import LogoDropzone from "./LogoDropzone";
 import { useForm } from "@mantine/form";
 import { MonthPickerInput } from "@mantine/dates";
-import { useEffect, useRef, useState } from "react";
 import "@mantine/dates/styles.css";
+import { useEffect, useRef, useState } from "react";
 import { fetchCoordsFromAddress } from "@/lib/util";
 import CityPercentagesForm, { CityPercentage } from "./CityPercentagesForm";
 import { US_STATES } from "@/lib/types";
@@ -53,7 +52,7 @@ export default function AddPartnerForm({
       organization: "",
       description: "",
       time: null as Date | null,
-      status: "",
+      status: "active",
       latitude: "",
       longitude: "",
       addressLine: "",
@@ -64,10 +63,14 @@ export default function AddPartnerForm({
       logoFile: null as File | null,
       logoUrl: "",
       numBabies: "" as number | "",
+      cityPercents: [] as CityPercentage[],
     },
+
     validate: {
       organization: (value) =>
         typeof value === "string" && value.trim() ? null : "Organization name is required",
+      description: (value) =>
+        typeof value === "string" && value.trim() ? null : "Description is required",
       time: (value, values) => {
         if (values.status === "waitlisted") return null;
         return value ? null : "Select a start time";
@@ -87,21 +90,28 @@ export default function AddPartnerForm({
         if (!value.trim() && !values.logoFile) return null;
         return typeof value === "string" ? null : "Enter a valid URL";
       },
+      cityPercents: (_, values) => {
+        if (values.status === "waitlisted") return null;
+        const total = values.cityPercents.reduce(
+          (s: number, e: CityPercentage) => s + e.percent,
+          0,
+        );
+        if (values.cityPercents.length === 0) return "Add at least one city";
+        return total === 100 ? null : `Percentages must add up to 100% (currently ${total}%)`;
+      },
     },
   });
 
   const {
     submit,
-    confirmAndSubmit,
-    clearSimilarMatch,
     isSubmitting,
     warning: submitWarning,
-    similarMatch,
   } = usePartnerSubmit({
     cityEntries,
     onSuccess: () => {
       form.reset();
       form.setFieldValue("country", DEFAULT_COUNTRY);
+      form.setFieldValue("cityPercents", []);
       setCityEntries([]);
       window.dispatchEvent(new CustomEvent("partners:refresh"));
       onClose();
@@ -110,11 +120,25 @@ export default function AddPartnerForm({
   });
 
   function handleClose() {
-    clearSimilarMatch();
     onClose();
   }
 
   const geocodeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const fieldRefs = useRef<Record<string, HTMLElement | null>>({});
+
+  function handleSubmit(values: typeof form.values) {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { cityPercents: _cityPercents, ...rest } = values;
+    submit(rest);
+  }
+
+  function handleSubmitError(errors: typeof form.errors) {
+    const firstKey = Object.keys(errors)[0];
+    if (firstKey && fieldRefs.current[firstKey]) {
+      fieldRefs.current[firstKey]!.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+  }
+
   useEffect(() => {
     const { addressLine, city, state, zipCode, country } = form.values;
     if (!addressLine || !city || !state || !zipCode) return;
@@ -176,17 +200,18 @@ export default function AddPartnerForm({
         overlayProps={{ radius: "sm", blur: 2 }}
       />
 
-      <form onSubmit={form.onSubmit(submit)}>
-        <Stack>
-          <Group justify="space-between" align="flex-start" w="100%">
-            <Text c="#344054" fz={16} fw={600}>
+      <form onSubmit={form.onSubmit(handleSubmit, handleSubmitError)}>
+        <Grid pb={80} pt={2}>
+          <Grid.Col span={5}>
+            <Text c="var(--color-text-heading)" fz={16} fw={600}>
               Status <span className="text-red-600">*</span>
             </Text>
+          </Grid.Col>
 
+          <Grid.Col span={7}>
             <Radio.Group
               value={form.values.status}
               onChange={(val) => form.setFieldValue("status", val)}
-              w={526}
             >
               <Group gap="md" grow>
                 {[
@@ -198,7 +223,7 @@ export default function AddPartnerForm({
                     value={option.value}
                     radius="md"
                     p="md"
-                    className="border border-gray-200 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md data-[checked=true]:border-[#053766] data-[checked=true]:bg-blue-50 h-full"
+                    className="border border-gray-200 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md data-[checked=true]:border-brand] data-[checked=true]:bg-blue-50 h-full"
                   >
                     <Group wrap="nowrap" align="flex-start" gap="sm">
                       <Radio.Indicator />
@@ -212,106 +237,112 @@ export default function AddPartnerForm({
                   </Radio.Card>
                 ))}
               </Group>
-              {form.errors.status && (
-                <Text c="red" size="sm" mt="xs">
-                  {form.errors.status}
-                </Text>
-              )}
             </Radio.Group>
-          </Group>
+          </Grid.Col>
 
-          <Group justify="space-between" align="flex-start">
-            <Text c="#344054" fz={16} fw={600}>
+          <Grid.Col span={5}>
+            <Text c="var(--color-text-heading)" fz={16} fw={600}>
               Name of Organization <span className="text-red-600">*</span>
             </Text>
+          </Grid.Col>
+
+          <Grid.Col span={7}>
             <TextInput
               placeholder="Name"
               key={form.key("organization")}
               {...form.getInputProps("organization")}
               size="md"
-              w={526}
               radius="md"
               required
             />
-          </Group>
+          </Grid.Col>
 
-          <Group justify="space-between" align="flex-start">
-            <Text c="#344054" fz={16} fw={600}>
+          <Grid.Col span={5}>
+            <Text c="var(--color-text-heading)" fz={16} fw={600}>
               Description <span className="text-red-600">*</span>
             </Text>
+          </Grid.Col>
+
+          <Grid.Col span={7}>
             <Textarea
               placeholder="Description"
               key={form.key("description")}
               {...form.getInputProps("description")}
               size="md"
-              w={526}
-              radius="md"
               required
               autosize
               maxRows={6}
             />
-          </Group>
+          </Grid.Col>
 
           {form.values.status !== "waitlisted" && (
-            <Group justify="space-between" align="flex-start">
-              <Text c="#344054" fz={16} fw={600}>
-                Cities Served <span className="text-red-600">*</span>
-              </Text>
-              <div style={{ width: 526 }}>
-                <CityPercentagesForm onChange={setCityEntries} />
-              </div>
-            </Group>
+            <>
+              <Grid.Col span={5}>
+                <Text c="var(--color-text-heading)" fz={16} fw={600}>
+                  Cities Served <span className="text-red-600">*</span>
+                </Text>
+              </Grid.Col>
+
+              <Grid.Col span={7}>
+                <div
+                  ref={(el) => {
+                    fieldRefs.current.cityPercents = el;
+                  }}
+                >
+                  <CityPercentagesForm
+                    onChange={(entries) => {
+                      setCityEntries(entries);
+                      form.setFieldValue("cityPercents", entries);
+                      if (form.errors.cityPercents) form.validateField("cityPercents");
+                    }}
+                  />
+                  {form.errors.cityPercents && (
+                    <Text c="red" size="sm" mt={6}>
+                      {form.errors.cityPercents}
+                    </Text>
+                  )}
+                </div>
+              </Grid.Col>
+            </>
           )}
 
           {form.values.status !== "waitlisted" && (
-            <Group justify="space-between" align="flex-start">
-              <Text c="#344054" fz={16} fw={600}>
-                Time it started <span className="text-red-600">*</span>
-              </Text>
-              <MonthPickerInput
-                placeholder="Pick date"
-                value={form.values.time}
-                onChange={(val) => form.setFieldValue("time", val as Date | null)}
-                error={form.errors.time}
-                required
-                w={526}
-              />
-            </Group>
+            <>
+              <Grid.Col span={5}>
+                <Text c="var(--color-text-heading)" fz={16} fw={600}>
+                  Time it started <span className="text-red-600">*</span>
+                </Text>
+              </Grid.Col>
+
+              <Grid.Col span={7}>
+                <MonthPickerInput
+                  placeholder="Pick date"
+                  value={form.values.time}
+                  onChange={(val) => form.setFieldValue("time", val as Date | null)}
+                  error={form.errors.time}
+                  required
+                  size="md"
+                />
+              </Grid.Col>
+            </>
           )}
 
-          <Group justify="space-between" align="flex-start">
-            <Text c="#344054" fz={16} fw={600}>
-              Number of Babies Helped Per Month
-            </Text>
-            <NumberInput
-              placeholder="Approximate Number of Babies Helped Per Month"
-              min={0}
-              value={form.values.numBabies}
-              onChange={(val) =>
-                form.setFieldValue("numBabies", typeof val === "number" ? val : "")
-              }
-              size="md"
-              w={526}
-              radius="md"
-              hideControls
-            />
-          </Group>
-
-          <Group justify="space-between" align="flex-start">
-            <Text c="#344054" fz={16} fw={600}>
+          <Grid.Col span={5}>
+            <Text c="var(--color-text-heading)" fz={16} fw={600}>
               Address <span className="text-red-600">*</span>
             </Text>
-            <Stack>
+          </Grid.Col>
+          <Grid.Col span={7}>
+            <Stack style={{ flex: 1 }}>
               <TextInput
                 placeholder="Address Line"
                 key={form.key("addressLine")}
                 {...form.getInputProps("addressLine")}
                 size="md"
-                w={526}
                 radius="md"
                 required
               />
-              <SimpleGrid w={526} cols={2}>
+              <SimpleGrid cols={2}>
                 <TextInput
                   placeholder="City"
                   key={form.key("city")}
@@ -356,13 +387,15 @@ export default function AddPartnerForm({
                 />
               </SimpleGrid>
             </Stack>
-          </Group>
+          </Grid.Col>
 
-          <Group justify="space-between" align="flex-start">
-            <Text c="#344054" fz={16} fw={600}>
+          <Grid.Col span={5}>
+            <Text c="var(--color-text-heading)" fz={16} fw={600}>
               Logo
             </Text>
-            <div style={{ width: 526 }}>
+          </Grid.Col>
+          <Grid.Col span={7}>
+            <div style={{ flex: 1 }}>
               <LogoDropzone
                 file={form.values.logoFile}
                 onChange={(file) => handleFileChange(file)}
@@ -375,68 +408,78 @@ export default function AddPartnerForm({
                 }
               />
             </div>
-          </Group>
+          </Grid.Col>
+
+          <Grid.Col span={5}>
+            <Text c="var(--color-text-heading)" fz={16} fw={600}>
+              Babies Helped Per Month
+            </Text>
+          </Grid.Col>
+
+          <Grid.Col span={7}>
+            <NumberInput
+              placeholder="Approximate number (optional)"
+              min={0}
+              value={form.values.numBabies}
+              onChange={(val) =>
+                form.setFieldValue("numBabies", typeof val === "number" ? val : "")
+              }
+              size="md"
+              radius="md"
+              hideControls
+            />
+          </Grid.Col>
 
           {submitWarning && (
-            <Group justify="flex-end" mt="xs">
+            <Grid.Col span={12}>
               <Text c="red" size="sm">
                 {submitWarning}
               </Text>
-            </Group>
+            </Grid.Col>
           )}
+        </Grid>
 
-          {similarMatch && (
-            <Alert
-              icon={<IconAlertTriangle size={16} />}
-              title="Possible duplicate partner"
-              color="yellow"
-              radius="md"
-              mt="xs"
-            >
-              <Text size="sm" mb="sm">
-                A partner named <strong>&ldquo;{similarMatch}&rdquo;</strong> already exists with a
-                similar name. Double-check this is a new organization before continuing.
-              </Text>
-              <Group gap="sm">
-                <Button size="xs" variant="outline" color="gray" onClick={clearSimilarMatch}>
-                  Go Back
-                </Button>
-                <Button size="xs" color="orange" onClick={confirmAndSubmit} loading={isSubmitting}>
-                  Submit Anyway
-                </Button>
-              </Group>
-            </Alert>
-          )}
-
-          <Group justify="flex-end" mt="md">
-            <Button
-              variant="outline"
-              color="#053766"
-              radius="md"
-              type="button"
-              disabled={isSubmitting}
-              onClick={() => {
-                clearSimilarMatch();
-                form.reset();
-                form.setFieldValue("country", DEFAULT_COUNTRY);
-                setCityEntries([]);
-                onClose();
-              }}
-            >
-              Cancel
-            </Button>
-            <Button
-              variant="filled"
-              color="#053766"
-              radius="md"
-              type="submit"
-              loading={isSubmitting}
-              disabled={isSubmitting || !!similarMatch}
-            >
-              Submit
-            </Button>
-          </Group>
-        </Stack>
+        <Group
+          justify="flex-end"
+          style={{
+            position: "sticky",
+            bottom: 0,
+            backgroundColor: "white",
+            paddingTop: 16,
+            paddingBottom: 16,
+            paddingLeft: 32,
+            paddingRight: 32,
+            borderTop: "1px solid var(--mantine-color-gray-1)",
+            zIndex: 10,
+            margin: "auto -32px -32px -32px",
+          }}
+        >
+          <Button
+            variant="outline"
+            color="brand"
+            radius="md"
+            type="button"
+            disabled={isSubmitting}
+            onClick={() => {
+              form.reset();
+              form.setFieldValue("country", DEFAULT_COUNTRY);
+              setCityEntries([]);
+              onClose();
+            }}
+          >
+            Cancel
+          </Button>
+          <Button
+            variant="filled"
+            color="brand"
+            radius="md"
+            type="submit"
+            loading={isSubmitting}
+            disabled={isSubmitting}
+          >
+            Submit
+          </Button>
+        </Group>
       </form>
     </Modal>
   );

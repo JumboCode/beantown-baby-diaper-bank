@@ -38,7 +38,12 @@ function ResetViewControl() {
           title="Reset view"
           aria-label="Reset view"
           onClick={() => map.setView(DEFAULT_CENTER, DEFAULT_ZOOM)}
-          style={{ display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            cursor: "pointer",
+          }}
         >
           <IconHome size={16} />
         </a>

@@ -19,15 +19,13 @@ export async function GET() {
 
     const admins = users.data
       .map((u) => {
-        const role =
-          (u.publicMetadata?.role as string | undefined) ?? "standard";
+        const role = (u.publicMetadata?.role as string | undefined) ?? "standard";
 
         const isAdmin = ["admin", "superadmin"].includes(role.toLowerCase());
 
         return {
           id: u.id,
-          name:
-            [u.firstName, u.lastName].filter(Boolean).join(" ") || "(No name)",
+          name: [u.firstName, u.lastName].filter(Boolean).join(" ") || "(No name)",
           email: u.emailAddresses?.[0]?.emailAddress ?? "",
           level: role,
           isAdmin,

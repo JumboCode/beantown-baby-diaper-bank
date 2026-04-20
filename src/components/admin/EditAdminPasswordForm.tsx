@@ -1,15 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import {
-  Button,
-  Group,
-  Modal,
-  PasswordInput,
-  Stack,
-  Text,
-  Alert,
-} from "@mantine/core";
+import { Button, Group, Modal, PasswordInput, Stack, Text, Alert } from "@mantine/core";
 import { useForm } from "@mantine/form";
 
 interface Admin {
@@ -29,9 +21,7 @@ interface FormValues {
   confirmPassword: string;
 }
 
-export default function EditAdminPasswordForm({
-  admin,
-}: EditAdminPasswordFormProps) {
+export default function EditAdminPasswordForm({ admin }: EditAdminPasswordFormProps) {
   const [opened, setOpened] = useState(false);
   const [loading, setLoading] = useState(false);
   const [serverError, setServerError] = useState<string | null>(null);
@@ -42,8 +32,7 @@ export default function EditAdminPasswordForm({
       confirmPassword: "",
     },
     validate: {
-      password: (value) =>
-        value.length < 8 ? "Password must be at least 8 characters" : null,
+      password: (value) => (value.length < 8 ? "Password must be at least 8 characters" : null),
       confirmPassword: (value, values) =>
         value !== values.password ? "Passwords do not match" : null,
     },
@@ -81,11 +70,7 @@ export default function EditAdminPasswordForm({
 
   return (
     <>
-      <Button
-      variant="light"
-      size="xs"
-      onClick={() => setOpened(true)}
-      >
+      <Button variant="light" size="xs" onClick={() => setOpened(true)}>
         Update Password
       </Button>
 
