@@ -580,7 +580,6 @@ function AdminPageContent() {
               <Popover.Target>
                 <Button
                   variant="default"
-                  radius={5}
                   onClick={handleFilterClick}
                   rightSection={
                     <Image src="/admin_view/filter.svg" alt="filter icon" width={16} height={16} />
@@ -602,14 +601,7 @@ function AdminPageContent() {
                     <Group justify="space-between" align="center">
                       <Text fw={600}>Joined in year</Text>
                       {activePartnerFilterCount > 0 && (
-                        <Button
-                          onClick={resetPartnerFilters}
-                          variant="subtle"
-                          color="brand"
-                          radius="md"
-                          size="xs"
-                          p={0}
-                        >
+                        <Button onClick={resetPartnerFilters} variant="subtle" size="xs">
                           Clear Filters
                         </Button>
                       )}
@@ -654,9 +646,18 @@ function AdminPageContent() {
                   </Stack>
                 ) : (
                   <Stack gap="xs">
-                    <h3>
-                      <strong>Date Range</strong>
-                    </h3>
+                    <Group justify="space-between" align="center">
+                      <Text fw={600}>Date Range</Text>
+                      <Button
+                        onClick={resetDistributionFilters}
+                        variant="subtle"
+                        color="brand"
+                        radius="md"
+                        size="xs"
+                      >
+                        Clear Filters
+                      </Button>
+                    </Group>
                     <MonthPickerInput
                       defaultLevel="decade"
                       leftSection={<Calendar size={18} />}
@@ -666,17 +667,6 @@ function AdminPageContent() {
                       onChange={handleDateRangeChange}
                       popoverProps={{ withinPortal: false }}
                     />
-                    <Group justify="flex-end" mt="sm">
-                      <Button
-                        onClick={resetDistributionFilters}
-                        variant="outline"
-                        color="brand"
-                        radius="md"
-                        size="xs"
-                      >
-                        Clear Filters
-                      </Button>
-                    </Group>
                   </Stack>
                 )}
               </Popover.Dropdown>
@@ -778,12 +768,7 @@ function AdminPageContent() {
                 <Text c="dimmed" maw={360}>
                   Try adjusting the date range or clear the filters.
                 </Text>
-                <Button
-                  variant="outline"
-                  color="brand"
-                  radius="md"
-                  onClick={resetDistributionFilters}
-                >
+                <Button variant="outline" onClick={resetDistributionFilters}>
                   Clear Filters
                 </Button>
               </Stack>
