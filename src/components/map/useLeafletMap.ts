@@ -45,14 +45,14 @@ const MA_BOUNDS: LatLngBoundsExpression = [
  *  - `mapConfig`: a memoized `MapConfig` suitable for passing to a Leaflet `MapContainer` or analogous component.
  *
  */
-export function useLeafletMap() {
+export function useLeafletMap(zoom: number = DEFAULT_ZOOM) {
   const mapConfig = useMemo<MapConfig>(
     () => ({
       center: DEFAULT_CENTER,
-      zoom: DEFAULT_ZOOM,
+      zoom,
       scrollWheelZoom: true,
       preferCanvas: false,
-      minZoom: 10,
+      minZoom: 8,
       maxZoom: 18,
       maxBounds: MA_BOUNDS,
       maxBoundsViscosity: 1.0,
@@ -61,7 +61,7 @@ export function useLeafletMap() {
         width: "100%",
       },
     }),
-    [],
+    [zoom],
   );
 
   return { mapConfig };
