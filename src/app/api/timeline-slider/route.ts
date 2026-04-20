@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { Prisma } from "@/generated/prisma/client";
 
 const MONTH_ORDER: Record<string, number> = {
   January: 0,
@@ -72,11 +73,35 @@ async function getTimelineData() {
 export async function GET() {
   try {
     const data = await getTimelineData();
+
+    if (data.years.length === 0 && data.months.length === 0) {
+      return NextResponse.json(
+        { years: [], months: [], message: "No distribution data has been uploaded yet" },
+        { status: 200 },
+      );
+    }
+
     return NextResponse.json(data);
   } catch (error) {
-    console.error("Error fetching timeline data:", error);
+    if (
+      error instanceof Prisma.PrismaClientKnownRequestError ||
+      error instanceof Prisma.PrismaClientUnknownRequestError
+    ) {
+      console.error("Database query error fetching timeline data:", error);
+      return NextResponse.json(
+        { error: "Failed to query timeline data from the database" },
+        { status: 503 },
+      );
+    }
+
+    if (error instanceof Prisma.PrismaClientInitializationError) {
+      console.error("Database connection error fetching timeline data:", error);
+      return NextResponse.json({ error: "Could not connect to the database" }, { status: 503 });
+    }
+
+    console.error("Unexpected error fetching timeline data:", error);
     return NextResponse.json(
-      { error: "Unable to load timeline data from the database" },
+      { error: "An unexpected error occurred while loading timeline data" },
       { status: 500 },
     );
   }

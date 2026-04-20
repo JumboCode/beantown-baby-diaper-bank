@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  Alert,
   Button,
   Group,
   TextInput,
@@ -15,6 +16,7 @@ import {
   SimpleGrid,
   LoadingOverlay,
 } from "@mantine/core";
+import { IconAlertTriangle } from "@tabler/icons-react";
 import LogoDropzone from "./LogoDropzone";
 import { useForm } from "@mantine/form";
 import { MonthPickerInput } from "@mantine/dates";
@@ -22,80 +24,18 @@ import { useEffect, useRef, useState } from "react";
 import "@mantine/dates/styles.css";
 import { fetchCoordsFromAddress } from "@/lib/util";
 import CityPercentagesForm, { CityPercentage } from "./CityPercentagesForm";
+import { US_STATES } from "@/lib/types";
+import { buildAddressString, usePartnerSubmit } from "@/hooks/admin/usePartnerSubmit";
 
 const countries = ["United States", "Canada"];
 const DEFAULT_COUNTRY = "United States";
-
-const US_STATES = [
-  "AL",
-  "AK",
-  "AZ",
-  "AR",
-  "CA",
-  "CO",
-  "CT",
-  "DE",
-  "FL",
-  "GA",
-  "HI",
-  "ID",
-  "IL",
-  "IN",
-  "IA",
-  "KS",
-  "KY",
-  "LA",
-  "ME",
-  "MD",
-  "MA",
-  "MI",
-  "MN",
-  "MS",
-  "MO",
-  "MT",
-  "NE",
-  "NV",
-  "NH",
-  "NJ",
-  "NM",
-  "NY",
-  "NC",
-  "ND",
-  "OH",
-  "OK",
-  "OR",
-  "PA",
-  "RI",
-  "SC",
-  "SD",
-  "TN",
-  "TX",
-  "UT",
-  "VT",
-  "VA",
-  "WA",
-  "WV",
-  "WI",
-  "WY",
-];
-
-type AddressFields = {
-  addressLine: string;
-  city: string;
-  state: string;
-  zipCode: string;
-  country: string;
-};
-
-const buildAddressString = ({ addressLine, city, state, zipCode, country }: AddressFields) =>
-  [addressLine, city, state, zipCode, country || DEFAULT_COUNTRY].filter(Boolean).join(", ");
+const DEFAULT_STATE = "MA";
 
 const requiredNumber = (label: string) => (value: unknown) => {
   const v = (value === 0 ? "0" : (value ?? "")).toString().trim();
   if (v === "") return `${label} is required`;
   return /^-?\d+(\.\d+)?$/.test(v) ? null : `${label} must be a number`;
 };
-
 
 export default function AddPartnerForm({
   opened,
@@ -105,8 +45,6 @@ export default function AddPartnerForm({
   onClose: () => void;
 }) {
   const [cityEntries, setCityEntries] = useState<CityPercentage[]>([]);
-  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
-  const [submitWarning, setSubmitWarning] = useState<string>("");
 
   const form = useForm({
     mode: "controlled",
@@ -120,7 +58,7 @@ export default function AddPartnerForm({
       longitude: "",
       addressLine: "",
       city: "",
-      state: "",
+      state: DEFAULT_STATE,
       zipCode: "",
       country: DEFAULT_COUNTRY,
       logoFile: null as File | null,
@@ -138,10 +76,11 @@ export default function AddPartnerForm({
       longitude: requiredNumber("Longitude"),
       state: (value) => (value ? null : "Select a state"),
       city: (value) => (value.trim() ? null : "City is required"),
-      addressLine: (value) =>
-        value.trim() ? null : "Address Line is required",
+      addressLine: (value) => (value.trim() ? null : "Address Line is required"),
       zipCode: (value: string) =>
-        /^\d{5}(-\d{4})?$/.test(value.trim()) ? null : "Zip Code must be a valid US zip code (e.g. 02101)",
+        /^\d{5}(-\d{4})?$/.test(value.trim())
+          ? null
+          : "Zip Code must be a valid US zip code (e.g. 02101)",
       country: (value) => (value ? null : "Select a country"),
       status: (value) => (value ? null : "Select a status"),
       logoUrl: (value, values) => {
@@ -150,6 +89,30 @@ export default function AddPartnerForm({
       },
     },
   });
+
+  const {
+    submit,
+    confirmAndSubmit,
+    clearSimilarMatch,
+    isSubmitting,
+    warning: submitWarning,
+    similarMatch,
+  } = usePartnerSubmit({
+    cityEntries,
+    onSuccess: () => {
+      form.reset();
+      form.setFieldValue("country", DEFAULT_COUNTRY);
+      setCityEntries([]);
+      window.dispatchEvent(new CustomEvent("partners:refresh"));
+      onClose();
+    },
+    onFieldError: (field, message) => form.setFieldError(field, message),
+  });
+
+  function handleClose() {
+    clearSimilarMatch();
+    onClose();
+  }
 
   const geocodeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => {
@@ -192,109 +155,10 @@ export default function AddPartnerForm({
     form.clearFieldError("logoFile");
   };
 
-  async function submitPartner(values: typeof form.values) {
-    setIsSubmitting(true);
-    setSubmitWarning("");
-
-    if (values.status !== "waitlisted") {
-      if (cityEntries.length === 0) {
-        setSubmitWarning("Please add at least one city.");
-        setIsSubmitting(false);
-        return;
-      }
-      const total = cityEntries.reduce((sum, e) => sum + e.percent, 0);
-      if (Math.abs(total - 100) > 0.01) {
-        setSubmitWarning(`City percentages must add up to 100% (currently ${total.toFixed(0)}%)`);
-        setIsSubmitting(false);
-        return;
-      }
-    }
-
-    // // Check for duplicate partner name before submitting.
-    // try {
-    //   const trimmedName = values.organization.trim();
-    //   const checkRes = await fetch(`/api/partners?search=${encodeURIComponent(trimmedName)}`);
-    //   if (checkRes.ok) {
-    //     const checkData = await checkRes.json();
-    //     const duplicate = checkData.data?.find(
-    //       (p: { name: string }) => p.name.trim().toLowerCase() === trimmedName.toLowerCase(),
-    //     );
-    //     if (duplicate) {
-    //       const duplicateWarning = `The partner ${trimmedName} already exists.`;
-    //       form.setFieldError("organization", duplicateWarning);
-    //       setSubmitWarning(duplicateWarning);
-    //       setIsSubmitting(false);
-    //       return;
-    //     }
-    //   }
-    // } catch {
-    //   // If the check fails, allow the submission to proceed.
-    // }
-
-    const cityPercentages = cityEntries.map((e) => ({
-      city: e.city,
-      percentage: Number((e.percent / 100).toFixed(4)),
-    }));
-
-    const partnerPayload = {
-      name: values.organization,
-      description: values.description,
-      start_partner: values.time,
-      status: values.status,
-      coordinates: {
-        lat: Number(values.latitude),
-        lng: Number(values.longitude),
-      },
-      address: buildAddressString(values),
-      logo: values.logoUrl || "",
-      cities: cityPercentages,
-      num_babies: values.numBabies !== "" ? Number(values.numBabies) : null,
-    };
-
-    try {
-      const requestBody = new FormData();
-      requestBody.append("partner", JSON.stringify(partnerPayload));
-      requestBody.append("logoAction", values.logoFile ? "replace" : "keep");
-      if (values.logoFile) {
-        requestBody.append("file", values.logoFile);
-      }
-
-      const response = await fetch("/api/partners", {
-        method: "POST",
-        body: requestBody,
-      });
-
-      if (!response.ok) {
-        const err = await response.json();
-        const warning = typeof err?.error === "string" ? err.error : "Unable to submit partner.";
-        if (response.status === 422 || warning === "Please check the entered cities.") {
-          const cityWarning = "Please check the entered cities.";
-          setSubmitWarning(cityWarning);
-          return;
-        }
-        form.setFieldError("logoFile", warning);
-        setSubmitWarning(warning);
-        return;
-      }
-
-      form.reset();
-      form.setFieldValue("country", DEFAULT_COUNTRY);
-      setCityEntries([]);
-      setSubmitWarning("");
-      onClose();
-
-      if (typeof window !== "undefined") {
-        window.dispatchEvent(new Event("partners:refresh"));
-      }
-    } finally {
-      setIsSubmitting(false);
-    }
-  }
-
   return (
     <Modal
       opened={opened}
-      onClose={onClose}
+      onClose={handleClose}
       size={990}
       padding={32}
       title={
@@ -312,7 +176,7 @@ export default function AddPartnerForm({
         overlayProps={{ radius: "sm", blur: 2 }}
       />
 
-      <form onSubmit={form.onSubmit(submitPartner)}>
+      <form onSubmit={form.onSubmit(submit)}>
         <Stack>
           <Group justify="space-between" align="flex-start" w="100%">
             <Text c="#344054" fz={16} fw={600}>
@@ -460,9 +324,10 @@ export default function AddPartnerForm({
                   placeholder="State"
                   data={US_STATES}
                   searchable
+                  defaultValue={DEFAULT_STATE}
                   key={form.key("state")}
-                  value={form.values.state || null}
-                  onChange={(val) => form.setFieldValue("state", val || "")}
+                  value={form.values.state || DEFAULT_STATE}
+                  onChange={(val) => form.setFieldValue("state", val || DEFAULT_STATE)}
                   error={form.errors.state}
                   size="md"
                   radius="md"
@@ -519,6 +384,30 @@ export default function AddPartnerForm({
               </Text>
             </Group>
           )}
+
+          {similarMatch && (
+            <Alert
+              icon={<IconAlertTriangle size={16} />}
+              title="Possible duplicate partner"
+              color="yellow"
+              radius="md"
+              mt="xs"
+            >
+              <Text size="sm" mb="sm">
+                A partner named <strong>&ldquo;{similarMatch}&rdquo;</strong> already exists with a
+                similar name. Double-check this is a new organization before continuing.
+              </Text>
+              <Group gap="sm">
+                <Button size="xs" variant="outline" color="gray" onClick={clearSimilarMatch}>
+                  Go Back
+                </Button>
+                <Button size="xs" color="orange" onClick={confirmAndSubmit} loading={isSubmitting}>
+                  Submit Anyway
+                </Button>
+              </Group>
+            </Alert>
+          )}
+
           <Group justify="flex-end" mt="md">
             <Button
               variant="outline"
@@ -527,6 +416,7 @@ export default function AddPartnerForm({
               type="button"
               disabled={isSubmitting}
               onClick={() => {
+                clearSimilarMatch();
                 form.reset();
                 form.setFieldValue("country", DEFAULT_COUNTRY);
                 setCityEntries([]);
@@ -541,6 +431,7 @@ export default function AddPartnerForm({
               radius="md"
               type="submit"
               loading={isSubmitting}
+              disabled={isSubmitting || !!similarMatch}
             >
               Submit
             </Button>
