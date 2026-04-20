@@ -8,6 +8,7 @@ import {
   Badge,
   Box,
   Tooltip as MantineTooltip,
+  Card,
 } from "@mantine/core";
 import {
   IconMapPin,
@@ -84,15 +85,12 @@ export function CityPopup({ city, year, onPartnerSelect, onClose }: CityPopupPro
               radius="xl"
               fw={700}
               size="md"
-              c="var(--color-brand-red)"
-              variant="outline"
-              // bg="white"
-              // style={{
-              //   background: "rgba(255,255,255,0.15)",
-              //   color: "white",
-              //   border: "1px solid rgba(255,255,255,0.3)",
-              //   backdropFilter: "blur(4px)",
-              // }}
+              style={{
+                background: "rgba(255,255,255,0.15)",
+                color: "white",
+                border: "1px solid rgba(255,255,255,0.3)",
+                backdropFilter: "blur(4px)",
+              }}
             >
               {year}
             </Badge>
@@ -121,15 +119,7 @@ export function CityPopup({ city, year, onPartnerSelect, onClose }: CityPopupPro
       <Stack gap={10} p={14}>
         {/* Two stat cells */}
         <Group grow gap={8}>
-          <Box
-            style={{
-              background: "#edf1f8",
-              border: "1px solid #c5d2e9",
-              borderLeft: "4px solid #1B3668",
-              borderRadius: 12,
-              padding: "10px 12px",
-            }}
-          >
+          <Card bg="white" withBorder radius="lg">
             <Group gap={5} mb={4} align="center">
               <IconChartBar size={12} color="#1B3668" />
               <Text fz="9px" c="#1B3668" tt="uppercase" fw={800} lts="0.08em">
@@ -142,16 +132,8 @@ export function CityPopup({ city, year, onPartnerSelect, onClose }: CityPopupPro
             <Text fz="10px" c="#2471A3" fw={500} mt={2}>
               diapers distributed
             </Text>
-          </Box>
-          <Box
-            style={{
-              background: "#e0e8f5",
-              border: "1px solid #c5d2e9",
-              borderLeft: "4px solid #2471A3",
-              borderRadius: 12,
-              padding: "10px 12px",
-            }}
-          >
+          </Card>
+          <Card bg="white" withBorder radius="lg">
             <Group gap={5} mb={4} align="center">
               <IconCalendarStats size={12} color="#2471A3" />
               <Text fz="9px" c="#162C58" tt="uppercase" fw={800} lts="0.08em">
@@ -169,24 +151,12 @@ export function CityPopup({ city, year, onPartnerSelect, onClose }: CityPopupPro
                 {totalChildren.toLocaleString()} children helped
               </Text>
             )}
-          </Box>
+          </Card>
         </Group>
 
         {/* Partners */}
-        <Box
-          style={{
-            border: "1px solid #E4ECF4",
-            borderRadius: 10,
-            overflow: "hidden",
-          }}
-        >
-          <Box
-            style={{
-              background: "#edf1f8",
-              borderBottom: activePartners.length > 0 ? "1px solid #c5d2e9" : undefined,
-              padding: "8px 12px",
-            }}
-          >
+        <Card bg="white" withBorder radius="lg">
+          <Card.Section>
             <Group justify="space-between" align="center">
               <Group gap={7} align="center">
                 <ThemeIcon
@@ -210,7 +180,7 @@ export function CityPopup({ city, year, onPartnerSelect, onClose }: CityPopupPro
                 {activePartners.length}
               </Badge>
             </Group>
-          </Box>
+          </Card.Section>
 
           <Box p={10}>
             {activePartners.length > 0 ? (
@@ -259,12 +229,7 @@ export function CityPopup({ city, year, onPartnerSelect, onClose }: CityPopupPro
                         {p.name}
                       </Text>
                       {isNew && (
-                        <Badge
-                          size="xs"
-                          variant="filled"
-                          color="red"
-                          style={{ fontSize: "8px", flexShrink: 0 }}
-                        >
+                        <Badge size="xs" variant="light" color="var(--color-brand-red)">
                           NEW
                         </Badge>
                       )}
@@ -278,7 +243,7 @@ export function CityPopup({ city, year, onPartnerSelect, onClose }: CityPopupPro
               </Text>
             )}
           </Box>
-        </Box>
+        </Card>
 
         {/* Waitlisted */}
         {waitlistedPartners.length > 0 && (
