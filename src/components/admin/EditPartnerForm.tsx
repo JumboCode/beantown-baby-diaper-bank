@@ -140,8 +140,12 @@ export default function EditPartnerForm({ partner, onClose }: EditPartnerFormPro
       organization: requiredInput("Name of Organization"),
       time: (value, values) =>
         values.status === "waitlisted" || value ? null : "Select a start time",
-      endTime: (value, values) =>
-        values.status === "inactive" && !value ? "Select an end time" : null,
+      endTime: (value, values) => {
+        if (values.status === "inactive" && !value) return "Select an end time";
+        if (value && values.time && value <= values.time)
+          return "End time must be after start time";
+        return null;
+      },
       latitude: requiredNumber("Latitude"),
       longitude: requiredNumber("Longitude"),
       state: (value) => (value ? null : "Select a state"),
@@ -293,6 +297,11 @@ export default function EditPartnerForm({ partner, onClose }: EditPartnerFormPro
                 <MonthPickerInput
                   placeholder="Pick date"
                   {...form.getInputProps("time")}
+                  onChange={(val) => {
+                    form.setFieldValue("time", new Date(val ?? ""));
+                    // Re-validate endTime so the cross-field error stays current
+                    form.validateField("endTime");
+                  }}
                   required
                   size="md"
                 />
@@ -311,6 +320,11 @@ export default function EditPartnerForm({ partner, onClose }: EditPartnerFormPro
                 <MonthPickerInput
                   placeholder="Pick end date"
                   {...form.getInputProps("endTime")}
+                  minDate={
+                    form.values.time
+                      ? new Date(form.values.time.getFullYear(), form.values.time.getMonth() + 1, 1)
+                      : undefined
+                  }
                   required
                   size="md"
                 />
