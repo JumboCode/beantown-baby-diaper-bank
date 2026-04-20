@@ -1,12 +1,20 @@
 @import "tailwindcss";
 
-:root {
-}
-
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-poppins);
+  /* Brand color tokens — sourced from Mantine cssVariablesResolver */
+  --color-brand: var(--color-brand);
+  --color-brand-dark: var(--color-brand-dark);
+  --color-brand-light: var(--color-brand-light);
+  --color-brand-red: var(--color-brand-red);
+  --color-brand-red-light: var(--color-brand-red-light);
+  --color-text-heading: var(--color-text-heading);
+  --color-text-muted: var(--color-text-muted);
+  --color-text-subtle: var(--color-text-subtle);
+  --color-text-accent: var(--color-text-accent);
+  --color-text-secondary: var(--color-text-secondary);
 }
 
 body {

@@ -1,7 +1,6 @@
 "use client";
 import { Paper, Stack, Text, Group, Skeleton } from "@mantine/core";
 import Image from "next/image";
-// import ImpactModal from "./ImpactModal";
 
 interface TotalDiapersDistributedProps {
   totalDiapers?: number;
@@ -21,11 +20,7 @@ export default function TotalDiapersDistributed({
     >
       <Group justify="space-between" align="center">
         <Stack gap="xs">
-          <Text
-            fz="16px"
-            fw={700}
-            c="#344054"
-          >
+          <Text fz="16px" fw={700} c="#344054">
             {year ? `Total Diapers Distributed in ${year}` : "Total Diapers Distributed"}
           </Text>
           {totalDiapers != null ? (

@@ -13,11 +13,11 @@ export default function ContinuousUpdateForm({
   onEntriesChange,
 }: ContinuousUpdateFormProps) {
   return (
-    <Paper withBorder radius="xl" p="lg">
+    <Paper withBorder p="lg">
       <Stack gap="md">
         <Group gap="xs">
-          <RiLineChartLine size={20} color="#0B3A79" />
-          <Text fw={700} size="lg" c="#0B3A79">
+          <RiLineChartLine size={20} color="var(--color-brand)" />
+          <Text fw={700} size="lg" c="brand">
             Continuous Update
           </Text>
         </Group>

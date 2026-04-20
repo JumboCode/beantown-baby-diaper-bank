@@ -43,7 +43,9 @@ export async function POST(request: Request) {
 
     for (const row of partnerRows) {
       const name = row.partnerName?.trim();
-      const totalDiapersStr = String(row.totalDiapers ?? "").replace(/,/g, "").trim();
+      const totalDiapersStr = String(row.totalDiapers ?? "")
+        .replace(/,/g, "")
+        .trim();
 
       // Check for missing fields
       if (!name || totalDiapersStr === "") {
@@ -55,7 +57,9 @@ export async function POST(request: Request) {
       const isInvalidDiapers = totalDiapersStr !== "" && !/^\d+$/.test(totalDiapersStr);
 
       if (isInvalidDiapers) {
-        errors.add("There are non-numeric or negative values for number of diapers in the spreadsheet. Please fix and reupload.");
+        errors.add(
+          "There are non-numeric or negative values for number of diapers in the spreadsheet. Please fix and reupload.",
+        );
       }
 
       const displayName = row.partnerName;
@@ -63,7 +67,9 @@ export async function POST(request: Request) {
 
       // Check for duplicates organizations
       if (seen.has(normalizedName)) {
-        errors.add(`Organization ${displayName} appears multiple times in the spreadsheet. Please fix duplicates.`);
+        errors.add(
+          `Organization ${displayName} appears multiple times in the spreadsheet. Please fix duplicates.`,
+        );
         continue;
       }
       seen.add(normalizedName);
@@ -71,7 +77,9 @@ export async function POST(request: Request) {
       // Check if partner does not exist
       const partner = partnerByNormalizedName.get(normalizedName);
       if (!partner) {
-        errors.add(`Organization ${displayName} does not exist, consider adding them as a new Partner`);
+        errors.add(
+          `Organization ${displayName} does not exist, consider adding them as a new Partner`,
+        );
         continue;
       }
 
@@ -86,7 +94,7 @@ export async function POST(request: Request) {
     }
 
     const errorList = Array.from(errors);
-    
+
     return NextResponse.json(
       {
         valid: errorList.length === 0,
@@ -96,9 +104,7 @@ export async function POST(request: Request) {
     );
   } catch (error) {
     const message =
-      error instanceof Error
-        ? error.message
-        : "Failed to validate uploaded distribution data.";
+      error instanceof Error ? error.message : "Failed to validate uploaded distribution data.";
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }

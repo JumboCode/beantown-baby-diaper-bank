@@ -11,8 +11,8 @@ import {
   Select,
   Stack,
   LoadingOverlay,
-  Box,
   SimpleGrid,
+  Grid,
 } from "@mantine/core";
 import LogoDropzone from "./LogoDropzone";
 import { useForm } from "@mantine/form";
@@ -24,6 +24,8 @@ import ContinuousUpdateForm from "./ContinuousUpdateForm";
 import type { CityPercentage } from "./CityPercentagesForm";
 import "@mantine/dates/styles.css";
 import { fetchCoordsFromAddress } from "@/lib/util";
+import { US_STATES } from "@/lib/types";
+import { buildAddressString, usePartnerSubmit } from "@/hooks/admin/usePartnerSubmit";
 
 interface EditPartnerFormProps {
   partner: Partner;
@@ -32,59 +34,6 @@ interface EditPartnerFormProps {
 
 const countries = ["United States", "Canada"];
 const DEFAULT_COUNTRY = "United States";
-
-const US_STATES = [
-  "AL",
-  "AK",
-  "AZ",
-  "AR",
-  "CA",
-  "CO",
-  "CT",
-  "DE",
-  "FL",
-  "GA",
-  "HI",
-  "ID",
-  "IL",
-  "IN",
-  "IA",
-  "KS",
-  "KY",
-  "LA",
-  "ME",
-  "MD",
-  "MA",
-  "MI",
-  "MN",
-  "MS",
-  "MO",
-  "MT",
-  "NE",
-  "NV",
-  "NH",
-  "NJ",
-  "NM",
-  "NY",
-  "NC",
-  "ND",
-  "OH",
-  "OK",
-  "OR",
-  "PA",
-  "RI",
-  "SC",
-  "SD",
-  "TN",
-  "TX",
-  "UT",
-  "VT",
-  "VA",
-  "WA",
-  "WV",
-  "WI",
-  "WY",
-];
 
 type AddressFields = {
   addressLine: string;
@@ -117,17 +66,11 @@ const parseAddressFields = (address: string | null): AddressFields => {
   };
 };
 
-const buildAddressString = ({ addressLine, city, state, zipCode, country }: AddressFields) =>
-  [addressLine, city, state, zipCode, country || DEFAULT_COUNTRY]
-    .filter((part) => Boolean(part))
-    .join(", ");
-
 const requiredNumber = (label: string) => (value: unknown) => {
   const v = (value === 0 ? "0" : (value ?? "")).toString().trim();
   if (v === "") return `${label} is required`;
   return /^-?\d+(\.\d+)?$/.test(v) ? null : `${label} must be a number`;
 };
-
 
 const requiredInput = (label: string) => (value: unknown) => {
   const v = (value === 0 ? "0" : (value ?? "")).toString().trim();
@@ -142,50 +85,23 @@ const parseMonthDateForPicker = (rawDate: string | null | undefined): Date | nul
     const parsed = new Date(rawDate);
     return Number.isNaN(parsed.getTime()) ? null : parsed;
   }
-
   const year = Number(monthMatch[1]);
   const monthIndex = Number(monthMatch[2]) - 1;
   return new Date(Date.UTC(year, monthIndex, 1, 12));
 };
 
-const formatMonthDateForApi = (date: Date | string | null): string | null => {
-  if (!date) return null;
-
-  if (typeof date === "string") {
-    const monthMatch = date.match(/^(\d{4})-(\d{2})/);
-    if (monthMatch) {
-      return `${monthMatch[1]}-${monthMatch[2]}-01`;
-    }
-  }
-
-  const parsed = date instanceof Date ? date : new Date(date);
-  if (Number.isNaN(parsed.getTime())) return null;
-
-  const year = parsed.getUTCFullYear();
-  const month = String(parsed.getUTCMonth() + 1).padStart(2, "0");
-  return `${year}-${month}-01`;
-};
-
 export default function EditPartnerForm({ partner, onClose }: EditPartnerFormProps) {
-  const [loading, setLoading] = useState(false);
   const [initialLogoUrl] = useState<string>(partner.logoUrl || "");
   const [cityEntries, setCityEntries] = useState<CityPercentage[]>([]);
   const [cityPercentages, setCityPercentages] = useState<
-    {
-      city: { id: number; name: string };
-      percentage: number;
-    }[]
+    { city: { id: number; name: string }; percentage: number }[]
   >([]);
 
   useEffect(() => {
     fetch(`/api/partners/percentages?partnerId=${partner.id}`)
       .then((res) => res.json())
-      .then((data) => {
-        setCityPercentages(data.data);
-      })
-      .catch((error) => {
-        console.error("Error fetching partner percentages:", error);
-      });
+      .then((data) => setCityPercentages(data.data))
+      .catch((error) => console.error("Error fetching partner percentages:", error));
   }, [partner.id]);
 
   const initialCityPercentEntries = useMemo<CityPercentage[]>(
@@ -232,7 +148,9 @@ export default function EditPartnerForm({ partner, onClose }: EditPartnerFormPro
       city: requiredInput("City"),
       addressLine: requiredInput("Address Line"),
       zipCode: (value: string) =>
-        /^\d{5}(-\d{4})?$/.test(value.trim()) ? null : "Zip Code must be a valid US zip code (e.g. 02101)",
+        /^\d{5}(-\d{4})?$/.test(value.trim())
+          ? null
+          : "Zip Code must be a valid US zip code (e.g. 02101)",
       country: (value) => (value ? null : "Select a country"),
       status: (value) => (value ? null : "Select a status"),
       description: requiredInput("Description"),
@@ -241,6 +159,18 @@ export default function EditPartnerForm({ partner, onClose }: EditPartnerFormPro
         return typeof value === "string" ? null : "Enter a valid URL";
       },
     },
+  });
+
+  const { submit, isSubmitting, warning } = usePartnerSubmit({
+    cityEntries,
+    partnerId: partner.id,
+    onSuccess: () => {
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new Event("partners:refresh"));
+      }
+      onClose();
+    },
+    onFieldError: (field, message) => form.setFieldError(field, message),
   });
 
   const geocodeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -269,156 +199,68 @@ export default function EditPartnerForm({ partner, onClose }: EditPartnerFormPro
     form.values.country,
   ]);
 
-  async function submitEditPartner(values: typeof form.values) {
-    setLoading(true);
-
-    const formData = {
-      id: partner.id,
-      name: values.organization,
-      description: values.description,
-      start_partner: values.status !== "waitlisted" ? formatMonthDateForApi(values.time) : null,
-      end_partner: values.status === "inactive" ? formatMonthDateForApi(values.endTime) : null,
-      status: values.status,
-      coordinates: {
-        lat: Number(values.latitude),
-        lng: Number(values.longitude),
-      },
-      address: buildAddressString(values),
-      logo: values.logoUrl,
-      num_babies: values.numBabies !== "" ? Number(values.numBabies) : null,
-    };
-
-    const logoAction = values.logoFile
-      ? "replace"
-      : initialLogoUrl && values.logoUrl.trim() === ""
-        ? "remove"
-        : "keep";
-
-    try {
-      const requestBody = new FormData();
-      requestBody.append("partner", JSON.stringify(formData));
-      requestBody.append("logoAction", logoAction);
-      if (values.logoFile) {
-        requestBody.append("file", values.logoFile);
-      }
-
-      const response = await fetch("/api/partners", {
-        method: "POST",
-        body: requestBody,
-      });
-
-      if (!response.ok) {
-        const err = await response.json();
-        form.setFieldError("logoFile", err.error);
-        return;
-      }
-
-      if (form.values.status !== "waitlisted" && cityEntries.length > 0) {
-        for (const entry of cityEntries) {
-          const cityRes = await fetch("/api/cities", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ name: entry.city }),
-          });
-          if (!cityRes.ok && cityRes.status !== 409) {
-            const err = await cityRes.json().catch(() => ({}));
-            form.setFieldError("organization", err.error || "Failed to save city percentages.");
-            return;
-          }
-        }
-
-        await fetch("/api/partners/percentages", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            partnerId: partner.id,
-            percentages: cityEntries.map((e) => ({
-              city: e.city,
-              percentage: e.percent / 100,
-            })),
-          }),
-        });
-      }
-
-      if (typeof window !== "undefined") {
-        window.dispatchEvent(new Event("partners:refresh"));
-      }
-      onClose();
-    } finally {
-      setLoading(false);
-    }
-  }
-
   return (
-    <Box pos="relative">
-      <LoadingOverlay visible={loading} zIndex={1000} overlayProps={{ radius: "sm", blur: 2 }} />
+    <>
+      <LoadingOverlay
+        visible={isSubmitting}
+        zIndex={1000}
+        overlayProps={{ radius: "sm", blur: 2 }}
+      />
 
-      <div className="mx-8">
-        <h2 className="text-lg text-gray-500" style={{ marginBottom: "24px" }}>
-          Change your partner data
-        </h2>
-        <form onSubmit={form.onSubmit(submitEditPartner)} className="flex flex-col gap-5">
-          <Group justify="space-between" align="flex-start">
-            <Text fw={600} c="#344054">
+      <form onSubmit={form.onSubmit(submit)}>
+        <Grid pb={80}>
+          <Grid.Col span={5}>
+            <Text fw={600} c="var(--color-text-heading)" fz={16}>
               Name of Organization <span className="text-red-600">*</span>
             </Text>
+          </Grid.Col>
+          <Grid.Col span={7}>
             <TextInput
               placeholder="Name"
               {...form.getInputProps("organization")}
               size="md"
-              className="min-w-170"
               radius="md"
             />
-          </Group>
+          </Grid.Col>
 
-          <Group justify="space-between" align="flex-start">
-            <Text fw={600} c="#344054">
+          <Grid.Col span={5}>
+            <Text fw={600} c="var(--color-text-heading)" fz={16}>
               Description <span className="text-red-600">*</span>
             </Text>
+          </Grid.Col>
+          <Grid.Col span={7}>
             <Textarea
+              key={form.key("description")}
               {...form.getInputProps("description")}
               size="md"
-              className="min-w-170"
               radius="md"
               autosize
               maxRows={6}
             />
-          </Group>
+          </Grid.Col>
 
-          <Group justify="space-between" align="flex-start" w="100%">
-            <Text fw={600} c="#344054" className="w-40">
+          <Grid.Col span={5}>
+            <Text fw={600} c="var(--color-text-heading)" fz={16}>
               Status <span className="text-red-600">*</span>
             </Text>
-
+          </Grid.Col>
+          <Grid.Col span={7}>
             <Radio.Group
               value={form.values.status}
               onChange={(val) => form.setFieldValue("status", val as status)}
-              className="min-w-170 w-full max-w-[600px]"
             >
               <Group gap="md" grow>
                 {[
-                  {
-                    value: "active",
-                    title: "Active",
-                    description: "Currently active",
-                  },
-                  {
-                    value: "inactive",
-                    title: "Inactive",
-                    description: "No longer active",
-                  },
-                  {
-                    value: "waitlisted",
-                    title: "Waitlisted",
-                    description: "On the waitlist",
-                  },
+                  { value: "active", title: "Active", description: "Currently active" },
+                  { value: "inactive", title: "Inactive", description: "No longer active" },
+                  { value: "waitlisted", title: "Waitlisted", description: "On the waitlist" },
                 ].map((option) => (
                   <Radio.Card
                     key={option.value}
                     value={option.value}
                     radius="md"
                     p="md"
-                    className="border border-gray-200 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md data-[checked=true]:border-[#053766] data-[checked=true]:bg-blue-50 h-full"
+                    className="border border-gray-200 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md data-[checked=true]:border-[var(--color-brand)] data-[checked=true]:bg-blue-50 h-full"
                   >
                     <Group wrap="nowrap" align="flex-start" gap="sm">
                       <Radio.Indicator />
@@ -438,41 +280,51 @@ export default function EditPartnerForm({ partner, onClose }: EditPartnerFormPro
                 </Text>
               )}
             </Radio.Group>
-          </Group>
+          </Grid.Col>
 
           {form.values.status !== "waitlisted" && (
-            <Group justify="space-between" align="flex-start">
-              <Text fw={600} c="#344054">
-                Time it started <span className="text-red-600">*</span>
-              </Text>
-              <MonthPickerInput
-                placeholder="Pick date"
-                {...form.getInputProps("time")}
-                required
-                className="min-w-170 w-full max-w-[600px]"
-              />
-            </Group>
+            <>
+              <Grid.Col span={5}>
+                <Text fw={600} c="var(--color-text-heading)" fz={16}>
+                  Time it started <span className="text-red-600">*</span>
+                </Text>
+              </Grid.Col>
+              <Grid.Col span={7}>
+                <MonthPickerInput
+                  placeholder="Pick date"
+                  {...form.getInputProps("time")}
+                  required
+                  size="md"
+                />
+              </Grid.Col>
+            </>
           )}
 
           {form.values.status === "inactive" && (
-            <Group justify="space-between" align="flex-start">
-              <Text fw={600} c="#344054">
-                Time it ended <span className="text-red-600">*</span>
-              </Text>
-              <MonthPickerInput
-                placeholder="Pick end date"
-                {...form.getInputProps("endTime")}
-                required
-                className="min-w-170 w-full max-w-[600px]"
-              />
-            </Group>
+            <>
+              <Grid.Col span={5}>
+                <Text fw={600} c="var(--color-text-heading)" fz={16}>
+                  Time it ended <span className="text-red-600">*</span>
+                </Text>
+              </Grid.Col>
+              <Grid.Col span={7}>
+                <MonthPickerInput
+                  placeholder="Pick end date"
+                  {...form.getInputProps("endTime")}
+                  required
+                  size="md"
+                />
+              </Grid.Col>
+            </>
           )}
 
-          <Group justify="space-between" align="flex-start" w="100%">
-            <Text fw={600} c="#344054">
+          <Grid.Col span={5}>
+            <Text fw={600} c="var(--color-text-heading)" fz={16}>
               Address <span className="text-red-600">*</span>
             </Text>
-            <Stack className="min-w-170 w-full max-w-[600px]">
+          </Grid.Col>
+          <Grid.Col span={7}>
+            <Stack>
               <TextInput
                 placeholder="Address Line"
                 {...form.getInputProps("addressLine")}
@@ -513,76 +365,99 @@ export default function EditPartnerForm({ partner, onClose }: EditPartnerFormPro
                 />
               </SimpleGrid>
             </Stack>
-          </Group>
+          </Grid.Col>
 
-          <Group justify="space-between" align="flex-start">
-            <Text c="#344054" fw={600}>
+          <Grid.Col span={5}>
+            <Text fw={600} c="var(--color-text-heading)" fz={16}>
               Logo
             </Text>
-            <div className="min-w-170 w-full max-w-[600px]">
-              <LogoDropzone
-                file={form.values.logoFile}
-                existingUrl={initialLogoUrl || undefined}
-                onChange={(file) => {
-                  form.setFieldValue("logoFile", file);
-                  if (!file) {
-                    form.clearFieldError("logoFile");
-                  }
-                }}
-                error={
-                  form.errors.logoFile
-                    ? String(form.errors.logoFile)
-                    : form.errors.logoUrl
-                      ? String(form.errors.logoUrl)
-                      : undefined
-                }
-              />
-            </div>
-          </Group>
+          </Grid.Col>
+          <Grid.Col span={7}>
+            <LogoDropzone
+              file={form.values.logoFile}
+              existingUrl={initialLogoUrl || undefined}
+              onChange={(file) => {
+                form.setFieldValue("logoFile", file);
+                if (!file) form.clearFieldError("logoFile");
+              }}
+              error={
+                form.errors.logoFile
+                  ? String(form.errors.logoFile)
+                  : form.errors.logoUrl
+                    ? String(form.errors.logoUrl)
+                    : undefined
+              }
+            />
+          </Grid.Col>
 
-          <Group justify="space-between" align="flex-start">
-            <Text fw={600} c="#344054" className="w-40">
-              Number of Babies Helped Per Month
+          <Grid.Col span={5}>
+            <Text fw={600} c="var(--color-text-heading)" fz={16}>
+              Babies Helped Per Month
             </Text>
+          </Grid.Col>
+          <Grid.Col span={7}>
             <NumberInput
-              placeholder="Approximate Number of Babies Helped Per Month (optional)"
+              placeholder="Approximate number (optional)"
               min={0}
               value={form.values.numBabies}
               onChange={(val) =>
                 form.setFieldValue("numBabies", typeof val === "number" ? val : "")
               }
               size="md"
-              className="min-w-170 w-full max-w-[600px]"
               radius="md"
               hideControls
             />
-          </Group>
+          </Grid.Col>
 
           {form.values.status !== "waitlisted" && (
-            <Group justify="space-between" align="flex-start">
-              <Text fw={600} c="#344054" className="w-40">
-                Update Percentages
-              </Text>
-              <div className="min-w-170 w-full max-w-[600px]">
+            <>
+              <Grid.Col span={5}>
+                <Text fw={600} c="var(--color-text-heading)" fz={16}>
+                  Update Percentages
+                </Text>
+              </Grid.Col>
+              <Grid.Col span={7}>
                 <ContinuousUpdateForm
                   partnerId={`${partner.id}`}
                   initialCityPercentages={initialCityPercentEntries}
                   onEntriesChange={setCityEntries}
                 />
-              </div>
-            </Group>
+              </Grid.Col>
+            </>
           )}
 
-          <Group justify="flex-end" mt="md">
-            <Button variant="outline" color="#053766" radius="md" onClick={onClose}>
-              Cancel
-            </Button>
-            <Button variant="filled" color="#053766" radius="md" type="submit">
-              Submit
-            </Button>
-          </Group>
-        </form>
-      </div>
-    </Box>
+          {warning && (
+            <Grid.Col span={12}>
+              <Text c="red" size="sm">
+                {warning}
+              </Text>
+            </Grid.Col>
+          )}
+        </Grid>
+
+        <Group
+          justify="flex-end"
+          style={{
+            position: "sticky",
+            bottom: 0,
+            backgroundColor: "white",
+            paddingTop: 16,
+            paddingBottom: 16,
+            paddingLeft: 32,
+            paddingRight: 32,
+            borderTop: "1px solid var(--mantine-color-gray-1)",
+            zIndex: 10,
+            margin: "auto -32px -32px -32px",
+          }}
+        >
+          <Button variant="outline" color="brand" radius="md" type="button" onClick={onClose}>
+            Cancel
+          </Button>
+          <Button variant="filled" color="brand" radius="md" type="submit" loading={isSubmitting}>
+            Submit
+          </Button>
+        </Group>
+      </form>
+    </>
   );
 }

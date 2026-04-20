@@ -206,22 +206,16 @@ export default function DeleteDistributionDataButton({ onSuccess }: MonthSelecti
         size="lg"
         opened={opened}
         onClose={close}
-        title={
-          <Text fw={800} fz={30} c="#101828">
-            Delete Records
-          </Text>
-        }
+        title="Delete Records"
         withCloseButton
         centered
-        radius="xl"
-        padding={28}
       >
         <Stack gap="lg">
           <Stack gap={4}>
-            <Text fw={600} size="sm" c="#475467" tt="uppercase">
+            <Text fw={600} size="sm" c="var(--color-text-muted)" tt="uppercase">
               Distribution Cleanup
             </Text>
-            <Text c="#667085" size="sm">
+            <Text c="dimmed" size="sm">
               Preview exactly what will be removed before confirming the deletion.
             </Text>
           </Stack>
@@ -231,8 +225,8 @@ export default function DeleteDistributionDataButton({ onSuccess }: MonthSelecti
             radius="md"
             p="md"
             style={{
-              background: "#FCFCFD",
-              borderColor: "#EAECF0",
+              background: "var(--mantine-color-gray-0)",
+              borderColor: "var(--mantine-color-gray-3)",
               boxShadow: "0 1px 2px rgba(16, 24, 40, 0.04)",
             }}
           >
@@ -251,8 +245,8 @@ export default function DeleteDistributionDataButton({ onSuccess }: MonthSelecti
                 }}
               >
                 <Group mt="xs">
-                  <Radio color="#163663" value="one_month" label="One Month" />
-                  <Radio color="#163663" value="range" label="Range of Months" />
+                  <Radio color="brand" value="one_month" label="One Month" />
+                  <Radio color="brand" value="range" label="Range of Months" />
                 </Group>
               </Radio.Group>
 
@@ -290,16 +284,16 @@ export default function DeleteDistributionDataButton({ onSuccess }: MonthSelecti
                   />
                 )}
 
-                <Button onClick={handleClick} color="#163663" mt="md" radius="md">
+                <Button onClick={handleClick} color="brand" mt="md" radius="md">
                   Apply Selection
                 </Button>
               </Group>
             </Stack>
           </Paper>
 
-          <Divider color="#EAECF0" />
+          <Divider color="var(--mantine-color-gray-3)" />
 
-          <Text fw={700} size="lg" c="#101828">
+          <Text fw={700} size="lg" c="var(--color-text-heading)">
             Preview Distributions to Delete
           </Text>
 
@@ -315,12 +309,12 @@ export default function DeleteDistributionDataButton({ onSuccess }: MonthSelecti
                   radius="md"
                   p="xl"
                   style={{
-                    borderColor: "#EAECF0",
-                    backgroundColor: "#FCFCFD",
+                    borderColor: "var(--mantine-color-gray-3)",
+                    backgroundColor: "var(--mantine-color-gray-0)",
                   }}
                 >
                   <Stack gap={4} align="center">
-                    <Text fw={700} size="sm" c="#344054">
+                    <Text fw={700} size="sm" c="var(--color-text-heading)">
                       No records found
                     </Text>
                     <Text size="sm" c="dimmed" ta="center">
@@ -336,14 +330,14 @@ export default function DeleteDistributionDataButton({ onSuccess }: MonthSelecti
                     radius="md"
                     p="md"
                     style={{
-                      borderColor: "#EAECF0",
-                      backgroundColor: "#F9FAFB",
+                      borderColor: "var(--mantine-color-gray-3)",
+                      backgroundColor: "var(--mantine-color-gray-0)",
                       boxShadow: "0 1px 2px rgba(16, 24, 40, 0.03)",
                     }}
                   >
                     <Group justify="space-between" align="center">
                       <div>
-                        <Text fw={700} size="sm" c="#344054">
+                        <Text fw={700} size="sm" c="var(--color-text-heading)">
                           Pending deletion
                         </Text>
                         <Text size="sm" c="dimmed">
@@ -359,9 +353,9 @@ export default function DeleteDistributionDataButton({ onSuccess }: MonthSelecti
                     style={{
                       maxHeight: "300px",
                       overflowY: "auto",
-                      border: "1px solid #EAECF0",
+                      border: "1px solid var(--mantine-color-gray-3)",
                       borderRadius: "12px",
-                      backgroundColor: "#FFFFFF",
+                      backgroundColor: "var(--mantine-color-white)",
                     }}
                   >
                     <Table withTableBorder highlightOnHover stickyHeader striped>

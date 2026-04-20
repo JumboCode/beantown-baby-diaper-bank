@@ -6,10 +6,7 @@ export async function POST(request: Request) {
     const formData = await request.formData();
     const imgFile = formData.get("file") as File;
     if (!imgFile) {
-      return NextResponse.json(
-        { error: "No file found in the request" },
-        { status: 400 },
-      );
+      return NextResponse.json({ error: "No file found in the request" }, { status: 400 });
     }
 
     // Use supabase client from lib/client.ts
@@ -25,15 +22,10 @@ export async function POST(request: Request) {
 
     if (uploadError) {
       console.error("Error: ", uploadError.message);
-      return NextResponse.json(
-        { error: "File upload failed " },
-        { status: 500 },
-      );
+      return NextResponse.json({ error: "File upload failed " }, { status: 500 });
     }
 
-    const { data: urlData } = supabase.storage
-      .from("partner_logos")
-      .getPublicUrl(fileName);
+    const { data: urlData } = supabase.storage.from("partner_logos").getPublicUrl(fileName);
 
     return NextResponse.json(
       {

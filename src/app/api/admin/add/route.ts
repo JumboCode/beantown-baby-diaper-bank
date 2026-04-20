@@ -70,21 +70,18 @@ export async function DELETE(request: Request) {
     if (requesterRole !== "superadmin") {
       return NextResponse.json(
         { message: "Only superadmin users can delete admin accounts" },
-        { status: 403 }
+        { status: 403 },
       );
     }
 
     const { id } = await request.json();
 
     if (!id) {
-      return NextResponse.json(
-        { message: "Missing required field: id" },
-        { status: 400 }
-      );
+      return NextResponse.json({ message: "Missing required field: id" }, { status: 400 });
     }
 
     const client = await clerkClient();
-    
+
     await client.users.deleteUser(id);
 
     return NextResponse.json({ message: "Admin deleted successfully" });
@@ -92,7 +89,7 @@ export async function DELETE(request: Request) {
     console.error("Error deleting user:", err);
     return NextResponse.json(
       { message: "Error deleting admin", error: err?.message || "Unknown error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

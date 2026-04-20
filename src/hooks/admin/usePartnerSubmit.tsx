@@ -1,4 +1,6 @@
 import { useRef, useState } from "react";
+import { modals } from "@mantine/modals";
+import { Mark, Text } from "@mantine/core";
 import { CityPercentage } from "@/components/admin/CityPercentagesForm";
 import { findSimilarPartnerName } from "@/lib/util";
 
@@ -17,6 +19,7 @@ export type PartnerFormValues = {
   organization: string;
   description: string;
   time: Date | null;
+  endTime?: Date | null;
   status: string;
   latitude: string;
   longitude: string;
@@ -34,15 +37,18 @@ export function usePartnerSubmit({
   cityEntries,
   onSuccess,
   onFieldError,
+  partnerId,
 }: {
   cityEntries: CityPercentage[];
   onSuccess: () => void;
   onFieldError: (field: string, message: string) => void;
+  partnerId?: number;
 }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [warning, setWarning] = useState("");
-  const [similarMatch, setSimilarMatch] = useState<string | null>(null);
   const pendingValuesRef = useRef<PartnerFormValues | null>(null);
+
+  const isEdit = partnerId !== undefined;
 
   async function doSubmit(values: PartnerFormValues) {
     const cityPercentages = cityEntries.map((e) => ({
@@ -51,9 +57,11 @@ export function usePartnerSubmit({
     }));
 
     const partnerPayload = {
+      ...(isEdit && { id: partnerId }),
       name: values.organization,
       description: values.description,
-      start_partner: values.time,
+      start_partner: values.status !== "waitlisted" ? values.time : null,
+      end_partner: values.status === "inactive" ? (values.endTime ?? null) : null,
       status: values.status,
       coordinates: { lat: Number(values.latitude), lng: Number(values.longitude) },
       address: buildAddressString(values),
@@ -97,16 +105,21 @@ export function usePartnerSubmit({
     setWarning("");
 
     if (values.status !== "waitlisted") {
-      if (cityEntries.length === 0) {
+      // In edit mode, city entries are only required if the user has made changes.
+      // If no entries were touched, we skip validation and let the server keep existing data.
+      const citiesChanged = cityEntries.length > 0;
+      if (!isEdit && !citiesChanged) {
         setWarning("Please add at least one city.");
         setIsSubmitting(false);
         return;
       }
-      const total = cityEntries.reduce((sum, e) => sum + e.percent, 0);
-      if (Math.abs(total - 100) > 0.01) {
-        setWarning(`City percentages must add up to 100% (currently ${total.toFixed(0)}%)`);
-        setIsSubmitting(false);
-        return;
+      if (citiesChanged) {
+        const total = cityEntries.reduce((sum, e) => sum + e.percent, 0);
+        if (Math.abs(total - 100) > 0.01) {
+          setWarning(`City percentages must add up to 100% (currently ${total.toFixed(0)}%)`);
+          setIsSubmitting(false);
+          return;
+        }
       }
     }
 
@@ -115,13 +128,41 @@ export function usePartnerSubmit({
       if (res.ok) {
         const json = await res.json();
         const names: string[] = (json.data ?? [])
-          .map((p: { name?: string | null }) => p.name)
+          .map((p: { name?: string | null; id?: number }) => p.name)
           .filter((n: unknown): n is string => typeof n === "string");
-        const match = findSimilarPartnerName(values.organization, names);
+
+        // In edit mode, exclude the partner's own current name from the similarity check
+        const checkNames = isEdit
+          ? names.filter((_, i) => (json.data ?? [])[i]?.id !== partnerId)
+          : names;
+
+        const match = findSimilarPartnerName(values.organization, checkNames);
         if (match) {
           pendingValuesRef.current = values;
-          setSimilarMatch(match);
           setIsSubmitting(false);
+          modals.openConfirmModal({
+            title: "Possible duplicate partner!",
+            centered: true,
+            size: "lg",
+            children: (
+              <Text size="sm">
+                A partner named &quot;<Mark fw={800}>{match}</Mark>&quot; already exists with a
+                similar name. Double-check this is a new organization before continuing.
+              </Text>
+            ),
+            labels: { confirm: "Submit Anyway", cancel: "Go Back" },
+            cancelProps: { variant: "outline", radius: "md" },
+            onConfirm: async () => {
+              const pending = pendingValuesRef.current;
+              if (!pending) return;
+              pendingValuesRef.current = null;
+              setIsSubmitting(true);
+              await doSubmit(pending);
+            },
+            onCancel: () => {
+              pendingValuesRef.current = null;
+            },
+          });
           return;
         }
       } else {
@@ -134,19 +175,5 @@ export function usePartnerSubmit({
     await doSubmit(values);
   }
 
-  async function confirmAndSubmit() {
-    if (!pendingValuesRef.current) return;
-    const values = pendingValuesRef.current;
-    pendingValuesRef.current = null;
-    setSimilarMatch(null);
-    setIsSubmitting(true);
-    await doSubmit(values);
-  }
-
-  function clearSimilarMatch() {
-    setSimilarMatch(null);
-    pendingValuesRef.current = null;
-  }
-
-  return { submit, confirmAndSubmit, clearSimilarMatch, isSubmitting, warning, similarMatch };
+  return { submit, isSubmitting, warning };
 }

@@ -69,7 +69,7 @@ export default function PartnerTableSkeleton() {
               <Text
                 size="xs"
                 fw={600}
-                c="#080b3c"
+                c="var(--color-brand)"
                 tt="uppercase"
                 style={{ letterSpacing: "0.05em" }}
               >

@@ -141,7 +141,7 @@ export default function UploadNewData({
             </Text>
             <Stack gap={4}>
               {conflictingMonths.map((month) => (
-                <Text key={month} size="sm" fw={600} c="#163663">
+                <Text key={month} size="sm" fw={600} c="brand">
                   • {month}
                 </Text>
               ))}
@@ -152,7 +152,7 @@ export default function UploadNewData({
           </Stack>
         ),
         labels: { confirm: "Upload", cancel: "Cancel" },
-        confirmProps: { color: "#163663" },
+        confirmProps: { color: "brand" },
         onConfirm: uploadFiles,
         groupProps: { justify: "center", grow: true, align: "stretch" },
       });
@@ -167,15 +167,13 @@ export default function UploadNewData({
       <Modal
         opened={opened}
         onClose={handleClose}
-        size={990}
-        padding={32}
         title={
-          <Text fw={700} size="30px" c="#101828">
+          <Text fw={700} size="30px" c="var(--color-text-heading)">
             Upload New Dataset
           </Text>
         }
       >
-        <Title order={2} c="#667085" fw="normal" fz={18} mb="md">
+        <Title order={2} c="dimmed" fw="normal" fz={18} mb="md">
           Add your new distribution data
         </Title>
         <Stack gap="md">
@@ -196,8 +194,8 @@ export default function UploadNewData({
             radius="md"
             p="md"
             style={{
-              borderColor: "#d9e1ea",
-              backgroundColor: "#fafbfc",
+              borderColor: "var(--mantine-color-gray-3)",
+              backgroundColor: "var(--mantine-color-gray-0)",
             }}
           >
             <Group justify="space-between" align="flex-start" mb="sm" gap="sm">
@@ -216,7 +214,7 @@ export default function UploadNewData({
                       width: 8,
                       height: 8,
                       borderRadius: "50%",
-                      backgroundColor: "#2f8a22",
+                      backgroundColor: "var(--mantine-color-green-7)",
                     }}
                   />
                   <Text size="xs" c="dimmed" fw={500}>
@@ -229,7 +227,7 @@ export default function UploadNewData({
                       width: 8,
                       height: 8,
                       borderRadius: "50%",
-                      backgroundColor: "#c1c7d0",
+                      backgroundColor: "var(--mantine-color-gray-4)",
                     }}
                   />
                   <Text size="xs" c="dimmed" fw={500}>
@@ -256,8 +254,12 @@ export default function UploadNewData({
                       alignItems: "flex-start",
                       justifyContent: "center",
                       gap: 4,
-                      backgroundColor: isUploaded ? "#eefbf4" : "#ffffff",
-                      borderColor: isUploaded ? "#a5d8b9" : "#e2e8f0",
+                      backgroundColor: isUploaded
+                        ? "var(--mantine-color-green-0)"
+                        : "var(--mantine-color-white)",
+                      borderColor: isUploaded
+                        ? "var(--mantine-color-green-3)"
+                        : "var(--mantine-color-gray-2)",
                       transition: "transform 150ms ease, box-shadow 150ms ease",
                     }}
                     onMouseEnter={(e) => {
@@ -269,13 +271,13 @@ export default function UploadNewData({
                       e.currentTarget.style.boxShadow = "none";
                     }}
                   >
-                    <Text fw={700} size="md" c="#495057">
+                    <Text fw={700} size="md" c="var(--color-text-heading)">
                       {month}
                     </Text>
                     <Text
                       size="xs"
                       fw={600}
-                      c={isUploaded ? "#16a34a" : "#94a3b8"}
+                      c={isUploaded ? "green.6" : "dimmed"}
                       style={{ lineHeight: 1.2 }}
                     >
                       {isUploaded ? "Uploaded" : "Missing"}
@@ -338,7 +340,7 @@ export default function UploadNewData({
                             size="lg"
                             radius="md"
                             variant="light"
-                            color={hasErrors ? "red" : "#163663"}
+                            color={hasErrors ? "red" : "brand"}
                           >
                             <IconFileText size={20} />
                           </ThemeIcon>
@@ -441,7 +443,7 @@ export default function UploadNewData({
               paddingBottom: 16,
               paddingLeft: 32,
               paddingRight: 32,
-              borderTop: "1px solid #f1f3f5",
+              borderTop: "1px solid var(--mantine-color-gray-1)",
               zIndex: 10,
               margin: "auto -32px -32px -32px",
             }}
@@ -451,24 +453,18 @@ export default function UploadNewData({
               href="/MothlyDataTemplate.xlsx"
               download
               leftSection={<FaDownload />}
-              color="#053766"
+              color="brand"
               radius="md"
               variant="subtle"
             >
               Download Template
             </Button>
-            <Button
-              variant="outline"
-              color="#053766"
-              radius="md"
-              type="button"
-              onClick={handleClose}
-            >
+            <Button variant="outline" color="brand" radius="md" type="button" onClick={handleClose}>
               Cancel
             </Button>
             <Button
               variant="filled"
-              color="#053766"
+              color="brand"
               radius="md"
               onClick={handleUpload}
               disabled={

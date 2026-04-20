@@ -5,7 +5,6 @@ import { useMemo, useState, useEffect } from "react";
 import { Distribution } from "@/lib/types";
 import { CollapsibleSection } from "./CollapsibleSection";
 import { EditableDistributionRow } from "./EditableDistributionRow";
-import DistributionsSkeleton from "./DistributionsSkeleton";
 
 const pluralizeDiapers = (count: number) =>
   `${count.toLocaleString()} ${count === 1 ? "diaper" : "diapers"}`;
@@ -242,7 +241,7 @@ export default function DistributionsTable({
 
     return (
       <div className="overflow-x-auto rounded-lg border border-gray-200">
-        <div className="grid grid-cols-2 gap-4 border-b border-gray-200 bg-gray-50 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-[#053766]">
+        <div className="grid grid-cols-2 gap-4 border-b border-gray-200 bg-gray-50 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-[var(--color-brand)]">
           <div>City</div>
           <div>Diapers</div>
         </div>
@@ -299,7 +298,7 @@ export default function DistributionsTable({
           title={
             <span className="flex items-center gap-3">
               <span>{yearGroup.year}</span>
-              <span className="rounded-full bg-blue-50 px-3 py-1 text-sm font-medium text-[#053766]">
+              <span className="rounded-full bg-blue-50 px-3 py-1 text-sm font-medium text-[var(--color-brand)]">
                 {pluralizeDiapers(displayedYearTotals[yearGroup.year] ?? yearGroup.totalDiapers)}
               </span>
             </span>
@@ -314,7 +313,7 @@ export default function DistributionsTable({
                   title={
                     <span className="flex items-center gap-3">
                       <span>{`${date.month} ${date.year}`}</span>
-                      <span className="rounded-full bg-blue-50 px-3 py-1 text-sm font-medium text-[#053766]">
+                      <span className="rounded-full bg-blue-50 px-3 py-1 text-sm font-medium text-[var(--color-brand)]">
                         {(
                           monthlyBaseTotals[`${date.year}-${date.month}`] ?? date.total
                         ).toLocaleString()}{" "}
