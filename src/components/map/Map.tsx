@@ -195,8 +195,16 @@ export default function Map({
                 mouseout: () =>
                   setHoveredCityId((current) => (current === boundary.id ? undefined : current)),
                 click: () => {
-                  setActiveCityName(boundary.name);
-                  setActiveCityId(boundary.id);
+                  if (!isMobile) {
+                    setActiveCityName(boundary.name);
+                    setActiveCityId(boundary.id);
+                  }
+                },
+                preclick: () => {
+                  if (isMobile) {
+                    setActiveCityName(boundary.name);
+                    setActiveCityId(boundary.id);
+                  }
                 },
               }}
             >
