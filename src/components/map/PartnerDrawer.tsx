@@ -132,7 +132,7 @@ export default function PartnerDrawer({ partnerId, onClose, boundaries }: Partne
           padding: "20px 20px 18px",
           position: "sticky",
           top: 0,
-          zIndex: 1,
+          zIndex: 800,
         }}
       >
         {loading ? (
@@ -302,8 +302,10 @@ export default function PartnerDrawer({ partnerId, onClose, boundaries }: Partne
                 </Box>
               </Box>
 
-              {/* Mini Map */}
-              <PartnerMiniMap partner={partner} boundaries={boundaries} />
+              {/* Mini Map — isolation contains Leaflet's internal z-indexes */}
+              <div style={{ isolation: "isolate" }}>
+                <PartnerMiniMap partner={partner} boundaries={boundaries} />
+              </div>
 
               {/* Stats */}
               {partner.status !== "waitlisted" && (

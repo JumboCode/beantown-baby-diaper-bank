@@ -6,6 +6,7 @@ import {
   IconHeartHandshake,
   IconArrowRight,
   IconExternalLink,
+  IconX,
 } from "@tabler/icons-react";
 import { useEffect, useRef, useState } from "react";
 
@@ -97,7 +98,7 @@ function TierCard({ tier }: { tier: (typeof tiers)[0] }) {
   );
 }
 
-function DropdownContent() {
+function DropdownContent({ onClose }: { onClose?: () => void }) {
   return (
     <>
       {/* Branded header */}
@@ -107,25 +108,47 @@ function DropdownContent() {
           padding: "20px 20px 16px",
         }}
       >
-        <Group gap={10} align="center" mb={8}>
-          <ThemeIcon
-            size={36}
-            radius="xl"
-            style={{
-              background: "rgba(255,255,255,0.15)",
-              border: "1px solid rgba(255,255,255,0.25)",
-            }}
-          >
-            <IconHeartHandshake size={18} color="white" />
-          </ThemeIcon>
-          <Stack gap={1}>
-            <Text fw={900} fz="16px" c="white" lh={1.2}>
-              Make an Impact
-            </Text>
-            <Text fz="11px" c="rgba(255,255,255,0.6)" fw={500}>
-              Beantown Baby Diaper Bank
-            </Text>
-          </Stack>
+        <Group justify="space-between" align="flex-start" mb={8}>
+          <Group gap={10} align="center">
+            <ThemeIcon
+              size={36}
+              radius="xl"
+              style={{
+                background: "rgba(255,255,255,0.15)",
+                border: "1px solid rgba(255,255,255,0.25)",
+              }}
+            >
+              <IconHeartHandshake size={18} color="white" />
+            </ThemeIcon>
+            <Stack gap={1}>
+              <Text fw={900} fz="16px" c="white" lh={1.2}>
+                Make an Impact
+              </Text>
+              <Text fz="11px" c="rgba(255,255,255,0.6)" fw={500}>
+                Beantown Baby Diaper Bank
+              </Text>
+            </Stack>
+          </Group>
+          {onClose && (
+            <Box
+              component="button"
+              onClick={onClose}
+              style={{
+                background: "rgba(255,255,255,0.12)",
+                border: "1px solid rgba(255,255,255,0.2)",
+                borderRadius: 8,
+                cursor: "pointer",
+                padding: "4px 5px",
+                color: "rgba(255,255,255,0.8)",
+                display: "flex",
+                alignItems: "center",
+                lineHeight: 0,
+                flexShrink: 0,
+              }}
+            >
+              <IconX size={14} />
+            </Box>
+          )}
         </Group>
         <Text fz="13px" c="rgba(255,255,255,0.8)" lh={1.5} fw={400}>
           Every dollar brings diaper relief to families across greater Boston.
@@ -246,7 +269,7 @@ export default function MakeAnImpact() {
               content: { overflow: "hidden" },
             }}
           >
-            <DropdownContent />
+            <DropdownContent onClose={() => setMobileOpen(false)} />
           </Modal>
         </>
       ) : (
