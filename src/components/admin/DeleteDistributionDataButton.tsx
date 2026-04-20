@@ -203,12 +203,12 @@ export default function DeleteDistributionDataButton({ onSuccess }: MonthSelecti
   return (
     <>
       <Modal
-        size="lg"
         opened={opened}
         onClose={close}
         title="Delete Records"
         withCloseButton
         centered
+        size="50%"
       >
         <Stack gap="lg">
           <Stack gap={4}>

@@ -30,6 +30,7 @@ export function ConfirmDeletion({ count, onConfirm }: ConfirmDeletionProps) {
       confirmProps: { color: "brand" },
       onCancel: () => console.log("Cancel"),
       onConfirm,
+      size: "lg",
       groupProps: {
         justify: "center",
         grow: true, // each button expands
