@@ -135,11 +135,9 @@ export async function processDistributionUpload(input: {
     const totalDiapers = parseNumericCell(row.totalDiapers);
 
     if (totalDiapers === null) {
-      throw new Error(
-        `Invalid numeric values for partner "${row.partnerName}" in uploaded CSV.`,
-      );
+      throw new Error(`Invalid numeric values for partner "${row.partnerName}" in uploaded CSV.`);
     }
-    
+
     const roundedTotalDiapers = Math.round(totalDiapers);
     monthlyRows.push({
       id: crypto.randomUUID(),

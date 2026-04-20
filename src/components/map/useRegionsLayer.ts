@@ -67,9 +67,7 @@ export function useRegionsLayer({
         return defaultFillColor;
       }
 
-      const bucket = choroplethBuckets?.find(
-        (entry) => value >= entry.min && value <= entry.max,
-      );
+      const bucket = choroplethBuckets?.find((entry) => value >= entry.min && value <= entry.max);
 
       return bucket?.color ?? defaultFillColor;
     },
@@ -80,8 +78,7 @@ export function useRegionsLayer({
     (feature) => {
       const regionFeature = feature as RegionFeature | undefined;
       const regionId = resolveRegionId(regionFeature);
-      const isHighlighted =
-        highlightedRegionId != null && regionId === highlightedRegionId;
+      const isHighlighted = highlightedRegionId != null && regionId === highlightedRegionId;
 
       return {
         color: isHighlighted ? "#0b7285" : "#2c3e50",

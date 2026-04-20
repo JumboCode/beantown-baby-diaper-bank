@@ -259,10 +259,7 @@ export async function PUT(req: Request) {
             year: String(year),
             month: null,
             percentage: row.percentage,
-            numberDiapers:
-              numDiapersBig === null
-                ? null
-                : BigInt(diapersArr![idx]),
+            numberDiapers: numDiapersBig === null ? null : BigInt(diapersArr![idx]),
           })),
         });
       }

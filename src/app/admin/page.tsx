@@ -21,7 +21,6 @@ import { IconAlertCircle } from "@tabler/icons-react";
 import { MonthPickerInput } from "@mantine/dates";
 import { useState, useEffect, useCallback, useMemo, Suspense } from "react";
 import Image from "next/image";
-import { Poppins } from "next/font/google";
 import { useRouter, useSearchParams } from "next/navigation";
 import DistributionsTable from "@/components/admin/DistributionsTable";
 import DistributionsSkeleton from "@/components/admin/DistributionsSkeleton";
@@ -35,11 +34,6 @@ import { Calendar, Search, SlidersHorizontal } from "lucide-react";
 
 import DeleteDistributionDataButton from "@/components/admin/DeleteDistributionDataButton";
 import { useUser } from "@clerk/nextjs";
-
-const poppins = Poppins({
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
-});
 
 interface Distribution {
   id: string;

@@ -34,34 +34,30 @@ export default function OneTimeUpdateForm({
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [exists, setExists] = useState<boolean | null>(null);
   const [loading, setLoading] = useState(false);
-  const [canSave, setCanSave] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
 
   const checkDistributions = async () => {
     if (!selectedDate) {
       setExists(null);
-      setCanSave(false);
       return;
     }
     setLoading(true);
-    
-    const monthName = MONTH_NAMES[Number(selectedDate.split('-')[1]) - 1];
-    const year = Number(selectedDate.split('-')[0]);
+
+    const monthName = MONTH_NAMES[Number(selectedDate.split("-")[1]) - 1];
+    const year = Number(selectedDate.split("-")[0]);
 
     try {
       const res = await fetch(`/api/distributions?month=${monthName}&year=${year}`);
       const data = await res.json();
-      
+
       // Filter to see if this specific partner has a record in that month's distribution
       const partnerData = data.filter((d: any) => String(d.partnerId) === String(partnerId));
       const doesExist = partnerData.length > 0;
-      
+
       setExists(doesExist);
-      setCanSave(doesExist);
     } catch (err) {
       console.error("Error verifying month:", err);
       setExists(false);
-      setCanSave(false);
     } finally {
       setLoading(false);
     }
@@ -75,19 +71,19 @@ export default function OneTimeUpdateForm({
   // Handler to save the specific monthly distribution
   const handleSaveOneTime = async (entries: CityPercentage[]) => {
     if (!selectedDate) return;
-    
+
     setIsSaving(true);
-    const monthName = MONTH_NAMES[Number(selectedDate.split('-')[1]) - 1];
-    const year = Number(selectedDate.split('-')[0]);
+    const monthName = MONTH_NAMES[Number(selectedDate.split("-")[1]) - 1];
+    const year = Number(selectedDate.split("-")[0]);
 
     console.log({
       partnerId,
       month: monthName,
       year: year,
-      percentages: entries.map(e => ({
+      percentages: entries.map((e) => ({
         city: e.city.trim(),
-        percentage: e.percent / 100
-      }))
+        percentage: e.percent / 100,
+      })),
     });
 
     try {
@@ -98,11 +94,11 @@ export default function OneTimeUpdateForm({
           partnerId,
           month: monthName,
           year: year,
-          percentages: entries.map(e => ({
+          percentages: entries.map((e) => ({
             city: e.city.trim(),
-            percentage: e.percent / 100
-          }))
-        })
+            percentage: e.percent / 100,
+          })),
+        }),
       });
 
       if (response.ok) {
@@ -128,10 +124,10 @@ export default function OneTimeUpdateForm({
             One-Time Update
           </Text>
         </Group>
-        
+
         <Text size="sm" c="dimmed">
-          This will only update distributions for the selected historical month. 
-          It will not affect the partner&apos;s ongoing/default percentages.
+          This will only update distributions for the selected historical month. It will not affect
+          the partner&apos;s ongoing/default percentages.
         </Text>
 
         <Stack gap={6}>
@@ -153,8 +149,8 @@ export default function OneTimeUpdateForm({
           )}
         </Stack>
 
-        <CityPercentagesForm 
-          initialEntries={initialCityPercentages} 
+        <CityPercentagesForm
+          initialEntries={initialCityPercentages}
           disabled={!exists || loading}
           onSave={handleSaveOneTime}
           isLoading={isSaving}

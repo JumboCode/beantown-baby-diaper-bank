@@ -320,14 +320,20 @@ export default function PartnerDrawer({ partnerId, onClose, boundaries }: Partne
                     }}
                   >
                     <Group gap={5} align="flex-start" style={{ minHeight: 44 }}>
-                      <IconBabyCarriage size={12} color="#1B3668" style={{ marginTop: 1, flexShrink: 0 }} />
+                      <IconBabyCarriage
+                        size={12}
+                        color="#1B3668"
+                        style={{ marginTop: 1, flexShrink: 0 }}
+                      />
                       <Text fz="9px" c="#1B3668" tt="uppercase" fw={800} lts="0.08em">
                         Approx. Number of Babies Helped
                       </Text>
                     </Group>
                     <Box style={{ paddingTop: 4 }}>
                       <Text fz="24px" fw={900} c="#1B3668" lh={1}>
-                        {partner.number_babies_helped != null ? partner.number_babies_helped.toLocaleString() : "N/A"}
+                        {partner.number_babies_helped != null
+                          ? partner.number_babies_helped.toLocaleString()
+                          : "N/A"}
                       </Text>
                       <Text fz="10px" c="#2471A3" fw={500} mt={2}>
                         Per Month
@@ -346,7 +352,11 @@ export default function PartnerDrawer({ partnerId, onClose, boundaries }: Partne
                     }}
                   >
                     <Group gap={5} align="flex-start" style={{ minHeight: 44 }}>
-                      <IconChartBar size={12} color="#2471A3" style={{ marginTop: 1, flexShrink: 0 }} />
+                      <IconChartBar
+                        size={12}
+                        color="#2471A3"
+                        style={{ marginTop: 1, flexShrink: 0 }}
+                      />
                       <Text fz="9px" c="#162C58" tt="uppercase" fw={800} lts="0.08em">
                         Total Number of Diapers Distributed
                       </Text>

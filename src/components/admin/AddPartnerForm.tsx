@@ -1,7 +1,6 @@
 "use client";
 
 import {
-  Alert,
   Button,
   Group,
   TextInput,
@@ -17,7 +16,6 @@ import {
   Grid,
   Title,
 } from "@mantine/core";
-import { IconAlertTriangle } from "@tabler/icons-react";
 import LogoDropzone from "./LogoDropzone";
 import { useForm } from "@mantine/form";
 import { MonthPickerInput } from "@mantine/dates";
@@ -106,11 +104,8 @@ export default function AddPartnerForm({
 
   const {
     submit,
-    confirmAndSubmit,
-    clearSimilarMatch,
     isSubmitting,
     warning: submitWarning,
-    similarMatch,
   } = usePartnerSubmit({
     cityEntries,
     onSuccess: () => {
@@ -125,7 +120,6 @@ export default function AddPartnerForm({
   });
 
   function handleClose() {
-    clearSimilarMatch();
     onClose();
   }
 
@@ -443,35 +437,6 @@ export default function AddPartnerForm({
               </Text>
             </Grid.Col>
           )}
-
-          {similarMatch && (
-            <Grid.Col span={12}>
-              <Alert
-                icon={<IconAlertTriangle size={16} />}
-                title="Possible duplicate partner"
-                color="yellow"
-                radius="md"
-              >
-                <Text size="sm" mb="sm">
-                  A partner named <strong>&ldquo;{similarMatch}&rdquo;</strong> already exists with
-                  a similar name. Double-check this is a new organization before continuing.
-                </Text>
-                <Group gap="sm">
-                  <Button size="xs" variant="outline" color="gray" onClick={clearSimilarMatch}>
-                    Go Back
-                  </Button>
-                  <Button
-                    size="xs"
-                    color="orange"
-                    onClick={confirmAndSubmit}
-                    loading={isSubmitting}
-                  >
-                    Submit Anyway
-                  </Button>
-                </Group>
-              </Alert>
-            </Grid.Col>
-          )}
         </Grid>
 
         <Group
@@ -496,7 +461,6 @@ export default function AddPartnerForm({
             type="button"
             disabled={isSubmitting}
             onClick={() => {
-              clearSimilarMatch();
               form.reset();
               form.setFieldValue("country", DEFAULT_COUNTRY);
               setCityEntries([]);
@@ -511,7 +475,7 @@ export default function AddPartnerForm({
             radius="md"
             type="submit"
             loading={isSubmitting}
-            disabled={isSubmitting || !!similarMatch}
+            disabled={isSubmitting}
           >
             Submit
           </Button>
