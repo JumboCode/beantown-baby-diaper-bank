@@ -35,36 +35,27 @@ const tiers = [
 ];
 
 function TierCard({ tier }: { tier: (typeof tiers)[0] }) {
-  const [hovered, setHovered] = useState(false);
-
   return (
     <Box
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
       style={{
         display: "flex",
         alignItems: "center",
         gap: 12,
-        background: hovered
-          ? "linear-gradient(135deg, #1B3668 0%, #2471A3 100%)"
-          : "linear-gradient(135deg, #edf1f8 0%, #e0e8f5 100%)",
-        border: hovered ? "1.5px solid #1B3668" : "1.5px solid #c5d2e9",
+        background: "linear-gradient(135deg, #edf1f8 0%, #e0e8f5 100%)",
+        border: "1.5px solid #c5d2e9",
         borderRadius: 12,
         padding: "12px 16px",
-        cursor: "default",
-        transition: "all 0.18s ease",
       }}
     >
       {/* Amount badge */}
       <Box
         style={{
-          backgroundColor: hovered ? "rgba(255,255,255,0.15)" : "#1B3668",
+          backgroundColor: "#1B3668",
           borderRadius: 8,
           padding: "6px 12px",
           minWidth: 58,
           textAlign: "center",
           flexShrink: 0,
-          border: hovered ? "1px solid rgba(255,255,255,0.25)" : "none",
         }}
       >
         <Text fw={900} c="white" fz="20px" lh={1}>
@@ -72,25 +63,21 @@ function TierCard({ tier }: { tier: (typeof tiers)[0] }) {
         </Text>
       </Box>
 
-      <IconArrowRight
-        size={14}
-        color={hovered ? "rgba(255,255,255,0.5)" : "#9ab0d6"}
-        style={{ flexShrink: 0 }}
-      />
+      <IconArrowRight size={14} color="#9ab0d6" style={{ flexShrink: 0 }} />
 
       {/* Diaper icons */}
       <Group gap={3} wrap="nowrap" style={{ flexShrink: 0 }}>
         {Array.from({ length: Math.min(tier.diapers / 40, 3) }).map((_, i) => (
-          <IconDiaper key={i} size={15} color={hovered ? "rgba(255,255,255,0.8)" : "#2471A3"} />
+          <IconDiaper key={i} size={15} color="#2471A3" />
         ))}
       </Group>
 
       {/* Label */}
       <Stack gap={0} style={{ minWidth: 0, flex: 1 }}>
-        <Text fw={800} fz="13px" lh={1.2} c={hovered ? "white" : "#1B3668"}>
+        <Text fw={800} fz="13px" lh={1.2} c="#1B3668">
           {tier.description}
         </Text>
-        <Text fz="11px" fw={500} c={hovered ? "rgba(255,255,255,0.65)" : "#667085"}>
+        <Text fz="11px" fw={500} c="#667085">
           {tier.label} {tier.sublabel}
         </Text>
       </Stack>
