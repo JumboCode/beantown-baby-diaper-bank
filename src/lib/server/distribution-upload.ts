@@ -152,6 +152,16 @@ export async function processDistributionUpload(input: {
   const FUZZY_THRESHOLD = 0.6;
 
   for (const row of partnerRows) {
+    const totalDiapers = parseNumericCell(row.totalDiapers);
+
+    if (totalDiapers === null) {
+      throw new Error(`Invalid numeric values for partner "${row.partnerName}" in uploaded CSV.`);
+    }
+
+    if (totalDiapers === 0) {
+      continue;
+    }
+
     const searchName = normalizeName(row.partnerName);
     let bestMatch = null;
     let highestScore = 0;
@@ -178,12 +188,6 @@ export async function processDistributionUpload(input: {
     }
 
     const partner = bestMatch;
-
-    const totalDiapers = parseNumericCell(row.totalDiapers);
-
-    if (totalDiapers === null) {
-      throw new Error(`Invalid numeric values for partner "${row.partnerName}" in uploaded CSV.`);
-    }
 
     const roundedTotalDiapers = Math.round(totalDiapers);
     monthlyRows.push({
