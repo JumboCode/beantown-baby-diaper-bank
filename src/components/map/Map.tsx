@@ -14,6 +14,7 @@ import { Text, Stack, Group, Box, Badge, ThemeIcon } from "@mantine/core";
 import { useMediaQuery } from "@mantine/hooks";
 import { TileLayer, MapContainer, Tooltip, useMap } from "react-leaflet";
 import MakeAnImpact from "./MakeAnImpact";
+import BabiesHelped from "./BabiesHelped";
 import { Polygon as ReactLeafletPolygon } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import Image from "next/image";
@@ -58,6 +59,7 @@ export interface MapProps {
   year: string;
   totalDiapersForYear?: number;
   selectedYear?: string;
+  babiesHelped?: number;
 }
 
 export default function Map({
@@ -66,6 +68,7 @@ export default function Map({
   year,
   totalDiapersForYear,
   selectedYear,
+  babiesHelped,
 }: MapProps) {
   const isMobile = useMediaQuery("(max-width: 768px)");
   const { mapConfig } = useLeafletMap(isMobile ? 8 : DEFAULT_ZOOM);
@@ -369,6 +372,21 @@ export default function Map({
         </Group>
       </Box>
 
+      {/* Babies Helped */}
+      {!(isMobile && activeCityWithStats) && (
+        <Box
+          style={{
+            position: "absolute",
+            top: isMobile ? 76 : 111,
+            right: 16,
+            zIndex: 1000,
+            pointerEvents: "none",
+          }}
+        >
+          <BabiesHelped babiesHelped={babiesHelped} year={selectedYear} />
+        </Box>
+      )}
+
       {/* City Popup — side panel on desktop, bottom sheet on mobile */}
       {activeCityWithStats && (
         <Box
@@ -388,11 +406,11 @@ export default function Map({
                 }
               : {
                   position: "absolute",
-                  top: 110,
+                  top: 186,
                   right: 16,
                   zIndex: 1000,
                   width: 350,
-                  maxHeight: "calc(100% - 190px)",
+                  maxHeight: "calc(100% - 265px)",
                   overflowY: "auto",
                   background: "rgba(255, 255, 255, 0.97)",
                   border: "1px solid #E4E7EC",
