@@ -55,16 +55,20 @@ export default function FileUpload({ files, onFileChange }: FileUploadProps) {
         const organizations = orgNames.size;
 
         let errors: string[] = [];
-        try {
-          const res = await fetch("/api/distributions/validate", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ csv: text }),
-          });
-          const data = await res.json();
-          if (data.errors) errors = data.errors;
-        } catch {
-          errors = ["Failed to reach validation service."];
+        if (rows === 0) {
+          errors = ["This file is empty. Please upload a CSV with at least one data row."];
+        } else {
+          try {
+            const res = await fetch("/api/distributions/validate", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ csv: text }),
+            });
+            const data = await res.json();
+            if (data.errors) errors = data.errors;
+          } catch {
+            errors = ["Failed to reach validation service."];
+          }
         }
 
         return { name: file.name, rows, totalDiapers, organizations, text, errors };
