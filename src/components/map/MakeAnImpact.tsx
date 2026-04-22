@@ -8,7 +8,7 @@ import {
   IconExternalLink,
   IconX,
 } from "@tabler/icons-react";
-import { useRef, useState } from "react";
+import { useState } from "react";
 
 const tiers = [
   {
