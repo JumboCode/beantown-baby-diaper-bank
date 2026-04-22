@@ -144,7 +144,7 @@ export default function TimelineSlider({
         style={{
           border: "1px solid #E4E7EC",
           borderRadius: 12,
-          background: "linear-gradient(180deg, #F4F7FC 0%, #FFFFFF 100%)",
+          background: "#F4F7FC",
           boxShadow: "inset 0 1px 0 rgba(255,255,255,0.9)",
         }}
       >
@@ -183,7 +183,7 @@ export default function TimelineSlider({
               root: { paddingLeft: 6, paddingRight: 6 },
               track: { height: isMobile ? 5 : 8 },
               bar: {
-                background: "linear-gradient(90deg, #1B3668 0%, #2471A3 100%)",
+                background: "#1B3668",
                 transition: "width 220ms ease",
               },
               mark: {
