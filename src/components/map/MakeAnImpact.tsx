@@ -1,5 +1,5 @@
 "use client";
-import { Text, Button, Group, Stack, Divider, Popover, Modal, Box, ThemeIcon } from "@mantine/core";
+import { Text, Button, Group, Stack, Divider, Modal, Box, ThemeIcon } from "@mantine/core";
 import { useMediaQuery } from "@mantine/hooks";
 import {
   IconDiaper,
@@ -8,7 +8,7 @@ import {
   IconExternalLink,
   IconX,
 } from "@tabler/icons-react";
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 
 const tiers = [
   {
@@ -187,38 +187,13 @@ function DropdownContent({ onClose }: { onClose?: () => void }) {
 }
 
 export default function MakeAnImpact() {
-  const ref = useRef<HTMLDivElement>(null);
   const isMobile = useMediaQuery("(max-width: 768px)");
-  const [mobileOpen, setMobileOpen] = useState(false);
-  const [popoverOpen, setPopoverOpen] = useState(false);
-
-  useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-    const prevent = (e: WheelEvent | TouchEvent) => e.preventDefault();
-    el.addEventListener("wheel", prevent, { passive: false });
-    el.addEventListener("touchmove", prevent, { passive: false });
-    return () => {
-      el.removeEventListener("wheel", prevent);
-      el.removeEventListener("touchmove", prevent);
-    };
-  }, []);
-
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
-        setPopoverOpen(false);
-        setMobileOpen(false);
-      }
-    };
-    document.addEventListener("keydown", handleKeyDown);
-    return () => document.removeEventListener("keydown", handleKeyDown);
-  }, []);
+  const [opened, setOpened] = useState(false);
 
   const triggerButton = (
     <Button
       leftSection={<IconHeartHandshake size={16} />}
-      onClick={isMobile ? () => setMobileOpen(true) : () => setPopoverOpen((o) => !o)}
+      onClick={() => setOpened(true)}
       styles={{
         root: {
           color: "#1B3668",
@@ -238,46 +213,24 @@ export default function MakeAnImpact() {
   );
 
   return (
-    <div ref={ref}>
-      {isMobile ? (
-        <>
-          {triggerButton}
-          <Modal
-            opened={mobileOpen}
-            onClose={() => setMobileOpen(false)}
-            withCloseButton={false}
-            centered
-            padding={0}
-            radius="xl"
-            size="calc(100vw - 32px)"
-            zIndex={10001}
-            styles={{
-              body: { padding: 0 },
-              content: { overflow: "hidden" },
-            }}
-          >
-            <DropdownContent onClose={() => setMobileOpen(false)} />
-          </Modal>
-        </>
-      ) : (
-        <Popover
-          position="bottom"
-          withArrow
-          withOverlay
-          shadow="xl"
-          radius="lg"
-          zIndex={10001}
-          width={460}
-          opened={popoverOpen}
-          onChange={setPopoverOpen}
-          closeOnEscape
-        >
-          <Popover.Target>{triggerButton}</Popover.Target>
-          <Popover.Dropdown p={0} style={{ overflow: "hidden" }}>
-            <DropdownContent />
-          </Popover.Dropdown>
-        </Popover>
-      )}
+    <div>
+      {triggerButton}
+      <Modal
+        opened={opened}
+        onClose={() => setOpened(false)}
+        withCloseButton={false}
+        centered
+        padding={0}
+        radius="md"
+        size={isMobile ? "calc(100vw - 32px)" : "md"}
+        zIndex={10001}
+        styles={{
+          body: { padding: 0 },
+          content: { overflow: "hidden" },
+        }}
+      >
+        <DropdownContent onClose={() => setOpened(false)} />
+      </Modal>
     </div>
   );
 }
