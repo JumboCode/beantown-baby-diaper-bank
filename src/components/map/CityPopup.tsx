@@ -156,7 +156,13 @@ export function CityPopup({ city, year, onPartnerSelect, onClose }: CityPopupPro
 
         {/* Partners */}
         <Card bg="white" withBorder radius="lg">
-          <Card.Section>
+          <Card.Section
+            style={{
+              background: "#edf1f8",
+              padding: "8px 12px",
+              borderBottom: activePartners.length > 0 ? "1px solid #c5d2e9" : undefined,
+            }}
+          >
             <Group justify="space-between" align="center">
               <Group gap={7} align="center">
                 <ThemeIcon
