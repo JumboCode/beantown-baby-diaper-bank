@@ -93,6 +93,7 @@ export default function Page() {
         setMapError(error as Error);
         console.error("Error fetching map data:", error);
         setCumulativeTotalDiapers(0);
+        setBabiesHelped(undefined);
       }
     },
     [cachedBoundaries],
