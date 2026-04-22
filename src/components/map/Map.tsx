@@ -326,7 +326,7 @@ export default function Map({
             right: 16,
             zIndex: 1000,
             pointerEvents: "none",
-            minWidth: isMobile ? 130 : 280,
+            minWidth: isMobile ? 160 : 330,
             background: "#1B3668",
             borderRadius: 12,
             boxShadow: "0 8px 32px rgba(27, 54, 104, 0.4)",
