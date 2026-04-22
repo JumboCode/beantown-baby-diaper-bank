@@ -1,6 +1,16 @@
 const MONTH_ORDER = [
-  "January", "February", "March", "April", "May", "June",
-  "July", "August", "September", "October", "November", "December",
+  "January",
+  "February",
+  "March",
+  "April",
+  "May",
+  "June",
+  "July",
+  "August",
+  "September",
+  "October",
+  "November",
+  "December",
 ] as const;
 
 // Estimation model: 200 diapers/month supplies one baby for one month.
@@ -32,9 +42,7 @@ export function estimateBabiesHelped(
 
   const totalUnique = sorted.reduce((acc, m, i) => {
     const babies =
-      m.children != null && m.children > 0
-        ? m.children
-        : m.diapers / DIAPERS_PER_BABY_MONTH;
+      m.children != null && m.children > 0 ? m.children : m.diapers / DIAPERS_PER_BABY_MONTH;
     return acc + (i === 0 ? babies : babies * NEW_BABY_RATE);
   }, 0);
 
