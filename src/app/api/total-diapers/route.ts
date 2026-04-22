@@ -36,11 +36,12 @@ async function getTotalDiapers(year: string | null) {
     const monthlyTotals: MonthlyDistributionTotal[] = monthlyDistributions
       .filter((m) => m.month != null)
       .map((m) => ({
-        month: m.month as string,
+        month: String(m.month),
         diapers: Number(m._sum.numberDiapers ?? 0),
         children: m._sum.numberChildren != null ? Number(m._sum.numberChildren) : null,
       }));
 
+    // yearlyTotalDiapers (from YearlyData) is used as the fallback when no monthly Distribution rows exist
     const babiesHelped = estimateBabiesHelped(monthlyTotals, yearlyTotalDiapers);
 
     return { totalDiapers, yearlyTotalDiapers, babiesHelped };
