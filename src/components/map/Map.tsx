@@ -379,7 +379,7 @@ export default function Map({
         <Box
           style={{
             position: "absolute",
-            top: isMobile ? 76 : 111,
+            top: isMobile ? 90 : 111,
             right: 16,
             zIndex: 1000,
             pointerEvents: "none",
