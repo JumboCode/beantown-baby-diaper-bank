@@ -319,58 +319,60 @@ export default function Map({
       </MapContainer>
 
       {/* Total Diapers Distributed */}
-      <Box
-        style={{
-          position: "absolute",
-          top: 16,
-          right: 16,
-          zIndex: 1000,
-          pointerEvents: "none",
-          minWidth: isMobile ? 0 : 240,
-          background: "#1B3668",
-          borderRadius: 12,
-          boxShadow: "0 8px 32px rgba(27, 54, 104, 0.4)",
-          padding: isMobile ? "8px 12px" : "14px 18px",
-        }}
-      >
-        <Group justify="space-between" align="flex-start" wrap="nowrap" gap={isMobile ? 8 : 12}>
-          <Stack gap={isMobile ? 1 : 4}>
-            <Text
-              fz={isMobile ? "9px" : "10px"}
-              fw={700}
-              c="rgba(255,255,255,0.55)"
-              tt="uppercase"
-              lts="0.1em"
-            >
-              {isMobile
-                ? (selectedYear ?? "Total")
-                : `Total Diapers${selectedYear ? ` Through ${selectedYear}` : ""}`}
-            </Text>
-            <Text fz={isMobile ? "22px" : "40px"} fw={900} c="white" lh={1}>
-              {totalDiapersForYear != null ? animatedRunningTotal.toLocaleString() : "--"}
-            </Text>
-            {isMobile && (
-              <Text fz="8px" fw={600} c="rgba(255,255,255,0.5)" tt="uppercase" lts="0.05em">
-                diapers
+      {!(isMobile && activeCityWithStats) && (
+        <Box
+          style={{
+            position: "absolute",
+            top: 16,
+            right: 16,
+            zIndex: 1000,
+            pointerEvents: "none",
+            minWidth: isMobile ? 0 : 240,
+            background: "#1B3668",
+            borderRadius: 12,
+            boxShadow: "0 8px 32px rgba(27, 54, 104, 0.4)",
+            padding: isMobile ? "8px 12px" : "14px 18px",
+          }}
+        >
+          <Group justify="space-between" align="flex-start" wrap="nowrap" gap={isMobile ? 8 : 12}>
+            <Stack gap={isMobile ? 1 : 4}>
+              <Text
+                fz={isMobile ? "9px" : "10px"}
+                fw={700}
+                c="rgba(255,255,255,0.55)"
+                tt="uppercase"
+                lts="0.1em"
+              >
+                {isMobile
+                  ? (selectedYear ?? "Total")
+                  : `Total Diapers${selectedYear ? ` Through ${selectedYear}` : ""}`}
               </Text>
+              <Text fz={isMobile ? "22px" : "40px"} fw={900} c="white" lh={1}>
+                {totalDiapersForYear != null ? animatedRunningTotal.toLocaleString() : "--"}
+              </Text>
+              {isMobile && (
+                <Text fz="8px" fw={600} c="rgba(255,255,255,0.5)" tt="uppercase" lts="0.05em">
+                  diapers
+                </Text>
+              )}
+            </Stack>
+            {!isMobile && (
+              <Image
+                src="/diaper.svg"
+                alt="Diaper icon"
+                width={52}
+                height={42}
+                style={{
+                  filter: "brightness(0) invert(1)",
+                  opacity: 0.7,
+                  flexShrink: 0,
+                  marginTop: 2,
+                }}
+              />
             )}
-          </Stack>
-          {!isMobile && (
-            <Image
-              src="/diaper.svg"
-              alt="Diaper icon"
-              width={52}
-              height={42}
-              style={{
-                filter: "brightness(0) invert(1)",
-                opacity: 0.7,
-                flexShrink: 0,
-                marginTop: 2,
-              }}
-            />
-          )}
-        </Group>
-      </Box>
+          </Group>
+        </Box>
+      )}
 
       {/* Babies Helped */}
       {!(isMobile && activeCityWithStats) && (
