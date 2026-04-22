@@ -67,18 +67,6 @@ export default function UploadNewData({
         title: "This month is currently selected for another file.",
       };
     }
-    if (uploadedMonthSet.has(dayjs(date).month())) {
-      return {
-        style: {
-          color: "var(--mantine-color-yellow-9)",
-          backgroundColor: "var(--mantine-color-yellow-1)",
-          border: "1px solid var(--mantine-color-yellow-4)",
-          borderRadius: "4px",
-          fontWeight: 600,
-        },
-        title: "Warning: Uploading to this month will overwrite existing data.",
-      };
-    }
 
     return {};
   };

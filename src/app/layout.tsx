@@ -14,8 +14,8 @@ const poppins = Poppins({
 });
 
 export const metadata: Metadata = {
-  title: "Beantown Baby Diaper Bank",
-  description: "Providing diapers to families in need.",
+  title: "Beantown Baby Diaper Bank Impact Visualization",
+  description: "Visualizing the impact of the Beantown Baby Diaper Bank across Greater Boston.",
 };
 
 export const viewport: Viewport = {
