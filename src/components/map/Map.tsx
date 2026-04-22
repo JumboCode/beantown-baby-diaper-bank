@@ -326,7 +326,7 @@ export default function Map({
             right: 16,
             zIndex: 1000,
             pointerEvents: "none",
-            minWidth: isMobile ? 0 : 240,
+            minWidth: isMobile ? 130 : 280,
             background: "#1B3668",
             borderRadius: 12,
             boxShadow: "0 8px 32px rgba(27, 54, 104, 0.4)",
@@ -346,7 +346,13 @@ export default function Map({
                   ? (selectedYear ?? "Total")
                   : `Total Diapers${selectedYear ? ` Through ${selectedYear}` : ""}`}
               </Text>
-              <Text fz={isMobile ? "22px" : "40px"} fw={900} c="white" lh={1}>
+              <Text 
+                fz={isMobile ? "22px" : "40px"} 
+                fw={900} 
+                c="white" 
+                lh={1}
+                style={{ fontVariantNumeric: "tabular-nums" }}
+              >
                 {totalDiapersForYear != null ? animatedRunningTotal.toLocaleString() : "--"}
               </Text>
               {isMobile && (
