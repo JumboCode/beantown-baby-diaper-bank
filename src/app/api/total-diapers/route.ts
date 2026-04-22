@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { cacheLife, cacheTag } from "next/cache";
+import { estimateBabiesHelped, MonthlyDistributionTotal } from "@/lib/estimateBabies";
 
 async function getTotalDiapers(year: string | null) {
   "use cache";
@@ -8,7 +9,7 @@ async function getTotalDiapers(year: string | null) {
   cacheLife("max");
 
   if (year) {
-    const [cumulativeResults, yearlyResults] = await Promise.all([
+    const [cumulativeResults, yearlyResults, monthlyDistributions] = await Promise.all([
       prisma.yearlyData.aggregate({
         where: { year: { lte: year } },
         _sum: { numDiapers: true },
@@ -17,6 +18,14 @@ async function getTotalDiapers(year: string | null) {
         where: { year },
         _sum: { numDiapers: true },
       }),
+      prisma.distribution.groupBy({
+        by: ["month"],
+        where: { year },
+        _sum: {
+          numberDiapers: true,
+          numberChildren: true,
+        },
+      }),
     ]);
 
     const totalDiapers =
@@ -24,7 +33,18 @@ async function getTotalDiapers(year: string | null) {
     const yearlyTotalDiapers =
       yearlyResults._sum.numDiapers == null ? 0 : Number(yearlyResults._sum.numDiapers);
 
-    return { totalDiapers, yearlyTotalDiapers };
+    const monthlyTotals: MonthlyDistributionTotal[] = monthlyDistributions
+      .filter((m) => m.month != null)
+      .map((m) => ({
+        month: String(m.month),
+        diapers: Number(m._sum.numberDiapers ?? 0),
+        children: m._sum.numberChildren != null ? Number(m._sum.numberChildren) : null,
+      }));
+
+    // yearlyTotalDiapers (from YearlyData) is used as the fallback when no monthly Distribution rows exist
+    const babiesHelped = estimateBabiesHelped(monthlyTotals, yearlyTotalDiapers);
+
+    return { totalDiapers, yearlyTotalDiapers, babiesHelped };
   }
 
   const results = await prisma.yearlyData.aggregate({
