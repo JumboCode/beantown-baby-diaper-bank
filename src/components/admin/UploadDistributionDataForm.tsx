@@ -28,7 +28,6 @@ import {
 } from "@tabler/icons-react";
 import UploadedMonths from "./UploadedMonths";
 import dayjs from "dayjs";
-import { File } from "lucide-react";
 
 interface UploadNewDataProps {
   opened: boolean;
