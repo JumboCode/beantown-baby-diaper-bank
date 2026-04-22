@@ -13,7 +13,6 @@ import { LatLngExpression } from "leaflet";
 import { Text, Stack, Group, Box, Badge, ThemeIcon } from "@mantine/core";
 import { useMediaQuery } from "@mantine/hooks";
 import { TileLayer, MapContainer, Tooltip, useMap } from "react-leaflet";
-import MakeAnImpact from "./MakeAnImpact";
 import BabiesHelped from "./BabiesHelped";
 import { Polygon as ReactLeafletPolygon } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
@@ -415,7 +414,6 @@ export default function Map({
                   maxHeight: "calc(100% - 265px)",
                   overflowY: "auto",
                   background: "rgba(255, 255, 255, 0.97)",
-                  border: "1px solid #E4E7EC",
                   borderRadius: 12,
                   boxShadow: "0 8px 24px rgba(16, 24, 40, 0.12)",
                   backdropFilter: "blur(8px)",
@@ -475,30 +473,6 @@ export default function Map({
               High
             </Text>
           </Group>
-        </Box>
-      )}
-
-      {/* Make an Impact */}
-      {!(isMobile && activeCityWithStats) && (
-        <Box
-          style={
-            isMobile
-              ? {
-                  position: "absolute",
-                  bottom: 16,
-                  right: 16,
-                  zIndex: 1001,
-                }
-              : {
-                  position: "absolute",
-                  top: 16,
-                  left: "50%",
-                  transform: "translateX(-50%)",
-                  zIndex: 1001,
-                }
-          }
-        >
-          <MakeAnImpact />
         </Box>
       )}
 

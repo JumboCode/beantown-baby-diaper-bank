@@ -7,6 +7,7 @@ import { useState, useCallback } from "react";
 import { FeatureCollection, MultiPolygon, Polygon } from "geojson";
 import { GeoJsonBoundaries, CityWithStats } from "@/lib/types";
 import { Box, Skeleton } from "@mantine/core";
+import MapHeader from "@/components/map/MapHeader";
 
 const LeafletMap = dynamic(() => import("@/components/map/Map"), {
   ssr: false,
@@ -111,6 +112,8 @@ export default function Page() {
         background: "#fff",
       }}
     >
+      <MapHeader />
+
       {/* Map — fills all available height */}
       <Box style={{ flex: 1, position: "relative", minHeight: 0 }}>
         {boundaries && cities ? (
