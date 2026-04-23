@@ -22,7 +22,7 @@ type MapConfig = Pick<
 
 // Default to Boston, MA
 export const DEFAULT_CENTER: LatLngTuple = [42.3601, -71.0589];
-export const DEFAULT_ZOOM = 9;
+export const DEFAULT_ZOOM = 7;
 
 // Massachusetts bounding box (with padding)
 const MA_BOUNDS: LatLngBoundsExpression = [
