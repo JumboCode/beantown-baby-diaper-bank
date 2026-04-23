@@ -80,6 +80,29 @@ async function syncDistributionIdSequence(tx: Prisma.TransactionClient) {
   `);
 }
 
+function getDiceCoefficient(s1: string, s2: string): number {
+  if (s1 === s2) return 1;
+  if (s1.length < 2 || s2.length < 2) return 0;
+
+  const bigrams1 = new Map<string, number>();
+  for (let i = 0; i < s1.length - 1; i++) {
+    const bigram = s1.substring(i, i + 2);
+    bigrams1.set(bigram, (bigrams1.get(bigram) || 0) + 1);
+  }
+
+  let intersectionSize = 0;
+  for (let i = 0; i < s2.length - 1; i++) {
+    const bigram = s2.substring(i, i + 2);
+    const count = bigrams1.get(bigram);
+    if (count && count > 0) {
+      bigrams1.set(bigram, count - 1);
+      intersectionSize++;
+    }
+  }
+
+  return (2.0 * intersectionSize) / (s1.length - 1 + s2.length - 1);
+}
+
 export async function processDistributionUpload(input: {
   csv: string;
   selectedDate: string;
@@ -114,29 +137,57 @@ export async function processDistributionUpload(input: {
     },
   });
 
-  const partnerByName = new Map(
-    partnersWithRegions
-      .filter((partner) => partner.name)
-      .map((partner) => [normalizeName(partner.name as string), partner]),
-  );
+  const partnersInfo = partnersWithRegions
+    .filter((partner) => partner.name)
+    .map((partner) => ({
+      normalizedName: normalizeName(partner.name as string),
+      partner,
+    }));
 
   const missingPartners = new Set<string>();
 
   const monthlyRows: Prisma.MonthlyDataCreateManyInput[] = [];
   const distributionRows: Prisma.DistributionCreateManyInput[] = [];
 
-  for (const row of partnerRows) {
-    const partner = partnerByName.get(normalizeName(row.partnerName));
-    if (!partner) {
-      missingPartners.add(row.partnerName);
-      continue;
-    }
+  const FUZZY_THRESHOLD = 0.6;
 
+  for (const row of partnerRows) {
     const totalDiapers = parseNumericCell(row.totalDiapers);
 
     if (totalDiapers === null) {
       throw new Error(`Invalid numeric values for partner "${row.partnerName}" in uploaded CSV.`);
     }
+
+    if (totalDiapers === 0) {
+      continue;
+    }
+
+    const searchName = normalizeName(row.partnerName);
+    let bestMatch = null;
+    let highestScore = 0;
+
+    // Fast path: exact match
+    const exactMatch = partnersInfo.find((p) => p.normalizedName === searchName);
+    if (exactMatch) {
+      bestMatch = exactMatch.partner;
+      highestScore = 1.0;
+    } else {
+      // Fallback: Fuzzy match using Dice coefficient
+      for (const info of partnersInfo) {
+        const score = getDiceCoefficient(searchName, info.normalizedName);
+        if (score > highestScore) {
+          highestScore = score;
+          bestMatch = info.partner;
+        }
+      }
+    }
+
+    if (!bestMatch || highestScore < FUZZY_THRESHOLD) {
+      missingPartners.add(row.partnerName);
+      continue;
+    }
+
+    const partner = bestMatch;
 
     const roundedTotalDiapers = Math.round(totalDiapers);
     monthlyRows.push({
