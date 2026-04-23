@@ -1,6 +1,6 @@
 "use client";
 import { Box, Group, Stack, Text, Skeleton } from "@mantine/core";
-import { IconBabyCarriage } from "@tabler/icons-react";
+import { IconBabyCarriageFilled } from "@tabler/icons-react";
 import { useMediaQuery } from "@mantine/hooks";
 import { useCountUp } from "./useCountUp";
 
@@ -54,11 +54,7 @@ export default function BabiesHelped({ babiesHelped, year }: BabiesHelpedProps) 
           )}
         </Stack>
         {!isMobile && (
-          <IconBabyCarriage
-            size={36}
-            color="rgba(255,255,255,0.5)"
-            style={{ flexShrink: 0, marginTop: 2 }}
-          />
+          <IconBabyCarriageFilled size={36} color="white" style={{ flexShrink: 0, marginTop: 2 }} />
         )}
       </Group>
     </Box>
