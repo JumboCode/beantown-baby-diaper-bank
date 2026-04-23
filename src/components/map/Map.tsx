@@ -141,7 +141,14 @@ export default function Map({
   }, [boundaries, cities]);
 
   const visibleBoundaries = useMemo(
-    () => boundaryPolygons.filter((boundary) => boundary.totalDiapers > 0),
+    () =>
+      boundaryPolygons
+        .filter((boundary) => boundary.totalDiapers > 0)
+        .sort((a, b) => {
+          if (a.name === "Boston") return -1;
+          if (b.name === "Boston") return 1;
+          return 0;
+        }),
     [boundaryPolygons],
   );
 
