@@ -109,10 +109,10 @@ const MemoizedCityPolygon = memo(
         <ReactLeafletPolygon
           className={isEntering ? "city-boundary city-boundary-enter" : "city-boundary"}
           pathOptions={{
-            weight: isActive ? 2 : isHovered ? 2.5 : 0.5,
-            color: isActive ? "#1B3668" : isHovered ? "#CC2027" : "#5A7687",
+            weight: isActive ? 3 : isHovered ? 2.5 : 0.5,
+            color: isActive || isHovered ? "#CC2027" : "#5A7687",
             fillColor: boundary.fillColor,
-            fillOpacity: isActive ? 0.75 : isHovered ? 0.65 : 0.35,
+            fillOpacity: 0.85,
           }}
           positions={boundary.positions}
           eventHandlers={{
@@ -257,7 +257,7 @@ export default function Map({
   const isMobile = useMediaQuery("(max-width: 768px)");
   const { mapConfig } = useLeafletMap(isMobile ? 8 : DEFAULT_ZOOM);
   const { style: mapStyle, ...mapOptions } = mapConfig;
-  const { tileLayerProps } = useBaseTileLayer();
+  const { tileLayerProps, labelLayerProps } = useBaseTileLayer();
   const [hoveredCityId, setHoveredCityId] = useState<string>();
   const [activeCityId, setActiveCityId] = useState<string>();
   const [activeCityName, setActiveCityName] = useState<string>();
@@ -362,6 +362,7 @@ export default function Map({
         <ZoomControl position="topleft" />
         <ResetViewControl />
         <TileLayer {...tileLayerProps} />
+        <TileLayer {...labelLayerProps} />
         {visibleBoundaries.map((boundary, index) => {
           const boundaryId = String(boundary.id || index);
           return (
