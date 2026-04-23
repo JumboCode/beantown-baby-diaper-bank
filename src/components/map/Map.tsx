@@ -12,19 +12,22 @@ import { IconMapPin, IconHome } from "@tabler/icons-react";
 import { LatLngExpression } from "leaflet";
 import { Text, Stack, Group, Box, Badge, ThemeIcon } from "@mantine/core";
 import { useMediaQuery } from "@mantine/hooks";
-import { TileLayer, MapContainer, Tooltip, useMap } from "react-leaflet";
+import { TileLayer, MapContainer, Tooltip, useMap, Pane } from "react-leaflet";
 import BabiesHelped from "./BabiesHelped";
 import { Polygon as ReactLeafletPolygon } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import { CityWithStats, GeoJsonBoundaries } from "@/lib/types";
 
 function getApproximateArea(positions: any[]): number {
-  let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
-  
+  let minX = Infinity,
+    maxX = -Infinity,
+    minY = Infinity,
+    maxY = -Infinity;
+
   function recurse(arr: any[]) {
     for (const item of arr) {
       if (Array.isArray(item)) {
-        if (item.length >= 2 && typeof item[0] === 'number') {
+        if (item.length >= 2 && typeof item[0] === "number") {
           minX = Math.min(minX, item[0]);
           maxX = Math.max(maxX, item[0]);
           minY = Math.min(minY, item[1]);
@@ -35,10 +38,10 @@ function getApproximateArea(positions: any[]): number {
       }
     }
   }
-  
+
   if (!positions) return 0;
   recurse(positions);
-  
+
   if (minX === Infinity) return 0;
   return (maxX - minX) * (maxY - minY);
 }
@@ -169,10 +172,9 @@ export default function Map({
   }, [boundaries, cities]);
 
   const visibleBoundaries = useMemo(
-    () =>
-      boundaryPolygons
-        .filter((boundary) => boundary.totalDiapers > 0)
-        .sort((a, b) => b.area - a.area),
+    () => [...boundaryPolygons]
+            .filter(b => b.totalDiapers > 0 && b.positions && b.positions.length > 0)
+            .sort((a, b) => b.area - a.area),
     [boundaryPolygons],
   );
 
@@ -208,24 +210,22 @@ export default function Map({
           const isEntering = enteringBoundaryIds.has(boundaryId);
 
           return (
-            <ReactLeafletPolygon
-              key={boundaryId}
-              className={isEntering ? "city-boundary city-boundary-enter" : "city-boundary"}
-              pathOptions={{
-                weight:
-                  activeCityId === boundary.id ? 2 : hoveredCityId === boundary.id ? 2.5 : 0.5,
-                color:
-                  activeCityId === boundary.id
-                    ? "#1B3668"
-                    : hoveredCityId === boundary.id
-                      ? "#CC2027"
-                      : "#5A7687",
-                fillColor: boundary.fillColor,
-                fillOpacity:
-                  activeCityId === boundary.id ? 0.75 : hoveredCityId === boundary.id ? 0.65 : 0.35,
-              }}
-              positions={boundary.positions}
-              eventHandlers={{
+            <Pane key={`pane-${boundaryId}`} name={`pane-${boundaryId}`} style={{ zIndex: 400 + index }}>
+              <ReactLeafletPolygon
+                key={boundaryId}
+                className={isEntering ? "city-boundary city-boundary-enter" : "city-boundary"}
+                pathOptions={{
+                  weight: activeCityId === boundary.id ? 2 : hoveredCityId === boundary.id ? 2.5 : 0.5,
+                  color: activeCityId === boundary.id
+                      ? "#1B3668"
+                      : hoveredCityId === boundary.id
+                        ? "#CC2027"
+                        : "#5A7687",
+                  fillColor: boundary.fillColor,
+                  fillOpacity: activeCityId === boundary.id ? 0.75 : hoveredCityId === boundary.id ? 0.65 : 0.35,
+                }}
+                positions={boundary.positions}
+                eventHandlers={{
                 mouseover: () => setHoveredCityId(boundary.id),
                 mouseout: () =>
                   setHoveredCityId((current) => (current === boundary.id ? undefined : current)),
@@ -248,7 +248,7 @@ export default function Map({
                   const city = cities.find((c) => c.name === boundary.name);
                   if (!city) {
                     return (
-                      <Tooltip sticky direction="top" offset={[0, -4]}>
+                      <Tooltip pane="tooltipPane" sticky direction="top" offset={[0, -4]}>
                         <Text fw={700} fz="sm" c="#0F4F78">
                           {boundary.name}
                         </Text>
@@ -276,6 +276,7 @@ export default function Map({
 
                   return (
                     <Tooltip
+                      pane="tooltipPane"
                       sticky
                       direction="top"
                       offset={[0, -10]}
@@ -345,7 +346,8 @@ export default function Map({
                     </Tooltip>
                   );
                 })()}
-            </ReactLeafletPolygon>
+              </ReactLeafletPolygon>
+            </Pane>
           );
         })}
       </MapContainer>
