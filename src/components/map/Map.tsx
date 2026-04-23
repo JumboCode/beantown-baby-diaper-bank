@@ -16,7 +16,6 @@ import { TileLayer, MapContainer, Tooltip, useMap } from "react-leaflet";
 import BabiesHelped from "./BabiesHelped";
 import { Polygon as ReactLeafletPolygon } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
-import Image from "next/image";
 import { CityWithStats, GeoJsonBoundaries } from "@/lib/types";
 
 export const Marker = dynamic(() => import("react-leaflet").then((module) => module.Marker), {
@@ -57,6 +56,7 @@ export interface MapProps {
   cities: CityWithStats[];
   year: string;
   totalDiapersForYear?: number;
+  yearlyTotalDiapers?: number;
   selectedYear?: string;
   babiesHelped?: number;
 }
@@ -66,6 +66,7 @@ export default function Map({
   cities,
   year,
   totalDiapersForYear,
+  yearlyTotalDiapers,
   selectedYear,
   babiesHelped,
 }: MapProps) {
@@ -79,6 +80,7 @@ export default function Map({
   const [selectedPartnerId, setSelectedPartnerId] = useState<number>();
 
   const animatedRunningTotal = useCountUp(totalDiapersForYear, 1400);
+  const animatedBabiesHelped = useCountUp(yearlyTotalDiapers, 400);
 
   const activeCityWithStats = cities.find((c) => c.name === activeCityName);
 
@@ -319,79 +321,81 @@ export default function Map({
 
       {/* Total Diapers Distributed */}
       {!(isMobile && activeCityWithStats) && (
-        <Box
-          style={{
-            position: "absolute",
-            top: 16,
-            right: 16,
-            zIndex: 1000,
-            pointerEvents: "none",
-            minWidth: isMobile ? 160 : 330,
-            background: "#1B3668",
-            borderRadius: 12,
-            boxShadow: "0 8px 32px rgba(27, 54, 104, 0.4)",
-            padding: isMobile ? "8px 12px" : "14px 18px",
-          }}
-        >
-          <Group justify="space-between" align="flex-start" wrap="nowrap" gap={isMobile ? 8 : 12}>
-            <Stack gap={isMobile ? 1 : 4}>
-              <Text
-                fz={isMobile ? "9px" : "10px"}
-                fw={700}
-                c="rgba(255,255,255,0.55)"
-                tt="uppercase"
-                lts="0.1em"
-              >
-                {isMobile
-                  ? (selectedYear ?? "Total")
-                  : `Total Diapers${selectedYear ? ` Through ${selectedYear}` : ""}`}
-              </Text>
-              <Text 
-                fz={isMobile ? "22px" : "40px"} 
-                fw={900} 
-                c="white" 
-                lh={1}
-                style={{ fontVariantNumeric: "tabular-nums" }}
-              >
-                {totalDiapersForYear != null ? animatedRunningTotal.toLocaleString() : "--"}
-              </Text>
-              {isMobile && (
-                <Text fz="8px" fw={600} c="rgba(255,255,255,0.5)" tt="uppercase" lts="0.05em">
-                  diapers
-                </Text>
-              )}
-            </Stack>
-            {!isMobile && (
-              <Image
-                src="/diaper.svg"
-                alt="Diaper icon"
-                width={52}
-                height={42}
-                style={{
-                  filter: "brightness(0) invert(1)",
-                  opacity: 0.7,
-                  flexShrink: 0,
-                  marginTop: 2,
-                }}
-              />
-            )}
-          </Group>
-        </Box>
-      )}
-
-      {/* Babies Helped */}
-      {!(isMobile && activeCityWithStats) && (
-        <Box
-          style={{
-            position: "absolute",
-            top: isMobile ? 90 : 111,
-            right: 16,
-            zIndex: 1000,
-            pointerEvents: "none",
-          }}
-        >
-          <BabiesHelped babiesHelped={babiesHelped} year={selectedYear} />
-        </Box>
+        <>
+          <Box
+            style={{
+              position: "absolute",
+              top: 16,
+              right: 16,
+              zIndex: 1000,
+              pointerEvents: "none",
+              minWidth: isMobile ? 160 : 330,
+              background: "#1B3668",
+              borderRadius: 12,
+              border: "1px solid #E4E7EC",
+              boxShadow: "0 8px 32px rgba(27, 54, 104, 0.4)",
+              padding: isMobile ? "8px 12px" : "14px 18px",
+            }}
+          >
+            <Group justify="space-between" align="flex-start" wrap="nowrap" gap={isMobile ? 8 : 12}>
+              <Stack gap={isMobile ? 1 : 4}>
+                <Group align="center" gap={isMobile ? 12 : 24}>
+                  {selectedYear && (
+                    <>
+                      <Stack gap={isMobile ? 2 : 4}>
+                        <Text c="#4ade80" fw={800} fz={isMobile ? "18px" : "26px"} lh={1}>
+                          +
+                          {yearlyTotalDiapers != null
+                            ? animatedBabiesHelped.toLocaleString()
+                            : "--"}
+                        </Text>
+                        <Text
+                          fz={isMobile ? "11px" : "15px"}
+                          fw={500}
+                          c="rgba(255,255,255,0.7)"
+                          lh={1}
+                        >
+                          in {selectedYear}
+                        </Text>
+                      </Stack>
+                      <Box
+                        style={{
+                          width: 1,
+                          height: isMobile ? 32 : 42,
+                          backgroundColor: "rgba(255,255,255,0.2)",
+                        }}
+                      />
+                    </>
+                  )}
+                  <Stack gap={isMobile ? 2 : 4}>
+                    <Text fz={isMobile ? "24px" : "34px"} fw={900} c="white" lh={1}>
+                      {totalDiapersForYear != null ? animatedRunningTotal.toLocaleString() : "--"}
+                    </Text>
+                    <Text fz={isMobile ? "11px" : "15px"} fw={500} c="rgba(255,255,255,0.7)" lh={1}>
+                      total diapers through {year}
+                    </Text>
+                  </Stack>
+                </Group>
+              </Stack>
+            </Group>
+          </Box>
+          <Box
+            style={{
+              position: "absolute",
+              top: isMobile ? 75 : 110,
+              right: 16,
+              zIndex: 1000,
+              pointerEvents: "none",
+              background: "#1B3668",
+              borderRadius: 12,
+              border: "1px solid #E4E7EC",
+              boxShadow: "0 8px 32px rgba(27, 54, 104, 0.4)",
+              padding: isMobile ? "8px 12px" : "14px 18px",
+            }}
+          >
+            <BabiesHelped babiesHelped={babiesHelped} year={selectedYear} />
+          </Box>
+        </>
       )}
 
       {/* City Popup — side panel on desktop, bottom sheet on mobile */}

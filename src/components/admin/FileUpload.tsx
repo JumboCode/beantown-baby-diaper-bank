@@ -88,11 +88,7 @@ export default function FileUpload({ files, onFileChange }: FileUploadProps) {
         </Text>
       </div>
 
-      <Dropzone
-        onDrop={handleDrop}
-        onReject={(files) => console.log("rejected files", files)}
-        accept={[MIME_TYPES.csv]}
-      >
+      <Dropzone onDrop={handleDrop} accept={[MIME_TYPES.csv]}>
         <Group justify="center" gap="xl" mih={120} style={{ pointerEvents: "none" }}>
           <Dropzone.Accept>
             <IconUpload

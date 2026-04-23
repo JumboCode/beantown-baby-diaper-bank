@@ -192,7 +192,6 @@ export function CityPopup({ city, year, onPartnerSelect, onClose }: CityPopupPro
             {activePartners.length > 0 ? (
               <Stack gap={6}>
                 {activePartners.map((p) => {
-                  console.log(p);
                   const selectedYear = Number(year);
                   let isNew = false;
                   if (p.startPartner) {

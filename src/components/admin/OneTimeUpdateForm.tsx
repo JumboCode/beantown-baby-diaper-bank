@@ -76,16 +76,6 @@ export default function OneTimeUpdateForm({
     const monthName = MONTH_NAMES[Number(selectedDate.split("-")[1]) - 1];
     const year = Number(selectedDate.split("-")[0]);
 
-    console.log({
-      partnerId,
-      month: monthName,
-      year: year,
-      percentages: entries.map((e) => ({
-        city: e.city.trim(),
-        percentage: e.percent / 100,
-      })),
-    });
-
     try {
       const response = await fetch("/api/distributions", {
         method: "POST",
