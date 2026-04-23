@@ -17,7 +17,6 @@ import BabiesHelped from "./BabiesHelped";
 import { Polygon as ReactLeafletPolygon } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import { CityWithStats, GeoJsonBoundaries } from "@/lib/types";
-import L from "leaflet";
 
 function getGeometryStats(positions: any[]): { area: number; center: [number, number] } {
   let minX = Infinity,
@@ -119,7 +118,7 @@ const MemoizedCityPolygon = memo(
             weight: isActive ? 3 : isHovered ? 2.5 : 0.5,
             color: isActive || isHovered ? "#CC2027" : "#5A7687",
             fillColor: boundary.fillColor,
-            fillOpacity: 0.85,
+            fillOpacity: 0.65,
           }}
           positions={boundary.positions}
           eventHandlers={{
@@ -514,17 +513,9 @@ export default function Map({
                 <>
                   <Stack gap={isMobile ? 2 : 4} style={{ flexShrink: 0 }}>
                     <Text c="#4ade80" fw={800} fz={isMobile ? "18px" : "22px"} lh={1}>
-                      +
-                      {yearlyTotalDiapers != null
-                        ? animatedBabiesHelped.toLocaleString()
-                        : "--"}
+                      +{yearlyTotalDiapers != null ? animatedBabiesHelped.toLocaleString() : "--"}
                     </Text>
-                    <Text
-                      fz={isMobile ? "11px" : "13px"}
-                      fw={500}
-                      c="rgba(255,255,255,0.7)"
-                      lh={1}
-                    >
+                    <Text fz={isMobile ? "11px" : "13px"} fw={500} c="rgba(255,255,255,0.7)" lh={1}>
                       in {selectedYear}
                     </Text>
                   </Stack>
