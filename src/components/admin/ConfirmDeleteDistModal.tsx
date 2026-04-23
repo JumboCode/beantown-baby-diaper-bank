@@ -28,7 +28,6 @@ export function ConfirmDeletion({ count, onConfirm }: ConfirmDeletionProps) {
       ),
       labels: { confirm: "Delete", cancel: "Cancel" },
       confirmProps: { color: "brand" },
-      onCancel: () => console.log("Cancel"),
       onConfirm,
       size: "lg",
       groupProps: {
