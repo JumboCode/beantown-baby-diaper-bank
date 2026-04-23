@@ -4,7 +4,7 @@ import dynamic from "next/dynamic";
 import { useCountUp } from "./useCountUp";
 import { useLeafletMap, DEFAULT_CENTER, DEFAULT_ZOOM } from "./useLeafletMap";
 import { useBaseTileLayer } from "./useBaseTileLayer";
-import { useEffect, useMemo, useRef, useState, memo } from "react";
+import React, { useEffect, useMemo, useRef, useState, memo } from "react";
 import { CityPopup } from "./CityPopup";
 import PartnerDrawer from "./PartnerDrawer";
 import { cityScore, getScoreColor, LEVEL_COLORS } from "@/lib/hotmap";
@@ -17,8 +17,9 @@ import BabiesHelped from "./BabiesHelped";
 import { Polygon as ReactLeafletPolygon } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import { CityWithStats, GeoJsonBoundaries } from "@/lib/types";
+import L from "leaflet";
 
-function getApproximateArea(positions: any[]): number {
+function getGeometryStats(positions: any[]): { area: number; center: [number, number] } {
   let minX = Infinity,
     maxX = -Infinity,
     minY = Infinity,
@@ -39,16 +40,22 @@ function getApproximateArea(positions: any[]): number {
     }
   }
 
-  if (!positions) return 0;
+  if (!positions) return { area: 0, center: [0, 0] };
   recurse(positions);
 
-  if (minX === Infinity) return 0;
-  return (maxX - minX) * (maxY - minY);
+  if (minX === Infinity) return { area: 0, center: [0, 0] };
+  return {
+    area: (maxX - minX) * (maxY - minY),
+    center: [(minX + maxX) / 2, (minY + maxY) / 2],
+  };
 }
 
-export const Marker = dynamic(() => import("react-leaflet").then((module) => module.Marker), {
-  ssr: false,
-});
+export const CircleMarker = dynamic(
+  () => import("react-leaflet").then((module) => module.CircleMarker),
+  {
+    ssr: false,
+  },
+);
 
 export const ZoomControl = dynamic(
   () => import("react-leaflet").then((module) => module.ZoomControl),
@@ -180,60 +187,108 @@ const MemoizedCityPolygon = memo(
                       background: "rgba(255, 255, 255, 0.96)",
                       border: "1px solid #E4E7EC",
                       borderRadius: 12,
-                      boxShadow: "0 8px 24px rgba(16, 24, 40, 0.12)",
-                      padding: "10px 14px",
+                      boxShadow: "0 12px 32px rgba(16, 24, 40, 0.16)",
+                      padding: "14px 16px",
                       backdropFilter: "blur(8px)",
-                      minWidth: 160,
+                      minWidth: 220,
+                      maxWidth: 260,
                       textAlign: "left",
                     }}
                   >
-                    <Group gap={6} mb={4} wrap="nowrap">
+                    <Group gap={6} mb={10} wrap="nowrap">
                       <ThemeIcon
-                        size={20}
+                        size={22}
                         radius="xl"
                         variant="light"
                         color="cyan"
                         styles={{ root: { backgroundColor: "#E0F2FE", color: "#0F6B99" } }}
                       >
-                        <IconMapPin size={12} />
+                        <IconMapPin size={14} />
                       </ThemeIcon>
-                      <Text fw={800} fz="15px" c="#101828" lh={1}>
+                      <Text fw={800} fz="16px" c="#101828" lh={1}>
                         {boundary.name}
                       </Text>
                     </Group>
 
-                    {totalDiapers === 0 ? (
-                      <Text fz="12px" c="#667085" fw={500} mt={6}>
-                        0 diapers distributed this year
-                      </Text>
-                    ) : (
-                      <Stack gap={4} mt={6}>
-                        <Group justify="space-between" wrap="nowrap">
-                          <Text fz="11px" fw={700} c="#475467" tt="uppercase">
-                            in {year}
+                    <Stack gap={12}>
+                      {totalDiapers === 0 ? (
+                        <Text fz="12px" c="#667085" fw={500} mt={2}>
+                          0 diapers distributed this year
+                        </Text>
+                      ) : (
+                        <>
+                          <Group grow gap={8}>
+                            <Box
+                              style={{
+                                background: "#F8FAFC",
+                                padding: "8px 10px",
+                                borderRadius: 8,
+                                border: "1px solid #F1F5F9",
+                              }}
+                            >
+                              <Text fz="10px" fw={700} c="#64748B" tt="uppercase">
+                                in {year}
+                              </Text>
+                              <Text fz="15px" fw={800} c="#16A34A" lh={1.2} mt={2}>
+                                +{totalDiapers.toLocaleString()}
+                              </Text>
+                            </Box>
+                            <Box
+                              style={{
+                                background: "#F8FAFC",
+                                padding: "8px 10px",
+                                borderRadius: 8,
+                                border: "1px solid #F1F5F9",
+                              }}
+                            >
+                              <Text fz="10px" fw={700} c="#64748B" tt="uppercase">
+                                Total
+                              </Text>
+                              <Text fz="15px" fw={800} c="#0F6B99" lh={1.2} mt={2}>
+                                {city.stats.runningTotal?.toLocaleString() ?? 0}
+                              </Text>
+                            </Box>
+                          </Group>
+
+                          <Box>
+                            <Group justify="space-between" wrap="nowrap">
+                              <Text fz="11px" fw={800} c="#475467" tt="uppercase">
+                                Partner Orgs
+                              </Text>
+                              <Badge variant="light" color="blue" size="sm" radius="sm" fw={800}>
+                                {activePartners.length}
+                              </Badge>
+                            </Group>
+                          </Box>
+                        </>
+                      )}
+
+                      {!isMobile && (
+                        <Group
+                          gap={6}
+                          wrap="nowrap"
+                          mt={2}
+                          style={{ borderTop: "1px solid #E2E8F0", paddingTop: 10 }}
+                        >
+                          <Text fz="11px" fw={700} c="#64748B">
+                            Click to view details
                           </Text>
-                          <Text fz="13px" fw={800} c="#16A34A">
-                            +{totalDiapers.toLocaleString()}
-                          </Text>
+                          <svg
+                            width="12"
+                            height="12"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="#64748B"
+                            strokeWidth="2.5"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          >
+                            <path d="M5 12h14"></path>
+                            <path d="M12 5l7 7-7 7"></path>
+                          </svg>
                         </Group>
-                        <Group justify="space-between" wrap="nowrap">
-                          <Text fz="11px" fw={700} c="#475467" tt="uppercase">
-                            Total
-                          </Text>
-                          <Text fz="13px" fw={800} c="#0F6B99">
-                            {city.stats.runningTotal?.toLocaleString() ?? 0}
-                          </Text>
-                        </Group>
-                        <Group justify="space-between" wrap="nowrap" mt={2}>
-                          <Text fz="11px" fw={700} c="#475467" tt="uppercase">
-                            Partner Orgs
-                          </Text>
-                          <Badge variant="light" color="blue" size="sm" radius="xl" fw={700}>
-                            {activePartners.length}
-                          </Badge>
-                        </Group>
-                      </Stack>
-                    )}
+                      )}
+                    </Stack>
                   </Box>
                 </Tooltip>
               );
@@ -255,9 +310,9 @@ export default function Map({
   babiesHelped,
 }: MapProps) {
   const isMobile = useMediaQuery("(max-width: 768px)");
-  const { mapConfig } = useLeafletMap(isMobile ? 8 : DEFAULT_ZOOM);
+  const { mapConfig } = useLeafletMap(isMobile ? 7 : DEFAULT_ZOOM);
   const { style: mapStyle, ...mapOptions } = mapConfig;
-  const { tileLayerProps, labelLayerProps } = useBaseTileLayer();
+  const { tileLayerProps } = useBaseTileLayer();
   const [hoveredCityId, setHoveredCityId] = useState<string>();
   const [activeCityId, setActiveCityId] = useState<string>();
   const [activeCityName, setActiveCityName] = useState<string>();
@@ -275,6 +330,7 @@ export default function Map({
     fillColor: string;
     totalDiapers: number;
     area: number;
+    center: [number, number];
   }
 
   const boundaryPolygons: BoundaryPolygon[] = useMemo(() => {
@@ -316,13 +372,16 @@ export default function Map({
       }
 
       const positions = feature.geometry.coordinates as unknown as LatLngExpression[][];
+      const geomStats = getGeometryStats(positions);
+
       return {
         id: name || Math.random(),
         positions,
-        name: name,
+        name: name || "Unknown Region",
         fillColor,
         totalDiapers: total,
-        area: getApproximateArea(positions as any),
+        area: geomStats.area,
+        center: geomStats.center,
       };
     });
   }, [boundaries, cities]);
@@ -358,29 +417,59 @@ export default function Map({
   return (
     <div style={{ position: "relative", height: "100%", width: "100%", zIndex: 0 }}>
       {/* Map */}
+      <style>{`.native-town-label { background: transparent !important; border: none !important; box-shadow: none !important; margin: 0 !important; padding: 0 !important; pointer-events: none !important; } .native-town-label::before { display: none !important; }`}</style>
       <MapContainer {...mapOptions} zoomControl={false} style={mapStyle}>
         <ZoomControl position="topleft" />
         <ResetViewControl />
         <TileLayer {...tileLayerProps} />
-        <TileLayer {...labelLayerProps} />
         {visibleBoundaries.map((boundary, index) => {
           const boundaryId = String(boundary.id || index);
           return (
-            <MemoizedCityPolygon
-              key={boundaryId}
-              boundary={boundary}
-              index={index}
-              boundaryId={boundaryId}
-              isEntering={enteringBoundaryIds.has(boundaryId)}
-              isActive={activeCityId === boundary.id}
-              isHovered={hoveredCityId === boundary.id}
-              year={year}
-              cities={cities}
-              isMobile={isMobile}
-              setHoveredCityId={setHoveredCityId}
-              setActiveCityName={setActiveCityName}
-              setActiveCityId={setActiveCityId}
-            />
+            <React.Fragment key={boundaryId}>
+              <MemoizedCityPolygon
+                boundary={boundary}
+                index={index}
+                boundaryId={boundaryId}
+                isEntering={false} // Transition disabled to prevent DOM tearing
+                isActive={activeCityId === boundary.id}
+                isHovered={hoveredCityId === boundary.id}
+                year={year}
+                cities={cities}
+                isMobile={isMobile}
+                setHoveredCityId={setHoveredCityId}
+                setActiveCityName={setActiveCityName}
+                setActiveCityId={setActiveCityId}
+              />
+              {boundary.name && typeof window !== "undefined" && (
+                <CircleMarker
+                  center={boundary.center}
+                  radius={0}
+                  opacity={1}
+                  stroke={false}
+                  fillOpacity={0}
+                  interactive={false}
+                >
+                  <Tooltip permanent direction="center" className="native-town-label">
+                    <div
+                      style={{
+                        fontWeight: 800,
+                        fontFamily: "inherit",
+                        fontSize: "11.5px",
+                        color: "#1e293b",
+                        textTransform: "uppercase",
+                        letterSpacing: "0.5px",
+                        textShadow:
+                          "1px 1px 0 rgba(255,255,255,0.95), -1px -1px 0 rgba(255,255,255,0.95), 1px -1px 0 rgba(255,255,255,0.95), -1px 1px 0 rgba(255,255,255,0.95), 0px 0px 5px rgba(255,255,255,0.9)",
+                        pointerEvents: "none",
+                        whiteSpace: "nowrap",
+                      }}
+                    >
+                      {boundary.name}
+                    </div>
+                  </Tooltip>
+                </CircleMarker>
+              )}
+            </React.Fragment>
           );
         })}
       </MapContainer>
