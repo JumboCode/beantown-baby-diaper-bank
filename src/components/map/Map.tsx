@@ -4,7 +4,7 @@ import dynamic from "next/dynamic";
 import { useCountUp } from "./useCountUp";
 import { useLeafletMap, DEFAULT_CENTER, DEFAULT_ZOOM } from "./useLeafletMap";
 import { useBaseTileLayer } from "./useBaseTileLayer";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, memo } from "react";
 import { CityPopup } from "./CityPopup";
 import PartnerDrawer from "./PartnerDrawer";
 import { cityScore, getScoreColor, LEVEL_COLORS } from "@/lib/hotmap";
@@ -89,6 +89,162 @@ export interface MapProps {
   babiesHelped?: number;
 }
 
+const MemoizedCityPolygon = memo(
+  ({
+    boundary,
+    index,
+    boundaryId,
+    isEntering,
+    isActive,
+    isHovered,
+    year,
+    cities,
+    isMobile,
+    setHoveredCityId,
+    setActiveCityName,
+    setActiveCityId,
+  }: any) => {
+    return (
+      <Pane name={`pane-${boundaryId}`} style={{ zIndex: 400 + index }}>
+        <ReactLeafletPolygon
+          className={isEntering ? "city-boundary city-boundary-enter" : "city-boundary"}
+          pathOptions={{
+            weight: isActive ? 2 : isHovered ? 2.5 : 0.5,
+            color: isActive ? "#1B3668" : isHovered ? "#CC2027" : "#5A7687",
+            fillColor: boundary.fillColor,
+            fillOpacity: isActive ? 0.75 : isHovered ? 0.65 : 0.35,
+          }}
+          positions={boundary.positions}
+          eventHandlers={{
+            mouseover: () => setHoveredCityId(boundary.id),
+            mouseout: () =>
+              setHoveredCityId((current: string | undefined) =>
+                current === boundary.id ? undefined : current,
+              ),
+            click: () => {
+              if (!isMobile) {
+                setActiveCityName(boundary.name);
+                setActiveCityId(boundary.id);
+              }
+            },
+            preclick: () => {
+              if (isMobile) {
+                setActiveCityName(boundary.name);
+                setActiveCityId(boundary.id);
+              }
+            },
+          }}
+        >
+          {boundary.name &&
+            (() => {
+              const city = cities.find((c: any) => c.name === boundary.name);
+              if (!city) {
+                return (
+                  <Tooltip pane="tooltipPane" sticky direction="top" offset={[0, -4]}>
+                    <Text fw={700} fz="sm" c="#0F4F78">
+                      {boundary.name}
+                    </Text>
+                  </Tooltip>
+                );
+              }
+
+              const totalDiapers =
+                city.distributions.reduce(
+                  (sum: number, d: any) => sum + Number(d.numberDiapers),
+                  0,
+                ) ?? 0;
+
+              const selectedYear = Number(year);
+              const activePartners = city.partners.filter((p: any) => {
+                const isWaitlisted =
+                  p.status === "waitlisted" || p.waitlisted === true || p.waitlisted === "true";
+                const isInactive = p.status === "inactive";
+                let startedOnOrBeforeYear = true;
+                if (p.startPartner) {
+                  startedOnOrBeforeYear = new Date(p.startPartner).getUTCFullYear() <= selectedYear;
+                }
+                return !isWaitlisted && !isInactive && startedOnOrBeforeYear;
+              });
+
+              return (
+                <Tooltip
+                  pane="tooltipPane"
+                  sticky
+                  direction="top"
+                  offset={[0, -10]}
+                  opacity={1}
+                  className="custom-map-tooltip"
+                >
+                  <Box
+                    style={{
+                      background: "rgba(255, 255, 255, 0.96)",
+                      border: "1px solid #E4E7EC",
+                      borderRadius: 12,
+                      boxShadow: "0 8px 24px rgba(16, 24, 40, 0.12)",
+                      padding: "10px 14px",
+                      backdropFilter: "blur(8px)",
+                      minWidth: 160,
+                      textAlign: "left",
+                    }}
+                  >
+                    <Group gap={6} mb={4} wrap="nowrap">
+                      <ThemeIcon
+                        size={20}
+                        radius="xl"
+                        variant="light"
+                        color="cyan"
+                        styles={{ root: { backgroundColor: "#E0F2FE", color: "#0F6B99" } }}
+                      >
+                        <IconMapPin size={12} />
+                      </ThemeIcon>
+                      <Text fw={800} fz="15px" c="#101828" lh={1}>
+                        {boundary.name}
+                      </Text>
+                    </Group>
+
+                    {totalDiapers === 0 ? (
+                      <Text fz="12px" c="#667085" fw={500} mt={6}>
+                        0 diapers distributed this year
+                      </Text>
+                    ) : (
+                      <Stack gap={4} mt={6}>
+                        <Group justify="space-between" wrap="nowrap">
+                          <Text fz="11px" fw={700} c="#475467" tt="uppercase">
+                            in {year}
+                          </Text>
+                          <Text fz="13px" fw={800} c="#16A34A">
+                            +{totalDiapers.toLocaleString()}
+                          </Text>
+                        </Group>
+                        <Group justify="space-between" wrap="nowrap">
+                          <Text fz="11px" fw={700} c="#475467" tt="uppercase">
+                            Total
+                          </Text>
+                          <Text fz="13px" fw={800} c="#0F6B99">
+                            {city.stats.runningTotal?.toLocaleString() ?? 0}
+                          </Text>
+                        </Group>
+                        <Group justify="space-between" wrap="nowrap" mt={2}>
+                          <Text fz="11px" fw={700} c="#475467" tt="uppercase">
+                            Partner Orgs
+                          </Text>
+                          <Badge variant="light" color="blue" size="sm" radius="xl" fw={700}>
+                            {activePartners.length}
+                          </Badge>
+                        </Group>
+                      </Stack>
+                    )}
+                  </Box>
+                </Tooltip>
+              );
+            })()}
+        </ReactLeafletPolygon>
+      </Pane>
+    );
+  },
+);
+MemoizedCityPolygon.displayName = "MemoizedCityPolygon";
+
 export default function Map({
   boundaries,
   cities,
@@ -172,9 +328,10 @@ export default function Map({
   }, [boundaries, cities]);
 
   const visibleBoundaries = useMemo(
-    () => [...boundaryPolygons]
-            .filter(b => b.totalDiapers > 0 && b.positions && b.positions.length > 0)
-            .sort((a, b) => b.area - a.area),
+    () =>
+      [...boundaryPolygons]
+        .filter((b) => b.totalDiapers > 0 && b.positions && b.positions.length > 0)
+        .sort((a, b) => b.area - a.area),
     [boundaryPolygons],
   );
 
@@ -207,147 +364,22 @@ export default function Map({
         <TileLayer {...tileLayerProps} />
         {visibleBoundaries.map((boundary, index) => {
           const boundaryId = String(boundary.id || index);
-          const isEntering = enteringBoundaryIds.has(boundaryId);
-
           return (
-            <Pane key={`pane-${boundaryId}`} name={`pane-${boundaryId}`} style={{ zIndex: 400 + index }}>
-              <ReactLeafletPolygon
-                key={boundaryId}
-                className={isEntering ? "city-boundary city-boundary-enter" : "city-boundary"}
-                pathOptions={{
-                  weight: activeCityId === boundary.id ? 2 : hoveredCityId === boundary.id ? 2.5 : 0.5,
-                  color: activeCityId === boundary.id
-                      ? "#1B3668"
-                      : hoveredCityId === boundary.id
-                        ? "#CC2027"
-                        : "#5A7687",
-                  fillColor: boundary.fillColor,
-                  fillOpacity: activeCityId === boundary.id ? 0.75 : hoveredCityId === boundary.id ? 0.65 : 0.35,
-                }}
-                positions={boundary.positions}
-                eventHandlers={{
-                mouseover: () => setHoveredCityId(boundary.id),
-                mouseout: () =>
-                  setHoveredCityId((current) => (current === boundary.id ? undefined : current)),
-                click: () => {
-                  if (!isMobile) {
-                    setActiveCityName(boundary.name);
-                    setActiveCityId(boundary.id);
-                  }
-                },
-                preclick: () => {
-                  if (isMobile) {
-                    setActiveCityName(boundary.name);
-                    setActiveCityId(boundary.id);
-                  }
-                },
-              }}
-            >
-              {boundary.name &&
-                (() => {
-                  const city = cities.find((c) => c.name === boundary.name);
-                  if (!city) {
-                    return (
-                      <Tooltip pane="tooltipPane" sticky direction="top" offset={[0, -4]}>
-                        <Text fw={700} fz="sm" c="#0F4F78">
-                          {boundary.name}
-                        </Text>
-                      </Tooltip>
-                    );
-                  }
-
-                  const totalDiapers =
-                    city.distributions.reduce((sum, d) => sum + Number(d.numberDiapers), 0) ?? 0;
-
-                  const selectedYear = Number(year);
-                  const activePartners = city.partners.filter((p) => {
-                    const isWaitlisted =
-                      p.status === "waitlisted" ||
-                      (p as any).waitlisted === true ||
-                      (p as any).waitlisted === "true";
-                    const isInactive = p.status === "inactive";
-                    let startedOnOrBeforeYear = true;
-                    if ((p as any).startPartner) {
-                      startedOnOrBeforeYear =
-                        new Date((p as any).startPartner).getUTCFullYear() <= selectedYear;
-                    }
-                    return !isWaitlisted && !isInactive && startedOnOrBeforeYear;
-                  });
-
-                  return (
-                    <Tooltip
-                      pane="tooltipPane"
-                      sticky
-                      direction="top"
-                      offset={[0, -10]}
-                      opacity={1}
-                      className="custom-map-tooltip"
-                    >
-                      <Box
-                        style={{
-                          background: "rgba(255, 255, 255, 0.96)",
-                          border: "1px solid #E4E7EC",
-                          borderRadius: 12,
-                          boxShadow: "0 8px 24px rgba(16, 24, 40, 0.12)",
-                          padding: "10px 14px",
-                          backdropFilter: "blur(8px)",
-                          minWidth: 160,
-                          textAlign: "left",
-                        }}
-                      >
-                        <Group gap={6} mb={4} wrap="nowrap">
-                          <ThemeIcon
-                            size={20}
-                            radius="xl"
-                            variant="light"
-                            color="cyan"
-                            styles={{ root: { backgroundColor: "#E0F2FE", color: "#0F6B99" } }}
-                          >
-                            <IconMapPin size={12} />
-                          </ThemeIcon>
-                          <Text fw={800} fz="15px" c="#101828" lh={1}>
-                            {boundary.name}
-                          </Text>
-                        </Group>
-
-                        {totalDiapers === 0 ? (
-                          <Text fz="12px" c="#667085" fw={500} mt={6}>
-                            0 diapers distributed this year
-                          </Text>
-                        ) : (
-                          <Stack gap={4} mt={6}>
-                            <Group justify="space-between" wrap="nowrap">
-                              <Text fz="11px" fw={700} c="#475467" tt="uppercase">
-                                in {year}
-                              </Text>
-                              <Text fz="13px" fw={800} c="#16A34A">
-                                +{totalDiapers.toLocaleString()}
-                              </Text>
-                            </Group>
-                            <Group justify="space-between" wrap="nowrap">
-                              <Text fz="11px" fw={700} c="#475467" tt="uppercase">
-                                Total
-                              </Text>
-                              <Text fz="13px" fw={800} c="#0F6B99">
-                                {city.stats.runningTotal?.toLocaleString() ?? 0}
-                              </Text>
-                            </Group>
-                            <Group justify="space-between" wrap="nowrap" mt={2}>
-                              <Text fz="11px" fw={700} c="#475467" tt="uppercase">
-                                Partner Orgs
-                              </Text>
-                              <Badge variant="light" color="blue" size="sm" radius="xl" fw={700}>
-                                {activePartners.length}
-                              </Badge>
-                            </Group>
-                          </Stack>
-                        )}
-                      </Box>
-                    </Tooltip>
-                  );
-                })()}
-              </ReactLeafletPolygon>
-            </Pane>
+            <MemoizedCityPolygon
+              key={boundaryId}
+              boundary={boundary}
+              index={index}
+              boundaryId={boundaryId}
+              isEntering={enteringBoundaryIds.has(boundaryId)}
+              isActive={activeCityId === boundary.id}
+              isHovered={hoveredCityId === boundary.id}
+              year={year}
+              cities={cities}
+              isMobile={isMobile}
+              setHoveredCityId={setHoveredCityId}
+              setActiveCityName={setActiveCityName}
+              setActiveCityId={setActiveCityId}
+            />
           );
         })}
       </MapContainer>
