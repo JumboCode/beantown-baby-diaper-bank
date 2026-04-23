@@ -2,6 +2,10 @@ import { useMemo } from "react";
 import type { CSSProperties } from "react";
 import type { LatLngBoundsExpression, LatLngTuple } from "leaflet";
 import type { MapContainerProps } from "react-leaflet";
+import { useMediaQuery } from "@mantine/hooks";
+
+const MIN_ZOOM = 10;
+const MIN_ZOOM_MOBILE = 8;
 
 // Define the configuration type for the Leaflet map
 type MapConfig = Pick<
@@ -46,13 +50,21 @@ const MA_BOUNDS: LatLngBoundsExpression = [
  *
  */
 export function useLeafletMap(zoom: number = DEFAULT_ZOOM) {
+  // Since the map is loaded completely client-side in Next.js (ssr: false),
+  // we can safely evaluate the media query on the very first render frame
+  // by disabling `getInitialValueInEffect`. This prevents Leaflet from
+  // initializing before `isMobile` is known, locking in the wrong minZoom.
+  const isMobile = useMediaQuery("(max-width: 768px)", false, {
+    getInitialValueInEffect: false,
+  });
+
   const mapConfig = useMemo<MapConfig>(
     () => ({
       center: DEFAULT_CENTER,
       zoom,
       scrollWheelZoom: true,
       preferCanvas: false,
-      minZoom: 8,
+      minZoom: isMobile ? MIN_ZOOM_MOBILE : MIN_ZOOM,
       maxZoom: 18,
       maxBounds: MA_BOUNDS,
       maxBoundsViscosity: 1.0,
@@ -61,7 +73,7 @@ export function useLeafletMap(zoom: number = DEFAULT_ZOOM) {
         width: "100%",
       },
     }),
-    [zoom],
+    [zoom, isMobile],
   );
 
   return { mapConfig };
