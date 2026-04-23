@@ -16,6 +16,7 @@ import {
   IconChartBar,
   IconCalendarStats,
   IconUsersGroup,
+  IconClock,
 } from "@tabler/icons-react";
 import { useState } from "react";
 import { CityWithStats } from "@/lib/types";
@@ -42,18 +43,12 @@ function isActivePartner(partner: Partner, year: string): boolean {
 }
 
 export function CityPopup({ city, year, onPartnerSelect, onClose }: CityPopupProps) {
-  const [showAllWaitlisted, setShowAllWaitlisted] = useState(false);
-
   const waitlistedPartners = city.partners.filter((p) => p.status === "waitlisted");
   const activePartners = city.partners.filter((p) => isActivePartner(p, year));
 
   const totalDiapers = city.distributions.reduce((sum, d) => sum + Number(d.numberDiapers), 0) ?? 0;
   const totalChildren =
     city.distributions.reduce((sum, d) => sum + Number(d.numberChildren), 0) ?? 0;
-  const visibleWaitlistedPartners = showAllWaitlisted
-    ? waitlistedPartners
-    : waitlistedPartners.slice(0, 5);
-  const hasMoreWaitlistedPartners = waitlistedPartners.length > 5;
 
   return (
     <>
@@ -63,9 +58,7 @@ export function CityPopup({ city, year, onPartnerSelect, onClose }: CityPopupPro
           background: "#1B3668",
           borderRadius: "12px 12px 0 0",
           padding: "16px 16px 14px",
-          position: "sticky",
-          top: 0,
-          zIndex: 1,
+          flexShrink: 0,
         }}
       >
         <Group justify="space-between" align="flex-start" wrap="nowrap">
@@ -116,7 +109,7 @@ export function CityPopup({ city, year, onPartnerSelect, onClose }: CityPopupPro
       </Box>
 
       {/* Stats + partners body */}
-      <Stack gap={10} p={14}>
+      <Stack gap={10} p={14} style={{ overflowY: "auto", flex: 1 }}>
         {/* Two stat cells */}
         <Group grow gap={8}>
           <Card bg="white" withBorder radius="lg">
@@ -188,7 +181,7 @@ export function CityPopup({ city, year, onPartnerSelect, onClose }: CityPopupPro
             </Group>
           </Card.Section>
 
-          <Box p={10}>
+          <Box p={10} style={{ maxHeight: 160, overflowY: "auto", overflowX: "hidden" }}>
             {activePartners.length > 0 ? (
               <Stack gap={6}>
                 {activePartners.map((p) => {
@@ -199,13 +192,15 @@ export function CityPopup({ city, year, onPartnerSelect, onClose }: CityPopupPro
                     isNew = partnerStartYear === selectedYear;
                   }
                   return (
-                    <Group
+                    <Box
                       key={p.id}
-                      gap={10}
-                      align="center"
-                      wrap="nowrap"
                       onClick={() => onPartnerSelect(Number(p.id))}
                       style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 10,
+                        width: "100%",
+                        flexWrap: "nowrap",
                         cursor: "pointer",
                         padding: "5px 8px",
                         borderRadius: 8,
@@ -238,7 +233,7 @@ export function CityPopup({ city, year, onPartnerSelect, onClose }: CityPopupPro
                           NEW
                         </Badge>
                       )}
-                    </Group>
+                    </Box>
                   );
                 })}
               </Stack>
@@ -252,65 +247,86 @@ export function CityPopup({ city, year, onPartnerSelect, onClose }: CityPopupPro
 
         {/* Waitlisted */}
         {waitlistedPartners.length > 0 && (
-          <Box
-            style={{
-              border: "1px solid #EAECF0",
-              borderRadius: 12,
-              overflow: "hidden",
-            }}
-          >
-            <Box
+          <Card bg="white" withBorder radius="lg">
+            <Card.Section
               style={{
-                background: "#f5f8ff",
-                borderBottom: "1px solid #c5d2e9",
+                background: "#f8f9fa",
                 padding: "8px 12px",
+                borderBottom: waitlistedPartners.length > 0 ? "1px solid #e9ecef" : undefined,
               }}
             >
               <Group justify="space-between" align="center">
-                <Text fz="11px" fw={800} c="#667085" tt="uppercase" lts="0.06em">
-                  Waitlisted
-                </Text>
-                <Badge variant="dot" color="gray" radius="xl" fw={700} size="sm">
+                <Group gap={7} align="center">
+                  <ThemeIcon
+                    size={22}
+                    radius="xl"
+                    styles={{ root: { backgroundColor: "#e9ecef", color: "#495057" } }}
+                  >
+                    <IconClock size={12} />
+                  </ThemeIcon>
+                  <Text fz="11px" fw={800} c="#495057" tt="uppercase" lts="0.06em">
+                    Waitlisted
+                  </Text>
+                </Group>
+                <Badge
+                  variant="filled"
+                  radius="xl"
+                  fw={700}
+                  size="sm"
+                  styles={{ root: { background: "#495057" } }}
+                >
                   {waitlistedPartners.length}
                 </Badge>
               </Group>
-            </Box>
-            <Box p={10}>
-              <Group gap={6} wrap="wrap">
-                {visibleWaitlistedPartners.map((p) => (
-                  <MantineTooltip key={p.id} label={p.name} withArrow>
-                    <Badge
-                      variant="outline"
-                      color="gray"
-                      radius="xl"
-                      size="sm"
-                      fw={500}
-                      style={{ cursor: "default", maxWidth: 160 }}
+            </Card.Section>
+
+            <Box p={10} style={{ maxHeight: 160, overflowY: "auto", overflowX: "hidden" }}>
+              <Stack gap={6}>
+                {waitlistedPartners.map((p) => {
+                  return (
+                    <Box
+                      key={p.id}
                       onClick={() => onPartnerSelect(Number(p.id))}
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 10,
+                        width: "100%",
+                        flexWrap: "nowrap",
+                        cursor: "pointer",
+                        padding: "5px 8px",
+                        borderRadius: 8,
+                        transition: "background 0.15s",
+                        opacity: 0.85,
+                      }}
+                      onMouseEnter={(e) => (e.currentTarget.style.background = "#f1f3f5")}
+                      onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
                     >
-                      <Text truncate fz="11px">
+                      <Avatar
+                        src={p.logoUrl}
+                        size="sm"
+                        radius="xl"
+                        color="gray"
+                        variant="light"
+                        style={{ flexShrink: 0, filter: "grayscale(100%)" }}
+                      >
+                        {p.name?.substring(0, 2).toUpperCase()}
+                      </Avatar>
+                      <Text
+                        fz="13px"
+                        fw={500}
+                        c="#495057"
+                        style={{ flex: 1, minWidth: 0 }}
+                        truncate
+                      >
                         {p.name}
                       </Text>
-                    </Badge>
-                  </MantineTooltip>
-                ))}
-                {hasMoreWaitlistedPartners && !showAllWaitlisted && (
-                  <Badge
-                    component="button"
-                    variant="light"
-                    color="blue"
-                    radius="xl"
-                    size="sm"
-                    fw={700}
-                    style={{ cursor: "pointer", border: "none" }}
-                    onClick={() => setShowAllWaitlisted(true)}
-                  >
-                    +{waitlistedPartners.length - visibleWaitlistedPartners.length} more
-                  </Badge>
-                )}
-              </Group>
+                    </Box>
+                  );
+                })}
+              </Stack>
             </Box>
-          </Box>
+          </Card>
         )}
       </Stack>
     </>

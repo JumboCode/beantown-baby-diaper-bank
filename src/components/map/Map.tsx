@@ -474,128 +474,150 @@ export default function Map({
         })}
       </MapContainer>
 
-      {/* Total Diapers Distributed */}
-      {!(isMobile && activeCityWithStats) && (
-        <>
+      <div
+        style={
+          isMobile
+            ? { display: "contents" } // Allows absolute children to bind to screen
+            : {
+                position: "absolute",
+                top: 16,
+                right: 16,
+                bottom: 16, // Fill available height for scrolling
+                zIndex: 1000,
+                display: "flex",
+                flexDirection: "column",
+                gap: 16,
+                width: 380, // WIDER!
+                pointerEvents: "none", // Let clicks pass through gaps
+              }
+        }
+      >
+        {/* Total Diapers Distributed */}
+        {!(isMobile && activeCityWithStats) && (
           <Box
             style={{
-              position: "absolute",
-              top: 16,
-              right: 16,
-              zIndex: 1000,
-              pointerEvents: "none",
-              minWidth: isMobile ? 160 : 330,
+              position: isMobile ? "absolute" : "relative",
+              top: isMobile ? 16 : undefined,
+              right: isMobile ? 16 : undefined,
+              zIndex: isMobile ? 1000 : undefined,
+              pointerEvents: "auto", // Restore pointer events for children if interactive
               background: "#1B3668",
               borderRadius: 12,
               border: "1px solid #E4E7EC",
               boxShadow: "0 8px 32px rgba(27, 54, 104, 0.4)",
               padding: isMobile ? "8px 12px" : "14px 18px",
+              width: isMobile ? "auto" : "100%",
             }}
           >
-            <Group justify="space-between" align="flex-start" wrap="nowrap" gap={isMobile ? 8 : 12}>
-              <Stack gap={isMobile ? 1 : 4}>
-                <Group align="center" gap={isMobile ? 12 : 24}>
-                  {selectedYear && (
-                    <>
-                      <Stack gap={isMobile ? 2 : 4}>
-                        <Text c="#4ade80" fw={800} fz={isMobile ? "18px" : "26px"} lh={1}>
-                          +
-                          {yearlyTotalDiapers != null
-                            ? animatedBabiesHelped.toLocaleString()
-                            : "--"}
-                        </Text>
-                        <Text
-                          fz={isMobile ? "11px" : "15px"}
-                          fw={500}
-                          c="rgba(255,255,255,0.7)"
-                          lh={1}
-                        >
-                          in {selectedYear}
-                        </Text>
-                      </Stack>
-                      <Box
-                        style={{
-                          width: 1,
-                          height: isMobile ? 32 : 42,
-                          backgroundColor: "rgba(255,255,255,0.2)",
-                        }}
-                      />
-                    </>
-                  )}
-                  <Stack gap={isMobile ? 2 : 4}>
-                    <Text fz={isMobile ? "24px" : "34px"} fw={900} c="white" lh={1}>
-                      {totalDiapersForYear != null ? animatedRunningTotal.toLocaleString() : "--"}
+            <Group align="center" wrap="nowrap" gap={isMobile ? 12 : 16}>
+              {selectedYear && (
+                <>
+                  <Stack gap={isMobile ? 2 : 4} style={{ flexShrink: 0 }}>
+                    <Text c="#4ade80" fw={800} fz={isMobile ? "18px" : "22px"} lh={1}>
+                      +
+                      {yearlyTotalDiapers != null
+                        ? animatedBabiesHelped.toLocaleString()
+                        : "--"}
                     </Text>
-                    <Text fz={isMobile ? "11px" : "15px"} fw={500} c="rgba(255,255,255,0.7)" lh={1}>
-                      total diapers through {year}
+                    <Text
+                      fz={isMobile ? "11px" : "13px"}
+                      fw={500}
+                      c="rgba(255,255,255,0.7)"
+                      lh={1}
+                    >
+                      in {selectedYear}
                     </Text>
                   </Stack>
-                </Group>
+                  <Box
+                    style={{
+                      flexShrink: 0,
+                      width: 1,
+                      height: isMobile ? 32 : 42,
+                      backgroundColor: "rgba(255,255,255,0.2)",
+                    }}
+                  />
+                </>
+              )}
+              <Stack gap={isMobile ? 2 : 4} style={{ minWidth: 0 }}>
+                <Text fz={isMobile ? "24px" : "28px"} fw={900} c="white" lh={1}>
+                  {totalDiapersForYear != null ? animatedRunningTotal.toLocaleString() : "--"}
+                </Text>
+                <Text fz={isMobile ? "11px" : "13px"} fw={500} c="rgba(255,255,255,0.7)" lh={1.2}>
+                  total diapers through {year}
+                </Text>
               </Stack>
             </Group>
           </Box>
+        )}
+
+        {/* Babies Helped */}
+        {!(isMobile && activeCityWithStats) && (
           <Box
             style={{
-              position: "absolute",
-              top: isMobile ? 75 : 110,
-              right: 16,
-              zIndex: 1000,
-              pointerEvents: "none",
+              position: isMobile ? "absolute" : "relative",
+              top: isMobile ? 75 : undefined,
+              right: isMobile ? 16 : undefined,
+              zIndex: isMobile ? 1000 : undefined,
+              pointerEvents: "auto",
               background: "#1B3668",
               borderRadius: 12,
               border: "1px solid #E4E7EC",
               boxShadow: "0 8px 32px rgba(27, 54, 104, 0.4)",
               padding: isMobile ? "8px 12px" : "14px 18px",
+              width: isMobile ? "auto" : "100%",
             }}
           >
             <BabiesHelped babiesHelped={babiesHelped} year={selectedYear} />
           </Box>
-        </>
-      )}
+        )}
 
-      {/* City Popup — side panel on desktop, bottom sheet on mobile */}
-      {activeCityWithStats && (
-        <Box
-          style={
-            isMobile
-              ? {
-                  position: "absolute",
-                  bottom: 0,
-                  left: 0,
-                  right: 0,
-                  zIndex: 1000,
-                  maxHeight: "60vh",
-                  overflowY: "auto",
-                  background: "rgba(255, 255, 255, 0.99)",
-                  borderRadius: "12px 12px 0 0",
-                  boxShadow: "0 -4px 24px rgba(16, 24, 40, 0.18)",
-                }
-              : {
-                  position: "absolute",
-                  top: 186,
-                  right: 16,
-                  zIndex: 1000,
-                  width: 350,
-                  maxHeight: "calc(100% - 265px)",
-                  overflowY: "auto",
-                  background: "rgba(255, 255, 255, 0.97)",
-                  borderRadius: 12,
-                  boxShadow: "0 8px 24px rgba(16, 24, 40, 0.12)",
-                  backdropFilter: "blur(8px)",
-                }
-          }
-        >
-          <CityPopup
-            city={activeCityWithStats}
-            year={year}
-            onPartnerSelect={setSelectedPartnerId}
-            onClose={() => {
-              setActiveCityName(undefined);
-              setActiveCityId(undefined);
-            }}
-          />
-        </Box>
-      )}
+        {/* City Popup — side panel on desktop, bottom sheet on mobile */}
+        {activeCityWithStats && (
+          <Box
+            style={
+              isMobile
+                ? {
+                    position: "absolute",
+                    bottom: 0,
+                    left: 0,
+                    right: 0,
+                    zIndex: 1000,
+                    maxHeight: "60vh",
+                    display: "flex",
+                    flexDirection: "column",
+                    overflow: "hidden",
+                    background: "rgba(255, 255, 255, 0.99)",
+                    borderRadius: "12px 12px 0 0",
+                    boxShadow: "0 -4px 24px rgba(16, 24, 40, 0.18)",
+                    pointerEvents: "auto",
+                  }
+                : {
+                    position: "relative",
+                    flex: 1, // takes remaining space
+                    minHeight: 0, // allows scrolling within flex child
+                    display: "flex",
+                    flexDirection: "column",
+                    overflow: "hidden",
+                    background: "rgba(255, 255, 255, 0.97)",
+                    borderRadius: 12,
+                    boxShadow: "0 8px 24px rgba(16, 24, 40, 0.12)",
+                    backdropFilter: "blur(8px)",
+                    pointerEvents: "auto",
+                  }
+            }
+          >
+            <CityPopup
+              city={activeCityWithStats}
+              year={year}
+              onPartnerSelect={setSelectedPartnerId}
+              onClose={() => {
+                setActiveCityName(undefined);
+                setActiveCityId(undefined);
+              }}
+            />
+          </Box>
+        )}
+      </div>
 
       {/* Legend — hidden on mobile when city popup is open to avoid overlap */}
       {!(isMobile && activeCityWithStats) && (
