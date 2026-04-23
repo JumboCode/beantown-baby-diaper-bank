@@ -59,6 +59,7 @@ export default function Page() {
   const [boundaries, setBoundaries] = useState<GeoJsonBoundaries | null>(null);
   const [cities, setCities] = useState<CityWithStats[]>([]);
   const [cumulativeTotalDiapers, setCumulativeTotalDiapers] = useState<number>();
+  const [yearlyTotalDiapers, setYearlyTotalDiapers] = useState<number>();
   const [selectedYear, setSelectedYear] = useState<string>();
   const [babiesHelped, setBabiesHelped] = useState<number | undefined>();
   const [cachedBoundaries, setCachedBoundaries] = useState<FeatureCollection<
@@ -89,6 +90,7 @@ export default function Page() {
         setCities(cities.data);
         setSelectedYear(year);
         setCumulativeTotalDiapers(totalDiapersResponse.totalDiapers ?? 0);
+        setYearlyTotalDiapers(totalDiapersResponse.yearlyTotalDiapers ?? 0);
         setBabiesHelped(totalDiapersResponse.babiesHelped ?? undefined);
       } catch (error) {
         setMapError(error as Error);
@@ -122,6 +124,7 @@ export default function Page() {
             cities={cities}
             year={timeline.labels[timeline.index] ?? ""}
             totalDiapersForYear={cumulativeTotalDiapers}
+            yearlyTotalDiapers={yearlyTotalDiapers}
             selectedYear={selectedYear}
             babiesHelped={babiesHelped}
           />
