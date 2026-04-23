@@ -18,6 +18,31 @@ import { Polygon as ReactLeafletPolygon } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import { CityWithStats, GeoJsonBoundaries } from "@/lib/types";
 
+function getApproximateArea(positions: any[]): number {
+  let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+  
+  function recurse(arr: any[]) {
+    for (const item of arr) {
+      if (Array.isArray(item)) {
+        if (item.length >= 2 && typeof item[0] === 'number') {
+          minX = Math.min(minX, item[0]);
+          maxX = Math.max(maxX, item[0]);
+          minY = Math.min(minY, item[1]);
+          maxY = Math.max(maxY, item[1]);
+        } else {
+          recurse(item);
+        }
+      }
+    }
+  }
+  
+  if (!positions) return 0;
+  recurse(positions);
+  
+  if (minX === Infinity) return 0;
+  return (maxX - minX) * (maxY - minY);
+}
+
 export const Marker = dynamic(() => import("react-leaflet").then((module) => module.Marker), {
   ssr: false,
 });
@@ -90,6 +115,7 @@ export default function Map({
     name: string;
     fillColor: string;
     totalDiapers: number;
+    area: number;
   }
 
   const boundaryPolygons: BoundaryPolygon[] = useMemo(() => {
@@ -130,12 +156,14 @@ export default function Map({
         fillColor = LEVEL_COLORS[0];
       }
 
+      const positions = feature.geometry.coordinates as unknown as LatLngExpression[][];
       return {
         id: name || Math.random(),
-        positions: feature.geometry.coordinates as unknown as LatLngExpression[][],
+        positions,
         name: name,
         fillColor,
         totalDiapers: total,
+        area: getApproximateArea(positions as any),
       };
     });
   }, [boundaries, cities]);
@@ -144,11 +172,7 @@ export default function Map({
     () =>
       boundaryPolygons
         .filter((boundary) => boundary.totalDiapers > 0)
-        .sort((a, b) => {
-          if (a.name === "Boston") return -1;
-          if (b.name === "Boston") return 1;
-          return 0;
-        }),
+        .sort((a, b) => b.area - a.area),
     [boundaryPolygons],
   );
 
