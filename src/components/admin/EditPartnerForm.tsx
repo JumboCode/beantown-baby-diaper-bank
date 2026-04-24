@@ -20,8 +20,7 @@ import { MonthPickerInput } from "@mantine/dates";
 import { Partner } from "./PartnerTable";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { status } from "@/generated/prisma/enums";
-import ContinuousUpdateForm from "./ContinuousUpdateForm";
-import type { CityPercentage } from "./CityPercentagesForm";
+import CityPercentagesForm, { type CityPercentage } from "./CityPercentagesForm";
 import "@mantine/dates/styles.css";
 import { fetchCoordsFromAddress } from "@/lib/util";
 import { US_STATES } from "@/lib/types";
@@ -135,6 +134,7 @@ export default function EditPartnerForm({ partner, onClose }: EditPartnerFormPro
       logoFile: null as File | null,
       logoUrl: partner.logoUrl || "",
       numBabies: (partner.num_babies ?? "") as number | "",
+      cityPercents: initialCityPercentEntries,
     },
     validate: {
       organization: requiredInput("Name of Organization"),
@@ -162,8 +162,23 @@ export default function EditPartnerForm({ partner, onClose }: EditPartnerFormPro
         if (!value.trim() && !values.logoFile) return null;
         return typeof value === "string" ? null : "Enter a valid URL";
       },
+      cityPercents: (_, values) => {
+        if (values.status === "waitlisted") return null;
+        const total = values.cityPercents.reduce(
+          (s: number, e: CityPercentage) => s + e.percent,
+          0,
+        );
+        if (values.cityPercents.length === 0) return "Add at least one city";
+        return total === 100 ? null : `Percentages must add up to 100% (currently ${total}%)`;
+      },
     },
   });
+
+  function handleSubmit(values: typeof form.values) {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { cityPercents: _cityPercents, ...rest } = values;
+    submit(rest);
+  }
 
   const { submit, isSubmitting, warning } = usePartnerSubmit({
     cityEntries,
@@ -211,7 +226,7 @@ export default function EditPartnerForm({ partner, onClose }: EditPartnerFormPro
         overlayProps={{ radius: "sm", blur: 2 }}
       />
 
-      <form onSubmit={form.onSubmit(submit)}>
+      <form onSubmit={form.onSubmit(handleSubmit)}>
         <Grid pb={80}>
           <Grid.Col span={5}>
             <Text fw={600} c="var(--color-text-heading)" fz={16}>
@@ -427,15 +442,25 @@ export default function EditPartnerForm({ partner, onClose }: EditPartnerFormPro
             <>
               <Grid.Col span={5}>
                 <Text fw={600} c="var(--color-text-heading)" fz={16}>
-                  Update Percentages
+                  Cities Served <span className="text-red-600">*</span>
                 </Text>
               </Grid.Col>
               <Grid.Col span={7}>
-                <ContinuousUpdateForm
-                  partnerId={`${partner.id}`}
-                  initialCityPercentages={initialCityPercentEntries}
-                  onEntriesChange={setCityEntries}
-                />
+                <div>
+                  <CityPercentagesForm
+                    initialEntries={initialCityPercentEntries}
+                    onChange={(entries) => {
+                      setCityEntries(entries);
+                      form.setFieldValue("cityPercents", entries);
+                      if (form.errors.cityPercents) form.validateField("cityPercents");
+                    }}
+                  />
+                  {form.errors.cityPercents && (
+                    <Text c="red" size="sm" mt={6}>
+                      {form.errors.cityPercents}
+                    </Text>
+                  )}
+                </div>
               </Grid.Col>
             </>
           )}

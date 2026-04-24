@@ -90,6 +90,23 @@ export function usePartnerSubmit({
         return;
       }
 
+      if (isEdit && values.status !== "waitlisted") {
+        const percentagesRes = await fetch("/api/partners/percentages", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            partnerId: String(partnerId),
+            percentages: cityPercentages,
+          }),
+        });
+
+        if (!percentagesRes.ok) {
+          const err = await percentagesRes.json().catch(() => ({}));
+          setWarning(err.error || "Unable to update partner percentages.");
+          return;
+        }
+      }
+
       setWarning("");
       onSuccess();
       if (typeof window !== "undefined") {
