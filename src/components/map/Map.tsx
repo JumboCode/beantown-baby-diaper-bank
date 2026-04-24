@@ -112,7 +112,7 @@ const MemoizedCityPolygon = memo(
             weight: isActive ? 2 : isHovered ? 2.5 : 0.5,
             color: isActive ? "#1B3668" : isHovered ? "#CC2027" : "#5A7687",
             fillColor: boundary.fillColor,
-            fillOpacity: isActive ? 0.75 : isHovered ? 0.65 : 0.35,
+            fillOpacity: 0.35,
           }}
           positions={boundary.positions}
           eventHandlers={{
@@ -482,7 +482,7 @@ export default function Map({
                 }
               : {
                   position: "absolute",
-                  top: 186,
+                  top: 200,
                   right: 16,
                   zIndex: 1000,
                   width: 350,
