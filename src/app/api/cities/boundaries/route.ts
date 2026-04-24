@@ -14,34 +14,17 @@ export type CityWithBoundaries = Omit<City, "boundary"> & {
 
 async function getCityBoundaries() {
   "use cache";
-  cacheTag("cities-v2");
+  cacheTag("cities");
   cacheLife("max");
 
   const result: RawCityWithBoundaries[] = await prisma.$queryRaw`
     SELECT
-      c1.id,
-      c1.name,
-      ST_AsGeoJSON(
-        ST_CollectionExtract(
-          COALESCE(
-            ST_Difference(
-              c1.boundary::geometry,
-              (
-                SELECT ST_Union(c2.boundary::geometry)
-                FROM "Cities" c2
-                WHERE c2.id != c1.id
-                  AND ST_Intersects(c1.boundary, c2.boundary)
-                  AND ST_Area(c1.boundary::geometry) > ST_Area(c2.boundary::geometry)
-              )
-            ),
-            c1.boundary::geometry
-          ),
-          3
-        )
-      ) AS boundary
-    FROM "Cities" c1
-    WHERE c1.boundary IS NOT NULL
-    ORDER BY c1.name
+      "id",
+      "name",
+      ST_AsGeoJSON("boundary") AS boundary
+    FROM "Cities"
+    WHERE "boundary" IS NOT NULL
+    ORDER BY "name"
   `;
 
   if (!result || result.length === 0) {
