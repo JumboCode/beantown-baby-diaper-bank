@@ -34,7 +34,7 @@ export default function BabiesHelped({ babiesHelped, year }: BabiesHelpedProps) 
         )}
         {isMobile && (
           <Text fz="8px" fw={600} c="rgba(255,255,255,0.5)" tt="uppercase" lts="0.05em">
-            estimated
+            in {year} estimated
           </Text>
         )}
       </Stack>
