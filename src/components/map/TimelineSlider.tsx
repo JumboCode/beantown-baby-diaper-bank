@@ -152,8 +152,8 @@ export default function TimelineSlider({
           style={{
             position: "relative",
             width: "100%",
-            paddingTop: isMobile ? 6 : 10,
-            paddingBottom: isMobile ? 6 : 12,
+            paddingTop: isMobile ? 6 : 7.5,
+            paddingBottom: isMobile ? 6 : 15,
           }}
         >
           <Slider
