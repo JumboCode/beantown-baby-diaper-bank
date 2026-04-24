@@ -482,7 +482,7 @@ export default function Map({
                 }
               : {
                   position: "absolute",
-                  top: 186,
+                  top: 200,
                   right: 16,
                   zIndex: 1000,
                   width: 350,
