@@ -10,7 +10,7 @@ export default function AdminSettingsButton() {
 
   const currentRole =
     typeof user?.publicMetadata?.role === "string" ? user.publicMetadata.role : "user";
-  const canDeleteAdmins = currentRole === "superadmin";
+  const canDeleteAdmins = currentRole === "superadmin" || currentRole === "admin";
 
   if (!canDeleteAdmins) {
     return null;
