@@ -1,5 +1,5 @@
 "use client";
-import { Box, Group, Stack, Text, Skeleton } from "@mantine/core";
+import { Group, Stack, Text, Skeleton } from "@mantine/core";
 import { IconBabyCarriageFilled } from "@tabler/icons-react";
 import { useMediaQuery } from "@mantine/hooks";
 import { useCountUp } from "./useCountUp";
@@ -30,16 +30,11 @@ export default function BabiesHelped({ babiesHelped, year }: BabiesHelpedProps) 
             ~{animatedCount.toLocaleString()}
           </Text>
         ) : (
-          <Skeleton
-            height={isMobile ? 28 : 36}
-            width={120}
-            radius="sm"
-            style={{ marginTop: 2 }}
-          />
+          <Skeleton height={isMobile ? 28 : 36} width={120} radius="sm" style={{ marginTop: 2 }} />
         )}
         {isMobile && (
           <Text fz="8px" fw={600} c="rgba(255,255,255,0.5)" tt="uppercase" lts="0.05em">
-            estimated
+            in {year} estimated
           </Text>
         )}
       </Stack>

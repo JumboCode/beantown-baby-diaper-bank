@@ -64,7 +64,7 @@ export default function AddNewAdminForm({ onAdminAdded }: { onAdminAdded?: () =>
 
   return (
     <>
-      <Modal opened={opened} onClose={close} title="Add New Admin" centered>
+      <Modal opened={opened} onClose={close} title="Add New Admin" centered size="lg">
         <form onSubmit={form.onSubmit(handleSubmit)}>
           <TextInput
             withAsterisk

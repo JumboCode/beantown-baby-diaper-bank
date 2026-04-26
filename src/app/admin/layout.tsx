@@ -1,3 +1,4 @@
+import AdminSettingsButton from "@/components/admin/AdminSettingsButton";
 import { UserButton } from "@clerk/nextjs";
 import { AppShell, AppShellHeader, AppShellMain, Button, Group, Skeleton } from "@mantine/core";
 import { MapIcon } from "lucide-react";
@@ -25,6 +26,8 @@ export default async function Layout({ children }: { children: React.ReactNode }
               View Hot Map
             </Button>
             <UserButton fallback={<Skeleton height={28} width={28} radius="xl" />} />
+
+            <AdminSettingsButton />
           </Group>
         </Group>
       </AppShellHeader>

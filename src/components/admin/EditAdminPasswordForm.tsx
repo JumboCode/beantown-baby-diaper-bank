@@ -83,6 +83,7 @@ export default function EditAdminPasswordForm({ admin }: EditAdminPasswordFormPr
         }}
         title="Update Admin Password"
         centered
+        size="lg"
       >
         <form onSubmit={form.onSubmit(handleSubmit)}>
           <Stack>
