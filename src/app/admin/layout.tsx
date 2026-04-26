@@ -1,15 +1,7 @@
 import AdminSettingsButton from "@/components/admin/AdminSettingsButton";
 import { UserButton } from "@clerk/nextjs";
-import {
-  ActionIcon,
-  AppShell,
-  AppShellHeader,
-  AppShellMain,
-  Button,
-  Group,
-  Skeleton,
-} from "@mantine/core";
-import { MapIcon, SettingsIcon } from "lucide-react";
+import { AppShell, AppShellHeader, AppShellMain, Button, Group, Skeleton } from "@mantine/core";
+import { MapIcon } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 
