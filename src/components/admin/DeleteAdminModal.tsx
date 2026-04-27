@@ -1,11 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { ActionIcon, Alert, Button, Group, Modal, Stack, Text, Tooltip } from "@mantine/core";
+import { Alert, Button, Group, Modal, Stack, Text, Tooltip } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
 import { modals } from "@mantine/modals";
 import { useUser } from "@clerk/nextjs";
-import { Trash, TriangleAlert } from "lucide-react";
+import { TriangleAlert } from "lucide-react";
 
 interface DeleteAdminModalProps {
   adminId: string;

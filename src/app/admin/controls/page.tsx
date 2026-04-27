@@ -10,15 +10,12 @@ import {
   Alert,
   Text,
   Badge,
-  Box,
   Tooltip,
 } from "@mantine/core";
 import AddNewAdminForm from "@/components/admin/AddNewAdminForm";
 import DeleteAdminModal from "@/components/admin/DeleteAdminModal";
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
 import { useUser } from "@clerk/nextjs";
-import { X, UserX } from "lucide-react";
 import classes from "./page.module.css";
 import EditAdminPasswordForm from "@/components/admin/EditAdminPasswordForm";
 
