@@ -364,7 +364,6 @@ export default function DeleteDistributionDataButton({ onSuccess }: MonthSelecti
                           <Table.Th>Partner</Table.Th>
                           <Table.Th>City</Table.Th>
                           <Table.Th># Diapers</Table.Th>
-                          <Table.Th># Children</Table.Th>
                           <Table.Th>Month</Table.Th>
                           <Table.Th>Year</Table.Th>
                         </Table.Tr>
@@ -376,7 +375,6 @@ export default function DeleteDistributionDataButton({ onSuccess }: MonthSelecti
                             <Table.Td>{dist.partner?.name}</Table.Td>
                             <Table.Td>{dist.city?.name}</Table.Td>
                             <Table.Td>{dist.numberDiapers}</Table.Td>
-                            <Table.Td>{dist.numberChildren}</Table.Td>
                             <Table.Td>{dist.month}</Table.Td>
                             <Table.Td>{dist.year}</Table.Td>
                           </Table.Tr>
