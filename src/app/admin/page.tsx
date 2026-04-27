@@ -19,7 +19,7 @@ import {
 } from "@mantine/core";
 import { IconAlertCircle } from "@tabler/icons-react";
 import { DateValue, MonthPickerInput, YearPickerInput } from "@mantine/dates";
-import { useState, useEffect, useCallback, useMemo, Suspense } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef, Suspense } from "react";
 import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
 import DistributionsTable from "@/components/admin/DistributionsTable";
@@ -137,6 +137,11 @@ function AdminPageContent() {
 
   const activeTab = searchParams.get("tab") ?? "Partners";
 
+  const searchParamsRef = useRef(searchParams);
+  useEffect(() => {
+    searchParamsRef.current = searchParams;
+  }, [searchParams]);
+
   const handleTabChange = (tab: string | null) => {
     if (tab) {
       const params = new URLSearchParams(searchParams.toString());
@@ -176,15 +181,16 @@ function AdminPageContent() {
   // Sync back input to URL
   useEffect(() => {
     const handler = setTimeout(() => {
-      const params = new URLSearchParams(searchParams.toString());
+      const currentParams = searchParamsRef.current;
+      const params = new URLSearchParams(currentParams.toString());
       if (partnerSearch) params.set("search", partnerSearch);
       else params.delete("search");
-      if (params.toString() !== searchParams.toString()) {
+      if (params.toString() !== currentParams.toString()) {
         router.replace(`?${params.toString()}`, { scroll: false });
       }
     }, 300);
     return () => clearTimeout(handler);
-  }, [partnerSearch, searchParams, router]);
+  }, [partnerSearch, router]);
 
   useEffect(() => {
     const urlSearch = searchParams.get("search") || "";
