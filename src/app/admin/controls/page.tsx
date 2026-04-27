@@ -6,7 +6,6 @@ import {
   Title,
   Group,
   Paper,
-  ActionIcon,
   Stack,
   Alert,
   Button,
@@ -17,8 +16,8 @@ import {
   Tooltip,
   Box,
 } from "@mantine/core";
-import Image from "next/image";
 import AddNewAdminForm from "@/components/admin/AddNewAdminForm";
+import DeleteAdminModal from "@/components/admin/DeleteAdminModal";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useUser } from "@clerk/nextjs";
@@ -36,10 +35,10 @@ interface Admin {
 
 export default function AdminControlsPage() {
   const router = useRouter();
-  const { user, isLoaded } = useUser();
+  const { user } = useUser();
 
   const [adminList, setAdminList] = useState<Admin[]>([]);
-
+  const [filterLevel, setFilterLevel] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const currentRole =
@@ -70,34 +69,6 @@ export default function AdminControlsPage() {
     fetchAdmins();
   }, []);
 
-  const handleDelete = async (adminId: string) => {
-    const confirmed = window.confirm(
-      "Are you sure you want to delete this admin? This action cannot be undone.",
-    );
-
-    if (!confirmed) return;
-
-    try {
-      const response = await fetch("/api/admin/add", {
-        method: "DELETE",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ id: adminId }),
-      });
-
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.message || "Failed to delete admin");
-      }
-
-      setAdminList((prevAdmins) => prevAdmins.filter((admin) => admin.id !== adminId));
-    } catch (err: any) {
-      console.error(err);
-      alert(err.message || "An error occurred while trying to delete the admin.");
-    }
-  };
-
   if (error) {
     return (
       <Container size="xl" py="xl">
@@ -106,7 +77,13 @@ export default function AdminControlsPage() {
     );
   }
 
-  const rows = adminList.map((element, index) => (
+  const toggleFilter = (level: string) => setFilterLevel((prev) => (prev === level ? null : level));
+
+  const visibleAdmins = filterLevel
+    ? adminList.filter((a) => a.level.toLowerCase() === filterLevel)
+    : adminList;
+
+  const rows = visibleAdmins.map((element, index) => (
     <Table.Tr key={`${element.email}-${index}`}>
       <Table.Td>
         <Badge
@@ -132,15 +109,12 @@ export default function AdminControlsPage() {
       </Table.Td>
       <Table.Td>
         {canDeleteAdmins ? (
-          <ActionIcon
-            variant="filled"
-            onClick={() => handleDelete(element.id)}
-            aria-label={`Delete ${element.email}`}
-            radius="xl"
-            size="lg"
-          >
-            <Image src="/admin_view/delete.svg" alt="delete icon" width={20} height={20} />
-          </ActionIcon>
+          <DeleteAdminModal
+            adminId={element.id}
+            adminName={element.name}
+            adminEmail={element.email}
+            onDeleted={() => setAdminList((prev) => prev.filter((a) => a.id !== element.id))}
+          />
         ) : (
           <Text size="xs" c="dimmed" fw={500}>
             Superadmin only
@@ -149,10 +123,6 @@ export default function AdminControlsPage() {
       </Table.Td>
     </Table.Tr>
   ));
-
-  if (!isLoaded) {
-    return null;
-  }
 
   return (
     <Container size="xl" py="xl">
@@ -184,7 +154,12 @@ export default function AdminControlsPage() {
             </Group>
 
             <SimpleGrid cols={{ base: 1, sm: 3 }} spacing="md">
-              <Paper className={classes.myAccessCard} radius="xl" p="lg">
+              <Paper
+                className={`${classes.myAccessCard} ${filterLevel === currentRole ? classes.statCardActive : ""}`}
+                radius="xl"
+                p="lg"
+                onClick={() => toggleFilter(currentRole)}
+              >
                 <Group justify="space-between" align="flex-start">
                   <div>
                     <Text className={classes.statLabel}>My access</Text>
@@ -196,7 +171,12 @@ export default function AdminControlsPage() {
                 </Group>
               </Paper>
 
-              <Paper className={classes.statCard} radius="xl" p="lg">
+              <Paper
+                className={`${classes.statCard} ${filterLevel === "admin" ? classes.statCardActive : ""}`}
+                radius="xl"
+                p="lg"
+                onClick={() => toggleFilter("admin")}
+              >
                 <Group justify="space-between" align="flex-start">
                   <div>
                     <Text className={classes.statLabel}>Admin accounts</Text>
@@ -207,8 +187,14 @@ export default function AdminControlsPage() {
                   </ThemeIcon>
                 </Group>
               </Paper>
+
               <Tooltip label="Superadmins can delete other admins" withArrow>
-                <Paper className={classes.statCard} radius="xl" p="lg">
+                <Paper
+                  className={`${classes.statCard} ${filterLevel === "superadmin" ? classes.statCardActive : ""}`}
+                  radius="xl"
+                  p="lg"
+                  onClick={() => toggleFilter("superadmin")}
+                >
                   <Group justify="space-between" align="flex-start">
                     <div>
                       <Text className={classes.statLabel}>Superadmins</Text>
@@ -232,7 +218,9 @@ export default function AdminControlsPage() {
                   Admin directory
                 </Title>
                 <Text size="sm" c="dimmed">
-                  Names, emails, and access levels.
+                  {filterLevel
+                    ? `Showing ${visibleAdmins.length} ${filterLevel} account${visibleAdmins.length !== 1 ? "s" : ""} — click the card again to clear`
+                    : "Names, emails, and access levels."}
                 </Text>
               </div>
             </Group>

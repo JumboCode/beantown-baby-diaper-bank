@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { Button, Group, Modal, PasswordInput, Stack, Text, Alert } from "@mantine/core";
+import { Alert, Button, Group, Modal, PasswordInput, Stack, Text } from "@mantine/core";
+import { useDisclosure } from "@mantine/hooks";
 import { useForm } from "@mantine/form";
 
 interface Admin {
@@ -12,45 +13,39 @@ interface Admin {
   isAdmin: boolean;
 }
 
-interface EditAdminPasswordFormProps {
-  admin: Admin;
-}
-
 interface FormValues {
   password: string;
   confirmPassword: string;
 }
 
-export default function EditAdminPasswordForm({ admin }: EditAdminPasswordFormProps) {
-  const [opened, setOpened] = useState(false);
+export default function EditAdminPasswordForm({ admin }: { admin: Admin }) {
+  const [opened, { open, close }] = useDisclosure(false);
   const [loading, setLoading] = useState(false);
   const [serverError, setServerError] = useState<string | null>(null);
 
   const form = useForm<FormValues>({
-    initialValues: {
-      password: "",
-      confirmPassword: "",
-    },
+    initialValues: { password: "", confirmPassword: "" },
     validate: {
-      password: (value) => (value.length < 8 ? "Password must be at least 8 characters" : null),
-      confirmPassword: (value, values) =>
-        value !== values.password ? "Passwords do not match" : null,
+      password: (v) => (v.length < 8 ? "Password must be at least 8 characters" : null),
+      confirmPassword: (v, values) => (v !== values.password ? "Passwords do not match" : null),
     },
   });
 
-  const handleSubmit = async (values: FormValues) => {
-    try {
-      setLoading(true);
-      setServerError(null);
+  const handleClose = () => {
+    if (loading) return;
+    form.reset();
+    setServerError(null);
+    close();
+  };
 
+  const handleSubmit = async (values: FormValues) => {
+    setLoading(true);
+    setServerError(null);
+    try {
       const response = await fetch(`/api/admin/${admin.id}/password`, {
         method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          password: values.password,
-        }),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ password: values.password }),
       });
 
       const data = await response.json();
@@ -60,9 +55,9 @@ export default function EditAdminPasswordForm({ admin }: EditAdminPasswordFormPr
       }
 
       form.reset();
-      setOpened(false);
-    } catch (err: any) {
-      setServerError(err.message || "Something went wrong");
+      close();
+    } catch (err) {
+      setServerError(err instanceof Error ? err.message : "Something went wrong");
     } finally {
       setLoading(false);
     }
@@ -70,54 +65,45 @@ export default function EditAdminPasswordForm({ admin }: EditAdminPasswordFormPr
 
   return (
     <>
-      <Button variant="light" size="xs" onClick={() => setOpened(true)}>
-        Update Password
+      <Button variant="light" size="xs" onClick={open}>
+        Update password
       </Button>
 
-      <Modal
-        opened={opened}
-        onClose={() => {
-          setOpened(false);
-          setServerError(null);
-          form.reset();
-        }}
-        title="Update Admin Password"
-        centered
-        size="lg"
-      >
+      <Modal opened={opened} onClose={handleClose} title="Update password" centered>
         <form onSubmit={form.onSubmit(handleSubmit)}>
-          <Stack>
-            <Text size="sm">
-              Updating password for <strong>{admin.name}</strong> ({admin.email})
+          <Stack gap="md">
+            <Text size="sm" c="dimmed">
+              Setting a new password for{" "}
+              <Text span fw={600} c="dark">
+                {admin.name}
+              </Text>{" "}
+              ({admin.email})
             </Text>
 
-            {serverError && <Alert color="red">{serverError}</Alert>}
-
             <PasswordInput
-              label="New Password"
-              placeholder="Enter new password"
+              label="New password"
+              placeholder="Min. 8 characters"
               {...form.getInputProps("password")}
             />
 
             <PasswordInput
-              label="Confirm Password"
+              label="Confirm password"
               placeholder="Re-enter new password"
               {...form.getInputProps("confirmPassword")}
             />
 
-            <Group justify="flex-end" mt="sm">
-              <Button
-                variant="default"
-                onClick={() => {
-                  setOpened(false);
-                  setServerError(null);
-                  form.reset();
-                }}
-              >
+            {serverError && (
+              <Alert color="red" variant="light">
+                {serverError}
+              </Alert>
+            )}
+
+            <Group justify="flex-end" gap="sm" mt="xs">
+              <Button variant="default" onClick={handleClose} disabled={loading}>
                 Cancel
               </Button>
               <Button type="submit" loading={loading}>
-                Update Password
+                Update password
               </Button>
             </Group>
           </Stack>

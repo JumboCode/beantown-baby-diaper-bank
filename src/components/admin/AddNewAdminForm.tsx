@@ -1,43 +1,45 @@
 "use client";
 
+import { useState } from "react";
 import { useDisclosure } from "@mantine/hooks";
-import { Modal } from "@mantine/core";
+import { Alert, Button, Group, Modal, PasswordInput, Stack, TextInput } from "@mantine/core";
 import { useForm } from "@mantine/form";
-import { Button, Group, TextInput, PasswordInput } from "@mantine/core";
 import { useSignIn } from "@clerk/nextjs";
 
 export default function AddNewAdminForm({ onAdminAdded }: { onAdminAdded?: () => void }) {
   const [opened, { open, close }] = useDisclosure(false);
+  const [loading, setLoading] = useState(false);
+  const [serverError, setServerError] = useState<string | null>(null);
   const { isLoaded } = useSignIn();
 
   const form = useForm({
     mode: "uncontrolled",
     validateInputOnChange: true,
     validateInputOnBlur: true,
-    initialValues: {
-      first: "",
-      last: "",
-      email: "",
-      password: "",
-    },
-
+    initialValues: { first: "", last: "", email: "", password: "" },
     validate: {
-      first: (value) => (value ? null : "First name is required"),
-      last: (value) => (value ? null : "Last name is required"),
-      email: (value) => (/^\S+@\S+$/.test(value) ? null : "Invalid email"),
-      password: (value) => (value.length >= 8 ? null : "Password must be at least 8 characters"),
+      first: (v) => (v.trim() ? null : "First name is required"),
+      last: (v) => (v.trim() ? null : "Last name is required"),
+      email: (v) => (/^\S+@\S+$/.test(v) ? null : "Invalid email"),
+      password: (v) => (v.length >= 8 ? null : "Password must be at least 8 characters"),
     },
   });
 
+  const handleClose = () => {
+    if (loading) return;
+    form.reset();
+    setServerError(null);
+    close();
+  };
+
   const handleSubmit = async (values: typeof form.values) => {
     if (!isLoaded) return;
-
+    setLoading(true);
+    setServerError(null);
     try {
       const response = await fetch("/api/admin/add", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           firstName: values.first.trim(),
           lastName: values.last.trim(),
@@ -49,7 +51,9 @@ export default function AddNewAdminForm({ onAdminAdded }: { onAdminAdded?: () =>
 
       if (!response.ok) {
         const errorData = await response.json();
-        const details = errorData?.errors?.map((e: any) => e.longMessage || e.message).join(" | ");
+        const details = errorData?.errors
+          ?.map((e: { longMessage?: string; message?: string }) => e.longMessage || e.message)
+          .join(" | ");
         throw new Error(details || errorData.message || "Failed to add admin");
       }
 
@@ -57,52 +61,71 @@ export default function AddNewAdminForm({ onAdminAdded }: { onAdminAdded?: () =>
       close();
       onAdminAdded?.();
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : "An error occurred";
-      console.error(errorMessage);
+      setServerError(err instanceof Error ? err.message : "An error occurred");
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
     <>
-      <Modal opened={opened} onClose={close} title="Add New Admin" centered size="lg">
-        <form onSubmit={form.onSubmit(handleSubmit)}>
-          <TextInput
-            withAsterisk
-            label="First Name"
-            placeholder="Jane"
-            key={form.key("first")}
-            {...form.getInputProps("first")}
-          />
-          <TextInput
-            withAsterisk
-            label="Last Name"
-            placeholder="Smith"
-            key={form.key("last")}
-            {...form.getInputProps("last")}
-          />
-          <TextInput
-            withAsterisk
-            label="Email"
-            placeholder="jane.smith@gmail.com"
-            key={form.key("email")}
-            {...form.getInputProps("email")}
-          />
-          <PasswordInput
-            withAsterisk
-            label="Password"
-            key={form.key("password")}
-            {...form.getInputProps("password")}
-          />
+      <Button variant="default" onClick={open}>
+        Add new admin
+      </Button>
 
-          <Group justify="flex-end" mt="md">
-            <Button type="submit">Submit</Button>
-          </Group>
+      <Modal opened={opened} onClose={handleClose} title="Add new administrator" centered>
+        <form onSubmit={form.onSubmit(handleSubmit)}>
+          <Stack gap="md">
+            <Group grow gap="sm">
+              <TextInput
+                withAsterisk
+                label="First name"
+                placeholder="Jane"
+                key={form.key("first")}
+                {...form.getInputProps("first")}
+              />
+              <TextInput
+                withAsterisk
+                label="Last name"
+                placeholder="Smith"
+                key={form.key("last")}
+                {...form.getInputProps("last")}
+              />
+            </Group>
+
+            <TextInput
+              withAsterisk
+              label="Email"
+              placeholder="jane.smith@example.com"
+              key={form.key("email")}
+              {...form.getInputProps("email")}
+            />
+
+            <PasswordInput
+              withAsterisk
+              label="Password"
+              placeholder="Min. 8 characters"
+              key={form.key("password")}
+              {...form.getInputProps("password")}
+            />
+
+            {serverError && (
+              <Alert color="red" variant="light">
+                {serverError}
+              </Alert>
+            )}
+
+            <Group justify="flex-end" gap="sm" mt="xs">
+              <Button variant="default" onClick={handleClose} disabled={loading}>
+                Cancel
+              </Button>
+              <Button type="submit" loading={loading}>
+                Add admin
+              </Button>
+            </Group>
+          </Stack>
         </form>
       </Modal>
-
-      <Button variant="default" onClick={open}>
-        Add New Admin
-      </Button>
     </>
   );
 }
