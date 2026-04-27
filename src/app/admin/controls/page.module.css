@@ -14,49 +14,12 @@
 .hero {
   position: relative;
   overflow: hidden;
-  background: linear-gradient(140deg, #0d1e40 0%, #1b3668 55%, #1e447a 100%);
+  background: var(--color-brand);
   border: none !important;
   box-shadow:
     0 2px 0 rgba(255, 255, 255, 0.06) inset,
     0 32px 80px rgba(11, 28, 65, 0.3);
   animation: fadeUp 0.45s ease-out both;
-}
-
-/* large translucent circle — top-right decorative element */
-.hero::before {
-  content: "";
-  position: absolute;
-  top: -80px;
-  right: -80px;
-  width: 380px;
-  height: 380px;
-  border-radius: 50%;
-  border: 60px solid rgba(255, 255, 255, 0.04);
-  pointer-events: none;
-}
-
-/* smaller red-tinted glow — bottom right */
-.hero::after {
-  content: "";
-  position: absolute;
-  bottom: -50px;
-  right: 140px;
-  width: 220px;
-  height: 220px;
-  border-radius: 50%;
-  background: radial-gradient(circle, rgba(204, 32, 39, 0.14) 0%, transparent 70%);
-  pointer-events: none;
-}
-
-.backButton {
-  align-self: flex-start;
-  color: rgba(255, 255, 255, 0.6) !important;
-  transition: color 0.2s ease;
-}
-
-.backButton:hover {
-  color: white !important;
-  background: rgba(255, 255, 255, 0.07) !important;
 }
 
 .eyebrow {
@@ -81,7 +44,7 @@
   line-height: 1.65;
 }
 
-/* ─── Stat cards (live inside hero, frosted glass) ──────────── */
+/* ─── Stat cards ─────────────────────────────────────────────── */
 
 .myAccessCard,
 .statCard {
@@ -98,14 +61,8 @@
 
 .myAccessCard:hover,
 .statCard:hover {
-  background: rgba(255, 255, 255, 0.11);
-  border-color: rgba(255, 255, 255, 0.22) !important;
-}
-
-.statCardActive {
-  background: rgba(255, 255, 255, 0.18) !important;
-  border-color: rgba(255, 255, 255, 0.55) !important;
-  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.25) !important;
 }
 
 .myAccessCard {
@@ -116,19 +73,40 @@
   animation: fadeUp 0.45s 0.18s ease-out both;
 }
 
+.statCardActive {
+  background: rgba(255, 255, 255, 0.2) !important;
+  border-color: rgba(255, 255, 255, 0.6) !important;
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.15);
+}
+
 .statLabel {
   color: rgba(255, 255, 255, 0.5);
   font-size: 0.7rem;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.12em;
+  margin-bottom: 8px;
 }
 
 .statValue {
-  margin-top: 4px;
   color: white;
   font-size: clamp(1.7rem, 3vw, 2.5rem);
   font-weight: 700;
+  line-height: 1;
+}
+
+/* Role displayed as a pill badge on the My Access card */
+.roleBadge {
+  display: inline-flex;
+  align-items: center;
+  padding: 5px 14px;
+  background: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 100px;
+  color: white;
+  font-size: 0.85rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
   line-height: 1;
 }
 
@@ -140,10 +118,54 @@
   animation: fadeUp 0.45s 0.28s ease-out both;
 }
 
+.tableHeader {
+  padding-bottom: 4px;
+  border-bottom: 1px solid color-mix(in srgb, var(--color-brand) 8%, transparent);
+  margin-bottom: 4px;
+}
+
 .sectionTitle {
   color: var(--color-text-heading);
   font-size: 1rem;
 }
+
+/* Active filter chip in the table header */
+.filterChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px 4px 12px;
+  background: color-mix(in srgb, var(--color-brand) 8%, transparent);
+  border: 1px solid color-mix(in srgb, var(--color-brand) 18%, transparent);
+  border-radius: 100px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--color-brand);
+  cursor: default;
+}
+
+.filterChipClear {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: none;
+  background: color-mix(in srgb, var(--color-brand) 12%, transparent);
+  color: var(--color-brand);
+  cursor: pointer;
+  font-size: 0.7rem;
+  line-height: 1;
+  padding: 0;
+  transition: background 0.15s ease;
+}
+
+.filterChipClear:hover {
+  background: color-mix(in srgb, var(--color-brand) 22%, transparent);
+}
+
+/* ─── Table ──────────────────────────────────────────────────── */
 
 .tableWrap {
   overflow-x: auto;
@@ -159,6 +181,41 @@
   letter-spacing: 0.1em;
   text-transform: uppercase;
   padding: 13px 16px;
+}
+
+/* Initials avatar in table rows */
+.avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--color-brand) 10%, transparent);
+  color: var(--color-brand);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  flex-shrink: 0;
+}
+
+/* ─── Empty state ────────────────────────────────────────────── */
+
+.emptyState {
+  padding: 56px 24px;
+  text-align: center;
+}
+
+.emptyStateIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--color-brand) 8%, transparent);
+  margin-bottom: 16px;
+  color: var(--color-brand);
 }
 
 @media (max-width: 48em) {

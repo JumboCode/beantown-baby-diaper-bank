@@ -65,11 +65,11 @@ export default function EditAdminPasswordForm({ admin }: { admin: Admin }) {
 
   return (
     <>
-      <Button variant="light" size="xs" onClick={open}>
+      <Button variant="subtle" size="xs" onClick={open}>
         Update password
       </Button>
 
-      <Modal opened={opened} onClose={handleClose} title="Update password" centered>
+      <Modal opened={opened} onClose={handleClose} title="Update password" centered size="lg">
         <form onSubmit={form.onSubmit(handleSubmit)}>
           <Stack gap="md">
             <Text size="sm" c="dimmed">

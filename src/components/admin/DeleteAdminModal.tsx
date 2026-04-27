@@ -93,16 +93,15 @@ export default function DeleteAdminModal({
   return (
     <>
       <Tooltip label={`Remove ${adminEmail} from admin list`} withArrow>
-        <ActionIcon
-          variant="light"
+        <Button
+          variant="subtle"
           color="brandRed"
           onClick={handleOpen}
           aria-label={`Delete ${adminEmail}`}
-          radius="xl"
-          size="lg"
+          size="xs"
         >
-          <Trash size={20} />
-        </ActionIcon>
+          Delete account
+        </Button>
       </Tooltip>
 
       <Modal opened={opened} onClose={handleClose} title="Remove administrator" centered size="lg">

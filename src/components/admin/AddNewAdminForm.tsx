@@ -73,7 +73,7 @@ export default function AddNewAdminForm({ onAdminAdded }: { onAdminAdded?: () =>
         Add new admin
       </Button>
 
-      <Modal opened={opened} onClose={handleClose} title="Add new administrator" centered>
+      <Modal opened={opened} onClose={handleClose} title="Add new administrator" centered size="lg">
         <form onSubmit={form.onSubmit(handleSubmit)}>
           <Stack gap="md">
             <Group grow gap="sm">
