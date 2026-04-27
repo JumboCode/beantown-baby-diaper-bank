@@ -18,7 +18,6 @@ import {
   Box,
 } from "@mantine/core";
 import Image from "next/image";
-import { Poppins } from "next/font/google";
 import AddNewAdminForm from "@/components/admin/AddNewAdminForm";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -26,11 +25,6 @@ import { useUser } from "@clerk/nextjs";
 import { Shield, Users, Crown, ChevronLeft } from "lucide-react";
 import classes from "./page.module.css";
 import EditAdminPasswordForm from "@/components/admin/EditAdminPasswordForm";
-
-const poppins = Poppins({
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
-});
 
 interface Admin {
   id: string;
@@ -106,7 +100,7 @@ export default function AdminControlsPage() {
 
   if (error) {
     return (
-      <Container size="xl" py="xl" className={poppins.className}>
+      <Container size="xl" py="xl">
         <Alert color="red">{error}</Alert>
       </Container>
     );
@@ -118,7 +112,7 @@ export default function AdminControlsPage() {
         <Badge
           radius="xl"
           color={element.level.toLowerCase() === "superadmin" ? "#6366f1" : "#3b82f6"}
-          variant="light"
+          variant="filled"
         >
           {element.level}
         </Badge>
@@ -139,7 +133,7 @@ export default function AdminControlsPage() {
       <Table.Td>
         {canDeleteAdmins ? (
           <ActionIcon
-            variant="light"
+            variant="filled"
             onClick={() => handleDelete(element.id)}
             aria-label={`Delete ${element.email}`}
             radius="xl"
@@ -161,7 +155,7 @@ export default function AdminControlsPage() {
   }
 
   return (
-    <Container size="xl" py="xl" className={poppins.className}>
+    <Container size="xl" py="xl">
       <Stack gap="xl">
         <Paper className={classes.hero} radius="xl" p="xl">
           <Stack gap="lg">
@@ -196,7 +190,7 @@ export default function AdminControlsPage() {
                     <Text className={classes.statLabel}>My access</Text>
                     <Text className={classes.statValue}>{currentRoleLabel}</Text>
                   </div>
-                  <ThemeIcon color="blue" variant="light" radius="xl" size={42}>
+                  <ThemeIcon color="blue" variant="filled" radius="xl" size={42}>
                     <Shield size={20} />
                   </ThemeIcon>
                 </Group>
@@ -208,7 +202,7 @@ export default function AdminControlsPage() {
                     <Text className={classes.statLabel}>Admin accounts</Text>
                     <Text className={classes.statValue}>{adminList.length}</Text>
                   </div>
-                  <ThemeIcon color="teal" variant="light" radius="xl" size={42}>
+                  <ThemeIcon color="teal" variant="filled" radius="xl" size={42}>
                     <Users size={20} />
                   </ThemeIcon>
                 </Group>
@@ -220,7 +214,7 @@ export default function AdminControlsPage() {
                       <Text className={classes.statLabel}>Superadmins</Text>
                       <Text className={classes.statValue}>{superAdminCount}</Text>
                     </div>
-                    <ThemeIcon color="violet" variant="light" radius="xl" size={42}>
+                    <ThemeIcon color="violet" variant="filled" radius="xl" size={42}>
                       <Crown size={20} />
                     </ThemeIcon>
                   </Group>

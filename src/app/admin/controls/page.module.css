@@ -1,90 +1,160 @@
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ─── Hero ─────────────────────────────────────────────────── */
+
 .hero {
-  border: 1px solid color-mix(in srgb, var(--color-brand) 10%, transparent);
-  box-shadow: 0 24px 60px color-mix(in srgb, var(--color-brand) 8%, transparent);
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(140deg, #0d1e40 0%, #1b3668 55%, #1e447a 100%);
+  border: none !important;
+  box-shadow:
+    0 2px 0 rgba(255, 255, 255, 0.06) inset,
+    0 32px 80px rgba(11, 28, 65, 0.3);
+  animation: fadeUp 0.45s ease-out both;
+}
+
+/* large translucent circle — top-right decorative element */
+.hero::before {
+  content: "";
+  position: absolute;
+  top: -80px;
+  right: -80px;
+  width: 380px;
+  height: 380px;
+  border-radius: 50%;
+  border: 60px solid rgba(255, 255, 255, 0.04);
+  pointer-events: none;
+}
+
+/* smaller red-tinted glow — bottom right */
+.hero::after {
+  content: "";
+  position: absolute;
+  bottom: -50px;
+  right: 140px;
+  width: 220px;
+  height: 220px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(204, 32, 39, 0.14) 0%, transparent 70%);
+  pointer-events: none;
 }
 
 .backButton {
   align-self: flex-start;
+  color: rgba(255, 255, 255, 0.6) !important;
+  transition: color 0.2s ease;
+}
+
+.backButton:hover {
+  color: white !important;
+  background: rgba(255, 255, 255, 0.07) !important;
 }
 
 .eyebrow {
   margin-bottom: 8px;
-  color: var(--color-text-accent);
-  font-size: 0.78rem;
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 0.7rem;
   font-weight: 700;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.18em;
   text-transform: uppercase;
-}
-
-.myAccessCard {
-  border: 1px solid color-mix(in srgb, var(--color-brand) 8%, transparent);
-  background: rgba(255, 255, 255, 0.88);
-  backdrop-filter: blur(6px);
 }
 
 .heroTitle {
-  color: var(--color-text-heading);
-  line-height: 1.05;
+  color: white !important;
+  line-height: 1.1;
+  font-size: clamp(1.45rem, 3vw, 1.9rem);
 }
 
 .heroSubtitle {
-  margin-top: 10px;
-  color: var(--color-text-muted);
-  font-size: 0.98rem;
-  line-height: 1.6;
+  margin-top: 8px;
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 0.9rem;
+  line-height: 1.65;
+}
+
+/* ─── Stat cards (live inside hero, frosted glass) ──────────── */
+
+.myAccessCard,
+.statCard {
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(255, 255, 255, 0.13) !important;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease;
+}
+
+.myAccessCard:hover,
+.statCard:hover {
+  background: rgba(255, 255, 255, 0.11);
+  border-color: rgba(255, 255, 255, 0.22) !important;
+}
+
+.myAccessCard {
+  animation: fadeUp 0.45s 0.1s ease-out both;
 }
 
 .statCard {
-  border: 1px solid color-mix(in srgb, var(--color-brand) 8%, transparent);
-  background: rgba(255, 255, 255, 0.88);
-  backdrop-filter: blur(6px);
+  animation: fadeUp 0.45s 0.18s ease-out both;
 }
 
 .statLabel {
-  color: var(--color-text-subtle);
-  font-size: 0.8rem;
-  font-weight: 600;
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 0.7rem;
+  font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.12em;
 }
 
 .statValue {
-  margin-top: 6px;
-  color: var(--color-brand-dark);
-  font-size: clamp(1.5rem, 3vw, 2.15rem);
+  margin-top: 4px;
+  color: white;
+  font-size: clamp(1.7rem, 3vw, 2.5rem);
   font-weight: 700;
   line-height: 1;
 }
 
+/* ─── Table card ─────────────────────────────────────────────── */
+
 .tableCard {
-  border-color: color-mix(in srgb, var(--color-brand) 10%, transparent);
-  box-shadow: 0 16px 38px rgba(17, 24, 39, 0.06);
+  border-color: color-mix(in srgb, var(--color-brand) 10%, transparent) !important;
+  box-shadow: 0 8px 32px rgba(17, 24, 39, 0.05);
+  animation: fadeUp 0.45s 0.28s ease-out both;
 }
 
 .sectionTitle {
   color: var(--color-text-heading);
+  font-size: 1rem;
 }
 
 .tableWrap {
   overflow-x: auto;
   border: 1px solid color-mix(in srgb, var(--color-brand) 8%, transparent);
-  border-radius: 20px;
+  border-radius: 16px;
 }
 
 .tableHead th {
-  background: #f4f8fc;
+  background: #f6f9fd;
   color: var(--color-text-subtle);
-  font-size: 0.77rem;
+  font-size: 0.7rem;
   font-weight: 700;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
+  padding: 13px 16px;
 }
 
 @media (max-width: 48em) {
-  .heroTitle {
-    max-width: none;
-  }
-
+  .heroTitle,
   .heroSubtitle {
     max-width: none;
   }
