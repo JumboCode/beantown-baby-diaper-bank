@@ -291,7 +291,7 @@ export default function DistributionsTable({
   };
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-2 pb-5">
       {yearGroups.map((yearGroup) => (
         <CollapsibleSection
           key={yearGroup.year}

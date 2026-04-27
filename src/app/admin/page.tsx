@@ -7,6 +7,7 @@ import {
   Center,
   CloseButton,
   Group,
+  ScrollArea,
   Stack,
   Text,
   ThemeIcon,
@@ -497,7 +498,16 @@ function AdminPageContent() {
   };
 
   return (
-    <Stack gap="lg" px="lg" pt="md">
+    <Stack
+      gap="lg"
+      px="lg"
+      pt="md"
+      style={{
+        height: "calc(100vh - var(--app-shell-header-height, 10vh))",
+        display: "flex",
+        flexDirection: "column",
+      }}
+    >
       <Card p={0}>
         <Group justify="space-between" align="flex-start">
           <Stack gap={4}>
@@ -537,6 +547,7 @@ function AdminPageContent() {
         classNames={classes}
         value={activeTab}
         onChange={handleTabChange}
+        style={{ flex: 1, display: "flex", flexDirection: "column", minHeight: 0 }}
         styles={{
           list: {
             "--tabs-border-color": "transparent",
@@ -734,9 +745,11 @@ function AdminPageContent() {
             />
           )}
         </Tabs.Panel>
-        <Tabs.Panel value="Diapers">
+        <Tabs.Panel value="Diapers" style={{ flex: 1, minHeight: 0 }}>
           {isLoadingDistributions ? (
-            <DistributionsSkeleton />
+            <ScrollArea h="100%" style={{ flex: 1 }}>
+              <DistributionsSkeleton />
+            </ScrollArea>
           ) : distributionsError ? (
             <Center py={80}>
               <Stack align="center" ta="center" gap="md">
@@ -780,10 +793,12 @@ function AdminPageContent() {
               </Stack>
             </Center>
           ) : (
-            <DistributionsTable
-              distributionData={filteredDistributions}
-              onDataUpdated={fetchDistributions}
-            />
+            <ScrollArea h="100%" style={{ flex: 1 }}>
+              <DistributionsTable
+                distributionData={filteredDistributions}
+                onDataUpdated={fetchDistributions}
+              />
+            </ScrollArea>
           )}
         </Tabs.Panel>
       </Tabs>
