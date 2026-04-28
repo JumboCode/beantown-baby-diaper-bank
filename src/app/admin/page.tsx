@@ -286,7 +286,7 @@ function AdminPageContent() {
 
   const fetchTimelineData = useCallback(async () => {
     try {
-      const res = await fetch(`/api/timeline-slider?year=${currentYear}`);
+      const res = await fetch(`/api/timeline-slider`);
       const data = await res.json();
       if (data.years) {
         setTimelineYears(data.years.map(String));
