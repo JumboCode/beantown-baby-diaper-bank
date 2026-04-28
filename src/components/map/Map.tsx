@@ -479,6 +479,7 @@ export default function Map({
                   background: "rgba(255, 255, 255, 0.99)",
                   borderRadius: "12px 12px 0 0",
                   boxShadow: "0 -4px 24px rgba(16, 24, 40, 0.18)",
+                  overscrollBehaviorY: "none",
                 }
               : {
                   position: "absolute",
@@ -486,12 +487,13 @@ export default function Map({
                   right: 16,
                   zIndex: 1000,
                   width: 350,
-                  maxHeight: "calc(100% - 265px)",
+                  maxHeight: "calc(100% - 200px)",
                   overflowY: "auto",
                   background: "rgba(255, 255, 255, 0.97)",
                   borderRadius: 12,
                   boxShadow: "0 8px 24px rgba(16, 24, 40, 0.12)",
                   backdropFilter: "blur(8px)",
+                  overscrollBehaviorY: "none",
                 }
           }
         >

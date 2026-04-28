@@ -122,7 +122,7 @@ export default function PartnerDrawer({ partnerId, onClose, boundaries }: Partne
       onClose={onClose}
       position={isMobile ? "bottom" : "right"}
       padding={0}
-      size={isMobile ? "85%" : "35%"}
+      size={isMobile ? "85%" : "40%"}
       withCloseButton={false}
       overlayProps={{ opacity: 0.2, top: headerHeight }}
       styles={{
