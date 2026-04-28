@@ -4,10 +4,9 @@ import { Text } from "@mantine/core";
 export default function LastUploaded() {
   const [lastUploaded, setLastUploaded] = useState<string | null>(null);
   const currentYear = new Date().getFullYear();
-
   const fetchTimelineData = useCallback(async () => {
     try {
-      const res = await fetch(`/api/timeline-slider?year=${currentYear}`);
+      const res = await fetch(`/api/timeline-slider`);
       const data = await res.json();
       if (data.months) {
         const validMonths = data.months.filter(
@@ -25,7 +24,7 @@ export default function LastUploaded() {
     } catch (err) {
       console.error("Failed to fetch timeline data:", err);
     }
-  }, [currentYear]);
+  }, []);
 
   useEffect(() => {
     fetchTimelineData();
