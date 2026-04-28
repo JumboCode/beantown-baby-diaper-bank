@@ -1,6 +1,6 @@
 // --- 1. Helper Functions ---
 
-export const LEVEL_COLORS = ["#D0E0F3", "#98B6DF", "#3D5F99", "#142A51"];
+export const LEVEL_COLORS = ["#F4F7FB", "#93BAE6", "#2D68C4", "#12337A", "#061026"];
 
 export const hexToRgb = (hex: string): [number, number, number] => {
   const parsed = hex.replace("#", "");
