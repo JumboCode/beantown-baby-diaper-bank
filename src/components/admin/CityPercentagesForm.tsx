@@ -25,6 +25,7 @@ type SaveStatus = "idle" | "loading" | "success" | "error";
 interface CityPercentagesFormProps {
   initialEntries?: CityPercentage[];
   disabled?: boolean;
+  hidePercentages?: boolean;
   onSave?: (entries: CityPercentage[]) => void;
   onChange?: (entries: CityPercentage[]) => void;
   isLoading?: boolean;
@@ -38,6 +39,7 @@ export default function CityPercentagesForm({
   onSave,
   onChange,
   disabled = false,
+  hidePercentages = false,
   isLoading = false,
   saveStatus = "idle",
 }: CityPercentagesFormProps) {
@@ -264,27 +266,29 @@ export default function CityPercentagesForm({
                   <Text fw={600} fz="sm" c="var(--color-text-heading)" style={{ flex: 1 }}>
                     {city}
                   </Text>
-                  <NumberInput
-                    placeholder="0"
-                    min={0}
-                    max={100}
-                    suffix="%"
-                    size="sm"
-                    radius="md"
-                    hideControls
-                    value={pct}
-                    onChange={(value) => handlePercentChange(city, value)}
-                    disabled={disabled}
-                    style={{ width: 100 }}
-                    styles={{
-                      input: {
-                        fontWeight: 600,
-                        textAlign: "right",
-                        color:
-                          pct === 0 ? "var(--mantine-color-gray-5)" : "var(--color-text-heading)",
-                      },
-                    }}
-                  />
+                  {!hidePercentages && (
+                    <NumberInput
+                      placeholder="0"
+                      min={0}
+                      max={100}
+                      suffix="%"
+                      size="sm"
+                      radius="md"
+                      hideControls
+                      value={pct}
+                      onChange={(value) => handlePercentChange(city, value)}
+                      disabled={disabled}
+                      style={{ width: 100 }}
+                      styles={{
+                        input: {
+                          fontWeight: 600,
+                          textAlign: "right",
+                          color:
+                            pct === 0 ? "var(--mantine-color-gray-5)" : "var(--color-text-heading)",
+                        },
+                      }}
+                    />
+                  )}
                   {!disabled && (
                     <ActionIcon
                       variant="subtle"
@@ -300,7 +304,7 @@ export default function CityPercentagesForm({
                 </div>
               );
             })}
-            {!disabled && (
+            {!disabled && !hidePercentages && (
               <Group justify="flex-end" gap={6}>
                 <Text
                   fw={700}
@@ -328,7 +332,7 @@ export default function CityPercentagesForm({
                 color={saveStatus === "success" ? "green" : saveStatus === "error" ? "red" : "blue"}
                 radius="md"
                 loading={isLoading}
-                disabled={disabled || totalPercent !== 100}
+                disabled={disabled || (!hidePercentages && totalPercent !== 100)}
                 onClick={() => onSave(entries)}
                 leftSection={saveStatus === "success" ? <RiCheckLine size={16} /> : undefined}
               >

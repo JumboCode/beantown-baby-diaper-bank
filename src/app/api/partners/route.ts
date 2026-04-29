@@ -18,7 +18,7 @@ type LogoAction = "keep" | "replace" | "remove";
 
 type CityPercentage = {
   city: string;
-  percentage: number;
+  percentage: number | null;
 };
 
 // Shared payload type — `id` absent means create, present means update
