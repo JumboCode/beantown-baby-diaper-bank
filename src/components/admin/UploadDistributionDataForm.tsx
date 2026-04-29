@@ -554,7 +554,7 @@ export default function UploadNewData({
             <>
               <Button
                 component="a"
-                href="/MothlyDataTemplate.xlsx"
+                href="/MonthlyDataTemplate.xlsx"
                 download
                 leftSection={<FaDownload />}
                 color="brand"
