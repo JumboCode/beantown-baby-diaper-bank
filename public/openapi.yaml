@@ -34,17 +34,24 @@ paths:
                       $ref: '#/components/schemas/PartnerListItem'
         '500':
           $ref: '#/components/responses/InternalServerError'
-    put:
-      summary: Create partner
+    post:
+      summary: Create or update a partner
       description: |
+        When the payload has no `id`, creates a new partner plus `PartnerRegion` rows.
+        When the payload includes an `id`, updates partner details only (city percentages
+        are managed via POST /partners/percentages).
+
         Accepts JSON or multipart/form-data. For multipart, include a `partner`
-        JSON string field, optional `logoAction` (keep|replace), and `file` when replacing.
+        JSON string field, optional `logoAction` (keep|replace|remove), and `file` when replacing.
+        `logoAction` defaults to `keep`. `remove` is only valid on updates.
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CreatePartnerPayload'
+              oneOf:
+                - $ref: '#/components/schemas/CreatePartnerPayload'
+                - $ref: '#/components/schemas/UpdatePartnerPayload'
           multipart/form-data:
             schema:
               type: object
@@ -52,15 +59,16 @@ paths:
               properties:
                 partner:
                   type: string
-                  description: JSON-serialized CreatePartnerPayload
+                  description: JSON-serialized CreatePartnerPayload or UpdatePartnerPayload
                 logoAction:
                   type: string
-                  enum: [keep, replace]
+                  enum: [keep, replace, remove]
+                  default: keep
                 file:
                   type: string
                   format: binary
       responses:
-        '200':
+        '201':
           description: Partner created
           content:
             application/json:
@@ -68,38 +76,7 @@ paths:
                 type: object
                 properties:
                   data:
-                    type: string
-                    description: JSON string of the created partner object (BigInt-safe serialization)
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
-    post:
-      summary: Update partner (body contains id)
-      description: |
-        Accepts JSON or multipart/form-data. For multipart, include a `partner`
-        JSON string field, optional `logoAction` (keep|replace|remove), and `file` when replacing.
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/UpdatePartnerPayload'
-          multipart/form-data:
-            schema:
-              type: object
-              required: [partner]
-              properties:
-                partner:
-                  type: string
-                  description: JSON-serialized UpdatePartnerPayload
-                logoAction:
-                  type: string
-                  enum: [keep, replace, remove]
-                file:
-                  type: string
-                  format: binary
-      responses:
+                    $ref: '#/components/schemas/PartnerRecord'
         '200':
           description: Partner updated
           content:
@@ -108,10 +85,15 @@ paths:
                 type: object
                 properties:
                   data:
-                    type: string
-                    description: JSON string of the updated partner object (BigInt-safe serialization)
+                    $ref: '#/components/schemas/PartnerRecord'
         '400':
           $ref: '#/components/responses/BadRequest'
+        '422':
+          description: Cities not found in database
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         '500':
           $ref: '#/components/responses/InternalServerError'
 
@@ -143,7 +125,7 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
     post:
-      summary: Update partner by ID
+      summary: Update partner by ID (legacy endpoint)
       parameters:
         - name: id
           in: path
@@ -165,8 +147,7 @@ paths:
                 type: object
                 properties:
                   data:
-                    type: object
-                    additionalProperties: true
+                    $ref: '#/components/schemas/PartnerRecord'
         '500':
           $ref: '#/components/responses/InternalServerError'
 
@@ -185,7 +166,7 @@ paths:
             type: string
       responses:
         '200':
-          description: Partner percentages
+          description: Partner region percentages. Returns empty array if partner not found by name.
           content:
             application/json:
               schema:
@@ -196,7 +177,7 @@ paths:
                     items:
                       $ref: '#/components/schemas/PartnerRegionItem'
         '500':
-          description: Error response object with status only
+          description: Error response
           content:
             application/json:
               schema:
@@ -205,42 +186,61 @@ paths:
                   status:
                     type: integer
     post:
-      summary: Update partner-region percentages
+      summary: Replace all city-percentage allocations for a partner
+      description: Percentages must sum to exactly 1. Fully replaces existing allocations.
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              type: array
-              items:
-                $ref: '#/components/schemas/PartnerRegionUpdate'
+              type: object
+              required: [partnerId, percentages]
+              properties:
+                partnerId:
+                  type: string
+                  description: BigInt-compatible string partner id
+                percentages:
+                  type: array
+                  items:
+                    type: object
+                    required: [city, percentage]
+                    properties:
+                      city:
+                        type: string
+                      percentage:
+                        type: number
+                        description: Must be between 0 and 1. All values must sum to 1.
       responses:
         '200':
-          description: Updated percentages
+          description: Percentages updated
           content:
             application/json:
               schema:
                 type: object
                 properties:
-                  data:
-                    type: array
-                    items:
-                      $ref: '#/components/schemas/PartnerRegionUpdate'
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: Continuous percentages updated
         '400':
           $ref: '#/components/responses/BadRequest'
-        '500':
-          description: Error response object with status only
+        '404':
+          description: Partner not found
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  status:
-                    type: integer
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
 
   /distributions:
     get:
       summary: Get distributions
+      description: |
+        Returns a bare array (not wrapped in `data`). Filter by single period or date range.
+        For date range, all four range params (startYear, endYear, startMonth, endMonth) must be provided together.
       parameters:
         - name: month
           in: query
@@ -277,8 +277,104 @@ paths:
                   $ref: '#/components/schemas/DistributionItem'
         '500':
           $ref: '#/components/responses/InternalServerError'
+    post:
+      summary: Replace monthly distributions for a partner/year/month combination
+      description: |
+        Fully replaces all distribution rows for the given (partnerId, year, month).
+        Total diapers are sourced from the existing MonthlyData row and redistributed
+        using the provided percentages. Percentages must sum to 1.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [partnerId, month, year, percentages]
+              properties:
+                partnerId:
+                  oneOf:
+                    - type: string
+                    - type: number
+                month:
+                  $ref: '#/components/schemas/MonthEnum'
+                year:
+                  type: integer
+                percentages:
+                  type: array
+                  items:
+                    type: object
+                    required: [city, percentage]
+                    properties:
+                      city:
+                        type: string
+                      percentage:
+                        type: number
+      responses:
+        '200':
+          description: Distributions updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: Distributions updated successfully
+                  rowsCreated:
+                    type: integer
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    put:
+      summary: Set total diapers for a partner/year, distributing across cities by percentages
+      description: |
+        Replaces yearly (month=null) distribution rows for the partner.
+        Allocates `numDiapers` across cities using their PartnerRegion percentages.
+        Also updates YearlyData aggregate rows.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [partnerId, year]
+              properties:
+                partnerId:
+                  oneOf:
+                    - type: string
+                    - type: number
+                year:
+                  type: string
+                numDiapers:
+                  type: integer
+                  nullable: true
+      responses:
+        '200':
+          description: Yearly distributions updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Yearly distributions updated successfully
+                  totalDiapers:
+                    type: integer
+                    nullable: true
+                  distributions:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/DistributionItem'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
     delete:
       summary: Delete distributions by IDs
+      description: Also decrements related MonthlyData and YearlyData aggregate rows.
       requestBody:
         required: true
         content:
@@ -291,6 +387,7 @@ paths:
                   type: array
                   items:
                     type: string
+                  description: BigInt-serialized distribution IDs
       responses:
         '200':
           description: Deletion count
@@ -308,7 +405,10 @@ paths:
 
   /distributions/upload:
     post:
-      summary: Upload distribution CSV data
+      summary: Validate and upload distribution CSV data for a given month
+      description: |
+        If the target month already has data, existing rows are deleted before inserting.
+        Returns validation errors before writing if any partner names are unknown, inactive, or waitlisted.
       requestBody:
         required: true
         content:
@@ -321,6 +421,7 @@ paths:
                   type: string
                 selectedDate:
                   type: string
+                  description: ISO date string. Month and year are extracted from it.
       responses:
         '200':
           description: Upload processing result
@@ -332,6 +433,51 @@ paths:
                   data:
                     type: object
                     additionalProperties: true
+        '400':
+          description: Validation errors
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: First error message
+                  errors:
+                    type: array
+                    items:
+                      type: string
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /distributions/validate:
+    post:
+      summary: Validate a distribution CSV without writing to the database
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [csv]
+              properties:
+                csv:
+                  type: string
+      responses:
+        '200':
+          description: Validation result
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [valid, errors]
+                properties:
+                  valid:
+                    type: boolean
+                  errors:
+                    type: array
+                    items:
+                      type: string
         '400':
           $ref: '#/components/responses/BadRequest'
         '500':
@@ -345,10 +491,12 @@ paths:
           in: query
           schema:
             type: string
+          description: Case-insensitive partial match
         - name: month
           in: query
           schema:
             $ref: '#/components/schemas/MonthEnum'
+          description: Requires year to also be provided
         - name: year
           in: query
           schema:
@@ -365,6 +513,72 @@ paths:
                     type: array
                     items:
                       $ref: '#/components/schemas/CityItem'
+    post:
+      summary: Create a new city
+      description: |
+        Fetches centroid and boundary geometry from Nominatim and stores them.
+        City must not already exist (case-insensitive check).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name]
+              properties:
+                name:
+                  type: string
+      responses:
+        '201':
+          description: City created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                      name:
+                        type: string
+        '400':
+          description: Missing name
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: City already exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '502':
+          description: Geocoding failure
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /cities/names:
+    get:
+      summary: Get a sorted list of all city names
+      responses:
+        '200':
+          description: City names
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      type: string
 
   /cities/centroids:
     get:
@@ -377,44 +591,45 @@ paths:
               schema:
                 $ref: '#/components/schemas/GeoJsonFeatureCollectionPoint'
         '404':
-          description: City not found
+          description: No cities with centroid data found
           content:
             text/plain:
               schema:
                 type: string
+                example: City not found
         '500':
           description: Internal server error
           content:
             text/plain:
               schema:
                 type: string
+                example: Internal Server Error
 
   /cities/boundaries:
     get:
       summary: Get city boundaries as GeoJSON FeatureCollection
       responses:
         '200':
-          description: GeoJSON FeatureCollection of city boundaries, or a plain text message when none exist
+          description: GeoJSON FeatureCollection of city boundaries
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/GeoJsonFeatureCollectionPolygon'
-            text/plain:
-              schema:
-                type: string
-        '500':
-          description: Internal server error
+        '404':
+          description: No city boundary data found
           content:
-            text/plain:
+            application/json:
               schema:
-                type: string
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
 
   /timeline-slider:
     get:
-      summary: Get timeline years and months
+      summary: Get timeline years and months for which distribution data exists
       responses:
         '200':
-          description: Timeline data
+          description: Timeline data. Returns empty arrays with a message when no data has been uploaded.
           content:
             application/json:
               schema:
@@ -424,27 +639,42 @@ paths:
                     type: array
                     items:
                       type: string
-                      nullable: true
                   months:
                     type: array
                     items:
                       type: object
                       properties:
                         Month:
-                          type: string
-                          nullable: true
+                          $ref: '#/components/schemas/MonthEnum'
                         Year:
                           type: string
-                          nullable: true
+                  message:
+                    type: string
+                    description: Only present when no data has been uploaded
+        '503':
+          description: Database connection or query error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         '500':
           $ref: '#/components/responses/InternalServerError'
 
   /total-diapers:
     get:
-      summary: Get aggregate diaper total
+      summary: Get aggregate diaper totals
+      description: |
+        Without `year`: returns cumulative total across all time.
+        With `year`: returns cumulative total through that year, the yearly total, and estimated babies helped.
+      parameters:
+        - name: year
+          in: query
+          schema:
+            type: string
+          description: If provided, also returns yearlyTotalDiapers and babiesHelped
       responses:
         '200':
-          description: Total diapers
+          description: Diaper totals
           content:
             application/json:
               schema:
@@ -452,23 +682,58 @@ paths:
                 properties:
                   totalDiapers:
                     type: integer
+                    description: Cumulative total (through `year` if provided, all-time otherwise)
+                  yearlyTotalDiapers:
+                    type: integer
+                    description: Total for the given year only. Present only when year param is provided.
+                  babiesHelped:
+                    type: integer
+                    description: Estimated babies helped in the given year. Present only when year param is provided.
         '500':
           $ref: '#/components/responses/InternalServerError'
 
   /monthly-data:
     get:
-      summary: Placeholder endpoint
+      summary: Get monthly data records
+      description: |
+        Returns a bare array (not wrapped in `data`). Filter by single period or date range.
+        For date range, all four range params (startYear, endYear, startMonth, endMonth) must be provided together.
+      parameters:
+        - name: month
+          in: query
+          schema:
+            $ref: '#/components/schemas/MonthEnum'
+        - name: year
+          in: query
+          schema:
+            type: string
+        - name: startMonth
+          in: query
+          schema:
+            $ref: '#/components/schemas/MonthEnum'
+        - name: startYear
+          in: query
+          schema:
+            type: string
+        - name: endMonth
+          in: query
+          schema:
+            $ref: '#/components/schemas/MonthEnum'
+        - name: endYear
+          in: query
+          schema:
+            type: string
       responses:
         '200':
-          description: Static message
+          description: Monthly data records
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                    example: Hello World
+                type: array
+                items:
+                  $ref: '#/components/schemas/MonthlyDataItem'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
     post:
       summary: Create monthly data records
       requestBody:
@@ -489,8 +754,59 @@ paths:
                 properties:
                   message:
                     type: string
+                    example: Monthly Data values created successfully
         '400':
           $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    put:
+      summary: Upsert a monthly data row and recalculate downstream distributions
+      description: |
+        Creates or updates the MonthlyData row for (partnerId, year, month), then
+        recalculates and replaces the corresponding Distribution rows and YearlyData aggregates.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [partnerId, year, month]
+              properties:
+                partnerId:
+                  oneOf:
+                    - type: string
+                    - type: number
+                year:
+                  type: string
+                month:
+                  $ref: '#/components/schemas/MonthEnum'
+                numDiapers:
+                  oneOf:
+                    - type: string
+                    - type: number
+                  nullable: true
+                numBabies:
+                  oneOf:
+                    - type: string
+                    - type: number
+                  nullable: true
+      responses:
+        '200':
+          description: Monthly data and recalculated distributions
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Monthly Data updated successfully
+                  data:
+                    $ref: '#/components/schemas/MonthlyDataItem'
+                  distributions:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/DistributionItem'
         '500':
           $ref: '#/components/responses/InternalServerError'
 
@@ -644,6 +960,46 @@ components:
         message:
           type: string
 
+    PartnerRecord:
+      description: Raw Prisma Partner record (BigInt fields serialized as strings)
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+          nullable: true
+        description:
+          type: string
+          nullable: true
+        status:
+          $ref: '#/components/schemas/StatusEnum'
+        address:
+          type: string
+          nullable: true
+        coords:
+          type: object
+          nullable: true
+          additionalProperties: true
+        logoUrl:
+          type: string
+          nullable: true
+        startPartner:
+          type: string
+          format: date-time
+          nullable: true
+        endPartner:
+          type: string
+          format: date-time
+          nullable: true
+        numBabies:
+          type: string
+          nullable: true
+          description: BigInt serialized as string
+        createdAt:
+          type: string
+          format: date-time
+
     PartnerListItem:
       type: object
       properties:
@@ -680,6 +1036,9 @@ components:
         logoUrl:
           type: string
           nullable: true
+        num_babies:
+          type: integer
+          nullable: true
 
     CreatePartnerPayload:
       type: object
@@ -692,9 +1051,6 @@ components:
         start_partner:
           type: string
           nullable: true
-        end_partner:
-          type: string
-          nullable: true
         status:
           $ref: '#/components/schemas/StatusEnum'
         coordinates:
@@ -704,6 +1060,9 @@ components:
           type: string
         logo:
           type: string
+        num_babies:
+          type: integer
+          nullable: true
         cities:
           type: array
           items:
@@ -740,6 +1099,9 @@ components:
           type: string
         logo:
           type: string
+        num_babies:
+          type: integer
+          nullable: true
 
     PartnerIdRouteUpdatePayload:
       type: object
@@ -797,54 +1159,57 @@ components:
           nullable: true
         number_babies_helped:
           type: integer
+          nullable: true
         number_diapers:
           type: integer
+        citiesServed:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                description: City ID (BigInt — may be string in some serializations)
+                nullable: true
 
     PartnerRegionItem:
       type: object
       properties:
         partnerId:
           type: string
+          description: BigInt serialized as string
         cityId:
           type: string
+          description: BigInt serialized as string
         percentage:
           type: number
           nullable: true
         city:
           type: object
+          nullable: true
           properties:
             id:
-              type: string
+              description: BigInt serialized as string or integer
             name:
               type: string
               nullable: true
-
-    PartnerRegionUpdate:
-      type: object
-      required: [partnerId, cityId]
-      properties:
-        partnerId:
-          type: integer
-        cityId:
-          type: integer
-        percentage:
-          type: number
-          nullable: true
 
     DistributionItem:
       type: object
       properties:
         id:
           type: string
+          description: BigInt serialized as string
         createdAt:
           type: string
           format: date-time
         partnerId:
           type: string
           nullable: true
+          description: BigInt serialized as string
         cityId:
           type: string
           nullable: true
+          description: BigInt serialized as string
         year:
           type: string
           nullable: true
@@ -854,9 +1219,11 @@ components:
         numberDiapers:
           type: string
           nullable: true
+          description: BigInt serialized as string
         numberChildren:
           type: string
           nullable: true
+          description: BigInt serialized as string
         percentage:
           type: number
           nullable: true
@@ -883,19 +1250,39 @@ components:
         name:
           type: string
           nullable: true
+        stats:
+          type: object
+          properties:
+            historical:
+              type: object
+              nullable: true
+              description: Null if no historical data exists for the city
+              properties:
+                median:
+                  type: number
+                p25:
+                  type: number
+                p75:
+                  type: number
+            runningTotal:
+              type: integer
+              description: Cumulative diapers through the filtered year, or 0 when no year filter
         distributions:
           type: array
           items:
             type: object
             properties:
               id:
-                type: string
+                oneOf:
+                  - type: integer
+                  - type: string
               year:
                 type: string
                 nullable: true
               month:
                 type: string
                 nullable: true
+                description: Null when data is from YearlyData (year-only filter)
               numberDiapers:
                 type: integer
                 nullable: true
@@ -905,9 +1292,11 @@ components:
               percentage:
                 type: number
                 nullable: true
+                description: Null when data is from YearlyData (year-only filter)
               partner:
                 type: object
                 nullable: true
+                description: Null when data is from YearlyData (year-only filter)
                 properties:
                   id:
                     type: integer
@@ -929,6 +1318,40 @@ components:
                 nullable: true
               status:
                 $ref: '#/components/schemas/StatusEnum'
+              startPartner:
+                type: string
+                format: date-time
+                nullable: true
+
+    MonthlyDataItem:
+      type: object
+      properties:
+        id:
+          type: string
+          description: UUID
+        partnerId:
+          type: string
+          description: BigInt serialized as string
+        year:
+          type: string
+          nullable: true
+        month:
+          $ref: '#/components/schemas/MonthEnum'
+        numberDiapers:
+          type: string
+          nullable: true
+          description: BigInt serialized as string
+        numBabies:
+          type: string
+          nullable: true
+          description: BigInt serialized as string
+        partner:
+          type: object
+          nullable: true
+          properties:
+            name:
+              type: string
+              nullable: true
 
     MonthlyDataCreateItem:
       type: object
@@ -993,7 +1416,11 @@ components:
                       type: number
               properties:
                 type: object
-                additionalProperties: true
+                properties:
+                  name:
+                    type: string
+                  id:
+                    type: integer
 
     GeoJsonFeatureCollectionPolygon:
       type: object
@@ -1011,15 +1438,21 @@ components:
                 enum: [Feature]
               id:
                 type: string
+                description: City ID as string
               properties:
                 type: object
-                additionalProperties: true
+                properties:
+                  name:
+                    type: string
+                  createdAt:
+                    type: string
+                    format: date-time
               geometry:
                 type: object
                 properties:
                   type:
                     type: string
-                    enum: [Polygon]
+                    enum: [Polygon, MultiPolygon]
                   coordinates:
                     type: array
                     items:
