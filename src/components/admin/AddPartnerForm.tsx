@@ -275,36 +275,34 @@ export default function AddPartnerForm({
             />
           </Grid.Col>
 
-          {form.values.status !== "waitlisted" && (
-            <>
-              <Grid.Col span={5}>
-                <Text c="var(--color-text-heading)" fz={16} fw={600}>
-                  Cities Served <span className="text-red-600">*</span>
-                </Text>
-              </Grid.Col>
+          <Grid.Col span={5}>
+            <Text c="var(--color-text-heading)" fz={16} fw={600}>
+              Cities Served
+              {form.values.status !== "waitlisted" && <span className="text-red-600"> *</span>}
+            </Text>
+          </Grid.Col>
 
-              <Grid.Col span={7}>
-                <div
-                  ref={(el) => {
-                    fieldRefs.current.cityPercents = el;
-                  }}
-                >
-                  <CityPercentagesForm
-                    onChange={(entries) => {
-                      setCityEntries(entries);
-                      form.setFieldValue("cityPercents", entries);
-                      if (form.errors.cityPercents) form.validateField("cityPercents");
-                    }}
-                  />
-                  {form.errors.cityPercents && (
-                    <Text c="red" size="sm" mt={6}>
-                      {form.errors.cityPercents}
-                    </Text>
-                  )}
-                </div>
-              </Grid.Col>
-            </>
-          )}
+          <Grid.Col span={7}>
+            <div
+              ref={(el) => {
+                fieldRefs.current.cityPercents = el;
+              }}
+            >
+              <CityPercentagesForm
+                hidePercentages={form.values.status === "waitlisted"}
+                onChange={(entries) => {
+                  setCityEntries(entries);
+                  form.setFieldValue("cityPercents", entries);
+                  if (form.errors.cityPercents) form.validateField("cityPercents");
+                }}
+              />
+              {form.errors.cityPercents && (
+                <Text c="red" size="sm" mt={6}>
+                  {form.errors.cityPercents}
+                </Text>
+              )}
+            </div>
+          </Grid.Col>
 
           {form.values.status !== "waitlisted" && (
             <>

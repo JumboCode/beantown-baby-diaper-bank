@@ -51,9 +51,10 @@ export function usePartnerSubmit({
   const isEdit = partnerId !== undefined;
 
   async function doSubmit(values: PartnerFormValues) {
+    const isWaitlisted = values.status === "waitlisted";
     const cityPercentages = cityEntries.map((e) => ({
       city: e.city,
-      percentage: Number((e.percent / 100).toFixed(4)),
+      percentage: isWaitlisted ? null : Number((e.percent / 100).toFixed(4)),
     }));
 
     const partnerPayload = {

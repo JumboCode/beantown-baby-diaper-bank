@@ -13,7 +13,6 @@ import { LatLngExpression } from "leaflet";
 import { Text, Stack, Group, Box, Badge, ThemeIcon } from "@mantine/core";
 import { useMediaQuery } from "@mantine/hooks";
 import { TileLayer, MapContainer, Tooltip, useMap, Pane } from "react-leaflet";
-import BabiesHelped from "./BabiesHelped";
 import { Polygon as ReactLeafletPolygon } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import { CityWithStats, GeoJsonBoundaries } from "@/lib/types";
@@ -86,7 +85,6 @@ export interface MapProps {
   totalDiapersForYear?: number;
   yearlyTotalDiapers?: number;
   selectedYear?: string;
-  babiesHelped?: number;
 }
 
 const MemoizedCityPolygon = memo(
@@ -252,7 +250,6 @@ export default function Map({
   totalDiapersForYear,
   yearlyTotalDiapers,
   selectedYear,
-  babiesHelped,
 }: MapProps) {
   const isMobile = useMediaQuery("(max-width: 768px)");
   const { mapConfig } = useLeafletMap(isMobile ? 8 : DEFAULT_ZOOM);
@@ -444,22 +441,6 @@ export default function Map({
               </Stack>
             </Group>
           </Box>
-          <Box
-            style={{
-              position: "absolute",
-              top: isMobile ? 75 : 110,
-              right: 16,
-              zIndex: 1000,
-              pointerEvents: "none",
-              background: "#1B3668",
-              borderRadius: 12,
-              border: "1px solid #E4E7EC",
-              boxShadow: "0 8px 32px rgba(27, 54, 104, 0.4)",
-              padding: isMobile ? "8px 12px" : "14px 18px",
-            }}
-          >
-            <BabiesHelped babiesHelped={babiesHelped} year={selectedYear} />
-          </Box>
         </>
       )}
 
@@ -483,11 +464,11 @@ export default function Map({
                 }
               : {
                   position: "absolute",
-                  top: 200,
+                  top: 112,
                   right: 16,
                   zIndex: 1000,
                   width: 350,
-                  maxHeight: "calc(100% - 200px)",
+                  maxHeight: "calc(100% - 128px)",
                   overflowY: "auto",
                   background: "rgba(255, 255, 255, 0.97)",
                   borderRadius: 12,

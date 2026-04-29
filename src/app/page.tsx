@@ -61,7 +61,6 @@ export default function Page() {
   const [cumulativeTotalDiapers, setCumulativeTotalDiapers] = useState<number>();
   const [yearlyTotalDiapers, setYearlyTotalDiapers] = useState<number>();
   const [selectedYear, setSelectedYear] = useState<string>();
-  const [babiesHelped, setBabiesHelped] = useState<number | undefined>();
   const cachedBoundariesRef = useRef<FeatureCollection<Polygon | MultiPolygon> | null>(null);
   const [mapError, setMapError] = useState<Error | null>(null);
 
@@ -88,15 +87,12 @@ export default function Page() {
       setSelectedYear(year);
       setCumulativeTotalDiapers(totalDiapersResponse.totalDiapers ?? 0);
       setYearlyTotalDiapers(totalDiapersResponse.yearlyTotalDiapers ?? 0);
-      setBabiesHelped(totalDiapersResponse.babiesHelped ?? undefined);
     } catch (error) {
       setMapError(error as Error);
       console.error("Error fetching map data:", error);
       setCumulativeTotalDiapers(0);
-      setBabiesHelped(undefined);
     }
   }, []);
-
   if (mapError) throw mapError;
 
   return (
@@ -121,7 +117,6 @@ export default function Page() {
             totalDiapersForYear={cumulativeTotalDiapers}
             yearlyTotalDiapers={yearlyTotalDiapers}
             selectedYear={selectedYear}
-            babiesHelped={babiesHelped}
           />
         ) : (
           <MapSkeleton />
