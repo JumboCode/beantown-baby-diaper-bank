@@ -3,7 +3,7 @@
 import dynamic from "next/dynamic";
 import TimelineSlider from "@/components/map/TimelineSlider";
 import { useTimelinePeriod } from "@/components/map/useTimelinePeriod";
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef } from "react";
 import { FeatureCollection, MultiPolygon, Polygon } from "geojson";
 import { GeoJsonBoundaries, CityWithStats } from "@/lib/types";
 import { Box, Skeleton } from "@mantine/core";
@@ -61,44 +61,42 @@ export default function Page() {
   const [cumulativeTotalDiapers, setCumulativeTotalDiapers] = useState<number>();
   const [yearlyTotalDiapers, setYearlyTotalDiapers] = useState<number>();
   const [selectedYear, setSelectedYear] = useState<string>();
-  const [cachedBoundaries, setCachedBoundaries] = useState<FeatureCollection<
-    Polygon | MultiPolygon
-  > | null>(null);
+<<<<<<< HEAD
+  const [babiesHelped, setBabiesHelped] = useState<number | undefined>();
+  const cachedBoundariesRef = useRef<FeatureCollection<Polygon | MultiPolygon> | null>(null);
   const [mapError, setMapError] = useState<Error | null>(null);
 
-  const handleTimelineChange = useCallback(
-    async (year: string) => {
-      try {
-        const boundariesPromise = cachedBoundaries
-          ? Promise.resolve(cachedBoundaries)
-          : fetch(`/api/cities/boundaries`)
-              .then((res) => res.json())
-              .then(flipBoundaries);
+  const handleTimelineChange = useCallback(async (year: string) => {
+    try {
+      const boundariesPromise = cachedBoundariesRef.current
+        ? Promise.resolve(cachedBoundariesRef.current)
+        : fetch(`/api/cities/boundaries`)
+            .then((res) => res.json())
+            .then(flipBoundaries);
 
-        const [cities, boundaries, totalDiapersResponse] = await Promise.all([
-          fetch(`/api/cities?year=${encodeURIComponent(year)}`).then((res) => res.json()),
-          boundariesPromise,
-          fetch(`/api/total-diapers?year=${encodeURIComponent(year)}`).then((res) => res.json()),
-        ]);
+      const [cities, boundaries, totalDiapersResponse] = await Promise.all([
+        fetch(`/api/cities?year=${encodeURIComponent(year)}`).then((res) => res.json()),
+        boundariesPromise,
+        fetch(`/api/total-diapers?year=${encodeURIComponent(year)}`).then((res) => res.json()),
+      ]);
 
-        if (!cachedBoundaries) {
-          setCachedBoundaries(boundaries);
-        }
-
-        setBoundaries(boundaries);
-        setCities(cities.data);
-        setSelectedYear(year);
-        setCumulativeTotalDiapers(totalDiapersResponse.totalDiapers ?? 0);
-        setYearlyTotalDiapers(totalDiapersResponse.yearlyTotalDiapers ?? 0);
-      } catch (error) {
-        setMapError(error as Error);
-        console.error("Error fetching map data:", error);
-        setCumulativeTotalDiapers(0);
+      if (!cachedBoundariesRef.current) {
+        cachedBoundariesRef.current = boundaries;
       }
-    },
-    [cachedBoundaries],
-  );
 
+      setBoundaries(boundaries);
+      setCities(cities.data);
+      setSelectedYear(year);
+      setCumulativeTotalDiapers(totalDiapersResponse.totalDiapers ?? 0);
+      setYearlyTotalDiapers(totalDiapersResponse.yearlyTotalDiapers ?? 0);
+      setBabiesHelped(totalDiapersResponse.babiesHelped ?? undefined);
+    } catch (error) {
+      setMapError(error as Error);
+      console.error("Error fetching map data:", error);
+      setCumulativeTotalDiapers(0);
+      setBabiesHelped(undefined);
+    }
+  }, []);
   if (mapError) throw mapError;
 
   return (
