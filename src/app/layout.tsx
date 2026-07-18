@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import { connection } from "next/server";
 import { Suspense } from "react";
 import { Poppins } from "next/font/google";
 import "@mantine/core/styles.css";
@@ -24,6 +25,11 @@ export const viewport: Viewport = {
   maximumScale: 1,
 };
 
+async function DynamicShell({ children }: { children: React.ReactNode }) {
+  await connection();
+  return <>{children}</>;
+}
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -33,9 +39,11 @@ export default function RootLayout({
     <html lang="en" className={poppins.variable}>
       <body>
         <Suspense fallback={<div></div>}>
-          <ClerkProvider afterSignOutUrl="/sign-in">
-            <Providers>{children}</Providers>
-          </ClerkProvider>
+          <DynamicShell>
+            <ClerkProvider afterSignOutUrl="/sign-in">
+              <Providers>{children}</Providers>
+            </ClerkProvider>
+          </DynamicShell>
         </Suspense>
       </body>
     </html>
