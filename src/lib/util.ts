@@ -16,6 +16,7 @@ import type { Geometry } from "geojson";
  */
 export function geoJsonToRingPositions(
   geometry: Geometry | null | undefined,
+  featureName?: string,
 ): LatLngExpression[][] {
   if (!geometry) return [];
   if (geometry.type === "MultiPolygon") {
@@ -24,6 +25,9 @@ export function geoJsonToRingPositions(
   if (geometry.type === "Polygon") {
     return geometry.coordinates as unknown as LatLngExpression[][];
   }
+  console.warn(
+    `geoJsonToRingPositions: skipping unrenderable geometry type "${geometry.type}"${featureName ? ` for "${featureName}"` : ""}`,
+  );
   return [];
 }
 

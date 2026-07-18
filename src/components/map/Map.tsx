@@ -313,7 +313,7 @@ export default function Map({
         fillColor = LEVEL_COLORS[0];
       }
 
-      const positions = geoJsonToRingPositions(feature.geometry);
+      const positions = geoJsonToRingPositions(feature.geometry, name);
       return {
         id: name || Math.random(),
         positions,

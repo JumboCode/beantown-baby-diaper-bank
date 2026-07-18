@@ -92,7 +92,7 @@ export function PartnerMiniMap({
   });
   const servedBoundaries = filteredBoundaires.map((f) => ({
     id: f.properties?.name ?? Math.random(),
-    positions: geoJsonToRingPositions(f.geometry),
+    positions: geoJsonToRingPositions(f.geometry, f.properties?.name),
   }));
 
   if (!coords) {
