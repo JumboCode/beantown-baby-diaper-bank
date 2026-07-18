@@ -16,6 +16,7 @@ import { TileLayer, MapContainer, Tooltip, useMap, Pane } from "react-leaflet";
 import { Polygon as ReactLeafletPolygon } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import { CityWithStats, GeoJsonBoundaries } from "@/lib/types";
+import { geoJsonToRingPositions } from "@/lib/util";
 
 function getApproximateArea(positions: any[]): number {
   let minX = Infinity,
@@ -312,7 +313,7 @@ export default function Map({
         fillColor = LEVEL_COLORS[0];
       }
 
-      const positions = feature.geometry.coordinates as unknown as LatLngExpression[][];
+      const positions = geoJsonToRingPositions(feature.geometry);
       return {
         id: name || Math.random(),
         positions,

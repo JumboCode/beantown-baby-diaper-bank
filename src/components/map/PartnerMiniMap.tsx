@@ -1,6 +1,6 @@
 import { GeoJsonBoundaries } from "@/lib/types";
+import { geoJsonToRingPositions } from "@/lib/util";
 import { Center, Group, Text, Loader, Box } from "@mantine/core";
-import { LatLngExpression } from "leaflet";
 import { useState, useEffect } from "react";
 import { useBaseTileLayer } from "./useBaseTileLayer";
 import { useLeafletMap } from "./useLeafletMap";
@@ -92,7 +92,7 @@ export function PartnerMiniMap({
   });
   const servedBoundaries = filteredBoundaires.map((f) => ({
     id: f.properties?.name ?? Math.random(),
-    positions: f.geometry.coordinates as unknown as LatLngExpression[][],
+    positions: geoJsonToRingPositions(f.geometry),
   }));
 
   if (!coords) {

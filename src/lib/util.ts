@@ -1,3 +1,32 @@
+import type { LatLngExpression } from "leaflet";
+import type { Geometry } from "geojson";
+
+/**
+ * Flattens a GeoJSON Polygon or MultiPolygon into a flat list of rings
+ * (LatLngExpression[][]) that Leaflet's <Polygon> expects. Polygon and
+ * MultiPolygon coordinates differ by one level of nesting (MultiPolygon
+ * adds a per-polygon wrapper array), so a feature's geometry.type must be
+ * checked before casting — treating both the same way misaligns the
+ * nesting depth and crashes Leaflet's ring renderer.
+ *
+ * Some seeded city boundaries fall back to a Point geometry when no
+ * polygon boundary was imported (e.g. Foxboro, Roslindale). Those aren't
+ * renderable as a polygon, so they return an empty ring list rather than
+ * crashing Leaflet on malformed coordinates.
+ */
+export function geoJsonToRingPositions(
+  geometry: Geometry | null | undefined,
+): LatLngExpression[][] {
+  if (!geometry) return [];
+  if (geometry.type === "MultiPolygon") {
+    return geometry.coordinates.flat() as unknown as LatLngExpression[][];
+  }
+  if (geometry.type === "Polygon") {
+    return geometry.coordinates as unknown as LatLngExpression[][];
+  }
+  return [];
+}
+
 function normalizeName(s: string): string {
   return s
     .toLowerCase()
