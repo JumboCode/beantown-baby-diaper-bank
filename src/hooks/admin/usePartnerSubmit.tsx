@@ -91,7 +91,7 @@ export function usePartnerSubmit({
         return;
       }
 
-      if (isEdit && values.status !== "waitlisted") {
+      if (isEdit && cityPercentages.length > 0) {
         const percentagesRes = await fetch("/api/partners/percentages", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
