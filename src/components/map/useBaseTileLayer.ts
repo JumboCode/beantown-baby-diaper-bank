@@ -1,11 +1,14 @@
 import { useMemo } from "react";
 import type { TileLayerProps } from "react-leaflet";
 
+// CARTO basemaps require an API key; without one, tiles render with an "API KEY REQUIRED" watermark.
+const CARTO_API_KEY = process.env.NEXT_PUBLIC_CARTO_API_KEY;
+
 /**
  * Returns a memoized set of TileLayerProps configured for the application's base map.
  *
  * The returned props are ready to be passed to a Leaflet/React-Leaflet <TileLayer /> and include:
- * - url: CartoDB "light_all" tile URL with subdomain and retina placeholders,
+ * - url: CartoDB "light_all" tile URL with subdomain and retina placeholders, authenticated with NEXT_PUBLIC_CARTO_API_KEY,
  * - attribution: HTML string containing OpenStreetMap and CARTO attributions,
  * - subdomains: array of tile subdomains.
  *
@@ -23,7 +26,7 @@ import type { TileLayerProps } from "react-leaflet";
 export function useBaseTileLayer() {
   const tileLayerProps = useMemo<TileLayerProps>(
     () => ({
-      url: "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png",
+      url: `https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png?key=${CARTO_API_KEY}`,
       attribution:
         '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
       subdomains: ["a", "b", "c", "d"],
