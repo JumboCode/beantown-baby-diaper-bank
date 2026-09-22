@@ -62,7 +62,12 @@ NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_test_...
 CLERK_SECRET_KEY=sk_test_...
 NEXT_PUBLIC_CLERK_SIGN_IN_URL=/sign-in
 NEXT_PUBLIC_CLERK_SIGN_UP_URL=/sign-up
+
+# Map basemap tiles (CARTO)
+NEXT_PUBLIC_CARTO_API_KEY=...
 ```
+
+The map's base tiles come from CARTO, which requires a free API key — without it, tiles show an "API KEY REQUIRED" watermark. Request one at [carto.com/basemaps/apikey](https://carto.com/basemaps/apikey). The key is sent from the browser, so it is public by design; restrict it to the project's domains (and `localhost:3000`) in the CARTO dashboard so others can't use up the monthly tile quota.
 
 ### 5. Generate Prisma Client
 
