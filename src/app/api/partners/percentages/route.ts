@@ -77,7 +77,7 @@ export async function POST(request: Request) {
     const body = await request.json();
     const { partnerId, percentages } = body as {
       partnerId?: string;
-      percentages?: Array<{ city?: string; percentage?: number }>;
+      percentages?: Array<{ city?: string; percentage?: number | null }>;
     };
 
     if (!partnerId || !Array.isArray(percentages) || percentages.length === 0) {
@@ -97,36 +97,44 @@ export async function POST(request: Request) {
 
     const normalizedPercentages = percentages.map((item) => ({
       city: typeof item.city === "string" ? item.city.trim() : "",
-      percentage: item.percentage,
+      percentage: item.percentage ?? null,
     }));
 
-    if (
-      normalizedPercentages.some(
-        (item) =>
-          !item.city ||
-          typeof item.percentage !== "number" ||
-          !Number.isFinite(item.percentage) ||
-          item.percentage < 0 ||
-          item.percentage > 1,
-      )
-    ) {
+    if (normalizedPercentages.some((item) => !item.city)) {
+      return NextResponse.json({ error: "Invalid city name" }, { status: 400 });
+    }
+
+    const allNull = normalizedPercentages.every((item) => item.percentage === null);
+    const allNumeric = normalizedPercentages.every(
+      (item) =>
+        typeof item.percentage === "number" &&
+        Number.isFinite(item.percentage) &&
+        item.percentage >= 0 &&
+        item.percentage <= 1,
+    );
+
+    if (!allNull && !allNumeric) {
       return NextResponse.json({ error: "Invalid city or percentage" }, { status: 400 });
     }
 
-    const validatedPercentages: Array<{ city: string; percentage: number }> =
-      normalizedPercentages.map((item) => ({
-        city: item.city,
-        percentage: item.percentage as number,
-      }));
+    const validatedPercentages = normalizedPercentages as Array<{
+      city: string;
+      percentage: number | null;
+    }>;
 
     const normalizedCityNames = validatedPercentages.map((item) => item.city.toLowerCase());
     if (new Set(normalizedCityNames).size !== normalizedCityNames.length) {
       return NextResponse.json({ error: "Duplicate cities in payload" }, { status: 400 });
     }
 
-    const totalPercentage = validatedPercentages.reduce((sum, item) => sum + item.percentage, 0);
-    if (Math.abs(totalPercentage - 1) > 1e-9) {
-      return NextResponse.json({ error: "Percentages must sum to 1" }, { status: 400 });
+    if (allNumeric) {
+      const totalPercentage = validatedPercentages.reduce(
+        (sum, item) => sum + (item.percentage as number),
+        0,
+      );
+      if (Math.abs(totalPercentage - 1) > 1e-9) {
+        return NextResponse.json({ error: "Percentages must sum to 1" }, { status: 400 });
+      }
     }
 
     const partner = await prisma.partner.findUnique({

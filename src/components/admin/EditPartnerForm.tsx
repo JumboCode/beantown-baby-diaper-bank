@@ -438,32 +438,30 @@ export default function EditPartnerForm({ partner, onClose }: EditPartnerFormPro
             />
           </Grid.Col>
 
-          {form.values.status !== "waitlisted" && (
-            <>
-              <Grid.Col span={5}>
-                <Text fw={600} c="var(--color-text-heading)" fz={16}>
-                  Cities Served <span className="text-red-600">*</span>
+          <Grid.Col span={5}>
+            <Text fw={600} c="var(--color-text-heading)" fz={16}>
+              Cities Served
+              {form.values.status !== "waitlisted" && <span className="text-red-600"> *</span>}
+            </Text>
+          </Grid.Col>
+          <Grid.Col span={7}>
+            <div>
+              <CityPercentagesForm
+                initialEntries={initialCityPercentEntries}
+                hidePercentages={form.values.status === "waitlisted"}
+                onChange={(entries) => {
+                  setCityEntries(entries);
+                  form.setFieldValue("cityPercents", entries);
+                  if (form.errors.cityPercents) form.validateField("cityPercents");
+                }}
+              />
+              {form.errors.cityPercents && (
+                <Text c="red" size="sm" mt={6}>
+                  {form.errors.cityPercents}
                 </Text>
-              </Grid.Col>
-              <Grid.Col span={7}>
-                <div>
-                  <CityPercentagesForm
-                    initialEntries={initialCityPercentEntries}
-                    onChange={(entries) => {
-                      setCityEntries(entries);
-                      form.setFieldValue("cityPercents", entries);
-                      if (form.errors.cityPercents) form.validateField("cityPercents");
-                    }}
-                  />
-                  {form.errors.cityPercents && (
-                    <Text c="red" size="sm" mt={6}>
-                      {form.errors.cityPercents}
-                    </Text>
-                  )}
-                </div>
-              </Grid.Col>
-            </>
-          )}
+              )}
+            </div>
+          </Grid.Col>
 
           {warning && (
             <Grid.Col span={12}>
