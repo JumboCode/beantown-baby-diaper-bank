@@ -170,7 +170,6 @@ export default function PartnerDrawer({ partnerId, onClose, boundaries }: Partne
                   padding: partner.logoUrl ? "0.4rem" : 0,
                   border: "1px solid rgba(255,255,255,0.2)",
                   flexShrink: 0,
-                  backdropFilter: "blur(4px)",
                 }}
               >
                 {partner.logoUrl ? (
@@ -212,7 +211,6 @@ export default function PartnerDrawer({ partnerId, onClose, boundaries }: Partne
                           background: s.bg,
                           color: s.color,
                           border: `1px solid ${s.border}`,
-                          backdropFilter: "blur(4px)",
                         }}
                       >
                         {s.label}

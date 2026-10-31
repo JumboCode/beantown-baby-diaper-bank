@@ -89,7 +89,6 @@ export function CityPopup({ city, year, onPartnerSelect, onClose }: CityPopupPro
                 background: "rgba(255,255,255,0.15)",
                 color: "white",
                 border: "1px solid rgba(255,255,255,0.3)",
-                backdropFilter: "blur(4px)",
               }}
             >
               {year}

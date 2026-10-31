@@ -181,7 +181,6 @@ const MemoizedCityPolygon = memo(
                       borderRadius: 12,
                       boxShadow: "0 8px 24px rgba(16, 24, 40, 0.12)",
                       padding: "10px 14px",
-                      backdropFilter: "blur(8px)",
                       minWidth: 160,
                       textAlign: "left",
                     }}
@@ -474,7 +473,6 @@ export default function Map({
                   background: "rgba(255, 255, 255, 0.97)",
                   borderRadius: 12,
                   boxShadow: "0 8px 24px rgba(16, 24, 40, 0.12)",
-                  backdropFilter: "blur(8px)",
                   overscrollBehaviorY: "none",
                 }
           }
@@ -505,7 +503,6 @@ export default function Map({
             borderRadius: 12,
             boxShadow: "0 8px 24px rgba(16, 24, 40, 0.12)",
             padding: isMobile ? "8px 10px" : "12px 14px",
-            backdropFilter: "blur(8px)",
             minWidth: isMobile ? 160 : 220,
             maxWidth: isMobile ? 200 : 280,
           }}

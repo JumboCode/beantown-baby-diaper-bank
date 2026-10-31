@@ -71,7 +71,10 @@ body {
     filter 300ms ease-out;
 }
 
-.city-boundary:hover {
-  filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.4));
-  z-index: 1000;
+/* Touch devices leave :hover stuck after a tap; skip the costly filter there */
+@media (hover: hover) {
+  .city-boundary:hover {
+    filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.4));
+    z-index: 1000;
+  }
 }
